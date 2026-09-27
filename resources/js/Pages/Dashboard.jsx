@@ -69,6 +69,9 @@ export default function Dashboard({ maturedHolds }) {
                         <p className="max-w-md text-base text-slate-600 dark:text-slate-300">
                             {t('logged_in')}
                         </p>
+                        <Link href={route('dashboards.vault')}>
+                            <PrimaryButton type="button">Open Zhako Vault</PrimaryButton>
+                        </Link>
                         {alerts.length === 0 && (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 No matured insurance holds awaiting release.
