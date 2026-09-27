@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             VaultSeeder::class,
             DemoHierarchySeeder::class,
             AttendanceSeeder::class,
+            DemoUsersSeeder::class,
         ]);
     }
 }
