@@ -27,3 +27,7 @@ Blueprint Part 11 walk for BuildVault ERP (Zhako). Status as of Phase 5.
 
 - Internal store: `phase-5-5-checklist.md`
 - Deploy: [DEPLOY.md](DEPLOY.md) · Ops: [OPERATIONS.md](OPERATIONS.md)
+
+## Final testing (Phase 5.8)
+
+See agent store `internal/phase-5-8-final-testing.md` — suite green; PAUSE before SiteBunker go-live.
