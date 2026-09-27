@@ -1,6 +1,6 @@
 # Import template validation rules
 
-Generated for Phase 4.5. Row enforcement lands in Phase 4.6.
+Phase 4.5 templates · Phase 4.6 enforces these rules on upload.
 
 ## Workers (`workers`)
 
@@ -53,7 +53,7 @@ Headers: `worker_name`, `date`, `check_in`, `check_out`, `status`, `late_minutes
 | `floor_name` | `nullable|string|exists:floors,name` |
 
 - worker_name must match an existing worker.
-- Duplicate worker+date rows will be rejected in Phase 4.6.
+- Duplicate worker+date rows are rejected.
 
 ## Payouts (`payouts`)
 
@@ -69,10 +69,10 @@ Headers: `project_name`, `category`, `amount_usd`, `worker_name`, `retention_hol
 | `notes` | `nullable|string|max:2000` |
 
 - Creates pending payouts only; approve/reconcile stays in the UI/services.
-- Liquidity checks run during Phase 4.6 import processing.
+- Liquidity checks run during import processing.
 - Empty retention_holdback uses default insurance % for payroll+worker.
 
-## Modes (Phase 4.6)
+## Modes
 
 - **partial** — import valid rows; skip/report invalid.
-- **atomic** — all-or-nothing; rollback on any invalid row.
+- **atomic** — all-or-nothing; no rows imported if any row is invalid.

@@ -50,6 +50,15 @@ const STYLES = {
     applied: CRIMSON,
     waived: SLATE,
 
+    // Imports
+    processing: AMBER,
+    failed: CRIMSON,
+    rolled_back: SLATE,
+    imported: EMERALD,
+    invalid: CRIMSON,
+    valid: EMERALD,
+    skipped: SLATE,
+
     // Ledger / money cues
     deposit: EMERALD,
     inflow: EMERALD,

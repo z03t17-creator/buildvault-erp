@@ -53,10 +53,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/documents/{document}/file', [DocumentController::class, 'file'])->name('documents.file');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
-    // Phase 4.5: template downloads (upload/validation UI in 4.6)
     Route::get('/imports', [ImportController::class, 'index'])->name('imports.index');
+    Route::post('/imports', [ImportController::class, 'store'])->name('imports.store');
     Route::get('/imports/templates/{type}', [ImportController::class, 'downloadTemplate'])
         ->name('imports.templates.download');
+    Route::get('/imports/{import}', [ImportController::class, 'show'])->name('imports.show');
+    Route::post('/imports/{import}/rollback', [ImportController::class, 'rollback'])
+        ->name('imports.rollback');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();

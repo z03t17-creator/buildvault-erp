@@ -23,6 +23,7 @@ class ImportTemplateTest extends TestCase
             ->component('Imports/Index')
             ->has('types', 4)
             ->where('types.0.type', Import::TYPE_WORKERS)
+            ->has('modes')
             ->has('recent'));
     }
 
