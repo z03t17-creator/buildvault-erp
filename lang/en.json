@@ -1,0 +1,12 @@
+{
+    "login": "Log in",
+    "dashboard": "Dashboard",
+    "locale-label": "Language",
+    "email": "Email",
+    "password": "Password",
+    "remember_me": "Remember me",
+    "forgot_password": "Forgot your password?",
+    "logged_in": "You're logged in!",
+    "log_out": "Log out",
+    "profile": "Profile"
+}

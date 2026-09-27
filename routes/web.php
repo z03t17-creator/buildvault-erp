@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -13,6 +14,8 @@ Route::get('/', function () {
         'phpVersion' => PHP_VERSION,
     ]);
 });
+
+Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

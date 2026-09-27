@@ -1,12 +1,15 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
 import Dropdown from '@/Components/Dropdown';
+import LocaleSwitcher from '@/Components/LocaleSwitcher';
 import NavLink from '@/Components/NavLink';
 import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import useTranslations from '@/hooks/useTranslations';
 import { Link, usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
     const user = usePage().props.auth.user;
+    const t = useTranslations();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
         useState(false);
@@ -28,12 +31,13 @@ export default function AuthenticatedLayout({ header, children }) {
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
                                 >
-                                    Dashboard
+                                    {t('dashboard')}
                                 </NavLink>
                             </div>
                         </div>
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center">
+                        <div className="hidden sm:ms-6 sm:flex sm:items-center gap-4">
+                            <LocaleSwitcher />
                             <div className="relative ms-3">
                                 <Dropdown>
                                     <Dropdown.Trigger>
@@ -64,14 +68,14 @@ export default function AuthenticatedLayout({ header, children }) {
                                         <Dropdown.Link
                                             href={route('profile.edit')}
                                         >
-                                            Profile
+                                            {t('profile')}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
                                         >
-                                            Log Out
+                                            {t('log_out')}
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
@@ -132,8 +136,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             href={route('dashboard')}
                             active={route().current('dashboard')}
                         >
-                            Dashboard
+                            {t('dashboard')}
                         </ResponsiveNavLink>
+                    </div>
+
+                    <div className="border-t border-gray-200 px-4 py-3">
+                        <LocaleSwitcher />
                     </div>
 
                     <div className="border-t border-gray-200 pb-1 pt-4">
@@ -148,14 +156,14 @@ export default function AuthenticatedLayout({ header, children }) {
 
                         <div className="mt-3 space-y-1">
                             <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
+                                {t('profile')}
                             </ResponsiveNavLink>
                             <ResponsiveNavLink
                                 method="post"
                                 href={route('logout')}
                                 as="button"
                             >
-                                Log Out
+                                {t('log_out')}
                             </ResponsiveNavLink>
                         </div>
                     </div>

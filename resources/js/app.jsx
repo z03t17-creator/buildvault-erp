@@ -1,11 +1,19 @@
 import '../css/app.css';
 import './bootstrap';
 
-import { createInertiaApp } from '@inertiajs/react';
+import { createInertiaApp, router } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createRoot } from 'react-dom/client';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
+
+function applyDocumentLocale(page) {
+    const locale = page?.props?.locale ?? 'en';
+    const direction = page?.props?.direction ?? 'ltr';
+
+    document.documentElement.lang = locale;
+    document.documentElement.dir = direction;
+}
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
@@ -15,6 +23,12 @@ createInertiaApp({
             import.meta.glob('./Pages/**/*.jsx'),
         ),
     setup({ el, App, props }) {
+        applyDocumentLocale(props.initialPage);
+
+        router.on('success', (event) => {
+            applyDocumentLocale(event.detail.page);
+        });
+
         const root = createRoot(el);
 
         root.render(<App {...props} />);
