@@ -10,6 +10,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ImportController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
@@ -51,6 +52,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
     Route::get('/documents/{document}/file', [DocumentController::class, 'file'])->name('documents.file');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
+
+    // Phase 4.5: template downloads (upload/validation UI in 4.6)
+    Route::get('/imports', [ImportController::class, 'index'])->name('imports.index');
+    Route::get('/imports/templates/{type}', [ImportController::class, 'downloadTemplate'])
+        ->name('imports.templates.download');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();
