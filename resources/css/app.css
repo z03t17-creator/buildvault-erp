@@ -1,3 +1,40 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+@layer base {
+    :root {
+        --bv-bg: 248 250 252; /* slate-50 */
+        --bv-surface: 255 255 255;
+        --bv-ink: 15 23 42; /* slate-900 */
+        --bv-muted: 100 116 139; /* slate-500 */
+        --bv-accent: 16 185 129; /* emerald-500 */
+        --bv-accent-strong: 5 150 105; /* emerald-600 */
+    }
+
+    .dark {
+        --bv-bg: 15 23 42; /* slate-900 */
+        --bv-surface: 30 41 59; /* slate-800 */
+        --bv-ink: 248 250 252; /* slate-50 */
+        --bv-muted: 148 163 184; /* slate-400 */
+        --bv-accent: 52 211 153; /* emerald-400 */
+        --bv-accent-strong: 16 185 129; /* emerald-500 */
+    }
+
+    html {
+        @apply antialiased;
+    }
+
+    body {
+        @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.12), transparent),
+            radial-gradient(ellipse 60% 40% at 100% 0%, rgb(148 163 184 / 0.15), transparent);
+    }
+
+    html.dark body {
+        background-image:
+            radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.18), transparent),
+            radial-gradient(ellipse 50% 30% at 0% 100%, rgb(51 65 85 / 0.5), transparent);
+    }
+}

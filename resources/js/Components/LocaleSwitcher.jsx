@@ -25,11 +25,11 @@ export default function LocaleSwitcher({ className = '' }) {
 
     return (
         <div
-            className={`flex items-center gap-2 text-sm text-gray-600 ${className}`}
+            className={`flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300 ${className}`}
             role="group"
             aria-label={t('locale-label')}
         >
-            <span className="hidden sm:inline font-medium text-gray-500">
+            <span className="hidden font-medium text-slate-500 dark:text-slate-400 sm:inline">
                 {t('locale-label')}
             </span>
             <div className="flex items-center gap-1">
@@ -40,8 +40,8 @@ export default function LocaleSwitcher({ className = '' }) {
                         onClick={() => switchLocale(code)}
                         className={
                             code === locale
-                                ? 'rounded px-2 py-1 font-semibold text-gray-900 bg-gray-200'
-                                : 'rounded px-2 py-1 text-gray-500 hover:text-gray-800 hover:bg-gray-100'
+                                ? 'rounded-md bg-emerald-600 px-2 py-1 font-semibold text-white shadow-sm'
+                                : 'rounded-md px-2 py-1 text-slate-500 hover:bg-slate-100 hover:text-slate-800 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-100'
                         }
                         aria-pressed={code === locale}
                     >
