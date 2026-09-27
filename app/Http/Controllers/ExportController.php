@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Payout;
 use App\Models\Project;
+use App\Models\Vault;
 use App\Models\Worker;
 use App\Services\ExportService;
 use Carbon\Carbon;
@@ -21,6 +22,8 @@ class ExportController extends Controller
 
     public function index(): InertiaResponse
     {
+        $this->authorize('manageExports', Vault::class);
+
         return Inertia::render('Exports/Index', [
             'projects' => Project::query()
                 ->orderBy('name')
@@ -40,11 +43,17 @@ class ExportController extends Controller
 
     public function projectExcel(Project $project): BinaryFileResponse
     {
+        $this->authorize('manageExports', Vault::class);
+        $this->authorize('view', $project);
+
         return $this->exports->downloadProjectExcel($project);
     }
 
     public function workerPdf(Request $request, Worker $worker): Response
     {
+        $this->authorize('manageExports', Vault::class);
+        $this->authorize('view', $worker);
+
         $monthInput = (string) $request->query('month', now()->format('Y-m'));
         try {
             $month = Carbon::createFromFormat('Y-m', $monthInput)->startOfMonth();
@@ -61,6 +70,9 @@ class ExportController extends Controller
 
     public function payoutVoucher(Payout $payout): Response
     {
+        $this->authorize('manageExports', Vault::class);
+        $this->authorize('view', $payout);
+
         return $this->exports->downloadPayoutVoucher($payout);
     }
 }

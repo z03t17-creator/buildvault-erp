@@ -33,7 +33,7 @@ class WorkerAvatarUploadTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $file = $this->fakePng('crew.png');
 
         $response = $this->actingAs($user)->post(route('workers.store'), [
@@ -64,7 +64,7 @@ class WorkerAvatarUploadTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $oldPath = $this->fakePng('old.png')->store('uploads/workers', 'public');
 
         $worker = Worker::query()->create([
@@ -92,7 +92,7 @@ class WorkerAvatarUploadTest extends TestCase
     {
         Storage::fake('public');
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         $this->actingAs($user)
             ->post(route('workers.store'), [

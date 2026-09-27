@@ -21,7 +21,7 @@ class ExportDownloadTest extends TestCase
 
     public function test_exports_index_lists_sources(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Project::query()->create(['name' => 'Export Site']);
         Worker::query()->create(['name' => 'Export Worker']);
 
@@ -38,7 +38,7 @@ class ExportDownloadTest extends TestCase
 
     public function test_project_excel_download(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Excel Site']);
         $worker = Worker::query()->create([
             'project_id' => $project->id,
@@ -79,7 +79,7 @@ class ExportDownloadTest extends TestCase
 
     public function test_worker_pdf_download(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'PDF Site']);
         $worker = Worker::query()->create([
             'project_id' => $project->id,
@@ -105,7 +105,7 @@ class ExportDownloadTest extends TestCase
 
     public function test_payout_voucher_pdf_download(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Voucher Site']);
         $worker = Worker::query()->create([
             'project_id' => $project->id,

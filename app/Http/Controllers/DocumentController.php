@@ -18,13 +18,20 @@ class DocumentController extends Controller
 {
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Document::class);
+
         $type = $request->query('type');
         $projectId = $request->query('project_id');
         $workerId = $request->query('worker_id');
+        $user = $request->user();
 
         $query = Document::query()
             ->with(['project:id,name', 'worker:id,name', 'uploader:id,name'])
             ->orderByDesc('id');
+
+        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
+            $query->where('worker_id', $user->worker->id);
+        }
 
         if ($type && in_array($type, Document::TYPES, true)) {
             $query->where('type', $type);
@@ -63,6 +70,8 @@ class DocumentController extends Controller
 
     public function store(StoreDocumentRequest $request): RedirectResponse
     {
+        $this->authorize('create', Document::class);
+
         $data = $request->validated();
         $file = $request->file('file');
         $projectId = (int) $data['project_id'];
@@ -95,6 +104,8 @@ class DocumentController extends Controller
 
     public function destroy(Document $document): RedirectResponse
     {
+        $this->authorize('delete', $document);
+
         if ($document->path && Storage::disk(Document::DISK)->exists($document->path)) {
             Storage::disk(Document::DISK)->delete($document->path);
         }
@@ -114,6 +125,8 @@ class DocumentController extends Controller
 
     public function file(Document $document): StreamedResponse
     {
+        $this->authorize('view', $document);
+
         abort_unless(
             Storage::disk(Document::DISK)->exists($document->path),
             404,

@@ -18,7 +18,7 @@ class RetentionHoldWorkflowTest extends TestCase
 
     public function test_dashboard_surfaces_matured_hold_alerts(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $vault = Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 5000,
@@ -51,7 +51,7 @@ class RetentionHoldWorkflowTest extends TestCase
 
     public function test_release_endpoint_returns_funds_to_payroll(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $vault = Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 5000,

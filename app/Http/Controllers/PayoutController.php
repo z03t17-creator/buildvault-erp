@@ -23,16 +23,26 @@ class PayoutController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('viewAny', Payout::class);
+
+        $query = Payout::query()
+            ->with(['project:id,name', 'worker:id,name', 'vault:id,name'])
+            ->orderByDesc('id');
+
+        $user = request()->user();
+        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
+            $query->where('worker_id', $user->worker->id);
+        }
+
         return Inertia::render('Payouts/Index', [
-            'payouts' => Payout::query()
-                ->with(['project:id,name', 'worker:id,name', 'vault:id,name'])
-                ->orderByDesc('id')
-                ->get(),
+            'payouts' => $query->get(),
         ]);
     }
 
     public function create(): Response
     {
+        $this->authorize('create', Payout::class);
+
         return Inertia::render('Payouts/Create', [
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'workers' => Worker::query()->orderBy('name')->get(['id', 'name', 'project_id']),
@@ -44,6 +54,8 @@ class PayoutController extends Controller
 
     public function store(StorePayoutRequest $request): RedirectResponse
     {
+        $this->authorize('create', Payout::class);
+
         try {
             $payout = $this->payouts->create([
                 ...$request->validated(),
@@ -60,6 +72,8 @@ class PayoutController extends Controller
 
     public function show(Payout $payout): Response
     {
+        $this->authorize('view', $payout);
+
         $payout->load(['project', 'worker', 'floor', 'vault', 'retentionHolds', 'penalties']);
 
         return Inertia::render('Payouts/Show', [
@@ -69,6 +83,8 @@ class PayoutController extends Controller
 
     public function approve(Payout $payout): RedirectResponse
     {
+        $this->authorize('approve', $payout);
+
         try {
             $this->payouts->approve($payout);
         } catch (InvalidArgumentException $e) {
@@ -80,6 +96,8 @@ class PayoutController extends Controller
 
     public function reject(RejectPayoutRequest $request, Payout $payout): RedirectResponse
     {
+        $this->authorize('reject', $payout);
+
         try {
             $this->payouts->reject($payout, $request->validated('notes'));
         } catch (InvalidArgumentException $e) {
@@ -91,6 +109,8 @@ class PayoutController extends Controller
 
     public function reconcile(Payout $payout): RedirectResponse
     {
+        $this->authorize('reconcile', $payout);
+
         try {
             $this->payouts->reconcile($payout);
         } catch (InvalidArgumentException $e) {

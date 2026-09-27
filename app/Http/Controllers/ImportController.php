@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreImportRequest;
 use App\Models\Import;
+use App\Models\Vault;
 use App\Services\ImportService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,8 @@ class ImportController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('manageImports', Vault::class);
+
         return Inertia::render('Imports/Index', [
             'types' => collect($this->imports->definitions())->map(fn ($def, $type) => [
                 'type' => $type,
@@ -47,6 +50,8 @@ class ImportController extends Controller
 
     public function store(StoreImportRequest $request): RedirectResponse
     {
+        $this->authorize('manageImports', Vault::class);
+
         $import = $this->imports->processUpload(
             $request->file('file'),
             $request->string('type')->toString(),
@@ -67,6 +72,8 @@ class ImportController extends Controller
 
     public function show(Import $import): Response
     {
+        $this->authorize('manageImports', Vault::class);
+
         $import->load(['creator:id,name', 'details' => fn ($q) => $q->orderBy('row_number')]);
 
         return Inertia::render('Imports/Show', [
@@ -100,6 +107,8 @@ class ImportController extends Controller
 
     public function rollback(Import $import): RedirectResponse
     {
+        $this->authorize('manageImports', Vault::class);
+
         try {
             $this->imports->rollback($import);
         } catch (Throwable $e) {
@@ -115,6 +124,8 @@ class ImportController extends Controller
 
     public function downloadTemplate(Request $request, string $type): BinaryFileResponse
     {
+        $this->authorize('manageImports', Vault::class);
+
         $format = strtolower((string) $request->query('format', 'csv'));
         if (! in_array($format, ['csv', 'xlsx'], true)) {
             abort(404);

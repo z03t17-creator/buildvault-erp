@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RetentionHold;
+use App\Models\Vault;
 use App\Services\RetentionHoldService;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
@@ -17,6 +18,8 @@ class RetentionHoldController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('manageRetention', Vault::class);
+
         return Inertia::render('RetentionHolds/Index', [
             'holds' => RetentionHold::query()
                 ->with(['worker:id,name', 'project:id,name', 'payout:id,status'])
@@ -28,6 +31,8 @@ class RetentionHoldController extends Controller
 
     public function release(RetentionHold $retentionHold): RedirectResponse
     {
+        $this->authorize('manageRetention', Vault::class);
+
         try {
             $this->holds->release($retentionHold, request()->user()?->id);
         } catch (InvalidArgumentException $e) {

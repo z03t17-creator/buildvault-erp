@@ -15,7 +15,7 @@ class PayrollDashboardTest extends TestCase
 
     public function test_payroll_dashboard_monthly_summary_per_worker(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Payroll Site']);
 
         $worker = Worker::query()->create([
@@ -68,7 +68,7 @@ class PayrollDashboardTest extends TestCase
 
     public function test_payroll_dashboard_filters_by_project(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $a = Project::query()->create(['name' => 'Site A']);
         $b = Project::query()->create(['name' => 'Site B']);
 

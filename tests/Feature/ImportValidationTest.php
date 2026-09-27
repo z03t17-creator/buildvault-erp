@@ -24,7 +24,7 @@ class ImportValidationTest extends TestCase
 
     public function test_partial_import_happy_path_creates_workers(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Import Site']);
 
         $csv = "name,project_name,role,daily_rate_usd,overtime_rate_usd,spending_limit_usd,phone,national_id_number\n"
@@ -52,7 +52,7 @@ class ImportValidationTest extends TestCase
 
     public function test_partial_import_skips_invalid_rows(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Project::query()->create(['name' => 'Import Site']);
 
         $csv = "name,project_name,role,daily_rate_usd,overtime_rate_usd,spending_limit_usd,phone,national_id_number\n"
@@ -80,7 +80,7 @@ class ImportValidationTest extends TestCase
 
     public function test_atomic_import_imports_nothing_when_any_row_invalid(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Project::query()->create(['name' => 'Import Site']);
 
         $csv = "name,project_name,role,daily_rate_usd,overtime_rate_usd,spending_limit_usd,phone,national_id_number\n"
@@ -106,7 +106,7 @@ class ImportValidationTest extends TestCase
 
     public function test_projects_import_and_rollback(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         $csv = "name,location,status,total_budget_usd,start_date,end_date,description\n"
             ."Rollback Site,Erbil,planning,100000,2026-10-01,2027-10-01,Test\n";
@@ -133,7 +133,7 @@ class ImportValidationTest extends TestCase
 
     public function test_import_show_renders_error_report(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Project::query()->create(['name' => 'Import Site']);
 
         $csv = "name,project_name,role,daily_rate_usd,overtime_rate_usd,spending_limit_usd,phone,national_id_number\n"

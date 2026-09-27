@@ -14,7 +14,7 @@ class ImportTemplateTest extends TestCase
 
     public function test_imports_index_lists_template_types(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         $response = $this->actingAs($user)->get(route('imports.index'));
 
@@ -29,7 +29,7 @@ class ImportTemplateTest extends TestCase
 
     public function test_download_csv_and_xlsx_templates(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         foreach (Import::TYPES as $type) {
             $csv = $this->actingAs($user)->get(route('imports.templates.download', [
@@ -50,7 +50,7 @@ class ImportTemplateTest extends TestCase
 
     public function test_create_pending_import_skeleton(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $service = app(ImportService::class);
 
         $import = $service->createPending([

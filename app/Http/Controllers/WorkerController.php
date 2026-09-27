@@ -18,6 +18,8 @@ class WorkerController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('viewAny', Worker::class);
+
         return Inertia::render('Workers/Index', [
             'workers' => Worker::query()
                 ->with('project:id,name')
@@ -28,6 +30,8 @@ class WorkerController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', Worker::class);
+
         return Inertia::render('Workers/Create', [
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'roles' => Worker::ROLES,
@@ -36,6 +40,8 @@ class WorkerController extends Controller
 
     public function store(StoreWorkerRequest $request): RedirectResponse
     {
+        $this->authorize('create', Worker::class);
+
         $data = $request->safe()->except(['avatar']);
 
         if ($request->hasFile('avatar')) {
@@ -51,6 +57,8 @@ class WorkerController extends Controller
 
     public function show(Worker $worker): Response
     {
+        $this->authorize('view', $worker);
+
         $worker->load('project');
 
         return Inertia::render('Workers/Show', [
@@ -60,6 +68,8 @@ class WorkerController extends Controller
 
     public function edit(Worker $worker): Response
     {
+        $this->authorize('update', $worker);
+
         return Inertia::render('Workers/Edit', [
             'worker' => $worker,
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
@@ -69,6 +79,8 @@ class WorkerController extends Controller
 
     public function update(UpdateWorkerRequest $request, Worker $worker): RedirectResponse
     {
+        $this->authorize('update', $worker);
+
         $data = $request->safe()->except(['avatar']);
 
         if ($request->hasFile('avatar')) {
@@ -85,6 +97,8 @@ class WorkerController extends Controller
 
     public function destroy(Worker $worker): RedirectResponse
     {
+        $this->authorize('delete', $worker);
+
         $this->deleteAvatar($worker->avatar_path);
         $worker->delete();
 

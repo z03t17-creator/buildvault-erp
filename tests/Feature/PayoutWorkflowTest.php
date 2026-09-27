@@ -33,7 +33,7 @@ class PayoutWorkflowTest extends TestCase
 
     public function test_store_approve_reconcile_happy_path(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $vault = Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 5000,
@@ -95,7 +95,7 @@ class PayoutWorkflowTest extends TestCase
 
     public function test_store_blocked_without_liquidity(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 100,

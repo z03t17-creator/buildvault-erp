@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Project;
+use App\Models\Vault;
 use App\Models\Worker;
 use App\Services\PayrollService;
 use Carbon\Carbon;
@@ -18,6 +19,8 @@ class PayrollDashboardController extends Controller
 
     public function show(Request $request): Response
     {
+        $this->authorize('viewPayroll', Vault::class);
+
         $monthInput = (string) $request->query('month', now()->format('Y-m'));
         try {
             $month = Carbon::createFromFormat('Y-m', $monthInput)->startOfMonth();

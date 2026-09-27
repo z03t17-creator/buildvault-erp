@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Backup;
+use App\Models\Vault;
 use App\Services\BackupService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -21,6 +22,8 @@ class BackupController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('manageBackups', Vault::class);
+
         return Inertia::render('Backups/Index', [
             'types' => Backup::TYPES,
             'schedule' => [
@@ -53,6 +56,8 @@ class BackupController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('manageBackups', Vault::class);
+
         $data = $request->validate([
             'type' => ['required', 'string', Rule::in(Backup::TYPES)],
         ]);
@@ -76,6 +81,8 @@ class BackupController extends Controller
 
     public function download(Backup $backup): StreamedResponse
     {
+        $this->authorize('manageBackups', Vault::class);
+
         abort_unless($backup->isDownloadable(), 404);
 
         return Storage::disk($backup->disk)->download(

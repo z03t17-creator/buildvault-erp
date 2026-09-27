@@ -35,7 +35,7 @@ class BackupManagementTest extends TestCase
 
     public function test_backups_index_renders(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         Backup::query()->create([
             'type' => Backup::TYPE_FULL,
@@ -60,7 +60,7 @@ class BackupManagementTest extends TestCase
 
     public function test_trigger_files_backup_logs_completed_run(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         // Files-only avoids sqlite3 dump while PHPUnit holds the DB lock.
         $response = $this->actingAs($user)->post(route('backups.store'), [
@@ -81,7 +81,7 @@ class BackupManagementTest extends TestCase
 
     public function test_download_completed_backup(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Storage::disk('backups')->put('BuildVault/ok.zip', 'PK'.str_repeat('y', 400));
 
         $backup = Backup::query()->create([

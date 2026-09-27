@@ -28,7 +28,7 @@ class VaultDashboardTest extends TestCase
             ], 200),
         ]);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $vault = Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 10000,
@@ -94,7 +94,7 @@ class VaultDashboardTest extends TestCase
             ], 200),
         ]);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         Vault::query()->create([
             'name' => VaultSeeder::NAME,
             'balance_usd' => 0,

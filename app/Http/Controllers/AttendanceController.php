@@ -26,11 +26,16 @@ class AttendanceController extends Controller
      */
     public function index(Request $request): Response
     {
+        $this->authorize('viewAny', Attendance::class);
+
         $date = $request->string('date')->toString() ?: now()->toDateString();
         $projectId = $request->integer('project_id') ?: null;
+        $user = $request->user();
 
         $workersQuery = Worker::query()->with('project:id,name')->orderBy('name');
-        if ($projectId) {
+        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
+            $workersQuery->where('id', $user->worker->id);
+        } elseif ($projectId) {
             $workersQuery->where('project_id', $projectId);
         }
         $workers = $workersQuery->get();
@@ -62,6 +67,8 @@ class AttendanceController extends Controller
 
     public function checkIn(BulkCheckInRequest $request): RedirectResponse
     {
+        $this->authorize('manage', Attendance::class);
+
         $data = $request->validated();
 
         Worker::query()
@@ -79,6 +86,8 @@ class AttendanceController extends Controller
 
     public function checkOut(BulkCheckOutRequest $request): RedirectResponse
     {
+        $this->authorize('manage', Attendance::class);
+
         $data = $request->validated();
 
         Worker::query()
@@ -98,6 +107,8 @@ class AttendanceController extends Controller
      */
     public function markAbsences(Request $request): RedirectResponse
     {
+        $this->authorize('manage', Attendance::class);
+
         $request->validate([
             'date' => ['required', 'date'],
         ]);

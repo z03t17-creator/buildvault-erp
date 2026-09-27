@@ -25,6 +25,8 @@ class VaultDashboardController extends Controller
 
     public function show(): Response
     {
+        $this->authorize('viewDashboard', Vault::class);
+
         $vault = Vault::query()->where('name', VaultSeeder::NAME)->first()
             ?? Vault::query()->orderBy('id')->first();
 
@@ -99,6 +101,8 @@ class VaultDashboardController extends Controller
 
     public function refreshFx(): RedirectResponse
     {
+        $this->authorize('refreshFx', Vault::class);
+
         $rate = $this->exchangeRates->refresh();
 
         return back()->with('success', sprintf('FX refreshed: 1 USD = %s IQD', number_format($rate, 2)));

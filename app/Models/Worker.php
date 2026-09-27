@@ -40,6 +40,7 @@ class Worker extends Model
      */
     protected $fillable = [
         'project_id',
+        'user_id',
         'name',
         'role',
         'daily_rate_usd',
@@ -87,6 +88,11 @@ class Worker extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     /**

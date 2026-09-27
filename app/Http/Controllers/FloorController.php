@@ -14,6 +14,9 @@ class FloorController extends Controller
 {
     public function index(Tower $tower): Response
     {
+        $this->authorize('view', $tower);
+        $this->authorize('viewAny', Floor::class);
+
         $tower->load('project');
 
         return Inertia::render('Floors/Index', [
@@ -25,6 +28,9 @@ class FloorController extends Controller
 
     public function create(Tower $tower): Response
     {
+        $this->authorize('view', $tower);
+        $this->authorize('create', Floor::class);
+
         $tower->load('project');
 
         return Inertia::render('Floors/Create', [
@@ -35,6 +41,9 @@ class FloorController extends Controller
 
     public function store(StoreFloorRequest $request, Tower $tower): RedirectResponse
     {
+        $this->authorize('view', $tower);
+        $this->authorize('create', Floor::class);
+
         $floor = $tower->floors()->create($request->validated());
 
         return redirect()
@@ -44,6 +53,8 @@ class FloorController extends Controller
 
     public function show(Floor $floor): Response
     {
+        $this->authorize('view', $floor);
+
         $floor->load('tower.project');
 
         return Inertia::render('Floors/Show', [
@@ -55,6 +66,8 @@ class FloorController extends Controller
 
     public function edit(Floor $floor): Response
     {
+        $this->authorize('update', $floor);
+
         $floor->load('tower.project');
 
         return Inertia::render('Floors/Edit', [
@@ -66,6 +79,8 @@ class FloorController extends Controller
 
     public function update(UpdateFloorRequest $request, Floor $floor): RedirectResponse
     {
+        $this->authorize('update', $floor);
+
         $floor->update($request->validated());
 
         return redirect()
@@ -75,6 +90,8 @@ class FloorController extends Controller
 
     public function destroy(Floor $floor): RedirectResponse
     {
+        $this->authorize('delete', $floor);
+
         $tower = $floor->tower;
         $floor->delete();
 

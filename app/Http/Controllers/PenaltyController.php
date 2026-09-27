@@ -23,6 +23,8 @@ class PenaltyController extends Controller
 
     public function index(): Response
     {
+        $this->authorize('viewAny', Penalty::class);
+
         return Inertia::render('Penalties/Index', [
             'penalties' => Penalty::query()
                 ->with(['worker:id,name', 'project:id,name', 'payout:id,status,amount_usd'])
@@ -33,6 +35,8 @@ class PenaltyController extends Controller
 
     public function create(): Response
     {
+        $this->authorize('create', Penalty::class);
+
         return Inertia::render('Penalties/Create', [
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'workers' => Worker::query()->orderBy('name')->get(['id', 'name', 'project_id']),
@@ -47,6 +51,8 @@ class PenaltyController extends Controller
 
     public function store(StorePenaltyRequest $request): RedirectResponse
     {
+        $this->authorize('create', Penalty::class);
+
         try {
             $penalty = $this->penalties->create($request->validated());
         } catch (InvalidArgumentException $e) {
@@ -60,6 +66,8 @@ class PenaltyController extends Controller
 
     public function show(Penalty $penalty): Response
     {
+        $this->authorize('view', $penalty);
+
         $penalty->load(['worker', 'project', 'floor', 'payout']);
 
         return Inertia::render('Penalties/Show', [
@@ -74,6 +82,8 @@ class PenaltyController extends Controller
 
     public function waive(Penalty $penalty): RedirectResponse
     {
+        $this->authorize('waive', $penalty);
+
         try {
             $this->penalties->waive($penalty);
         } catch (InvalidArgumentException $e) {
@@ -85,6 +95,8 @@ class PenaltyController extends Controller
 
     public function link(LinkPenaltyRequest $request, Penalty $penalty): RedirectResponse
     {
+        $this->authorize('link', $penalty);
+
         try {
             $payout = Payout::query()->findOrFail($request->validated('payout_id'));
             $this->penalties->linkToPayout($penalty, $payout);

@@ -25,7 +25,7 @@ class ResourceControllersTest extends TestCase
 
     public function test_project_store_and_show(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
 
         $response = $this->actingAs($user)->post(route('projects.store'), [
             'name' => 'Zhako Tower Site',
@@ -51,7 +51,7 @@ class ResourceControllersTest extends TestCase
 
     public function test_tower_store_and_show_nested_under_project(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Parent Project']);
 
         $response = $this->actingAs($user)->post(route('projects.towers.store', $project), [
@@ -76,7 +76,7 @@ class ResourceControllersTest extends TestCase
 
     public function test_floor_store_and_show_nested_under_tower(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Parent Project']);
         $tower = $project->towers()->create(['name' => 'Tower B']);
 
@@ -102,7 +102,7 @@ class ResourceControllersTest extends TestCase
 
     public function test_worker_store_and_show(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Crew Project']);
 
         $response = $this->actingAs($user)->post(route('workers.store'), [
@@ -131,7 +131,7 @@ class ResourceControllersTest extends TestCase
 
     public function test_attendance_index_and_bulk_check_in_out(): void
     {
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Site']);
         $tower = $project->towers()->create(['name' => 'T1']);
         $floor = $tower->floors()->create(['name' => 'F1']);

@@ -19,7 +19,7 @@ class DocumentUploadTest extends TestCase
     {
         Storage::fake(Document::DISK);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Doc Site']);
         $worker = Worker::query()->create([
             'project_id' => $project->id,
@@ -55,7 +55,7 @@ class DocumentUploadTest extends TestCase
     {
         Storage::fake(Document::DISK);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Upload Site']);
         $worker = Worker::query()->create([
             'project_id' => $project->id,
@@ -88,7 +88,7 @@ class DocumentUploadTest extends TestCase
     {
         Storage::fake(Document::DISK);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Stream Site']);
         $path = $project->id.'/contract/demo.pdf';
         Storage::disk(Document::DISK)->put($path, '%PDF-1.4 demo');
@@ -113,7 +113,7 @@ class DocumentUploadTest extends TestCase
     {
         Storage::fake(Document::DISK);
 
-        $user = User::factory()->create();
+        $user = $this->userWithRole();
         $project = Project::query()->create(['name' => 'Reject Site']);
 
         $response = $this->actingAs($user)->post(route('documents.store'), [
