@@ -25,5 +25,15 @@ class Floor extends Model
     {
         return $this->hasMany(Attendance::class);
     }
+
+    public function payouts(): HasMany
+    {
+        return $this->hasMany(Payout::class);
+    }
+
+    public function penalties(): HasMany
+    {
+        return $this->hasMany(Penalty::class);
+    }
 }
 

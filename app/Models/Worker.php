@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+
 class Worker extends Model
 {
     public const ROLE_ENGINEER = 'engineer';
@@ -96,11 +97,18 @@ class Worker extends Model
         return $this->hasMany(Attendance::class);
     }
 
-    /**
-     * Payout rows (table/model fleshed out in Phase 3).
-     */
     public function payouts(): HasMany
     {
         return $this->hasMany(Payout::class);
+    }
+
+    public function retentionHolds(): HasMany
+    {
+        return $this->hasMany(RetentionHold::class);
+    }
+
+    public function penalties(): HasMany
+    {
+        return $this->hasMany(Penalty::class);
     }
 }
