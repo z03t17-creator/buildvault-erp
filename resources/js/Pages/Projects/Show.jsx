@@ -32,6 +32,9 @@ export default function Show({ project }) {
                             <Link href={route('projects.index')}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
+                            <Link href={route('documents.index', { project_id: project.id })}>
+                                <SecondaryButton>Documents</SecondaryButton>
+                            </Link>
                             <Link href={route('projects.edit', project.id)}>
                                 <SecondaryButton>{t('edit')}</SecondaryButton>
                             </Link>

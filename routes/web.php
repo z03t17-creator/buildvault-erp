@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
@@ -45,6 +46,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])
         ->name('dashboards.vault.refresh-fx');
     Route::get('/dashboards/payroll', [PayrollDashboardController::class, 'show'])->name('dashboards.payroll');
+
+    Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
+    Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');
+    Route::get('/documents/{document}/file', [DocumentController::class, 'file'])->name('documents.file');
+    Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])->name('documents.destroy');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();

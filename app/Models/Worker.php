@@ -111,4 +111,9 @@ class Worker extends Model
     {
         return $this->hasMany(Penalty::class);
     }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(Document::class);
+    }
 }

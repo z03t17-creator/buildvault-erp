@@ -28,6 +28,9 @@ export default function Show({ worker }) {
                             <Link href={route('workers.index')}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
+                            <Link href={route('documents.index', { worker_id: worker.id, project_id: worker.project_id || undefined })}>
+                                <SecondaryButton>Documents</SecondaryButton>
+                            </Link>
                             <Link href={route('workers.edit', worker.id)}>
                                 <SecondaryButton>{t('edit')}</SecondaryButton>
                             </Link>

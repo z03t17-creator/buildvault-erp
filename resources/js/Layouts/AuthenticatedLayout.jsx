@@ -75,6 +75,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Penalties
                                 </NavLink>
                                 <NavLink
+                                    href={route('documents.index')}
+                                    active={route().current('documents.*')}
+                                >
+                                    Docs
+                                </NavLink>
+                                <NavLink
                                     href={route('retention-holds.index')}
                                     active={route().current('retention-holds.*')}
                                 >
@@ -235,6 +241,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('penalties.*')}
                         >
                             Penalties
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('documents.index')}
+                            active={route().current('documents.*')}
+                        >
+                            Docs
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('retention-holds.index')}

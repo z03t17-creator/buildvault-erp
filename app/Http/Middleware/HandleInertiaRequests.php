@@ -45,6 +45,9 @@ class HandleInertiaRequests extends Middleware
             'alerts' => [
                 'maturedRetentionCount' => $maturedCount,
             ],
+            'flash' => [
+                'success' => $request->session()->get('success'),
+            ],
         ];
     }
 }

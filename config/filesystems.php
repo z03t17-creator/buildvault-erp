@@ -47,6 +47,17 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Blueprint document uploads: storage/app/uploads/{project_id}/{type}/
+         * Served via authenticated DocumentController@file (not public symlink).
+         */
+        'uploads' => [
+            'driver' => 'local',
+            'root' => storage_path('app/uploads'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),
