@@ -58,6 +58,17 @@ return [
             'report' => false,
         ],
 
+        /*
+         * Spatie backups (SiteBunker-friendly local disk).
+         * Path: storage/app/backups/
+         */
+        'backups' => [
+            'driver' => 'local',
+            'root' => storage_path('app/backups'),
+            'throw' => false,
+            'report' => false,
+        ],
+
         's3' => [
             'driver' => 's3',
             'key' => env('AWS_ACCESS_KEY_ID'),

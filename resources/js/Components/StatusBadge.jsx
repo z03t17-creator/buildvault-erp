@@ -59,6 +59,9 @@ const STYLES = {
     valid: EMERALD,
     skipped: SLATE,
 
+    // Backups
+    running: AMBER,
+
     // Ledger / money cues
     deposit: EMERALD,
     inflow: EMERALD,

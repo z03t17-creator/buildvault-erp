@@ -43,6 +43,8 @@ php artisan serve
 - PHP **8.3**, MariaDB, document root → `public/`.
 - Cache / queue / session drivers: **database** (see `.env.example`).
 - Queue via cPanel cron: `php artisan queue:work --stop-when-empty`.
+- Scheduler cron (every minute): `php artisan schedule:run` — runs daily `backup:run-logged` at 02:00 into `storage/app/backups/`.
+- Direct backup: `php artisan backup:run` (Spatie) or `php artisan backup:run-logged` (logs to `backups` table / UI).
 
 ## Development
 

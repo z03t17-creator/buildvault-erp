@@ -80,17 +80,26 @@ Laravel 11 uses `CACHE_STORE` (not the older `CACHE_DRIVER`). Migrations must in
    php artisan storage:link
    ```
 
-7. **cPanel cron — queue**  
+7. **cPanel cron — queue + scheduler**  
    No supervisor/long-running worker. Run often:
    ```bash
    * * * * * cd /home/USER/path/to/app && php artisan queue:work --stop-when-empty >> /dev/null 2>&1
-   ```
-   Scheduler (if used):
-   ```bash
    * * * * * cd /home/USER/path/to/app && php artisan schedule:run >> /dev/null 2>&1
    ```
+   The scheduler runs insurance maturity checks and **daily backups** at 02:00 (`backup:run-logged` → `storage/app/backups/`).
 
-8. **SSL**  
+8. **Backups (Phase 4.8)**  
+   - Package: `spatie/laravel-backup`  
+   - Disk: `backups` → `storage/app/backups/` (local; SiteBunker-friendly)  
+   - Includes: DB dump + `storage/app/uploads` + `.env` (not full `vendor`/codebase)  
+   - UI: **/backups** — list, trigger, download  
+   - Direct cron alternative (no Laravel scheduler):
+     ```bash
+     0 2 * * * cd /home/USER/path/to/app && php artisan backup:run >> /dev/null 2>&1
+     ```
+     Prefer `backup:run-logged` if you want rows in the `backups` table.
+
+9. **SSL**  
    Enable free SSL in cPanel; set `APP_URL` to `https://…`.
 
 ## Go-live checklist
@@ -102,7 +111,8 @@ Laravel 11 uses `CACHE_STORE` (not the older `CACHE_DRIVER`). Migrations must in
 - [ ] `APP_DEBUG=false`
 - [ ] `CACHE_STORE` / `QUEUE_CONNECTION` / `SESSION_DRIVER` = `database`
 - [ ] Cron for `queue:work --stop-when-empty`
-- [ ] `storage/` and `bootstrap/cache/` writable
+- [ ] Cron for `schedule:run` (daily backup + maturity)
+- [ ] `storage/` and `bootstrap/cache/` writable (`storage/app/backups/` writable)
 - [ ] Dev seed password rotated or admin recreated
 
 ## Related

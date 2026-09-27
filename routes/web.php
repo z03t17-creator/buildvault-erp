@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
+use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
@@ -69,6 +70,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('exports.worker');
     Route::get('/exports/payouts/{payout}/voucher', [ExportController::class, 'payoutVoucher'])
         ->name('exports.voucher');
+
+    Route::get('/backups', [BackupController::class, 'index'])->name('backups.index');
+    Route::post('/backups', [BackupController::class, 'store'])->name('backups.store');
+    Route::get('/backups/{backup}/download', [BackupController::class, 'download'])
+        ->name('backups.download');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();
