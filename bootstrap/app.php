@@ -15,7 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\SetAppLocale::class,
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\SecurityHeaders::class,
         ]);
+
+        // Behind LiteSpeed/cPanel SSL termination — trust proxy headers for HTTPS.
+        $middleware->trustProxies(at: '*');
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //
