@@ -139,8 +139,9 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                         </div>
                     </div>
 
-                    <div className="overflow-x-auto border border-slate-200/80 bg-white/90 shadow-sm dark:border-slate-700 dark:bg-slate-900/80">
-                        <table className="min-w-full border-collapse text-sm">
+                    <div className="bv-surface shadow-sm">
+                        <div className="bv-table-wrap">
+                        <table className="bv-table min-w-[44rem] border-collapse">
                             <thead className="sticky top-0 z-10 bg-slate-100/95 text-start text-xs uppercase tracking-wider text-slate-500 backdrop-blur dark:bg-slate-950/95 dark:text-slate-400">
                                 <tr>
                                     <th className="border-b border-slate-200 px-3 py-3 dark:border-slate-800">
@@ -178,7 +179,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                                 index % 2 === 0
                                                     ? 'bg-white/40 dark:bg-slate-900/40'
                                                     : 'bg-slate-50/50 dark:bg-slate-950/30'
-                                            } ${checked ? 'bg-emerald-50/70 dark:bg-emerald-950/30' : ''}`}
+                                            } ${checked ? '!bg-emerald-50/80 dark:!bg-emerald-950/35' : ''}`}
                                         >
                                             <td className="px-3 py-2.5">
                                                 <input
@@ -218,6 +219,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 })}
                             </tbody>
                         </table>
+                        </div>
                     </div>
                 </div>
             </div>

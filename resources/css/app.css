@@ -10,6 +10,10 @@
         --bv-muted: 100 116 139; /* slate-500 */
         --bv-accent: 16 185 129; /* emerald-500 */
         --bv-accent-strong: 5 150 105; /* emerald-600 */
+        --bv-crimson: 225 29 72; /* rose-600 */
+        --bv-amber: 217 119 6; /* amber-600 */
+        --bv-motion: 180ms;
+        --bv-motion-slow: 280ms;
     }
 
     .dark {
@@ -19,14 +23,29 @@
         --bv-muted: 148 163 184; /* slate-400 */
         --bv-accent: 52 211 153; /* emerald-400 */
         --bv-accent-strong: 16 185 129; /* emerald-500 */
+        --bv-crimson: 251 113 133; /* rose-400 */
+        --bv-amber: 251 191 36; /* amber-400 */
     }
 
     html {
         @apply antialiased;
+        color-scheme: light;
+        transition: background-color var(--bv-motion-slow) ease, color var(--bv-motion-slow) ease;
+    }
+
+    html.dark {
+        color-scheme: dark;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        :root {
+            --bv-motion: 0ms;
+            --bv-motion-slow: 0ms;
+        }
     }
 
     body {
-        @apply bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+        @apply bg-slate-50 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-50;
         background-image:
             radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.12), transparent),
             radial-gradient(ellipse 60% 40% at 100% 0%, rgb(148 163 184 / 0.15), transparent);
@@ -36,5 +55,73 @@
         background-image:
             radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.18), transparent),
             radial-gradient(ellipse 50% 30% at 0% 100%, rgb(51 65 85 / 0.5), transparent);
+    }
+}
+
+@layer components {
+    .bv-surface {
+        @apply border border-slate-200/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/75;
+        transition:
+            background-color var(--bv-motion) ease,
+            border-color var(--bv-motion) ease,
+            box-shadow var(--bv-motion) ease;
+    }
+
+    .bv-badge {
+        transition:
+            background-color var(--bv-motion) ease,
+            color var(--bv-motion) ease,
+            box-shadow var(--bv-motion) ease,
+            transform var(--bv-motion) ease;
+    }
+
+    .bv-table-wrap {
+        @apply -mx-4 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:px-0;
+    }
+
+    .bv-table {
+        @apply min-w-full text-sm;
+    }
+
+    .bv-table tbody tr {
+        @apply transition-colors;
+        transition-duration: var(--bv-motion);
+    }
+
+    .bv-table tbody tr:hover {
+        @apply bg-emerald-50/50 dark:bg-emerald-950/25;
+    }
+
+    .bv-row-enter {
+        animation: bv-fade-up var(--bv-motion-slow) ease both;
+    }
+
+    .bv-card {
+        @apply bv-surface;
+        transition:
+            transform var(--bv-motion) ease,
+            border-color var(--bv-motion) ease,
+            background-color var(--bv-motion) ease;
+    }
+
+    .bv-card:hover {
+        @apply border-emerald-300/60 dark:border-emerald-700/50;
+    }
+
+    .bv-nav-panel {
+        transition:
+            max-height var(--bv-motion-slow) ease,
+            opacity var(--bv-motion) ease;
+    }
+}
+
+@keyframes bv-fade-up {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
     }
 }

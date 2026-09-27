@@ -39,8 +39,8 @@ export default function BrandMark({
                     <p
                         className={
                             isHero
-                                ? 'font-display text-xs font-semibold uppercase tracking-[0.35em] text-slate-500 dark:text-slate-400'
-                                : 'font-display text-[0.65rem] font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400'
+                                ? 'font-display text-2xl font-semibold tracking-[0.2em] text-slate-900 dark:text-white sm:text-3xl'
+                                : 'font-display text-base font-semibold tracking-[0.18em] text-slate-900 transition group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400 sm:text-lg'
                         }
                     >
                         ZHAKO
@@ -48,14 +48,15 @@ export default function BrandMark({
                     <h1
                         className={
                             isHero
-                                ? 'font-display text-3xl font-semibold tracking-tight text-slate-900 dark:text-white sm:text-4xl'
-                                : 'font-display truncate text-lg font-semibold tracking-tight text-slate-900 dark:text-white sm:text-xl'
+                                ? 'font-sans text-lg font-semibold tracking-tight text-slate-600 dark:text-slate-300 sm:text-xl'
+                                : 'truncate font-sans text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400 sm:text-sm'
                         }
                     >
                         BuildVault ERP
                     </h1>
                 </div>
             )}
+
         </div>
     );
 

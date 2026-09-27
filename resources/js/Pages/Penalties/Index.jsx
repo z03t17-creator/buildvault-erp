@@ -23,8 +23,10 @@ export default function Index({ penalties }) {
         >
             <Head title="Penalties" />
             <div className="py-8">
-                <div className="mx-auto max-w-7xl overflow-x-auto px-4 sm:px-6 lg:px-8">
-                    <table className="min-w-full border border-slate-200/80 bg-white/80 text-sm dark:border-slate-700 dark:bg-slate-900/70">
+                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                    <div className="bv-surface">
+                        <div className="bv-table-wrap">
+                    <table className="bv-table min-w-[36rem]">
                         <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
                             <tr>
                                 <th className="px-3 py-2 text-start">Worker</th>
@@ -43,7 +45,7 @@ export default function Index({ penalties }) {
                                         </Link>
                                     </td>
                                     <td className="px-3 py-2 max-w-xs truncate">{p.reason}</td>
-                                    <td className="px-3 py-2 tabular-nums">{p.amount_usd}</td>
+                                    <td className="px-3 py-2 tabular-nums text-rose-700 dark:text-rose-300">{p.amount_usd}</td>
                                     <td className="px-3 py-2">{p.payout_id ? `#${p.payout_id}` : '—'}</td>
                                     <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                                 </tr>
@@ -55,6 +57,8 @@ export default function Index({ penalties }) {
                             )}
                         </tbody>
                     </table>
+                        </div>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>

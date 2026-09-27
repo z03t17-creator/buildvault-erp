@@ -38,8 +38,9 @@ export default function Index({ workers }) {
                             }
                         />
                     ) : (
-                        <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                            <table className="min-w-full text-sm">
+                        <div className="bv-surface">
+                            <div className="bv-table-wrap">
+                            <table className="bv-table min-w-[36rem]">
                                 <thead className="border-b border-slate-200 bg-slate-50/80 text-start text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
                                     <tr>
                                         <th className="px-4 py-3 font-semibold">{t('name')}</th>
@@ -50,7 +51,7 @@ export default function Index({ workers }) {
                                 </thead>
                                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                     {list.map((worker) => (
-                                        <tr key={worker.id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/15">
+                                        <tr key={worker.id}>
                                             <td className="px-4 py-3">
                                                 <Link
                                                     href={route('workers.show', worker.id)}
@@ -83,6 +84,7 @@ export default function Index({ workers }) {
                                     ))}
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     )}
                 </div>

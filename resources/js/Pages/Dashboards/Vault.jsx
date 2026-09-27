@@ -1,14 +1,9 @@
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router } from '@inertiajs/react';
-
-const HEALTH_STYLES = {
-    healthy: 'bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:ring-emerald-800',
-    warning: 'bg-amber-100 text-amber-900 ring-amber-200 dark:bg-amber-900/40 dark:text-amber-200 dark:ring-amber-800',
-    critical: 'bg-rose-100 text-rose-800 ring-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:ring-rose-800',
-};
 
 function formatUsd(n) {
     return new Intl.NumberFormat('en-US', {
@@ -133,15 +128,15 @@ function CashFlowChart({ series }) {
 }
 
 function HealthBadge({ item }) {
-    const style = HEALTH_STYLES[item.status] || HEALTH_STYLES.warning;
-
     return (
-        <div className={`rounded-sm ring-1 px-4 py-3 ${style}`}>
+        <div className="bv-card rounded-sm px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-                <p className="font-display text-sm font-semibold tracking-wide">{item.label}</p>
-                <span className="text-[10px] font-bold uppercase tracking-wider">{item.status}</span>
+                <p className="font-display text-sm font-semibold tracking-wide text-slate-900 dark:text-white">
+                    {item.label}
+                </p>
+                <StatusBadge status={item.status} />
             </div>
-            <p className="mt-1 text-xs opacity-90">{item.detail}</p>
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{item.detail}</p>
         </div>
     );
 }
@@ -194,22 +189,22 @@ export default function Vault({
 
                     {/* Dual balances */}
                     <section className="grid gap-4 sm:grid-cols-2">
-                        <div className="relative overflow-hidden border border-slate-200/80 bg-gradient-to-br from-white via-emerald-50/40 to-slate-50 p-6 dark:border-slate-700 dark:from-slate-900 dark:via-emerald-950/30 dark:to-slate-950">
+                        <div className="bv-card relative overflow-hidden bg-gradient-to-br from-white via-emerald-50/40 to-slate-50 p-5 sm:p-6 dark:from-slate-900 dark:via-emerald-950/30 dark:to-slate-950">
                             <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                                 Balance USD
                             </p>
-                            <p className="mt-3 font-display text-4xl font-semibold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                            <p className="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white sm:text-4xl">
                                 {formatUsd(vault?.balance_usd)}
                             </p>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 Available {formatUsd(liq.available_usd)} · Pending {formatUsd(liq.pending_payouts_usd)}
                             </p>
                         </div>
-                        <div className="relative overflow-hidden border border-slate-200/80 bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-6 dark:border-slate-700 dark:from-slate-900 dark:via-slate-950 dark:to-emerald-950/20">
+                        <div className="bv-card relative overflow-hidden bg-gradient-to-br from-white via-slate-50 to-emerald-50/30 p-5 sm:p-6 dark:from-slate-900 dark:via-slate-950 dark:to-emerald-950/20">
                             <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                                 Balance IQD
                             </p>
-                            <p className="mt-3 font-display text-4xl font-semibold tracking-tight text-slate-900 dark:text-white tabular-nums">
+                            <p className="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white sm:text-4xl">
                                 {formatIqd(vault?.balance_iqd)}
                             </p>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
@@ -230,7 +225,7 @@ export default function Vault({
                                 ))}
                             </div>
                         </div>
-                        <div className="border border-slate-200/80 bg-white/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
+                        <div className="bv-card p-5">
                             <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
                                 Live FX
                             </p>
@@ -262,7 +257,7 @@ export default function Vault({
                     </section>
 
                     {/* Insurance */}
-                    <section className="border border-slate-200/80 bg-white/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
+                    <section className="bv-surface p-5">
                         <div className="flex flex-wrap items-end justify-between gap-3">
                             <div>
                                 <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
@@ -302,7 +297,7 @@ export default function Vault({
                             ].map(([label, value]) => (
                                 <div
                                     key={label}
-                                    className="border border-slate-200/80 bg-slate-50/80 px-3 py-3 dark:border-slate-700 dark:bg-slate-900/50"
+                                    className="bv-card bg-slate-50/80 px-3 py-3 dark:bg-slate-900/50"
                                 >
                                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
                                     <p className="mt-1 font-display text-xl font-semibold tabular-nums text-slate-900 dark:text-white">
@@ -314,7 +309,7 @@ export default function Vault({
                     </section>
 
                     {/* Cash flow */}
-                    <section className="border border-slate-200/80 bg-white/80 p-5 dark:border-slate-700 dark:bg-slate-900/70">
+                    <section className="bv-surface p-5">
                         <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
                             Cash flow · 30 days
                         </h3>

@@ -60,7 +60,7 @@ export default function Payroll({
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <section className="flex flex-col gap-4 border border-slate-200/80 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+                    <section className="bv-surface flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
                         <div className="flex flex-wrap gap-4">
                             <div>
                                 <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
@@ -107,8 +107,9 @@ export default function Payroll({
                         <SummaryCard label="Net payroll" value={formatUsd(sum.net_pay_usd)} accent />
                     </section>
 
-                    <section className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                        <table className="min-w-full text-sm">
+                    <section className="bv-surface">
+                        <div className="bv-table-wrap">
+                        <table className="bv-table min-w-[48rem]">
                             <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
                                 <tr>
                                     <th className="px-3 py-2 text-start">Worker</th>
@@ -123,7 +124,7 @@ export default function Payroll({
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                                 {list.map((row) => (
-                                    <tr key={row.worker_id} className="hover:bg-emerald-50/40 dark:hover:bg-emerald-950/20">
+                                    <tr key={row.worker_id}>
                                         <td className="px-3 py-2">
                                             <Link
                                                 href={route('workers.show', row.worker_id)}
@@ -182,6 +183,7 @@ export default function Payroll({
                                 </tfoot>
                             )}
                         </table>
+                        </div>
                     </section>
                 </div>
             </div>
@@ -191,7 +193,7 @@ export default function Payroll({
 
 function SummaryCard({ label, value, accent }) {
     return (
-        <div className="border border-slate-200/80 bg-gradient-to-br from-white to-slate-50/80 px-4 py-3 dark:border-slate-700 dark:from-slate-900 dark:to-slate-950">
+        <div className="bv-card bg-gradient-to-br from-white to-slate-50/80 px-4 py-3 dark:from-slate-900 dark:to-slate-950">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
             <p
                 className={`mt-1 font-display text-2xl font-semibold tabular-nums ${

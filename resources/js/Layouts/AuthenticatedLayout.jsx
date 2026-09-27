@@ -25,7 +25,7 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="flex min-w-0 items-center gap-6">
                             <BrandMark size="header" href={route('dashboard')} />
 
-                            <div className="hidden space-x-5 sm:-my-px sm:ms-2 sm:flex">
+                            <div className="hidden space-x-4 lg:-my-px lg:ms-2 lg:flex xl:space-x-5">
                                 <NavLink
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
@@ -88,7 +88,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </div>
 
-                        <div className="hidden items-center gap-3 sm:flex">
+                        <div className="hidden items-center gap-3 lg:flex">
                             <LocaleSwitcher />
                             <ThemeToggle />
                             <div className="relative ms-1">
@@ -133,7 +133,7 @@ export default function AuthenticatedLayout({ header, children }) {
                             </div>
                         </div>
 
-                        <div className="-me-2 flex items-center gap-2 sm:hidden">
+                        <div className="-me-2 flex items-center gap-2 lg:hidden">
                             <ThemeToggle />
                             <button
                                 onClick={() =>
@@ -141,7 +141,9 @@ export default function AuthenticatedLayout({ header, children }) {
                                         (previousState) => !previousState,
                                     )
                                 }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-slate-400 transition duration-150 ease-in-out hover:bg-slate-100 hover:text-slate-600 focus:outline-none dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                className="inline-flex items-center justify-center rounded-md p-2 text-slate-400 transition duration-200 ease-in-out hover:bg-slate-100 hover:text-slate-600 focus:outline-none dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                                aria-expanded={showingNavigationDropdown}
+                                aria-label="Toggle navigation"
                             >
                                 <svg
                                     className="h-6 w-6"
@@ -179,8 +181,10 @@ export default function AuthenticatedLayout({ header, children }) {
 
                 <div
                     className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
+                        (showingNavigationDropdown
+                            ? 'max-h-[40rem] opacity-100'
+                            : 'max-h-0 opacity-0 pointer-events-none') +
+                        ' bv-nav-panel overflow-hidden border-t border-slate-200/80 lg:hidden dark:border-slate-800'
                     }
                 >
                     <div className="space-y-1 pb-3 pt-2">
@@ -271,14 +275,14 @@ export default function AuthenticatedLayout({ header, children }) {
             </nav>
 
             {header && (
-                <header className="border-b border-slate-200/60 bg-white/60 dark:border-slate-800 dark:bg-slate-900/40">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
+                <header className="border-b border-slate-200/60 bg-white/60 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/40">
+                    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
                         {header}
                     </div>
                 </header>
             )}
 
-            <main>{children}</main>
+            <main className="bv-row-enter">{children}</main>
         </div>
     );
 }

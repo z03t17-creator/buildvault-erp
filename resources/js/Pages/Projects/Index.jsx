@@ -39,12 +39,12 @@ export default function Index({ projects }) {
                             }
                         />
                     ) : (
-                        <ul className="divide-y divide-slate-200 border border-slate-200/80 bg-white/80 dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900/70">
+                        <ul className="bv-surface divide-y divide-slate-200 dark:divide-slate-800">
                             {list.map((project) => (
                                 <li key={project.id}>
                                     <Link
                                         href={route('projects.show', project.id)}
-                                        className="flex flex-col gap-3 px-5 py-4 transition hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 sm:flex-row sm:items-center sm:justify-between"
+                                        className="flex flex-col gap-3 px-5 py-4 transition duration-200 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 sm:flex-row sm:items-center sm:justify-between"
                                     >
                                         <div className="min-w-0">
                                             <div className="flex flex-wrap items-center gap-2">
