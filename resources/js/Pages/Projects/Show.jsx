@@ -1,25 +1,102 @@
-import PageStub from "@/Components/PageStub";
-import { Link } from "@inertiajs/react";
+import EmptyState from '@/Components/EmptyState';
+import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import StatusBadge from '@/Components/StatusBadge';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useTranslations from '@/hooks/useTranslations';
+import { Head, Link } from '@inertiajs/react';
+
+function Meta({ label, value }) {
+    return (
+        <div>
+            <dt className="text-xs uppercase tracking-wider text-slate-400">{label}</dt>
+            <dd className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{value ?? '—'}</dd>
+        </div>
+    );
+}
 
 export default function Show({ project }) {
-  return (
-    <PageStub
-      title={project.name}
-      links={[
-        { href: route("projects.index"), label: "Projects" },
-        { href: route("projects.edit", project.id), label: "Edit" },
-        { href: route("projects.towers.index", project.id), label: "Towers" },
-        { href: route("projects.towers.create", project.id), label: "Add tower" },
-      ]}
-    >
-      <p className="mb-2">{project.description || "No description."}</p>
-      <p className="text-slate-500">Status: {project.status} · Location: {project.location || "—"}</p>
-      <h3 className="mt-4 font-semibold">Towers</h3>
-      <ul className="mt-2 space-y-1">
-        {(project.towers || []).map((t) => (
-          <li key={t.id}><Link href={route("towers.show", t.id)} className="underline text-emerald-700 dark:text-emerald-400">{t.name}</Link></li>
-        ))}
-      </ul>
-    </PageStub>
-  );
+    const t = useTranslations();
+    const towers = project.towers || [];
+    const workers = project.workers || [];
+
+    return (
+        <AuthenticatedLayout
+            header={
+                <PageHeader
+                    title={project.name}
+                    subtitle={project.location || t('project')}
+                    actions={
+                        <>
+                            <Link href={route('projects.index')}>
+                                <SecondaryButton>{t('back')}</SecondaryButton>
+                            </Link>
+                            <Link href={route('projects.edit', project.id)}>
+                                <SecondaryButton>{t('edit')}</SecondaryButton>
+                            </Link>
+                            <Link href={route('projects.towers.create', project.id)}>
+                                <PrimaryButton type="button">{t('create_tower')}</PrimaryButton>
+                            </Link>
+                        </>
+                    }
+                />
+            }
+        >
+            <Head title={project.name} />
+
+            <div className="py-8">
+                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    <section className="border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                            <StatusBadge status={project.status} />
+                        </div>
+                        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                            {project.description || '—'}
+                        </p>
+                        <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+                            <Meta label={t('budget_usd')} value={project.total_budget_usd} />
+                            <Meta label={t('towers_count')} value={towers.length} />
+                            <Meta label={t('workers_count')} value={workers.length} />
+                        </dl>
+                    </section>
+
+                    <section>
+                        <div className="mb-3 flex items-center justify-between">
+                            <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
+                                {t('towers')}
+                            </h3>
+                            <Link
+                                href={route('projects.towers.index', project.id)}
+                                className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
+                            >
+                                {t('towers')}
+                            </Link>
+                        </div>
+                        {towers.length === 0 ? (
+                            <EmptyState title={t('no_towers')} />
+                        ) : (
+                            <ul className="divide-y divide-slate-200 border border-slate-200/80 bg-white/80 dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900/70">
+                                {towers.map((tower) => (
+                                    <li key={tower.id}>
+                                        <Link
+                                            href={route('towers.show', tower.id)}
+                                            className="flex items-center justify-between px-5 py-3 transition hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20"
+                                        >
+                                            <span className="font-medium text-slate-900 dark:text-white">
+                                                {tower.name}
+                                            </span>
+                                            <span className="text-sm text-slate-500">
+                                                {(tower.floors || []).length} {t('floors_count').toLowerCase()}
+                                            </span>
+                                        </Link>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                    </section>
+                </div>
+            </div>
+        </AuthenticatedLayout>
+    );
 }

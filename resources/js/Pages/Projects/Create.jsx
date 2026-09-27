@@ -1,24 +1,84 @@
-import PageStub from "@/Components/PageStub";
-import { useForm } from "@inertiajs/react";
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PageHeader from '@/Components/PageHeader';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useTranslations from '@/hooks/useTranslations';
+import { Head, Link, useForm } from '@inertiajs/react';
 
 export default function Create({ statuses }) {
-  const { data, setData, post, processing, errors } = useForm({ name: "", status: "planning" });
-  return (
-    <PageStub title="Create project" links={[{ href: route("projects.index"), label: "Back" }]}>
-      <form onSubmit={(e) => { e.preventDefault(); post(route("projects.store")); }} className="space-y-3">
-        <div>
-          <label className="block text-sm">Name</label>
-          <input className="mt-1 w-full rounded border-slate-300 dark:border-slate-600 dark:bg-slate-950" value={data.name} onChange={(e) => setData("name", e.target.value)} />
-          {errors.name && <p className="text-red-600 text-xs">{errors.name}</p>}
-        </div>
-        <div>
-          <label className="block text-sm">Status</label>
-          <select className="mt-1 w-full rounded border-slate-300 dark:border-slate-600 dark:bg-slate-950" value={data.status} onChange={(e) => setData("status", e.target.value)}>
-            {(statuses || []).map((s) => <option key={s} value={s}>{s}</option>)}
-          </select>
-        </div>
-        <button disabled={processing} className="rounded bg-emerald-600 px-3 py-2 text-white text-sm">Save</button>
-      </form>
-    </PageStub>
-  );
+    const t = useTranslations();
+    const { data, setData, post, processing, errors } = useForm({
+        name: '',
+        description: '',
+        location: '',
+        status: 'planning',
+        total_budget_usd: '',
+    });
+
+    return (
+        <AuthenticatedLayout
+            header={
+                <PageHeader
+                    title={t('create_project')}
+                    actions={
+                        <Link href={route('projects.index')}>
+                            <SecondaryButton>{t('back')}</SecondaryButton>
+                        </Link>
+                    }
+                />
+            }
+        >
+            <Head title={t('create_project')} />
+            <div className="py-8">
+                <form
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        post(route('projects.store'));
+                    }}
+                    className="mx-auto max-w-2xl space-y-5 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                >
+                    <div>
+                        <InputLabel htmlFor="name" value={t('name')} />
+                        <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
+                        <InputError message={errors.name} className="mt-1" />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="location" value={t('location')} />
+                        <TextInput id="location" className="mt-1 block w-full" value={data.location} onChange={(e) => setData('location', e.target.value)} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="status" value={t('status')} />
+                        <select
+                            id="status"
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
+                            value={data.status}
+                            onChange={(e) => setData('status', e.target.value)}
+                        >
+                            {(statuses || []).map((s) => (
+                                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                            ))}
+                        </select>
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="description" value={t('description')} />
+                        <textarea
+                            id="description"
+                            className="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100"
+                            rows={3}
+                            value={data.description}
+                            onChange={(e) => setData('description', e.target.value)}
+                        />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="budget" value={t('budget_usd')} />
+                        <TextInput id="budget" type="number" step="0.01" className="mt-1 block w-full" value={data.total_budget_usd} onChange={(e) => setData('total_budget_usd', e.target.value)} />
+                    </div>
+                    <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
+                </form>
+            </div>
+        </AuthenticatedLayout>
+    );
 }

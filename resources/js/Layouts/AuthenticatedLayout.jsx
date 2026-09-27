@@ -23,12 +23,30 @@ export default function AuthenticatedLayout({ header, children }) {
                         <div className="flex min-w-0 items-center gap-6">
                             <BrandMark size="header" href={route('dashboard')} />
 
-                            <div className="hidden space-x-6 sm:-my-px sm:ms-2 sm:flex">
+                            <div className="hidden space-x-5 sm:-my-px sm:ms-2 sm:flex">
                                 <NavLink
                                     href={route('dashboard')}
                                     active={route().current('dashboard')}
                                 >
                                     {t('dashboard')}
+                                </NavLink>
+                                <NavLink
+                                    href={route('projects.index')}
+                                    active={route().current('projects.*') || route().current('towers.*') || route().current('floors.*')}
+                                >
+                                    {t('projects')}
+                                </NavLink>
+                                <NavLink
+                                    href={route('workers.index')}
+                                    active={route().current('workers.*')}
+                                >
+                                    {t('workers')}
+                                </NavLink>
+                                <NavLink
+                                    href={route('attendance.index')}
+                                    active={route().current('attendance.*')}
+                                >
+                                    {t('attendance')}
                                 </NavLink>
                             </div>
                         </div>
@@ -134,6 +152,24 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('dashboard')}
                         >
                             {t('dashboard')}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('projects.index')}
+                            active={route().current('projects.*') || route().current('towers.*') || route().current('floors.*')}
+                        >
+                            {t('projects')}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('workers.index')}
+                            active={route().current('workers.*')}
+                        >
+                            {t('workers')}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('attendance.index')}
+                            active={route().current('attendance.*')}
+                        >
+                            {t('attendance')}
                         </ResponsiveNavLink>
                     </div>
 
