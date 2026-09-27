@@ -57,6 +57,22 @@ export default function Show({ payout }) {
                             </ul>
                         </div>
                     )}
+                    {(payout.penalties || []).length > 0 && (
+                        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
+                            <h3 className="font-semibold text-sm">Linked penalties</h3>
+                            <ul className="mt-2 space-y-1 text-sm">
+                                {payout.penalties.map((pen) => (
+                                    <li key={pen.id}>
+                                        <Link href={route('penalties.show', pen.id)} className="text-emerald-700 underline dark:text-emerald-400">
+                                            #{pen.id}
+                                        </Link>
+                                        : {pen.amount_usd} · {pen.status}
+                                        {pen.deducted_from_payout ? ' · deducted' : ''}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
                 </div>
             </div>
         </AuthenticatedLayout>

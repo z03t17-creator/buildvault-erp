@@ -20,6 +20,8 @@ const STYLES = {
     holding: 'bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200',
     matured: 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
     released: 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300',
+    applied: 'bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-300',
+    waived: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
 };
 
 function labelize(value) {

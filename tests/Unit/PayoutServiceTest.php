@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Models\Payout;
+use App\Models\Penalty;
 use App\Models\Project;
 use App\Models\ProjectAllocation;
 use App\Models\RetentionHold;
@@ -12,6 +13,7 @@ use App\Models\Worker;
 use App\Services\ExchangeRateService;
 use App\Services\LiquidityService;
 use App\Services\PayoutService;
+use App\Services\PenaltyService;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
@@ -66,6 +68,7 @@ class PayoutServiceTest extends TestCase
         $this->service = new PayoutService(
             new LiquidityService,
             new ExchangeRateService,
+            new PenaltyService,
         );
     }
 
@@ -174,5 +177,37 @@ class PayoutServiceTest extends TestCase
 
         $this->expectException(InvalidArgumentException::class);
         $this->service->approve($payout->fresh());
+    }
+
+    public function test_reconcile_applies_linked_penalty_deduction(): void
+    {
+        $payout = $this->service->create([
+            'project_id' => $this->project->id,
+            'worker_id' => $this->worker->id,
+            'category' => Payout::CATEGORY_PAYROLL,
+            'amount_usd' => 1000,
+        ]);
+
+        Penalty::query()->create([
+            'worker_id' => $this->worker->id,
+            'project_id' => $this->project->id,
+            'reason' => 'Tool loss',
+            'amount_usd' => 40,
+            'payout_id' => $payout->id,
+            'status' => Penalty::STATUS_PENDING,
+        ]);
+
+        $this->service->approve($payout);
+        $this->service->reconcile($payout->fresh());
+
+        $this->assertDatabaseHas('penalties', [
+            'payout_id' => $payout->id,
+            'status' => Penalty::STATUS_APPLIED,
+            'deducted_from_payout' => true,
+            'amount_usd' => 40,
+        ]);
+
+        $allocation = ProjectAllocation::query()->where('project_id', $this->project->id)->first();
+        $this->assertSame('540.00', (string) $allocation->penalty_pool_usd);
     }
 }

@@ -4,6 +4,7 @@ use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PayoutController;
+use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TowerController;
@@ -51,6 +52,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])->name('payouts.approve');
     Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])->name('payouts.reject');
     Route::post('/payouts/{payout}/reconcile', [PayoutController::class, 'reconcile'])->name('payouts.reconcile');
+
+    Route::get('/penalties', [PenaltyController::class, 'index'])->name('penalties.index');
+    Route::get('/penalties/create', [PenaltyController::class, 'create'])->name('penalties.create');
+    Route::post('/penalties', [PenaltyController::class, 'store'])->name('penalties.store');
+    Route::get('/penalties/{penalty}', [PenaltyController::class, 'show'])->name('penalties.show');
+    Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
+    Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
 });
 
 require __DIR__.'/auth.php';

@@ -54,6 +54,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     Payouts
                                 </NavLink>
+                                <NavLink
+                                    href={route('penalties.index')}
+                                    active={route().current('penalties.*')}
+                                >
+                                    Penalties
+                                </NavLink>
                             </div>
                         </div>
 
@@ -182,6 +188,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('payouts.*')}
                         >
                             Payouts
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('penalties.index')}
+                            active={route().current('penalties.*')}
+                        >
+                            Penalties
                         </ResponsiveNavLink>
                     </div>
 

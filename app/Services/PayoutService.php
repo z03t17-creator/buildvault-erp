@@ -17,6 +17,7 @@ class PayoutService
     public function __construct(
         private readonly LiquidityService $liquidity,
         private readonly ExchangeRateService $exchangeRates,
+        private readonly PenaltyService $penalties,
     ) {}
 
     /**
@@ -177,11 +178,22 @@ class PayoutService
             throw new InvalidArgumentException('Only approved payouts can be reconciled.');
         }
 
-        $payout->status = Payout::STATUS_RECONCILED;
-        $payout->reconciled_at = now();
-        $payout->save();
+        return DB::transaction(function () use ($payout) {
+            $payout = Payout::query()->lockForUpdate()->findOrFail($payout->id);
 
-        return $payout->fresh();
+            if ($payout->status !== Payout::STATUS_APPROVED) {
+                throw new InvalidArgumentException('Only approved payouts can be reconciled.');
+            }
+
+            // Optional: apply worker penalties linked to this payout.
+            $this->penalties->applyDeductionsForPayout($payout);
+
+            $payout->status = Payout::STATUS_RECONCILED;
+            $payout->reconciled_at = now();
+            $payout->save();
+
+            return $payout->fresh(['penalties', 'retentionHolds']);
+        });
     }
 
     /**

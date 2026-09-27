@@ -60,7 +60,7 @@ class PayoutController extends Controller
 
     public function show(Payout $payout): Response
     {
-        $payout->load(['project', 'worker', 'floor', 'vault', 'retentionHolds']);
+        $payout->load(['project', 'worker', 'floor', 'vault', 'retentionHolds', 'penalties']);
 
         return Inertia::render('Payouts/Show', [
             'payout' => $payout,
