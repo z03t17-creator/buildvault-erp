@@ -1,90 +1,111 @@
 # Deployment — SiteBunker Enterprise
 
-BuildVault ERP targets [SiteBunker Enterprise](https://sitebunker.net/web-ssd-hosting/) shared hosting: cPanel, LiteSpeed, SSH, free SSL, MariaDB, PHP 8.3, OPcache.
+BuildVault ERP deploys to [SiteBunker Enterprise](https://sitebunker.net/web-ssd-hosting/): cPanel, LiteSpeed, SSH, free SSL, MariaDB, PHP 8.3, OPcache (~40GB NVMe, 3 vCPU, 3GB RAM).
 
-This document is an overview for Phase 1.1. Host-specific `.env` defaults for cache/queue/session are refined in a later phase; use the settings below when preparing production.
+## Critical: no Node on the host
 
-## Important: no Node on the host
+**SiteBunker NodeJS Selector is unavailable.** Do not run `npm`, Vite, or Inertia SSR on the server.
 
-**SiteBunker NodeJS Selector is unavailable** on this plan. You cannot run `npm install`, `npm run build`, or Inertia SSR on the server.
-
-Always:
-
-1. Build frontend assets on your workstation or CI (`npm ci && npm run build`).
-2. Deploy the resulting `public/build` directory (manifest + hashed assets) with the PHP application.
-3. Do not rely on Vite HMR or `npm run dev` in production.
+| Where | What |
+|-------|------|
+| Local / CI | `npm ci && npm run build` → produces `public/build` |
+| Host | PHP 8.3 + Composer only; ship prebuilt `public/build` |
 
 ## Runtime requirements
 
 | Item | Value |
 |------|--------|
-| PHP | **8.3** (select in cPanel MultiPHP) |
-| Database | **MariaDB** (create via cPanel → MySQL Databases) |
-| Web root | Point the domain/subdomain document root to the app’s `public/` directory |
-| Composer | Run via SSH: `composer install --no-dev --optimize-autoloader` |
-| Node | **Not used on the host** — build off-server |
+| PHP | **8.3** (cPanel MultiPHP) |
+| Database | **MariaDB** (cPanel → MySQL Databases) |
+| Document root | App `public/` directory |
+| Composer (SSH) | `composer install --no-dev --optimize-autoloader` |
+| Node | **Not on host** |
 
-## Recommended `.env` drivers (SiteBunker)
+## Production `.env` drivers
 
-Use database-backed drivers so Redis/Memcached are not required:
+Copy from `.env.example`. Keep these for SiteBunker (no Redis required):
 
 ```env
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://your-domain.example
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=your_cpanel_db
+DB_USERNAME=your_cpanel_user
+DB_PASSWORD=your_db_password
+
 CACHE_STORE=database
 QUEUE_CONNECTION=database
 SESSION_DRIVER=database
 ```
 
-Ensure the Laravel cache, jobs, and sessions migrations have been run so the required tables exist.
+Laravel 11 uses `CACHE_STORE` (not the older `CACHE_DRIVER`). Migrations must include the framework `cache`, `jobs`, and `sessions` tables (shipped in this app).
 
-## Deploy outline (cPanel / SSH)
+## Deploy steps (cPanel / SSH)
 
-1. **Build locally (or in CI)**  
-   `composer install --no-dev` (optional locally) + `npm ci && npm run build`. Keep `public/build` for upload.
+1. **Build assets off-server**  
+   ```bash
+   npm ci && npm run build
+   ```
+   Keep `public/build` (manifest + hashed assets) in the release you upload.
 
-2. **Upload application**  
-   Sync the project to the hosting account (Git over SSH, rsync, or cPanel File Manager). Exclude `node_modules`, local `.env`, and development-only files. Include `vendor` (from `composer install --no-dev` on SSH) or run Composer on the server after upload.
+2. **Upload / pull code**  
+   Git over SSH, rsync, or File Manager. Exclude `node_modules` and local `.env`. Prefer running Composer **on the host**:
+   ```bash
+   cd /home/USER/path/to/app
+   composer install --no-dev --optimize-autoloader
+   ```
 
 3. **Document root**  
-   Set the site’s document root to `.../public` so `index.php` is the front controller.
+   Point the domain/subdomain to `.../public`.
 
-4. **Production `.env`**  
-   Copy `.env.example`, set `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL`, MariaDB credentials, and the database cache/queue/session drivers above. Run `php artisan key:generate` once if no key exists.
+4. **Configure `.env`**  
+   As above; `php artisan key:generate` once if needed.
 
-5. **Migrate**  
-   `php artisan migrate --force`
+5. **Migrate + seed (first deploy)**  
+   ```bash
+   php artisan migrate --force
+   php artisan db:seed --force   # roles, Zhako vault, optional admin — review before production
+   ```
+   Change or remove the seeded `admin@zhako.test` user before go-live.
 
 6. **Optimize**  
-   `php artisan config:cache`  
-   `php artisan route:cache`  
-   `php artisan view:cache`
+   ```bash
+   php artisan config:cache
+   php artisan route:cache
+   php artisan view:cache
+   php artisan storage:link
+   ```
 
-7. **Queue worker via cron**  
-   SiteBunker has no long-running supervisor process. Add a cPanel cron entry that runs frequently, for example:
-
+7. **cPanel cron — queue**  
+   No supervisor/long-running worker. Run often:
    ```bash
    * * * * * cd /home/USER/path/to/app && php artisan queue:work --stop-when-empty >> /dev/null 2>&1
    ```
-
-   Also schedule Laravel’s scheduler if needed:
-
+   Scheduler (if used):
    ```bash
    * * * * * cd /home/USER/path/to/app && php artisan schedule:run >> /dev/null 2>&1
    ```
 
 8. **SSL**  
-   Enable free SSL in cPanel and force HTTPS for `APP_URL`.
+   Enable free SSL in cPanel; set `APP_URL` to `https://…`.
 
-## Checklist before go-live
+## Go-live checklist
 
-- [ ] PHP 8.3 selected for the domain
-- [ ] MariaDB database and user created; `.env` credentials verified
-- [ ] `public/build` present and current (built off-server)
+- [ ] PHP 8.3 for the domain
+- [ ] MariaDB credentials in `.env`
+- [ ] `public/build` present (built off-server)
 - [ ] Document root → `public/`
 - [ ] `APP_DEBUG=false`
-- [ ] Cache / queue / session = `database`
-- [ ] Cron for `queue:work --stop-when-empty` (and `schedule:run` if used)
-- [ ] Storage and bootstrap cache directories writable by the web user
+- [ ] `CACHE_STORE` / `QUEUE_CONNECTION` / `SESSION_DRIVER` = `database`
+- [ ] Cron for `queue:work --stop-when-empty`
+- [ ] `storage/` and `bootstrap/cache/` writable
+- [ ] Dev seed password rotated or admin recreated
 
-## Out of scope for Phase 1.1
+## Related
 
-Vault migrations, Spatie permissions, exchange-rate services, and custom locale middleware ship in later phases. This file documents the hosting model so asset and runtime choices stay compatible from day one.
+- Local setup: [INSTALL.md](INSTALL.md)
+- Defaults in repo: `.env.example`

@@ -1,6 +1,6 @@
 # Local installation — BuildVault ERP
 
-This guide sets up BuildVault ERP for local development (Phase 1.1 scaffold: Laravel 11 + Breeze Inertia React + Tailwind).
+This guide sets up BuildVault ERP for local development (Laravel 11 + Breeze Inertia React + Tailwind). For SiteBunker production, see [DEPLOY.md](DEPLOY.md).
 
 ## Prerequisites
 
@@ -30,6 +30,16 @@ composer install
 cp .env.example .env
 php artisan key:generate
 ```
+
+`.env.example` defaults to SiteBunker-friendly drivers even for local use:
+
+```env
+CACHE_STORE=database
+QUEUE_CONNECTION=database
+SESSION_DRIVER=database
+```
+
+(SQLite works with these drivers after migrate.)
 
 ### 3. Database
 
