@@ -57,11 +57,28 @@ DB_USERNAME=root
 DB_PASSWORD=
 ```
 
-Then create the database and migrate:
+Then create the database, migrate, and seed:
 
 ```bash
 php artisan migrate
+php artisan db:seed
 ```
+
+Or in one step:
+
+```bash
+php artisan migrate:fresh --seed
+```
+
+**Local test Super Admin** (dev only — not a production secret):
+
+| Field | Value |
+|-------|--------|
+| Email | `admin@zhako.test` |
+| Password | `password` |
+| Role | Super Admin |
+
+This also seeds the central **Zhako** vault with zero balances.
 
 ### 4. Frontend dependencies and build
 
@@ -88,7 +105,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Breeze auth routes (registe
 
 ```bash
 php artisan --version    # confirm Laravel boots
-php artisan migrate:fresh
+php artisan migrate:fresh --seed
 php artisan route:list
 npm run build            # production Vite build → public/build
 ```
@@ -97,4 +114,4 @@ npm run build            # production Vite build → public/build
 
 - Do not commit `.env` or `vendor/` / `node_modules/`.
 - `public/build` is produced by `npm run build` and is gitignored in the scaffold; regenerate it after frontend changes.
-- Phase 1.2+ (vault tables, Spatie, locale middleware, etc.) is not part of this install yet.
+- Seeded credentials (`admin@zhako.test` / `password`) are for local development only.
