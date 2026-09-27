@@ -3,9 +3,11 @@
 namespace App\Services;
 
 use App\Models\ExchangeRate;
+use App\Support\AuditActions;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
 use Throwable;
 
 class ExchangeRateService
@@ -19,6 +21,12 @@ class ExchangeRateService
     public const SOURCE_API = 'exchangerate-api';
 
     public const SOURCE_FALLBACK = 'fallback';
+
+    public const SOURCE_MANUAL = 'manual';
+
+    public function __construct(
+        private readonly AuditLogger $audit,
+    ) {}
 
     /**
      * Return the USD→IQD rate, cached for 12 hours.
@@ -42,6 +50,38 @@ class ExchangeRateService
         $rate = $this->fetchAndPersist();
 
         Cache::put(self::CACHE_KEY, $rate, self::CACHE_TTL_SECONDS);
+
+        return $rate;
+    }
+
+    /**
+     * Manually override the USD→IQD rate (persists + caches; audited).
+     */
+    public function override(float $rate, ?string $note = null): float
+    {
+        if ($rate <= 0) {
+            throw new InvalidArgumentException('FX rate must be greater than zero.');
+        }
+
+        $rate = round($rate, 6);
+        $previous = Cache::get(self::CACHE_KEY);
+
+        $this->persist('USD', 'IQD', $rate, self::SOURCE_MANUAL);
+        Cache::put(self::CACHE_KEY, $rate, self::CACHE_TTL_SECONDS);
+
+        $this->audit->log(
+            AuditActions::FX_RATE_OVERRIDDEN,
+            sprintf('FX rate overridden to %.6f IQD/USD', $rate),
+            null,
+            [
+                'base_currency' => 'USD',
+                'target_currency' => 'IQD',
+                'rate' => $rate,
+                'previous_rate' => $previous !== null ? (float) $previous : null,
+                'source' => self::SOURCE_MANUAL,
+                'note' => $note,
+            ],
+        );
 
         return $rate;
     }

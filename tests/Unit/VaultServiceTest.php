@@ -35,7 +35,7 @@ class VaultServiceTest extends TestCase
             'balance_iqd' => 0,
         ]);
 
-        $this->service = new VaultService(new ExchangeRateService);
+        $this->service = app(VaultService::class);
     }
 
     public function test_split_math_default_percentages_sum_to_deposit(): void

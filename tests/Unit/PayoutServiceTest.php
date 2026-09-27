@@ -65,11 +65,7 @@ class PayoutServiceTest extends TestCase
             'name' => 'Pay Worker',
         ]);
 
-        $this->service = new PayoutService(
-            new LiquidityService,
-            new ExchangeRateService,
-            new PenaltyService,
-        );
+        $this->service = app(PayoutService::class);
     }
 
     public function test_create_pending_with_default_insurance_holdback(): void

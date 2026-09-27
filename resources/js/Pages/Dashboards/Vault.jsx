@@ -1,9 +1,11 @@
+import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
+import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 
 function formatUsd(n) {
     return new Intl.NumberFormat('en-US', {
@@ -154,6 +156,12 @@ export default function Vault({
     const fxData = fx || {};
     const ins = insurance || {};
     const pool = pools || {};
+    const { flash } = usePage().props;
+
+    const overrideForm = useForm({
+        rate: fxData.rate || '',
+        note: '',
+    });
 
     return (
         <AuthenticatedLayout
@@ -165,6 +173,9 @@ export default function Vault({
                         <>
                             <Link href={route('dashboard')}>
                                 <SecondaryButton type="button">Home</SecondaryButton>
+                            </Link>
+                            <Link href={route('audit.index')}>
+                                <SecondaryButton type="button">Audit log</SecondaryButton>
                             </Link>
                             <PrimaryButton
                                 type="button"
@@ -181,6 +192,11 @@ export default function Vault({
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    {flash?.success && (
+                        <p className="border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
+                            {flash.success}
+                        </p>
+                    )}
                     {!vault && (
                         <p className="border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
                             No vault found. Run seeders to create the Zhako vault.
@@ -225,34 +241,63 @@ export default function Vault({
                                 ))}
                             </div>
                         </div>
-                        <div className="bv-card p-5">
-                            <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
-                                Live FX
-                            </p>
-                            <p className="mt-3 font-display text-3xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                                {Number(fxData.rate || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
-                            </p>
-                            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                                IQD per 1 USD
-                            </p>
-                            <dl className="mt-4 space-y-1 text-xs text-slate-500 dark:text-slate-400">
-                                <div className="flex justify-between gap-2">
-                                    <dt>Source</dt>
-                                    <dd className="font-medium capitalize text-slate-700 dark:text-slate-200">{fxData.source}</dd>
-                                </div>
-                                <div className="flex justify-between gap-2">
-                                    <dt>Fetched</dt>
-                                    <dd className="tabular-nums">
-                                        {fxData.fetched_at
-                                            ? new Date(fxData.fetched_at).toLocaleString()
-                                            : '—'}
-                                    </dd>
-                                </div>
-                                <div className="flex justify-between gap-2">
-                                    <dt>Fallback</dt>
-                                    <dd className="tabular-nums">{fxData.fallback_rate}</dd>
-                                </div>
-                            </dl>
+                        <div className="bv-card space-y-4 p-5">
+                            <div>
+                                <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500">
+                                    Live FX
+                                </p>
+                                <p className="mt-3 font-display text-3xl font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                                    {Number(fxData.rate || 0).toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                                </p>
+                                <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
+                                    IQD per 1 USD
+                                </p>
+                                <dl className="mt-4 space-y-1 text-xs text-slate-500 dark:text-slate-400">
+                                    <div className="flex justify-between gap-2">
+                                        <dt>Source</dt>
+                                        <dd className="font-medium capitalize text-slate-700 dark:text-slate-200">{fxData.source}</dd>
+                                    </div>
+                                    <div className="flex justify-between gap-2">
+                                        <dt>Fetched</dt>
+                                        <dd className="tabular-nums">
+                                            {fxData.fetched_at
+                                                ? new Date(fxData.fetched_at).toLocaleString()
+                                                : '—'}
+                                        </dd>
+                                    </div>
+                                    <div className="flex justify-between gap-2">
+                                        <dt>Fallback</dt>
+                                        <dd className="tabular-nums">{fxData.fallback_rate}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <form
+                                className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700"
+                                onSubmit={(e) => {
+                                    e.preventDefault();
+                                    overrideForm.post(route('dashboards.vault.override-fx'));
+                                }}
+                            >
+                                <InputLabel value="Override rate (IQD/USD)" />
+                                <TextInput
+                                    type="number"
+                                    step="0.01"
+                                    min="0.01"
+                                    className="mt-1 block w-full"
+                                    value={overrideForm.data.rate}
+                                    onChange={(e) => overrideForm.setData('rate', e.target.value)}
+                                />
+                                <TextInput
+                                    type="text"
+                                    className="mt-1 block w-full"
+                                    placeholder="Optional note"
+                                    value={overrideForm.data.note}
+                                    onChange={(e) => overrideForm.setData('note', e.target.value)}
+                                />
+                                <SecondaryButton type="submit" disabled={overrideForm.processing}>
+                                    Override FX
+                                </SecondaryButton>
+                            </form>
                         </div>
                     </section>
 

@@ -6,6 +6,7 @@ use App\Models\Project;
 use App\Models\ProjectAllocation;
 use App\Models\Transaction;
 use App\Models\Vault;
+use App\Support\AuditActions;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -14,6 +15,7 @@ class VaultService
 {
     public function __construct(
         private readonly ExchangeRateService $exchangeRates,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -100,6 +102,14 @@ class VaultService
                 ],
             );
 
+            $poolsBefore = [
+                'expenses_pool_usd' => (float) $allocation->expenses_pool_usd,
+                'payroll_pool_usd' => (float) $allocation->payroll_pool_usd,
+                'retention_pool_usd' => (float) $allocation->retention_pool_usd,
+                'penalty_pool_usd' => (float) $allocation->penalty_pool_usd,
+                'profit_pool_usd' => (float) $allocation->profit_pool_usd,
+            ];
+
             $allocation->expenses_pool_usd = round((float) $allocation->expenses_pool_usd + $split['expenses_usd'], 2);
             $allocation->payroll_pool_usd = round((float) $allocation->payroll_pool_usd + $split['payroll_usd'], 2);
             $allocation->retention_pool_usd = round((float) $allocation->retention_pool_usd + $split['retention_usd'], 2);
@@ -137,6 +147,45 @@ class VaultService
                 'reference_id' => $depositTxn->id,
                 'created_by' => $createdBy,
             ]);
+
+            $causer = $createdBy ? \App\Models\User::query()->find($createdBy) : null;
+
+            $this->audit->log(
+                AuditActions::VAULT_DEPOSIT,
+                sprintf('Vault deposit %.2f USD → project #%d', $amountUsd, $project->id),
+                $vault,
+                [
+                    'vault_id' => $vault->id,
+                    'project_id' => $project->id,
+                    'amount_usd' => $amountUsd,
+                    'amount_iqd' => $amountIqd,
+                    'exchange_rate' => $rate,
+                    'transaction_id' => $depositTxn->id,
+                    'split' => $split,
+                ],
+                $causer,
+            );
+
+            $this->audit->log(
+                AuditActions::ALLOCATION_CHANGED,
+                sprintf('Allocation pools credited from deposit (%.2f USD) on project #%d', $amountUsd, $project->id),
+                $allocation,
+                [
+                    'project_id' => $project->id,
+                    'reason' => 'vault_deposit',
+                    'before' => $poolsBefore,
+                    'after' => [
+                        'expenses_pool_usd' => (float) $allocation->expenses_pool_usd,
+                        'payroll_pool_usd' => (float) $allocation->payroll_pool_usd,
+                        'retention_pool_usd' => (float) $allocation->retention_pool_usd,
+                        'penalty_pool_usd' => (float) $allocation->penalty_pool_usd,
+                        'profit_pool_usd' => (float) $allocation->profit_pool_usd,
+                    ],
+                    'split' => $split,
+                    'deposit_transaction_id' => $depositTxn->id,
+                ],
+                $causer,
+            );
 
             return [
                 'vault' => $vault->refresh(),

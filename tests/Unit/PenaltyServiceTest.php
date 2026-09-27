@@ -66,12 +66,8 @@ class PenaltyServiceTest extends TestCase
             'name' => 'Penalty Worker',
         ]);
 
-        $this->penalties = new PenaltyService;
-        $this->payouts = new PayoutService(
-            new LiquidityService,
-            new ExchangeRateService,
-            $this->penalties,
-        );
+        $this->penalties = app(PenaltyService::class);
+        $this->payouts = app(PayoutService::class);
     }
 
     public function test_create_pending_penalty_linked_to_worker(): void

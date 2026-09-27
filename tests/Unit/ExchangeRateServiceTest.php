@@ -20,7 +20,7 @@ class ExchangeRateServiceTest extends TestCase
         parent::setUp();
 
         Cache::flush();
-        $this->service = new ExchangeRateService;
+        $this->service = app(ExchangeRateService::class);
     }
 
     public function test_fetches_usd_to_iqd_rate_persists_and_caches(): void

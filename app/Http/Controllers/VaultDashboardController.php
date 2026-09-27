@@ -11,6 +11,7 @@ use App\Services\ExchangeRateService;
 use App\Services\LiquidityService;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
@@ -106,6 +107,20 @@ class VaultDashboardController extends Controller
         $rate = $this->exchangeRates->refresh();
 
         return back()->with('success', sprintf('FX refreshed: 1 USD = %s IQD', number_format($rate, 2)));
+    }
+
+    public function overrideFx(Request $request): RedirectResponse
+    {
+        $this->authorize('overrideFx', Vault::class);
+
+        $data = $request->validate([
+            'rate' => ['required', 'numeric', 'gt:0'],
+            'note' => ['nullable', 'string', 'max:255'],
+        ]);
+
+        $rate = $this->exchangeRates->override((float) $data['rate'], $data['note'] ?? null);
+
+        return back()->with('success', sprintf('FX overridden: 1 USD = %s IQD', number_format($rate, 2)));
     }
 
     /**

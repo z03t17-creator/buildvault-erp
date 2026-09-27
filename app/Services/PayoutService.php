@@ -8,6 +8,7 @@ use App\Models\ProjectAllocation;
 use App\Models\RetentionHold;
 use App\Models\Transaction;
 use App\Models\Vault;
+use App\Support\AuditActions;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -18,6 +19,7 @@ class PayoutService
         private readonly LiquidityService $liquidity,
         private readonly ExchangeRateService $exchangeRates,
         private readonly PenaltyService $penalties,
+        private readonly AuditLogger $audit,
     ) {}
 
     /**
@@ -112,7 +114,8 @@ class PayoutService
                 ->lockForUpdate()
                 ->firstOrFail();
 
-            $allocation->{$column} = round((float) $allocation->{$column} - $amount, 2);
+            $poolBefore = (float) $allocation->{$column};
+            $allocation->{$column} = round($poolBefore - $amount, 2);
             $allocation->save();
 
             $rate = (float) $payout->exchange_rate ?: $this->exchangeRates->getUsdToIqd();
@@ -153,6 +156,35 @@ class PayoutService
                 ]);
             }
 
+            $this->audit->log(
+                AuditActions::PAYOUT_APPROVED,
+                sprintf('Payout #%d approved (%s, %.2f USD)', $payout->id, $payout->category, $amount),
+                $payout,
+                [
+                    'payout_id' => $payout->id,
+                    'project_id' => $project->id,
+                    'category' => $payout->category,
+                    'amount_usd' => $amount,
+                    'cash_out_usd' => $cashOut,
+                    'retention_holdback' => $holdback,
+                ],
+            );
+
+            $this->audit->log(
+                AuditActions::ALLOCATION_CHANGED,
+                sprintf('Allocation pool %s reduced by %.2f USD (payout #%d)', $column, $amount, $payout->id),
+                $allocation,
+                [
+                    'project_id' => $project->id,
+                    'pool' => $column,
+                    'before' => $poolBefore,
+                    'after' => (float) $allocation->{$column},
+                    'delta_usd' => -$amount,
+                    'reason' => 'payout_approve',
+                    'payout_id' => $payout->id,
+                ],
+            );
+
             return $payout->fresh(['retentionHolds', 'project', 'worker']);
         });
     }
@@ -168,6 +200,18 @@ class PayoutService
             $payout->notes = trim(($payout->notes ? $payout->notes."\n" : '').$notes);
         }
         $payout->save();
+
+        $this->audit->log(
+            AuditActions::PAYOUT_REJECTED,
+            sprintf('Payout #%d rejected', $payout->id),
+            $payout,
+            [
+                'payout_id' => $payout->id,
+                'project_id' => $payout->project_id,
+                'amount_usd' => (float) $payout->amount_usd,
+                'notes' => $notes,
+            ],
+        );
 
         return $payout->fresh();
     }

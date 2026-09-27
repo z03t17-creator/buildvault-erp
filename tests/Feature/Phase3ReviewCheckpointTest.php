@@ -52,14 +52,10 @@ class Phase3ReviewCheckpointTest extends TestCase
             'name' => 'Checkpoint Worker',
         ]);
 
-        $vaultService = new VaultService(new ExchangeRateService);
-        $penaltyService = new PenaltyService;
-        $payoutService = new PayoutService(
-            new LiquidityService,
-            new ExchangeRateService,
-            $penaltyService,
-        );
-        $retentionService = new RetentionHoldService(new ExchangeRateService);
+        $vaultService = app(VaultService::class);
+        $penaltyService = app(PenaltyService::class);
+        $payoutService = app(PayoutService::class);
+        $retentionService = app(RetentionHoldService::class);
 
         // 1) Deposit 10,000 USD → 5-way split
         $deposit = $vaultService->deposit($project, 10000, $vault);

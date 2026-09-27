@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AttendanceController;
+use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PayoutController;
@@ -48,7 +49,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboards/vault', [VaultDashboardController::class, 'show'])->name('dashboards.vault');
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])
         ->name('dashboards.vault.refresh-fx');
+    Route::post('/dashboards/vault/override-fx', [VaultDashboardController::class, 'overrideFx'])
+        ->name('dashboards.vault.override-fx');
     Route::get('/dashboards/payroll', [PayrollDashboardController::class, 'show'])->name('dashboards.payroll');
+
+    Route::get('/audit', [AuditLogController::class, 'index'])->name('audit.index');
 
     Route::get('/documents', [DocumentController::class, 'index'])->name('documents.index');
     Route::post('/documents', [DocumentController::class, 'store'])->name('documents.store');

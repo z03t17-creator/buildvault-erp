@@ -63,7 +63,7 @@ class RetentionHoldServiceTest extends TestCase
             'name' => 'Hold Worker',
         ]);
 
-        $this->service = new RetentionHoldService(new ExchangeRateService);
+        $this->service = app(RetentionHoldService::class);
     }
 
     public function test_maturity_from_adds_six_months(): void
