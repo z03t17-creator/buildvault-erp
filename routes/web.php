@@ -10,6 +10,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ExportController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\VaultDashboardController;
@@ -60,6 +61,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/imports/{import}', [ImportController::class, 'show'])->name('imports.show');
     Route::post('/imports/{import}/rollback', [ImportController::class, 'rollback'])
         ->name('imports.rollback');
+
+    Route::get('/exports', [ExportController::class, 'index'])->name('exports.index');
+    Route::get('/exports/projects/{project}/excel', [ExportController::class, 'projectExcel'])
+        ->name('exports.project');
+    Route::get('/exports/workers/{worker}/pdf', [ExportController::class, 'workerPdf'])
+        ->name('exports.worker');
+    Route::get('/exports/payouts/{payout}/voucher', [ExportController::class, 'payoutVoucher'])
+        ->name('exports.voucher');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();

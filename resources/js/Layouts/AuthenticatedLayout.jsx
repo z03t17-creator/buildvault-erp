@@ -87,6 +87,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Imports
                                 </NavLink>
                                 <NavLink
+                                    href={route('exports.index')}
+                                    active={route().current('exports.*')}
+                                >
+                                    Exports
+                                </NavLink>
+                                <NavLink
                                     href={route('retention-holds.index')}
                                     active={route().current('retention-holds.*')}
                                 >
@@ -259,6 +265,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('imports.*')}
                         >
                             Imports
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('exports.index')}
+                            active={route().current('exports.*')}
+                        >
+                            Exports
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('retention-holds.index')}
