@@ -85,4 +85,10 @@ class Project extends Model
     {
         return $this->hasManyThrough(Floor::class, Tower::class);
     }
+
+    public function workers(): HasMany
+    {
+        return $this->hasMany(Worker::class);
+    }
 }
+
