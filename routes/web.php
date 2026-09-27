@@ -9,6 +9,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
+use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
 use App\Services\RetentionHoldService;
@@ -43,6 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboards/vault', [VaultDashboardController::class, 'show'])->name('dashboards.vault');
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])
         ->name('dashboards.vault.refresh-fx');
+    Route::get('/dashboards/payroll', [PayrollDashboardController::class, 'show'])->name('dashboards.payroll');
 
     Route::resource('projects', ProjectController::class);
     Route::resource('projects.towers', TowerController::class)->shallow();

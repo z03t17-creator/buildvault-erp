@@ -39,6 +39,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                     Vault
                                 </NavLink>
                                 <NavLink
+                                    href={route('dashboards.payroll')}
+                                    active={route().current('dashboards.payroll')}
+                                >
+                                    Payroll
+                                </NavLink>
+                                <NavLink
                                     href={route('projects.index')}
                                     active={route().current('projects.*') || route().current('towers.*') || route().current('floors.*')}
                                 >
@@ -189,6 +195,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('dashboards.vault')}
                         >
                             Vault
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('dashboards.payroll')}
+                            active={route().current('dashboards.payroll')}
+                        >
+                            Payroll
                         </ResponsiveNavLink>
                         <ResponsiveNavLink
                             href={route('projects.index')}
