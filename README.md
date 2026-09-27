@@ -46,6 +46,19 @@ php artisan serve
 - Scheduler cron (every minute): `php artisan schedule:run` — runs daily `backup:run-logged` at 02:00 into `storage/app/backups/`.
 - Direct backup: `php artisan backup:run` (Spatie) or `php artisan backup:run-logged` (logs to `backups` table / UI).
 
+## Progressive Web App (PWA)
+
+BuildVault can be installed as a standalone app (Chrome / Edge / Android / iOS Safari “Add to Home Screen”).
+
+| File | Role |
+|------|------|
+| `public/manifest.json` | Name **BuildVault ERP**, slate/emerald theme, icons, `display: standalone` |
+| `public/sw.js` | Minimal service worker — caches static assets + offline shell |
+| `public/offline.html` | Offline fallback page |
+| `public/icons/` | Icons generated from `public/images/zhako-logo.jpg` |
+
+After `npm run build` and deploy, open the site over **HTTPS** (or localhost), then use the browser’s **Install app** / **Add to Home Screen**. SiteBunker SSL is enough; no Node on the host for the SW/manifest (they live under `public/`).
+
 ## Development
 
 ```bash

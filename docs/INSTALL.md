@@ -131,6 +131,15 @@ php artisan route:list
 npm run build            # production Vite build → public/build
 ```
 
+## Progressive Web App (install)
+
+1. Run `npm run build` so Vite assets exist under `public/build`.
+2. Serve over **HTTPS** (production) or `php artisan serve` / localhost (dev SW registration works on localhost).
+3. Open the app → browser menu → **Install BuildVault ERP** / **Add to Home Screen**.
+4. Manifest: `/manifest.json` · Service worker: `/sw.js` · Offline shell: `/offline.html` · Icons: `/icons/*` (from ZHAKO logo).
+
+The service worker caches the offline shell and static assets only; authenticated Inertia navigations still require a network.
+
 ## Notes
 
 - Do not commit `.env` or `vendor/` / `node_modules/`.
