@@ -54,8 +54,19 @@ export default function Index({ workers }) {
                                             <td className="px-4 py-3">
                                                 <Link
                                                     href={route('workers.show', worker.id)}
-                                                    className="font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300"
+                                                    className="inline-flex items-center gap-3 font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300"
                                                 >
+                                                    {worker.avatar_url ? (
+                                                        <img
+                                                            src={worker.avatar_url}
+                                                            alt=""
+                                                            className="h-8 w-8 object-cover border border-slate-200 dark:border-slate-700"
+                                                        />
+                                                    ) : (
+                                                        <span className="flex h-8 w-8 items-center justify-center border border-slate-200 bg-slate-100 text-xs font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                                            {(worker.name || '?').charAt(0).toUpperCase()}
+                                                        </span>
+                                                    )}
                                                     {worker.name}
                                                 </Link>
                                             </td>

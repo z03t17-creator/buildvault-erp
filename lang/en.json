@@ -36,6 +36,8 @@
     "overtime_rate": "OT rate (USD)",
     "phone": "Phone",
     "national_id": "National ID",
+    "avatar": "Avatar photo",
+    "avatar_hint": "JPG, PNG, WebP or GIF · max 4 MB.",
     "avatar_path": "Avatar path",
     "avatar_upload_later": "Photo upload comes in a later phase.",
     "no_projects": "No projects yet",

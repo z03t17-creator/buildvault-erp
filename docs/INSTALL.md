@@ -90,7 +90,17 @@ php artisan migrate:fresh --seed
 
 This also seeds the central **Zhako** vault with zero balances.
 
-### 4. Frontend dependencies and build
+### 4. Public storage link (worker avatars)
+
+Worker photos are stored on the **public** disk under `storage/app/public/uploads/workers/` and served at `/storage/uploads/workers/...`. Create the symlink once after clone:
+
+```bash
+php artisan storage:link
+```
+
+This links `public/storage` → `storage/app/public`. Without it, avatar URLs 404 in the browser.
+
+### 5. Frontend dependencies and build
 
 ```bash
 npm install
@@ -103,7 +113,7 @@ For hot reload during UI work:
 npm run dev
 ```
 
-### 5. Run the app
+### 6. Run the app
 
 ```bash
 php artisan serve
@@ -116,6 +126,7 @@ Open [http://127.0.0.1:8000](http://127.0.0.1:8000). Breeze auth routes (registe
 ```bash
 php artisan --version    # confirm Laravel boots
 php artisan migrate:fresh --seed
+php artisan storage:link # worker avatar uploads
 php artisan route:list
 npm run build            # production Vite build → public/build
 ```
@@ -125,3 +136,4 @@ npm run build            # production Vite build → public/build
 - Do not commit `.env` or `vendor/` / `node_modules/`.
 - `public/build` is produced by `npm run build` and is gitignored in the scaffold; regenerate it after frontend changes.
 - Seeded credentials (`admin@zhako.test` / `password`) are for local development only.
+- Uploaded avatars live under `storage/app/public/uploads/workers/` (gitignored); ensure `storage:link` is run on each environment.

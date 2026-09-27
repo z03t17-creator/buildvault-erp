@@ -40,12 +40,20 @@ export default function Show({ worker }) {
             <div className="py-8">
                 <div className="mx-auto max-w-3xl border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
                     <div className="mb-6 flex items-start gap-4">
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center border border-slate-200 bg-slate-100 font-display text-2xl font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                            {(worker.name || '?').charAt(0).toUpperCase()}
-                        </div>
+                        {worker.avatar_url ? (
+                            <img
+                                src={worker.avatar_url}
+                                alt={worker.name}
+                                className="h-20 w-20 shrink-0 object-cover border border-slate-200 dark:border-slate-700"
+                            />
+                        ) : (
+                            <div className="flex h-20 w-20 shrink-0 items-center justify-center border border-slate-200 bg-slate-100 font-display text-2xl font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
+                                {(worker.name || '?').charAt(0).toUpperCase()}
+                            </div>
+                        )}
                         <div>
                             <StatusBadge status={worker.role} />
-                            <p className="mt-2 text-xs text-slate-500">{t('avatar_upload_later')}</p>
+                            <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">{worker.name}</p>
                         </div>
                     </div>
                     <dl className="grid gap-5 sm:grid-cols-2">

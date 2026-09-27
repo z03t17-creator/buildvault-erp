@@ -7,11 +7,15 @@ use App\Http\Requests\Worker\UpdateWorkerRequest;
 use App\Models\Project;
 use App\Models\Worker;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class WorkerController extends Controller
 {
+    public const AVATAR_DIR = 'uploads/workers';
+
     public function index(): Response
     {
         return Inertia::render('Workers/Index', [
@@ -32,7 +36,13 @@ class WorkerController extends Controller
 
     public function store(StoreWorkerRequest $request): RedirectResponse
     {
-        $worker = Worker::query()->create($request->validated());
+        $data = $request->safe()->except(['avatar']);
+
+        if ($request->hasFile('avatar')) {
+            $data['avatar_path'] = $this->storeAvatar($request->file('avatar'));
+        }
+
+        $worker = Worker::query()->create($data);
 
         return redirect()
             ->route('workers.show', $worker)
@@ -59,7 +69,14 @@ class WorkerController extends Controller
 
     public function update(UpdateWorkerRequest $request, Worker $worker): RedirectResponse
     {
-        $worker->update($request->validated());
+        $data = $request->safe()->except(['avatar']);
+
+        if ($request->hasFile('avatar')) {
+            $this->deleteAvatar($worker->avatar_path);
+            $data['avatar_path'] = $this->storeAvatar($request->file('avatar'));
+        }
+
+        $worker->update($data);
 
         return redirect()
             ->route('workers.show', $worker)
@@ -68,10 +85,23 @@ class WorkerController extends Controller
 
     public function destroy(Worker $worker): RedirectResponse
     {
+        $this->deleteAvatar($worker->avatar_path);
         $worker->delete();
 
         return redirect()
             ->route('workers.index')
             ->with('success', 'Worker deleted.');
+    }
+
+    protected function storeAvatar(UploadedFile $file): string
+    {
+        return $file->store(self::AVATAR_DIR, 'public');
+    }
+
+    protected function deleteAvatar(?string $path): void
+    {
+        if ($path && Storage::disk('public')->exists($path)) {
+            Storage::disk('public')->delete($path);
+        }
     }
 }

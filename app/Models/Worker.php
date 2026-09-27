@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-
 class Worker extends Model
 {
     public const ROLE_ENGINEER = 'engineer';
@@ -50,6 +50,13 @@ class Worker extends Model
     ];
 
     /**
+     * @var list<string>
+     */
+    protected $appends = [
+        'avatar_url',
+    ];
+
+    /**
      * @return array<string, string>
      */
     protected function casts(): array
@@ -59,6 +66,21 @@ class Worker extends Model
             'overtime_rate_usd' => 'decimal:2',
             'spending_limit_usd' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Public URL via `php artisan storage:link` → `/storage/uploads/workers/...`
+     * Relative so it works regardless of APP_URL host/port.
+     */
+    protected function avatarUrl(): Attribute
+    {
+        return Attribute::get(function (): ?string {
+            if (! $this->avatar_path) {
+                return null;
+            }
+
+            return '/storage/'.ltrim($this->avatar_path, '/');
+        });
     }
 
     public function project(): BelongsTo

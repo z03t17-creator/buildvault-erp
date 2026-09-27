@@ -27,7 +27,7 @@ class StoreWorkerRequest extends FormRequest
             'spending_limit_usd' => ['nullable', 'numeric', 'min:0'],
             'phone' => ['nullable', 'string', 'max:50'],
             'national_id_number' => ['nullable', 'string', 'max:100'],
-            'avatar_path' => ['nullable', 'string', 'max:255'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp,gif', 'max:4096'],
         ];
     }
 }

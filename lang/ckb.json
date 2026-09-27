@@ -36,6 +36,8 @@
     "overtime_rate": "کرێی زیادەکات (دۆلار)",
     "phone": "تەلەفۆن",
     "national_id": "ناسنامە",
+    "avatar": "وێنەی کەسی",
+    "avatar_hint": "JPG، PNG، WebP یان GIF · زۆرترین 4 مێگابایت.",
     "avatar_path": "ڕێڕەوی وێنە",
     "avatar_upload_later": "بارکردنی وێنە لە قۆناغی دواتردا.",
     "no_projects": "هێشتا پڕۆژە نییە",

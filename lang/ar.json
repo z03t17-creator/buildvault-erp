@@ -36,6 +36,8 @@
     "overtime_rate": "أجر الإضافي (دولار)",
     "phone": "الهاتف",
     "national_id": "الهوية الوطنية",
+    "avatar": "صورة شخصية",
+    "avatar_hint": "JPG أو PNG أو WebP أو GIF · بحد أقصى 4 ميغابايت.",
     "avatar_path": "مسار الصورة",
     "avatar_upload_later": "رفع الصورة في مرحلة لاحقة.",
     "no_projects": "لا توجد مشاريع بعد",
