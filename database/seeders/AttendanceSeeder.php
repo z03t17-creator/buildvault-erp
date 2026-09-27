@@ -70,23 +70,27 @@ class AttendanceSeeder extends Seeder
             ]);
         }
 
-        // Explicit leave sample (no check-in)
+        // Explicit leave sample (no check-in). Use whereDate so re-seeds
+        // match the unique (worker_id, date) row under SQLite date storage.
         $laborerTwo = $workers->get('DEMO-LAB-002');
         if ($laborerTwo) {
-            Attendance::query()->updateOrCreate(
-                [
+            $leave = Attendance::query()
+                ->where('worker_id', $laborerTwo->id)
+                ->whereDate('date', $today)
+                ->first() ?? new Attendance([
                     'worker_id' => $laborerTwo->id,
                     'date' => $today,
-                ],
-                [
-                    'floor_id' => $floor?->id,
-                    'check_in' => null,
-                    'check_out' => null,
-                    'late_minutes' => 0,
-                    'overtime_hours' => 0,
-                    'status' => Attendance::STATUS_LEAVE_SICK,
-                ],
-            );
+                ]);
+
+            $leave->fill([
+                'floor_id' => $floor?->id,
+                'check_in' => null,
+                'check_out' => null,
+                'late_minutes' => 0,
+                'overtime_hours' => 0,
+                'status' => Attendance::STATUS_LEAVE_SICK,
+            ]);
+            $leave->save();
         }
     }
 }
