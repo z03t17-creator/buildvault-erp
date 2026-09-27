@@ -48,6 +48,12 @@ export default function AuthenticatedLayout({ header, children }) {
                                 >
                                     {t('attendance')}
                                 </NavLink>
+                                <NavLink
+                                    href={route('payouts.index')}
+                                    active={route().current('payouts.*')}
+                                >
+                                    Payouts
+                                </NavLink>
                             </div>
                         </div>
 
@@ -170,6 +176,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('attendance.*')}
                         >
                             {t('attendance')}
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('payouts.index')}
+                            active={route().current('payouts.*')}
+                        >
+                            Payouts
                         </ResponsiveNavLink>
                     </div>
 

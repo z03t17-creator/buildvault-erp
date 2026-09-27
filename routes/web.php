@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TowerController;
@@ -42,6 +43,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
     Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
     Route::post('/attendance/mark-absences', [AttendanceController::class, 'markAbsences'])->name('attendance.mark-absences');
+
+    Route::get('/payouts', [PayoutController::class, 'index'])->name('payouts.index');
+    Route::get('/payouts/create', [PayoutController::class, 'create'])->name('payouts.create');
+    Route::post('/payouts', [PayoutController::class, 'store'])->name('payouts.store');
+    Route::get('/payouts/{payout}', [PayoutController::class, 'show'])->name('payouts.show');
+    Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])->name('payouts.approve');
+    Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])->name('payouts.reject');
+    Route::post('/payouts/{payout}/reconcile', [PayoutController::class, 'reconcile'])->name('payouts.reconcile');
 });
 
 require __DIR__.'/auth.php';
