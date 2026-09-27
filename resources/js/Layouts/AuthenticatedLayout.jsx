@@ -9,7 +9,9 @@ import { usePage } from '@inertiajs/react';
 import { useState } from 'react';
 
 export default function AuthenticatedLayout({ header, children }) {
-    const user = usePage().props.auth.user;
+    const page = usePage();
+    const user = page.props.auth.user;
+    const maturedCount = page.props.alerts?.maturedRetentionCount || 0;
     const t = useTranslations();
 
     const [showingNavigationDropdown, setShowingNavigationDropdown] =
@@ -59,6 +61,17 @@ export default function AuthenticatedLayout({ header, children }) {
                                     active={route().current('penalties.*')}
                                 >
                                     Penalties
+                                </NavLink>
+                                <NavLink
+                                    href={route('retention-holds.index')}
+                                    active={route().current('retention-holds.*')}
+                                >
+                                    Insurance
+                                    {maturedCount > 0 && (
+                                        <span className="ms-1 inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
+                                            {maturedCount}
+                                        </span>
+                                    )}
                                 </NavLink>
                             </div>
                         </div>
@@ -194,6 +207,12 @@ export default function AuthenticatedLayout({ header, children }) {
                             active={route().current('penalties.*')}
                         >
                             Penalties
+                        </ResponsiveNavLink>
+                        <ResponsiveNavLink
+                            href={route('retention-holds.index')}
+                            active={route().current('retention-holds.*')}
+                        >
+                            Insurance{maturedCount > 0 ? ` (${maturedCount})` : ''}
                         </ResponsiveNavLink>
                     </div>
 

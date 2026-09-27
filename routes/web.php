@@ -7,8 +7,10 @@ use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
 use App\Http\Controllers\WorkerController;
+use App\Services\RetentionHoldService;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -24,8 +26,10 @@ Route::get('/', function () {
 
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
+Route::get('/dashboard', function (RetentionHoldService $holds) {
+    return Inertia::render('Dashboard', [
+        'maturedHolds' => $holds->maturedAwaitingRelease(),
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -59,6 +63,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/penalties/{penalty}', [PenaltyController::class, 'show'])->name('penalties.show');
     Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
     Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
+
+    Route::get('/retention-holds', [RetentionHoldController::class, 'index'])->name('retention-holds.index');
+    Route::post('/retention-holds/{retentionHold}/release', [RetentionHoldController::class, 'release'])
+        ->name('retention-holds.release');
 });
 
 require __DIR__.'/auth.php';
