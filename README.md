@@ -35,16 +35,21 @@ php artisan serve
 
 - Login: `admin@zhako.test` / `password` (dev Super Admin — see [docs/INSTALL.md](docs/INSTALL.md))
 - Full local setup: [docs/INSTALL.md](docs/INSTALL.md)
-- SiteBunker cPanel/SSH deploy: [docs/DEPLOY.md](docs/DEPLOY.md)
+- SiteBunker deploy: [docs/DEPLOY.md](docs/DEPLOY.md)
+- Daily operations: [docs/OPERATIONS.md](docs/OPERATIONS.md)
+- Go-live runbook: [docs/GO-LIVE.md](docs/GO-LIVE.md)
+- Compliance / retention: [docs/COMPLIANCE.md](docs/COMPLIANCE.md)
+- Part 11 checklist: [docs/PART11-CHECKLIST.md](docs/PART11-CHECKLIST.md)
 
 ## SiteBunker notes (production)
 
 - **No Node on the host** (NodeJS Selector unavailable) — run `npm ci && npm run build` off-server and deploy `public/build`.
-- PHP **8.3**, MariaDB, document root → `public/`.
+- PHP **8.3**, MariaDB, document root → `public/`. Use `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`.
 - Cache / queue / session drivers: **database** (see `.env.example`).
-- Queue via cPanel cron: `php artisan queue:work --stop-when-empty`.
-- Scheduler cron (every minute): `php artisan schedule:run` — runs daily `backup:run-logged` at 02:00 into `storage/app/backups/`.
-- Direct backup: `php artisan backup:run` (Spatie) or `php artisan backup:run-logged` (logs to `backups` table / UI).
+- Queue cron: `php artisan queue:work --stop-when-empty`.
+- Scheduler cron: `php artisan schedule:run` — daily `backup:run-logged` at 02:00 → `storage/app/backups/`.
+- OPcache on; LiteSpeed LSCache only for `/public/build` static assets; AutoSSL + force HTTPS.
+- Audit log: `/audit` (Super Admin / Accountant).
 
 ## Progressive Web App (PWA)
 
