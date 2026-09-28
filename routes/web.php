@@ -17,6 +17,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
+use App\Services\ExchangeRateService;
 use App\Services\RetentionHoldService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
@@ -30,9 +31,17 @@ Route::get('/', function () {
 
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
-Route::get('/dashboard', function (RetentionHoldService $holds) {
+Route::get('/dashboard', function (RetentionHoldService $holds, ExchangeRateService $fx) {
+    $rate = $fx->getUsdToIqd();
+
+    $maturedHolds = $holds->maturedAwaitingRelease()->map(function ($hold) use ($rate) {
+        $hold->setAttribute('amount_iqd', round((float) $hold->amount_usd * $rate, 0));
+
+        return $hold;
+    });
+
     return Inertia::render('Dashboard', [
-        'maturedHolds' => $holds->maturedAwaitingRelease(),
+        'maturedHolds' => $maturedHolds,
     ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 

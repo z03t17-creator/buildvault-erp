@@ -4,9 +4,20 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 
+function formatIqd(n, iqdLabel) {
+    return (
+        new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0,
+        }).format(Number(n) || 0) +
+        ' ' +
+        iqdLabel
+    );
+}
+
 export default function Dashboard({ maturedHolds }) {
     const t = useTranslations();
     const alerts = maturedHolds || [];
+    const iqd = t('IQD');
 
     return (
         <AuthenticatedLayout
@@ -15,8 +26,8 @@ export default function Dashboard({ maturedHolds }) {
                     <h2 className="font-display text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">
                         {t('dashboard')}
                     </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400">
-                        BuildVault ERP · ZHAKO
+                    <p className="text-sm text-slate-500 dark:text-slate-400" dir="auto">
+                        {t('product_tagline')}
                     </p>
                 </div>
             }
@@ -30,33 +41,46 @@ export default function Dashboard({ maturedHolds }) {
                             <div className="flex flex-wrap items-start justify-between gap-3">
                                 <div>
                                     <h3 className="font-display text-lg font-semibold text-amber-950 dark:text-amber-100">
-                                        Insurance ready to return
+                                        {t('insurance_ready')}
                                     </h3>
                                     <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
-                                        {alerts.length} matured hold{alerts.length === 1 ? '' : 's'} — release returns funds to the staff payroll pool.
+                                        {t('insurance_ready_hint', { count: alerts.length })}
                                     </p>
                                 </div>
-                                <Link href={route('retention-holds.index')} className="text-sm font-medium text-amber-900 underline dark:text-amber-200">
-                                    View all holds
+                                <Link
+                                    href={route('retention-holds.index')}
+                                    className="text-sm font-medium text-amber-900 underline dark:text-amber-200"
+                                >
+                                    {t('view_all_holds')}
                                 </Link>
                             </div>
                             <ul className="mt-4 divide-y divide-amber-200/80 dark:divide-amber-800/60">
                                 {alerts.map((hold) => (
-                                    <li key={hold.id} className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm">
+                                    <li
+                                        key={hold.id}
+                                        className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                                    >
                                         <div>
                                             <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                {hold.worker?.name || `Worker #${hold.worker_id}`}
+                                                {hold.worker?.name || `${t('worker')} #${hold.worker_id}`}
                                             </span>
-                                            <span className="text-slate-500"> · {hold.project?.name}</span>
+                                            <span className="text-slate-500">
+                                                {' '}
+                                                · {hold.project?.name}
+                                            </span>
                                             <div className="mt-0.5 tabular-nums text-slate-700 dark:text-slate-300">
-                                                {hold.amount_usd} USD · matured {hold.maturity_date}
+                                                {formatIqd(hold.amount_iqd ?? hold.amount_usd, iqd)}
+                                                {' · '}
+                                                {t('matured_on', { date: hold.maturity_date })}
                                             </div>
                                         </div>
                                         <PrimaryButton
                                             type="button"
-                                            onClick={() => router.post(route('retention-holds.release', hold.id))}
+                                            onClick={() =>
+                                                router.post(route('retention-holds.release', hold.id))
+                                            }
                                         >
-                                            Release to payroll
+                                            {t('release_to_payroll')}
                                         </PrimaryButton>
                                     </li>
                                 ))}
@@ -71,15 +95,15 @@ export default function Dashboard({ maturedHolds }) {
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-3">
                             <Link href={route('dashboards.vault')}>
-                                <PrimaryButton type="button">Open Zhako Vault</PrimaryButton>
+                                <PrimaryButton type="button">{t('open_zhako_vault')}</PrimaryButton>
                             </Link>
                             <Link href={route('dashboards.payroll')}>
-                                <PrimaryButton type="button">Payroll summary</PrimaryButton>
+                                <PrimaryButton type="button">{t('payroll_summary')}</PrimaryButton>
                             </Link>
                         </div>
                         {alerts.length === 0 && (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
-                                No matured insurance holds awaiting release.
+                                {t('no_matured_holds')}
                             </p>
                         )}
                     </section>

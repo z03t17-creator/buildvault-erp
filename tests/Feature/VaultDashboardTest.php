@@ -19,7 +19,7 @@ class VaultDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_vault_dashboard_renders_dual_currency_and_fx(): void
+    public function test_vault_dashboard_renders_iqd_surfaces_and_keeps_fx_plumbing(): void
     {
         Cache::flush();
         Http::fake([
@@ -80,9 +80,14 @@ class VaultDashboardTest extends TestCase
             ->where('vault.balance_iqd', 13255000)
             ->where('fx.rate', 1325.5)
             ->where('insurance.holding_usd', 100)
+            ->where('insurance.holding_iqd', 132550)
+            ->where('pools.payroll_usd', 3000)
+            ->where('pools.payroll_iqd', 3976500)
+            ->where('liquidity.available_iqd', 13122450)
             ->has('cashFlow', 30)
             ->has('health', 3)
-            ->where('pools.payroll_usd', 3000));
+            ->where('health.0.label', 'Liquidity')
+            ->where('cashFlow.29.inflow_iqd', 13255000));
     }
 
     public function test_refresh_fx_endpoint(): void

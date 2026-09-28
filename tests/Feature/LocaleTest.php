@@ -56,6 +56,9 @@ class LocaleTest extends TestCase
                 ->where('locale', 'ckb')
                 ->where('direction', 'rtl')
                 ->where('translations.dashboard', 'داشبۆرد')
+                ->where('translations.vault', 'قاسە')
+                ->where('translations.open_zhako_vault', 'کردنەوەی قاسەی ژاکۆ')
+                ->where('translations.payroll_summary', 'کورتەی مووچە')
             );
     }
 

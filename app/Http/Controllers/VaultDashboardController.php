@@ -43,6 +43,8 @@ class VaultDashboardController extends Controller
         $reserved = $vault ? $this->liquidity->reservedInsuranceUsd($vault) : 0.0;
         $available = $vault ? $this->liquidity->availableUsd($vault) : 0.0;
 
+        $toIqd = fn (float $usd): float => round($usd * $rate, 0);
+
         $poolTotals = ProjectAllocation::query()
             ->selectRaw('
                 COALESCE(SUM(expenses_pool_usd), 0) as expenses,
@@ -60,7 +62,7 @@ class VaultDashboardController extends Controller
             ->get()
             ->keyBy('status');
 
-        $cashFlow = $this->cashFlowSeries($vault, 30);
+        $cashFlow = $this->cashFlowSeries($vault, 30, $rate);
 
         return Inertia::render('Dashboards/Vault', [
             'vault' => $vault ? [
@@ -73,7 +75,11 @@ class VaultDashboardController extends Controller
                 'available_usd' => $available,
                 'pending_payouts_usd' => $pending,
                 'reserved_insurance_usd' => $reserved,
+                'available_iqd' => $toIqd($available),
+                'pending_payouts_iqd' => $toIqd($pending),
+                'reserved_insurance_iqd' => $toIqd($reserved),
             ],
+            // FX kept for ledger/payout plumbing + tests; not shown in UI (IQD-only product).
             'fx' => [
                 'rate' => $rate,
                 'source' => $latestFx?->source ?? ExchangeRateService::SOURCE_FALLBACK,
@@ -87,6 +93,10 @@ class VaultDashboardController extends Controller
                 'matured_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total ?? 0), 2),
                 'matured_count' => (int) ($holdStats->get(RetentionHold::STATUS_MATURED)?->cnt ?? 0),
                 'released_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total ?? 0), 2),
+                'retention_pool_iqd' => $toIqd((float) ($poolTotals->retention ?? 0)),
+                'holding_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->total ?? 0)),
+                'matured_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total ?? 0)),
+                'released_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total ?? 0)),
             ],
             'pools' => [
                 'expenses_usd' => round((float) ($poolTotals->expenses ?? 0), 2),
@@ -94,8 +104,13 @@ class VaultDashboardController extends Controller
                 'retention_usd' => round((float) ($poolTotals->retention ?? 0), 2),
                 'penalty_usd' => round((float) ($poolTotals->penalty ?? 0), 2),
                 'profit_usd' => round((float) ($poolTotals->profit ?? 0), 2),
+                'expenses_iqd' => $toIqd((float) ($poolTotals->expenses ?? 0)),
+                'payroll_iqd' => $toIqd((float) ($poolTotals->payroll ?? 0)),
+                'retention_iqd' => $toIqd((float) ($poolTotals->retention ?? 0)),
+                'penalty_iqd' => $toIqd((float) ($poolTotals->penalty ?? 0)),
+                'profit_iqd' => $toIqd((float) ($poolTotals->profit ?? 0)),
             ],
-            'health' => $this->healthBadges($vault, $available, $pending, $reserved, $holdStats),
+            'health' => $this->healthBadges($vault, $available, $pending, $reserved, $holdStats, $rate),
             'cashFlow' => $cashFlow,
         ]);
     }
@@ -133,34 +148,41 @@ class VaultDashboardController extends Controller
         float $pending,
         float $reserved,
         $holdStats,
+        float $rate,
     ): array {
         $balance = $vault ? (float) $vault->balance_usd : 0.0;
         $maturedCount = (int) ($holdStats->get(RetentionHold::STATUS_MATURED)?->cnt ?? 0);
+        $fmt = fn (float $usd): string => number_format(round($usd * $rate, 0), 0);
 
         $liquidityStatus = 'critical';
-        $liquidityDetail = 'No vault liquidity';
+        $liquidityDetail = __('health_no_liquidity');
         if ($vault && $balance > 0) {
             $ratio = $balance > 0 ? $available / $balance : 0;
             if ($available <= 0) {
                 $liquidityStatus = 'critical';
-                $liquidityDetail = 'Available cash is zero after commitments';
+                $liquidityDetail = __('health_available_zero');
             } elseif ($ratio < 0.15 || $pending > $available) {
                 $liquidityStatus = 'warning';
-                $liquidityDetail = sprintf('Available %.0f USD (%.0f%% of vault)', $available, $ratio * 100);
+                $liquidityDetail = __('health_available_pct', [
+                    'amount' => $fmt($available),
+                    'pct' => (int) round($ratio * 100),
+                ]);
             } else {
                 $liquidityStatus = 'healthy';
-                $liquidityDetail = sprintf('Available %.0f USD', $available);
+                $liquidityDetail = __('health_available', [
+                    'amount' => $fmt($available),
+                ]);
             }
         }
 
         $insuranceStatus = 'healthy';
-        $insuranceDetail = sprintf('Reserved %.0f USD', $reserved);
+        $insuranceDetail = __('health_reserved', ['amount' => $fmt($reserved)]);
         if ($maturedCount > 0) {
             $insuranceStatus = 'warning';
-            $insuranceDetail = sprintf('%d hold(s) matured — release to payroll', $maturedCount);
+            $insuranceDetail = __('health_matured_holds', ['count' => $maturedCount]);
         } elseif ($reserved > 0 && $balance > 0 && $reserved / $balance > 0.35) {
             $insuranceStatus = 'warning';
-            $insuranceDetail = 'Insurance reserve is a large share of vault';
+            $insuranceDetail = __('health_insurance_large');
         }
 
         $poolSum = (float) ProjectAllocation::query()
@@ -168,34 +190,34 @@ class VaultDashboardController extends Controller
             ->value('total');
 
         $allocStatus = 'critical';
-        $allocDetail = 'No project allocations';
+        $allocDetail = __('health_no_allocations');
         if ($poolSum > 0) {
             $payroll = (float) ProjectAllocation::query()->sum('payroll_pool_usd');
             if ($payroll <= 0) {
                 $allocStatus = 'warning';
-                $allocDetail = 'Payroll pool depleted';
+                $allocDetail = __('health_payroll_depleted');
             } else {
                 $allocStatus = 'healthy';
-                $allocDetail = sprintf('Pools total %.0f USD', $poolSum);
+                $allocDetail = __('health_pools_total', ['amount' => $fmt($poolSum)]);
             }
         }
 
         return [
             [
                 'key' => 'liquidity',
-                'label' => 'Liquidity',
+                'label' => __('health_liquidity'),
                 'status' => $liquidityStatus,
                 'detail' => $liquidityDetail,
             ],
             [
                 'key' => 'insurance',
-                'label' => 'Insurance',
+                'label' => __('health_insurance'),
                 'status' => $insuranceStatus,
                 'detail' => $insuranceDetail,
             ],
             [
                 'key' => 'allocations',
-                'label' => 'Allocations',
+                'label' => __('health_allocations'),
                 'status' => $allocStatus,
                 'detail' => $allocDetail,
             ],
@@ -203,9 +225,9 @@ class VaultDashboardController extends Controller
     }
 
     /**
-     * @return list<array{date: string, label: string, inflow_usd: float, outflow_usd: float, net_usd: float}>
+     * @return list<array{date: string, label: string, inflow_usd: float, outflow_usd: float, net_usd: float, inflow_iqd: float, outflow_iqd: float, net_iqd: float}>
      */
-    protected function cashFlowSeries(?Vault $vault, int $days): array
+    protected function cashFlowSeries(?Vault $vault, int $days, float $rate): array
     {
         $end = Carbon::today();
         $start = $end->copy()->subDays($days - 1);
@@ -219,8 +241,13 @@ class VaultDashboardController extends Controller
                 ->selectRaw("
                     DATE(created_at) as day,
                     SUM(CASE WHEN type IN (?, ?) THEN amount_usd ELSE 0 END) as inflow,
-                    SUM(CASE WHEN type = ? THEN amount_usd ELSE 0 END) as outflow
+                    SUM(CASE WHEN type = ? THEN amount_usd ELSE 0 END) as outflow,
+                    SUM(CASE WHEN type IN (?, ?) THEN amount_iqd ELSE 0 END) as inflow_iqd,
+                    SUM(CASE WHEN type = ? THEN amount_iqd ELSE 0 END) as outflow_iqd
                 ", [
+                    Transaction::TYPE_DEPOSIT,
+                    Transaction::TYPE_ADJUSTMENT,
+                    Transaction::TYPE_WITHDRAWAL,
                     Transaction::TYPE_DEPOSIT,
                     Transaction::TYPE_ADJUSTMENT,
                     Transaction::TYPE_WITHDRAWAL,
@@ -237,12 +264,17 @@ class VaultDashboardController extends Controller
             $row = $rows->get($key);
             $in = round((float) ($row->inflow ?? 0), 2);
             $out = round((float) ($row->outflow ?? 0), 2);
+            $inIqd = round((float) ($row->inflow_iqd ?? ($in * $rate)), 0);
+            $outIqd = round((float) ($row->outflow_iqd ?? ($out * $rate)), 0);
             $series[] = [
                 'date' => $key,
                 'label' => $d->format('M j'),
                 'inflow_usd' => $in,
                 'outflow_usd' => $out,
                 'net_usd' => round($in - $out, 2),
+                'inflow_iqd' => $inIqd,
+                'outflow_iqd' => $outIqd,
+                'net_iqd' => round($inIqd - $outIqd, 0),
             ];
         }
 

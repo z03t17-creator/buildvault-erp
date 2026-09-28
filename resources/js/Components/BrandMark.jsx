@@ -35,7 +35,10 @@ export default function BrandMark({
             </div>
 
             {showTitle && (
-                <div className={isHero ? 'space-y-1' : 'min-w-0 leading-tight'}>
+                <div
+                    className={isHero ? 'space-y-1' : 'min-w-0 leading-tight'}
+                    dir="ltr"
+                >
                     <p
                         className={
                             isHero

@@ -1,3 +1,4 @@
+import useTranslations from '@/hooks/useTranslations';
 import { useEffect, useState } from 'react';
 
 function getPreferredTheme() {
@@ -21,6 +22,7 @@ function applyTheme(theme) {
 
 export default function ThemeToggle({ className = '' }) {
     const [theme, setTheme] = useState('light');
+    const t = useTranslations();
 
     useEffect(() => {
         const initial = getPreferredTheme();
@@ -40,8 +42,8 @@ export default function ThemeToggle({ className = '' }) {
             type="button"
             onClick={toggle}
             className={`inline-flex items-center justify-center rounded-md border border-slate-200 bg-white px-2.5 py-1.5 text-slate-600 transition duration-200 hover:border-emerald-500/40 hover:text-emerald-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-emerald-500/50 dark:hover:text-emerald-400 ${className}`}
-            aria-label={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            aria-label={theme === 'dark' ? t('switch_light_mode') : t('switch_dark_mode')}
+            title={theme === 'dark' ? t('light_mode') : t('dark_mode')}
         >
             {theme === 'dark' ? (
                 <svg className="h-4 w-4 transition-transform duration-200" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
