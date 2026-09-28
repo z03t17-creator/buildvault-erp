@@ -73,7 +73,7 @@ class RoleAccessPhase3Test extends TestCase
             'retention-holds.index',
             'documents.index',
             'imports.index',
-            'exports.index',
+            'reports.index',
             'backups.index',
             'audit.index',
             'users.index',
@@ -106,7 +106,7 @@ class RoleAccessPhase3Test extends TestCase
             'retention-holds.index',
             'documents.index',
             'imports.index',
-            'exports.index',
+            'reports.index',
         ] as $name) {
             $this->actingAs($boss)->get(route($name))->assertOk();
         }
@@ -142,7 +142,7 @@ class RoleAccessPhase3Test extends TestCase
             'retention-holds.index',
             'documents.index',
             'imports.index',
-            'exports.index',
+            'reports.index',
             'backups.index',
             'audit.index',
         ] as $name) {
@@ -198,7 +198,7 @@ class RoleAccessPhase3Test extends TestCase
             'retention-holds.index',
             'documents.index',
             'imports.index',
-            'exports.index',
+            'reports.index',
             'backups.index',
             'audit.index',
             'users.index',

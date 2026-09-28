@@ -1,5 +1,6 @@
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -82,10 +83,9 @@ export default function Index({ settlement, canSave, filters }) {
         >
             <Head title={t('monthly_settlement')} />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-4xl space-y-8 px-4 sm:px-6 lg:px-8">
+            <PageShell className="!space-y-8" narrow>
                     {flash.success && (
-                        <p className="border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
+                        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
                             {flash.success}
                         </p>
                     )}
@@ -307,8 +307,7 @@ export default function Index({ settlement, canSave, filters }) {
                     {!canSave && (
                         <p className="text-xs text-slate-500">{t('settlement_view_only')}</p>
                     )}
-                </div>
-            </div>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

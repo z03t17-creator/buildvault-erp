@@ -1,11 +1,13 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
-import { formatIqd } from '@/lib/numberFormat';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
@@ -25,6 +27,7 @@ export default function Payroll({
     const t = useTranslations();
     const iqd = t('IQD');
     const canVault = useCan('vault.view');
+    const canReports = useCan('vault.exports');
     const [selectedMonth, setSelectedMonth] = useState(month || '');
     const [selectedProject, setSelectedProject] = useState(projectId ? String(projectId) : '');
 
@@ -49,28 +52,35 @@ export default function Payroll({
                     title={t('payroll')}
                     subtitle={t('payroll_subtitle', { month: monthLabel || month })}
                     actions={
-                        canVault ? (
-                            <Link href={route('dashboards.vault')}>
-                                <SecondaryButton type="button">{t('vault')}</SecondaryButton>
-                            </Link>
-                        ) : null
+                        <div className="flex flex-wrap gap-2">
+                            {canReports && (
+                                <Link href={route('reports.index')}>
+                                    <SecondaryButton type="button">{t('reports')}</SecondaryButton>
+                                </Link>
+                            )}
+                            {canVault && (
+                                <Link href={route('dashboards.vault')}>
+                                    <SecondaryButton type="button">{t('vault')}</SecondaryButton>
+                                </Link>
+                            )}
+                        </div>
                     }
                 />
             }
         >
             <Head title={`${t('payroll')} · ${monthLabel || month}`} />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    <section className="bv-surface flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
+            <PageShell>
+                <DataPanel>
+                    <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
                         <div className="flex flex-wrap gap-4">
                             <div>
-                                <label className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('month')}
                                 </label>
                                 <input
                                     type="month"
-                                    className={`mt-1 block ${selectClass}`}
+                                    className={`mt-1.5 block ${selectClass}`}
                                     value={selectedMonth}
                                     onChange={(e) => {
                                         setSelectedMonth(e.target.value);
@@ -79,11 +89,11 @@ export default function Payroll({
                                 />
                             </div>
                             <div>
-                                <label className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('project')}
                                 </label>
                                 <select
-                                    className={`mt-1 block min-w-[12rem] ${selectClass}`}
+                                    className={`mt-1.5 block min-w-[12rem] ${selectClass}`}
                                     value={selectedProject}
                                     onChange={(e) => {
                                         setSelectedProject(e.target.value);
@@ -92,7 +102,9 @@ export default function Payroll({
                                 >
                                     <option value="">{t('all_projects')}</option>
                                     {(projects || []).map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
+                                        </option>
                                     ))}
                                 </select>
                             </div>
@@ -100,171 +112,227 @@ export default function Payroll({
                         <p className="text-xs text-slate-500 dark:text-slate-400">
                             {t('period')} {from} → {to}
                         </p>
-                    </section>
-
-                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                    </div>
+                    <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
                         {t('payroll_net_formula')}
                     </p>
+                </DataPanel>
 
-                    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-                        <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
-                        <SummaryCard label={t('present_days')} value={String(sum.days_present ?? 0)} />
-                        <SummaryCard label={t('ot_hours_label')} value={Number(sum.overtime_hours || 0).toFixed(2)} />
-                        <SummaryCard
-                            label={t('col_penalties')}
-                            value={<MoneyAmount value={sum.penalties_iqd} label={iqd} size="lg" />}
-                        />
-                        <SummaryCard
-                            label={t('col_advances')}
-                            value={<MoneyAmount value={sum.advances_iqd} label={iqd} size="lg" />}
-                        />
-                        <SummaryCard
-                            label={t('col_insurance_holdback')}
-                            value={<MoneyAmount value={sum.insurance_holdback_iqd} label={iqd} size="lg" />}
-                        />
-                    </section>
+                <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
+                    <SummaryCard
+                        label={`${t('col_penalties')} (${iqd})`}
+                        value={<MoneyAmount value={sum.penalties_iqd} label={iqd} size="lg" showLabel={false} />}
+                    />
+                    <SummaryCard
+                        label={`${t('col_advances')} (${iqd})`}
+                        value={<MoneyAmount value={sum.advances_iqd} label={iqd} size="lg" showLabel={false} />}
+                    />
+                    <SummaryCard
+                        label={`${t('col_insurance_holdback')} (${iqd})`}
+                        value={
+                            <MoneyAmount
+                                value={sum.insurance_holdback_iqd}
+                                label={iqd}
+                                size="lg"
+                                showLabel={false}
+                            />
+                        }
+                    />
+                </section>
 
-                    <section className="grid gap-3 sm:grid-cols-2">
-                        <SummaryCard
-                            label={t('gross_payroll')}
-                            value={<MoneyAmount value={sum.gross_pay_iqd} label={iqd} size="xl" />}
-                        />
-                        <SummaryCard
-                            label={t('net_payroll')}
-                            value={<MoneyAmount value={sum.net_pay_iqd} label={iqd} size="xl" accent />}
-                            accent
-                        />
-                    </section>
+                <section className="grid gap-4 sm:grid-cols-2">
+                    <SummaryCard
+                        label={`${t('gross_payroll')} (${iqd})`}
+                        value={<MoneyAmount value={sum.gross_pay_iqd} label={iqd} size="xl" showLabel={false} />}
+                    />
+                    <SummaryCard
+                        label={`${t('net_payroll')} (${iqd})`}
+                        value={
+                            <MoneyAmount
+                                value={sum.net_pay_iqd}
+                                label={iqd}
+                                size="xl"
+                                showLabel={false}
+                                accent
+                            />
+                        }
+                        accent
+                    />
+                </section>
 
-                    <section className="bv-surface">
-                        <div className="bv-table-wrap">
-                        <table className="bv-table min-w-[56rem]">
-                            <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                <tr>
-                                    <th className="px-3 py-2 text-start">{t('Worker')}</th>
-                                    <th className="px-3 py-2 text-start">{t('Project')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_present')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_ot_hrs')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_base')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_ot_pay')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_penalties')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_insurance_holdback')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_advances')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_net')}</th>
+                <DataPanel
+                    title={t('payroll')}
+                    subtitle={`${iqd} · ${monthLabel || month}`}
+                    padded={false}
+                >
+                    <DataTable minWidth="48rem" caption={t('payroll')}>
+                        <thead>
+                            <tr>
+                                <Th>{t('Worker')}</Th>
+                                <Th>{t('Project')}</Th>
+                                <Th align="end">{t('col_base')}</Th>
+                                <Th align="end">{t('col_ot_pay')}</Th>
+                                <Th align="end">{t('col_penalties')}</Th>
+                                <Th align="end">{t('col_insurance_holdback')}</Th>
+                                <Th align="end">{t('col_advances')}</Th>
+                                <Th align="end">{t('col_net')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {list.map((row) => (
+                                <tr key={row.worker_id}>
+                                    <Td>
+                                        <Link
+                                            href={route('workers.show', row.worker_id)}
+                                            className="font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+                                        >
+                                            {row.name}
+                                        </Link>
+                                        {row.role && (
+                                            <span className="ms-2 inline-flex align-middle">
+                                                <StatusBadge status={row.role} />
+                                            </span>
+                                        )}
+                                    </Td>
+                                    <Td muted>{row.project?.name || '—'}</Td>
+                                    <Td align="end">
+                                        <MoneyAmount
+                                            value={row.base_pay_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </Td>
+                                    <Td align="end">
+                                        <MoneyAmount
+                                            value={row.overtime_pay_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </Td>
+                                    <Td align="end" className="text-rose-700 dark:text-rose-300">
+                                        <MoneyAmount
+                                            value={row.penalties_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-rose-700 dark:text-rose-300"
+                                        />
+                                    </Td>
+                                    <Td align="end" className="text-amber-700 dark:text-amber-300">
+                                        <MoneyAmount
+                                            value={row.insurance_holdback_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-amber-700 dark:text-amber-300"
+                                        />
+                                        {row.insurance_holdback_pct != null && (
+                                            <div className="mt-0.5 text-[11px] font-normal text-slate-400">
+                                                {t('holdback_line', {
+                                                    percent: Number(row.insurance_holdback_pct).toFixed(0),
+                                                })}
+                                            </div>
+                                        )}
+                                    </Td>
+                                    <Td align="end" className="text-amber-700 dark:text-amber-300">
+                                        <MoneyAmount
+                                            value={row.advances_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-amber-700 dark:text-amber-300"
+                                        />
+                                    </Td>
+                                    <Td align="end">
+                                        <MoneyAmount
+                                            value={row.net_pay_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="font-semibold"
+                                        />
+                                    </Td>
                                 </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {list.map((row) => (
-                                    <tr key={row.worker_id}>
-                                        <td className="px-3 py-2">
-                                            <Link
-                                                href={route('workers.show', row.worker_id)}
-                                                className="font-medium text-emerald-700 underline dark:text-emerald-400"
-                                            >
-                                                {row.name}
-                                            </Link>
-                                            {row.role && (
-                                                <span className="ms-2 inline-flex align-middle">
-                                                    <StatusBadge status={row.role} />
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
-                                            {row.project?.name || '—'}
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{row.days_present}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{Number(row.overtime_hours).toFixed(2)}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums"><MoneyAmount value={row.base_pay_iqd} label={iqd} size="sm" /></td>
-                                        <td className="px-3 py-2 text-end tabular-nums"><MoneyAmount value={row.overtime_pay_iqd} label={iqd} size="sm" /></td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            <MoneyAmount value={row.penalties_iqd} label={iqd} size="sm" />
-                                            {(row.late_minutes > 0 || row.unexcused_absences > 0 || Number(row.recorded_penalties_iqd) > 0) && (
-                                                <div className="text-[10px] text-slate-400">
-                                                    {row.late_minutes > 0 ? t('minutes_late', { n: row.late_minutes }) : ''}
-                                                    {row.late_minutes > 0 && row.unexcused_absences > 0 ? ' · ' : ''}
-                                                    {row.unexcused_absences > 0 ? t('days_absent', { n: row.unexcused_absences }) : ''}
-                                                    {Number(row.recorded_penalties_iqd) > 0 ? (
-                                                        <>
-                                                            {(row.late_minutes > 0 || row.unexcused_absences > 0) ? ' · ' : ''}
-                                                            {t('recorded_penalties_line', {
-                                                                amount: formatIqd(row.recorded_penalties_iqd, iqd),
-                                                            })}
-                                                        </>
-                                                    ) : null}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            <MoneyAmount value={row.insurance_holdback_iqd} label={iqd} size="sm" />
-                                            {row.insurance_holdback_pct != null && (
-                                                <div className="text-[10px] text-slate-400">
-                                                    {t('holdback_line', {
-                                                        percent: Number(row.insurance_holdback_pct).toFixed(0),
-                                                    })}
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            <MoneyAmount value={row.advances_iqd} label={iqd} size="sm" />
-                                        </td>
-                                        <td className="px-3 py-2 text-end font-sans text-base font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white">
-                                            <MoneyAmount value={row.net_pay_iqd} label={iqd} size="sm" />
-                                        </td>
-                                    </tr>
-                                ))}
-                                {!list.length && (
-                                    <tr>
-                                        <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
-                                            {t('payroll_empty')}
-                                        </td>
-                                    </tr>
-                                )}
-                            </tbody>
-                            {list.length > 0 && (
-                                <tfoot className="border-t border-slate-200 bg-slate-50/80 text-sm font-semibold dark:border-slate-800 dark:bg-slate-950/50">
-                                    <tr>
-                                        <td className="px-3 py-2" colSpan={2}>{t('totals')}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{sum.days_present}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{Number(sum.overtime_hours || 0).toFixed(2)}</td>
-                                        <td className="px-3 py-2" colSpan={2} />
-                                        <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            <MoneyAmount value={sum.penalties_iqd} label={iqd} size="sm" />
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            <MoneyAmount value={sum.insurance_holdback_iqd} label={iqd} size="sm" />
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            <MoneyAmount value={sum.advances_iqd} label={iqd} size="sm" />
-                                        </td>
-                                        <td className="px-3 py-2 text-end font-sans text-base tracking-normal tabular-nums text-emerald-700 dark:text-emerald-400">
-                                            <MoneyAmount value={sum.net_pay_iqd} label={iqd} size="sm" />
-                                        </td>
-                                    </tr>
-                                </tfoot>
+                            ))}
+                            {!list.length && (
+                                <tr>
+                                    <Td colSpan={8} align="center" muted className="py-12">
+                                        {t('payroll_empty')}
+                                    </Td>
+                                </tr>
                             )}
-                        </table>
-                        </div>
-                    </section>
-                </div>
-            </div>
+                        </tbody>
+                        {list.length > 0 && (
+                            <tfoot>
+                                <tr>
+                                    <Td className="font-semibold" colSpan={2}>
+                                        {t('totals')}
+                                    </Td>
+                                    <Td />
+                                    <Td />
+                                    <Td align="end" className="font-semibold text-rose-700 dark:text-rose-300">
+                                        <MoneyAmount
+                                            value={sum.penalties_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-rose-700 dark:text-rose-300"
+                                        />
+                                    </Td>
+                                    <Td align="end" className="font-semibold text-amber-700 dark:text-amber-300">
+                                        <MoneyAmount
+                                            value={sum.insurance_holdback_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-amber-700 dark:text-amber-300"
+                                        />
+                                    </Td>
+                                    <Td align="end" className="font-semibold text-amber-700 dark:text-amber-300">
+                                        <MoneyAmount
+                                            value={sum.advances_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            className="text-amber-700 dark:text-amber-300"
+                                        />
+                                    </Td>
+                                    <Td align="end">
+                                        <MoneyAmount
+                                            value={sum.net_pay_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                            accent
+                                        />
+                                    </Td>
+                                </tr>
+                            </tfoot>
+                        )}
+                    </DataTable>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }
 
 function SummaryCard({ label, value, accent }) {
     return (
-        <div className="bv-card bg-gradient-to-br from-white to-slate-50/80 px-4 py-3 dark:from-slate-900 dark:to-slate-950">
-            <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">{label}</p>
-            <p
-                dir="ltr"
-                className={`mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums sm:text-3xl ${
-                    accent
-                        ? 'text-emerald-700 dark:text-emerald-400'
-                        : 'text-slate-900 dark:text-white'
-                }`}
-            >
-                {value}
+        <div
+            className={
+                'bv-card px-5 py-4 ' +
+                (accent
+                    ? 'border-emerald-300/60 bg-gradient-to-br from-emerald-50/80 to-white dark:border-emerald-700/40 dark:from-emerald-950/30 dark:to-slate-900'
+                    : '')
+            }
+        >
+            <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                {label}
             </p>
+            <div className="mt-2">{value}</div>
         </div>
     );
 }

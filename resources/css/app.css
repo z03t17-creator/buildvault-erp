@@ -60,11 +60,31 @@
 
 @layer components {
     .bv-surface {
-        @apply border border-slate-200/80 bg-white/85 dark:border-slate-700 dark:bg-slate-900/75;
+        @apply rounded-lg border border-slate-200/80 bg-white/90 dark:border-slate-700/80 dark:bg-slate-900/80;
         transition:
             background-color var(--bv-motion) ease,
             border-color var(--bv-motion) ease,
             box-shadow var(--bv-motion) ease;
+    }
+
+    .bv-panel {
+        @apply bv-surface overflow-hidden shadow-sm shadow-slate-900/[0.03] dark:shadow-none;
+    }
+
+    .bv-sidebar {
+        background-image: linear-gradient(
+            180deg,
+            rgb(248 250 252 / 0.65) 0%,
+            transparent 12rem
+        );
+    }
+
+    html.dark .bv-sidebar {
+        background-image: linear-gradient(
+            180deg,
+            rgb(15 23 42 / 0.5) 0%,
+            transparent 12rem
+        );
     }
 
     .bv-badge {
@@ -76,20 +96,29 @@
     }
 
     .bv-table-wrap {
-        @apply -mx-4 overflow-x-auto overscroll-x-contain px-4 sm:mx-0 sm:px-0;
+        @apply overflow-x-auto overscroll-x-contain;
     }
 
     .bv-table {
-        @apply min-w-full text-sm;
+        @apply min-w-full border-collapse text-sm;
+    }
+
+    .bv-table thead {
+        @apply border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-950/40;
     }
 
     .bv-table tbody tr {
-        @apply transition-colors;
+        @apply border-b border-slate-100 last:border-0 dark:border-slate-800/80;
+        transition-property: background-color;
         transition-duration: var(--bv-motion);
     }
 
     .bv-table tbody tr:hover {
-        @apply bg-emerald-50/50 dark:bg-emerald-950/25;
+        @apply bg-slate-50/80 dark:bg-slate-800/40;
+    }
+
+    .bv-table tfoot {
+        @apply border-t border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-950/40;
     }
 
     .bv-row-enter {
@@ -99,13 +128,12 @@
     .bv-card {
         @apply bv-surface;
         transition:
-            transform var(--bv-motion) ease,
             border-color var(--bv-motion) ease,
             background-color var(--bv-motion) ease;
     }
 
     .bv-card:hover {
-        @apply border-emerald-300/60 dark:border-emerald-700/50;
+        @apply border-emerald-300/50 dark:border-emerald-700/40;
     }
 
     .bv-nav-panel {

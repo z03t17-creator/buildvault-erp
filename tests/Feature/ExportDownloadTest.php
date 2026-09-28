@@ -26,14 +26,18 @@ class ExportDownloadTest extends TestCase
         Worker::query()->create(['name' => 'Export Worker']);
 
         $this->actingAs($user)
-            ->get(route('exports.index'))
+            ->get(route('reports.index'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Exports/Index')
+                ->component('Reports/Index')
                 ->has('projects', 1)
                 ->has('workers', 1)
                 ->has('payouts')
                 ->has('default_month'));
+
+        $this->actingAs($user)
+            ->get(route('exports.index'))
+            ->assertRedirect(route('reports.index'));
     }
 
     public function test_project_excel_download(): void

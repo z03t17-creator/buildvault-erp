@@ -24,7 +24,7 @@ class ExportController extends Controller
     {
         $this->authorize('manageExports', Vault::class);
 
-        return Inertia::render('Exports/Index', [
+        return Inertia::render('Reports/Index', [
             'projects' => Project::query()
                 ->orderBy('name')
                 ->get(['id', 'name', 'status', 'location']),

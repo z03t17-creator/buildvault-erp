@@ -1,37 +1,59 @@
 import BrandMark from '@/Components/BrandMark';
 import Dropdown from '@/Components/Dropdown';
 import LocaleSwitcher from '@/Components/LocaleSwitcher';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import useTranslations from '@/hooks/useTranslations';
-import { usePage } from '@inertiajs/react';
-import { useState } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 
-function buildNavItems(t, maturedCount) {
-    return [
-        {
+const NAV_GROUPS = [
+    {
+        id: 'main',
+        labelKey: 'nav_group_main',
+        keys: ['dashboard', 'vault', 'payroll', 'settlements', 'projects', 'workers', 'stock'],
+    },
+    {
+        id: 'ops',
+        labelKey: 'nav_group_operations',
+        keys: ['payouts', 'expenses', 'penalties', 'advances', 'productions', 'insurance'],
+    },
+    {
+        id: 'system',
+        labelKey: 'nav_group_system',
+        keys: ['docs', 'imports', 'reports', 'backups', 'users', 'audit'],
+    },
+];
+
+function buildNavCatalog(t, maturedCount) {
+    return {
+        dashboard: {
             key: 'dashboard',
             href: route('dashboard'),
             active: route().current('dashboard'),
             label: t('dashboard'),
-            primary: true,
         },
-        {
+        vault: {
             key: 'vault',
             href: route('dashboards.vault'),
-            active: route().current('dashboards.vault'),
+            active:
+                route().current('dashboards.vault') ||
+                route().current('vault.*'),
             label: t('vault'),
-            primary: true,
         },
-        {
+        payroll: {
             key: 'payroll',
             href: route('dashboards.payroll'),
             active: route().current('dashboards.payroll'),
             label: t('payroll'),
-            primary: true,
         },
-        {
+        settlements: {
+            key: 'settlements',
+            href: route('settlements.index'),
+            active: route().current('settlements.*'),
+            label: t('settlements'),
+        },
+        projects: {
             key: 'projects',
             href: route('projects.index'),
             active:
@@ -39,115 +61,121 @@ function buildNavItems(t, maturedCount) {
                 route().current('towers.*') ||
                 route().current('floors.*'),
             label: t('projects'),
-            primary: true,
         },
-        {
+        workers: {
             key: 'workers',
             href: route('workers.index'),
             active: route().current('workers.*'),
             label: t('workers'),
-            primary: true,
         },
-        {
+        stock: {
             key: 'stock',
             href: route('stock.dashboard'),
             active: route().current('stock.*'),
             label: t('stock'),
-            primary: true,
         },
-        {
-            key: 'settlements',
-            href: route('settlements.index'),
-            active: route().current('settlements.*'),
-            label: t('settlements'),
-            primary: false,
-        },
-        {
+        payouts: {
             key: 'payouts',
             href: route('payouts.index'),
             active: route().current('payouts.*'),
             label: t('payouts'),
-            primary: false,
         },
-        {
+        expenses: {
             key: 'expenses',
             href: route('expenses.index'),
             active: route().current('expenses.*'),
             label: t('expenses'),
-            primary: false,
         },
-        {
+        penalties: {
             key: 'penalties',
             href: route('penalties.index'),
             active: route().current('penalties.*'),
             label: t('penalties'),
-            primary: false,
         },
-        {
+        advances: {
             key: 'advances',
             href: route('advances.index'),
             active: route().current('advances.*'),
             label: t('advances'),
-            primary: false,
         },
-        {
+        productions: {
             key: 'productions',
             href: route('productions.index'),
             active: route().current('productions.*'),
             label: t('productions'),
-            primary: false,
         },
-        {
-            key: 'docs',
-            href: route('documents.index'),
-            active: route().current('documents.*'),
-            label: t('docs'),
-            primary: false,
-        },
-        {
-            key: 'imports',
-            href: route('imports.index'),
-            active: route().current('imports.*'),
-            label: t('imports'),
-            primary: false,
-        },
-        {
-            key: 'exports',
-            href: route('exports.index'),
-            active: route().current('exports.*'),
-            label: t('exports'),
-            primary: false,
-        },
-        {
-            key: 'backups',
-            href: route('backups.index'),
-            active: route().current('backups.*'),
-            label: t('backups'),
-            primary: false,
-        },
-        {
-            key: 'users',
-            href: route('users.index'),
-            active: route().current('users.*'),
-            label: t('users'),
-            primary: false,
-        },
-        {
-            key: 'audit',
-            href: route('audit.index'),
-            active: route().current('audit.*'),
-            label: t('audit'),
-            primary: false,
-        },
-        {
+        insurance: {
             key: 'insurance',
             href: route('retention-holds.index'),
             active: route().current('retention-holds.*'),
             label: t('insurance'),
-            primary: false,
             badge: maturedCount > 0 ? maturedCount : null,
         },
-    ];
+        docs: {
+            key: 'docs',
+            href: route('documents.index'),
+            active: route().current('documents.*'),
+            label: t('docs'),
+        },
+        imports: {
+            key: 'imports',
+            href: route('imports.index'),
+            active: route().current('imports.*'),
+            label: t('imports'),
+        },
+        reports: {
+            key: 'reports',
+            href: route('reports.index'),
+            active:
+                route().current('reports.*') || route().current('exports.*'),
+            label: t('reports'),
+        },
+        backups: {
+            key: 'backups',
+            href: route('backups.index'),
+            active: route().current('backups.*'),
+            label: t('backups'),
+        },
+        users: {
+            key: 'users',
+            href: route('users.index'),
+            active: route().current('users.*'),
+            label: t('users'),
+        },
+        audit: {
+            key: 'audit',
+            href: route('audit.index'),
+            active: route().current('audit.*'),
+            label: t('audit'),
+        },
+    };
+}
+
+function SidebarNav({ groups, onNavigate }) {
+    return (
+        <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4" aria-label="Primary">
+            {groups.map((group) => (
+                <div key={group.id}>
+                    <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
+                        {group.label}
+                    </p>
+                    <div className="space-y-0.5">
+                        {group.items.map((item) => (
+                            <SidebarNavLink
+                                key={item.key}
+                                href={item.href}
+                                active={item.active}
+                                badge={item.badge}
+                                onClick={onNavigate}
+                            >
+                                {item.label}
+                            </SidebarNavLink>
+                        ))}
+                    </div>
+                </div>
+            ))}
+        </nav>
+    );
 }
 
 export default function AuthenticatedLayout({ header, children }) {
@@ -156,37 +184,128 @@ export default function AuthenticatedLayout({ header, children }) {
     const allowedNav = new Set(page.props.auth?.nav || []);
     const maturedCount = page.props.alerts?.maturedRetentionCount || 0;
     const t = useTranslations();
-    const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
 
-    const navItems = buildNavItems(t, maturedCount).filter((item) => allowedNav.has(item.key));
-    const primaryItems = navItems.filter((item) => item.primary);
-    const secondaryItems = navItems.filter((item) => !item.primary);
-    const secondaryActive = secondaryItems.some((item) => item.active);
-    const insuranceBadge =
-        (page.props.auth?.can?.['vault.retention'] && maturedCount > 0) ? maturedCount : 0;
+    const catalog = buildNavCatalog(t, maturedCount);
+    const navGroups = NAV_GROUPS.map((group) => ({
+        id: group.id,
+        label: t(group.labelKey),
+        items: group.keys
+            .filter((key) => allowedNav.has(key) && catalog[key])
+            .map((key) => catalog[key]),
+    })).filter((group) => group.items.length > 0);
+
+    useEffect(() => {
+        const onKey = (e) => {
+            if (e.key === 'Escape') {
+                setSidebarOpen(false);
+            }
+        };
+        window.addEventListener('keydown', onKey);
+        return () => window.removeEventListener('keydown', onKey);
+    }, []);
+
+    const closeSidebar = () => setSidebarOpen(false);
+
+    const sidebarBody = (
+        <>
+            <div className="flex h-16 shrink-0 items-center border-b border-slate-200/80 px-4 dark:border-slate-800 sm:h-[4.25rem]">
+                <BrandMark size="header" href={route('dashboard')} />
+            </div>
+            <SidebarNav groups={navGroups} onNavigate={closeSidebar} />
+            <div className="mt-auto border-t border-slate-200/80 p-3 dark:border-slate-800">
+                <Link
+                    href={route('profile.edit')}
+                    onClick={closeSidebar}
+                    className={
+                        'flex items-center gap-3 rounded-md px-3 py-2.5 transition ' +
+                        (route().current('profile.*')
+                            ? 'bg-emerald-600/10 ring-1 ring-emerald-500/25 dark:bg-emerald-500/15'
+                            : 'hover:bg-slate-100 dark:hover:bg-slate-800/80')
+                    }
+                >
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                        {(user.name || '?').charAt(0).toUpperCase()}
+                    </span>
+                    <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100" dir="auto">
+                            {user.name}
+                        </span>
+                        <span className="block truncate text-xs text-slate-500">{t('profile')}</span>
+                    </span>
+                </Link>
+            </div>
+        </>
+    );
 
     return (
-        <div className="min-h-screen">
-            <nav className="border-b border-slate-200/80 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {/* Top bar: brand + controls — never overlaps */}
-                    <div className="flex h-16 items-center justify-between gap-3 sm:h-[4.25rem]">
-                        <div className="min-w-0 shrink">
-                            <BrandMark size="header" href={route('dashboard')} />
+        <div className="min-h-screen lg:flex">
+            <aside className="bv-sidebar sticky top-0 z-30 hidden h-screen w-60 shrink-0 flex-col border-e border-slate-200/80 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:flex xl:w-64">
+                {sidebarBody}
+            </aside>
+
+            <div
+                className={
+                    (sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none') +
+                    ' fixed inset-0 z-40 lg:hidden'
+                }
+                aria-hidden={!sidebarOpen}
+            >
+                <div
+                    className={
+                        'absolute inset-0 bg-slate-900/40 transition-opacity ' +
+                        (sidebarOpen ? 'opacity-100' : 'opacity-0')
+                    }
+                    onClick={closeSidebar}
+                />
+                <aside
+                    className={
+                        'bv-sidebar absolute inset-y-0 start-0 flex w-[min(18rem,88vw)] flex-col border-e border-slate-200 bg-white shadow-xl transition-transform dark:border-slate-800 dark:bg-slate-900 ' +
+                        (sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full')
+                    }
+                >
+                    {sidebarBody}
+                </aside>
+            </div>
+
+            <div className="flex min-w-0 flex-1 flex-col">
+                <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+                    <div className="flex h-14 items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
+                        <div className="flex min-w-0 items-center gap-3">
+                            <button
+                                type="button"
+                                onClick={() => setSidebarOpen(true)}
+                                className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
+                                aria-expanded={sidebarOpen}
+                                aria-label={t('toggle_navigation')}
+                            >
+                                <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
+                                    <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M4 6h16M4 12h16M4 18h16"
+                                    />
+                                </svg>
+                            </button>
+                            <div className="min-w-0 lg:hidden">
+                                <BrandMark size="header" href={route('dashboard')} />
+                            </div>
+                            {header && (
+                                <div className="hidden min-w-0 lg:block">{header}</div>
+                            )}
                         </div>
 
                         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                            <div className="hidden lg:block">
-                                <LocaleSwitcher compact />
-                            </div>
+                            <LocaleSwitcher compact />
                             <ThemeToggle />
-                            <div className="relative hidden lg:block">
+                            <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
                                         <span className="inline-flex rounded-md">
                                             <button
                                                 type="button"
-                                                className="inline-flex max-w-[10rem] items-center truncate rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-400/60 hover:text-emerald-800 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-600/50 dark:hover:text-emerald-300"
+                                                className="inline-flex max-w-[11rem] items-center truncate rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-400/60 hover:text-emerald-800 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-600/50 dark:hover:text-emerald-300"
                                             >
                                                 <span className="truncate" dir="auto">
                                                     {user.name}
@@ -207,189 +326,36 @@ export default function AuthenticatedLayout({ header, children }) {
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
-                                    <Dropdown.Content>
-                                        <Dropdown.Link href={route('profile.edit')}>
+                                    <Dropdown.Content contentClasses="py-1 bg-white dark:bg-slate-900">
+                                        <Dropdown.Link
+                                            href={route('profile.edit')}
+                                            className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                        >
                                             {t('profile')}
                                         </Dropdown.Link>
                                         <Dropdown.Link
                                             href={route('logout')}
                                             method="post"
                                             as="button"
+                                            className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
                                         >
                                             {t('log_out')}
                                         </Dropdown.Link>
                                     </Dropdown.Content>
                                 </Dropdown>
                             </div>
-
-                            <button
-                                type="button"
-                                onClick={() =>
-                                    setShowingNavigationDropdown((previousState) => !previousState)
-                                }
-                                className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
-                                aria-expanded={showingNavigationDropdown}
-                                aria-label={t('toggle_navigation')}
-                            >
-                                <svg className="h-6 w-6" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                    <path
-                                        className={!showingNavigationDropdown ? 'inline-flex' : 'hidden'}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={showingNavigationDropdown ? 'inline-flex' : 'hidden'}
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
                         </div>
                     </div>
 
-                    {/* Desktop primary nav — second row, clear hierarchy.
-                        More must sit OUTSIDE overflow-x-auto: CSS forces overflow-y
-                        to auto when overflow-x is non-visible, which clipped the
-                        absolute Dropdown panel so "More" appeared dead on live. */}
-                    <div className="hidden border-t border-slate-200/70 py-1 lg:block dark:border-slate-800">
-                        <div className="flex items-center gap-1">
-                            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                                {primaryItems.map((item) => (
-                                    <NavLink key={item.key} href={item.href} active={item.active}>
-                                        {item.label}
-                                    </NavLink>
-                                ))}
-                            </div>
-
-                            {secondaryItems.length > 0 && (
-                                <div className="relative ms-1 shrink-0">
-                                    <Dropdown>
-                                        <Dropdown.Trigger>
-                                            <button
-                                                type="button"
-                                                className={
-                                                    'inline-flex items-center border-b-2 px-2 pt-1 pb-0.5 text-sm font-medium leading-5 transition ' +
-                                                    (secondaryActive
-                                                        ? 'border-emerald-500 text-slate-900 dark:text-white'
-                                                        : 'border-transparent text-slate-500 hover:border-emerald-300/70 hover:text-emerald-800 dark:text-slate-400 dark:hover:text-emerald-300')
-                                                }
-                                            >
-                                                {t('more')}
-                                                {insuranceBadge > 0 && (
-                                                    <span className="ms-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                                        {insuranceBadge}
-                                                    </span>
-                                                )}
-                                                <svg
-                                                    className="ms-1 h-3.5 w-3.5"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                    aria-hidden
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </Dropdown.Trigger>
-                                        <Dropdown.Content
-                                            align="left"
-                                            width="48"
-                                            contentClasses="max-h-[70vh] overflow-y-auto py-1 bg-white dark:bg-slate-900"
-                                        >
-                                            {secondaryItems.map((item) => (
-                                                <Dropdown.Link
-                                                    key={item.key}
-                                                    href={item.href}
-                                                    className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                                                >
-                                                    <span className="inline-flex items-center gap-2">
-                                                        {item.label}
-                                                        {item.badge != null && (
-                                                            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                                                {item.badge}
-                                                            </span>
-                                                        )}
-                                                    </span>
-                                                </Dropdown.Link>
-                                            ))}
-                                        </Dropdown.Content>
-                                    </Dropdown>
-                                </div>
-                            )}
+                    {header && (
+                        <div className="border-t border-slate-200/60 px-4 py-4 lg:hidden dark:border-slate-800">
+                            {header}
                         </div>
-                    </div>
-                </div>
-
-                {/* Mobile panel */}
-                <div
-                    className={
-                        (showingNavigationDropdown
-                            ? 'max-h-[40rem] opacity-100'
-                            : 'max-h-0 opacity-0 pointer-events-none') +
-                        ' bv-nav-panel overflow-hidden border-t border-slate-200/80 lg:hidden dark:border-slate-800'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        {navItems.map((item) => (
-                            <ResponsiveNavLink
-                                key={item.key}
-                                href={item.href}
-                                active={item.active}
-                            >
-                                <span className="inline-flex items-center gap-2">
-                                    {item.label}
-                                    {item.badge != null && (
-                                        <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                            {item.badge}
-                                        </span>
-                                    )}
-                                </span>
-                            </ResponsiveNavLink>
-                        ))}
-                    </div>
-
-                    <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800">
-                        <LocaleSwitcher />
-                    </div>
-
-                    <div className="border-t border-slate-200 pb-1 pt-4 dark:border-slate-800">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-slate-800 dark:text-slate-100" dir="auto">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-slate-500" dir="ltr">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                {t('profile')}
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink method="post" href={route('logout')} as="button">
-                                {t('log_out')}
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            {header && (
-                <header className="border-b border-slate-200/60 bg-white/60 transition-colors duration-200 dark:border-slate-800 dark:bg-slate-900/40">
-                    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8">
-                        {header}
-                    </div>
+                    )}
                 </header>
-            )}
 
-            <main className="bv-row-enter">{children}</main>
+                <main className="bv-row-enter flex-1">{children}</main>
+            </div>
         </div>
     );
 }

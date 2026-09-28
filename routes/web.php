@@ -114,7 +114,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     Route::middleware('can:manageExports,'.Vault::class)->group(function () {
-        Route::get('/exports', [ExportController::class, 'index'])->name('exports.index');
+        Route::get('/reports', [ExportController::class, 'index'])->name('reports.index');
+        Route::redirect('/exports', '/reports')->name('exports.index');
         Route::get('/exports/projects/{project}/excel', [ExportController::class, 'projectExcel'])
             ->name('exports.project');
         Route::get('/exports/workers/{worker}/pdf', [ExportController::class, 'workerPdf'])

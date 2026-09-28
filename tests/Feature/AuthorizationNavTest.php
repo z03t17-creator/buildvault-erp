@@ -49,6 +49,7 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('backups.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('audit.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('imports.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('reports.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('exports.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('retention-holds.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('workers.index'))->assertForbidden();
@@ -70,7 +71,8 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($admin)->get(route('backups.index'))->assertOk();
         $this->actingAs($admin)->get(route('audit.index'))->assertOk();
         $this->actingAs($admin)->get(route('imports.index'))->assertOk();
-        $this->actingAs($admin)->get(route('exports.index'))->assertOk();
+        $this->actingAs($admin)->get(route('reports.index'))->assertOk();
+        $this->actingAs($admin)->get(route('exports.index'))->assertRedirect(route('reports.index'));
         $this->actingAs($admin)->get(route('retention-holds.index'))->assertOk();
         $this->actingAs($admin)->get(route('workers.index'))->assertOk();
         $this->actingAs($admin)->get(route('payouts.index'))->assertOk();
@@ -91,6 +93,7 @@ class AuthorizationNavTest extends TestCase
                     $forbidden = [
                         'vault',
                         'payroll',
+                        'settlements',
                         'projects',
                         'workers',
                         'attendance',
@@ -102,6 +105,7 @@ class AuthorizationNavTest extends TestCase
                         'docs',
                         'imports',
                         'exports',
+                        'reports',
                         'backups',
                         'audit',
                         'insurance',
@@ -146,6 +150,7 @@ class AuthorizationNavTest extends TestCase
                         'dashboard',
                         'vault',
                         'payroll',
+                        'settlements',
                         'projects',
                         'workers',
                         'stock',
@@ -156,7 +161,7 @@ class AuthorizationNavTest extends TestCase
                         'productions',
                         'docs',
                         'imports',
-                        'exports',
+                        'reports',
                         'backups',
                         'audit',
                         'insurance',
@@ -192,6 +197,7 @@ class AuthorizationNavTest extends TestCase
 
                     return in_array('vault', $keys, true)
                         && in_array('payroll', $keys, true)
+                        && in_array('settlements', $keys, true)
                         && in_array('insurance', $keys, true)
                         && in_array('workers', $keys, true)
                         && in_array('projects', $keys, true)
@@ -200,7 +206,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
                         && in_array('productions', $keys, true)
-                        && in_array('exports', $keys, true)
+                        && in_array('reports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
                         && ! in_array('users', $keys, true);
@@ -244,12 +250,14 @@ class AuthorizationNavTest extends TestCase
 
                     return in_array('vault', $keys, true)
                         && in_array('payroll', $keys, true)
+                        && in_array('settlements', $keys, true)
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
                         && in_array('productions', $keys, true)
                         && in_array('stock', $keys, true)
                         && in_array('projects', $keys, true)
+                        && in_array('reports', $keys, true)
                         && in_array('backups', $keys, true)
                         && in_array('audit', $keys, true)
                         && in_array('insurance', $keys, true);

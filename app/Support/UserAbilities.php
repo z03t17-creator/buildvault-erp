@@ -133,7 +133,7 @@ final class UserAbilities
             'productions' => $can['productions.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,
-            'exports' => $can['vault.exports'] ?? false,
+            'reports' => $can['vault.exports'] ?? false,
             'backups' => $can['vault.backups'] ?? false,
             'audit' => $can['vault.audit'] ?? false,
             'insurance' => ($can['vault.retention'] ?? false) || ($can['vault.retentionManage'] ?? false),
