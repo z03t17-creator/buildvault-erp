@@ -86,7 +86,8 @@ class RetentionHoldService
             Transaction::query()->create([
                 'vault_id' => $hold->vault_id,
                 'project_id' => $hold->project_id,
-                'type' => Transaction::TYPE_ADJUSTMENT,
+                'type' => Transaction::TYPE_INSURANCE,
+                'occurred_on' => now()->toDateString(),
                 'amount_usd' => $amount,
                 'amount_iqd' => round($amount * $rate, 2),
                 'exchange_rate' => $rate,
@@ -95,6 +96,7 @@ class RetentionHoldService
                     $hold->id,
                     $hold->worker_id,
                 ),
+                'reference_code' => 'INS-'.$hold->id,
                 'reference_type' => $hold->getMorphClass(),
                 'reference_id' => $hold->id,
                 'created_by' => $releasedBy,

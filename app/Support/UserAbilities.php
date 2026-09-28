@@ -38,6 +38,7 @@ final class UserAbilities
 
         return [
             'vault.view' => $gate->allows('viewDashboard', Vault::class),
+            'vault.ledger' => $gate->allows('viewLedger', Vault::class),
             'vault.refreshFx' => $gate->allows('refreshFx', Vault::class),
             'vault.overrideFx' => $gate->allows('overrideFx', Vault::class),
             'vault.audit' => $gate->allows('viewAuditLog', Vault::class),

@@ -133,7 +133,7 @@ class PenaltyServiceTest extends TestCase
         $this->assertSame('575.00', (string) $allocation->penalty_pool_usd);
 
         $this->assertDatabaseHas('transactions', [
-            'type' => Transaction::TYPE_ADJUSTMENT,
+            'type' => Transaction::TYPE_PENALTY,
             'reference_id' => $payout->id,
             'amount_usd' => 75,
         ]);

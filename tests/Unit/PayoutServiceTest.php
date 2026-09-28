@@ -123,7 +123,7 @@ class PayoutServiceTest extends TestCase
         );
 
         $this->assertDatabaseHas('transactions', [
-            'type' => Transaction::TYPE_WITHDRAWAL,
+            'type' => Transaction::TYPE_PAYROLL,
             'reference_id' => $payout->id,
             'amount_usd' => 900,
         ]);

@@ -129,7 +129,7 @@ class Phase3ReviewCheckpointTest extends TestCase
         $this->assertSame('550.00', (string) $allocation->penalty_pool_usd); // 500 + 50
 
         $this->assertDatabaseHas('transactions', [
-            'type' => Transaction::TYPE_ADJUSTMENT,
+            'type' => Transaction::TYPE_PENALTY,
             'reference_id' => $payout->id,
             'amount_usd' => 50,
         ]);

@@ -179,7 +179,8 @@ class PenaltyService
                 Transaction::query()->create([
                     'vault_id' => $vault->id,
                     'project_id' => $payout->project_id,
-                    'type' => Transaction::TYPE_ADJUSTMENT,
+                    'type' => Transaction::TYPE_PENALTY,
+                    'occurred_on' => now()->toDateString(),
                     'amount_usd' => $total,
                     'amount_iqd' => round($total * $rate, 2),
                     'exchange_rate' => $rate,
@@ -188,6 +189,7 @@ class PenaltyService
                         $payout->id,
                         $penalties->count(),
                     ),
+                    'reference_code' => 'PEN-PAY-'.$payout->id,
                     'reference_type' => $payout->getMorphClass(),
                     'reference_id' => $payout->id,
                     'created_by' => $payout->created_by,

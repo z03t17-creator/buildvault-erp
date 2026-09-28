@@ -4,9 +4,13 @@ namespace Tests\Unit;
 
 use App\Models\EmployeeAdvance;
 use App\Models\Project;
+use App\Models\Transaction;
+use App\Models\Vault;
 use App\Models\Worker;
 use App\Services\EmployeeAdvanceService;
+use Database\Seeders\VaultSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use InvalidArgumentException;
 use Tests\TestCase;
 
@@ -16,13 +20,28 @@ class EmployeeAdvanceServiceTest extends TestCase
 
     private EmployeeAdvanceService $service;
 
+    private Vault $vault;
+
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new EmployeeAdvanceService;
+
+        Http::fake([
+            '*' => Http::response([
+                'rates' => ['IQD' => 1310],
+            ], 200),
+        ]);
+
+        $this->vault = Vault::query()->create([
+            'name' => VaultSeeder::NAME,
+            'balance_usd' => 10000,
+            'balance_iqd' => 13_100_000,
+        ]);
+
+        $this->service = app(EmployeeAdvanceService::class);
     }
 
-    public function test_create_defaults_remaining_to_amount(): void
+    public function test_create_defaults_remaining_to_amount_and_posts_ledger(): void
     {
         [$worker, $project] = $this->workerAndProject();
 
@@ -37,6 +56,15 @@ class EmployeeAdvanceServiceTest extends TestCase
 
         $this->assertSame('100000.00', (string) $advance->remaining_iqd);
         $this->assertSame(EmployeeAdvance::STATUS_OPEN, $advance->status);
+
+        $this->assertDatabaseHas('transactions', [
+            'type' => Transaction::TYPE_ADVANCE,
+            'reference_id' => $advance->id,
+            'amount_iqd' => 100000,
+        ]);
+
+        $this->vault->refresh();
+        $this->assertSame(13_000_000.0, (float) $this->vault->balance_iqd);
     }
 
     public function test_repay_and_open_payroll_remaining(): void

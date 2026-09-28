@@ -89,7 +89,7 @@ class ExpensePhase6Test extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'id' => $expense->transaction_id,
-            'type' => Transaction::TYPE_WITHDRAWAL,
+            'type' => Transaction::TYPE_EXPENSE,
             'project_id' => $this->project->id,
             'amount_iqd' => 1_310_000,
             'reference_type' => $expense->getMorphClass(),

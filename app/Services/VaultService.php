@@ -62,15 +62,24 @@ class VaultService
         ?Vault $vault = null,
         ?int $createdBy = null,
         ?string $description = null,
+        string $ledgerType = Transaction::TYPE_DEPOSIT,
+        bool $allocatePools = true,
+        ?string $occurredOn = null,
+        ?string $referenceCode = null,
     ): array {
         if ($amountUsd <= 0) {
             throw new InvalidArgumentException('Deposit amount must be greater than zero.');
+        }
+
+        if (! in_array($ledgerType, Transaction::CASH_INFLOW_TYPES, true)) {
+            throw new InvalidArgumentException("Ledger type [{$ledgerType}] is not a cash inflow.");
         }
 
         $amountUsd = round($amountUsd, 2);
         $vault ??= $this->zhakoVault();
         $rate = $this->exchangeRates->getUsdToIqd();
         $amountIqd = round($amountUsd * $rate, 2);
+        $occurredOn ??= now()->toDateString();
 
         $percentages = $this->percentagesFor($project);
         $split = $this->splitAmount($amountUsd, $percentages);
@@ -85,6 +94,10 @@ class VaultService
             $percentages,
             $createdBy,
             $description,
+            $ledgerType,
+            $allocatePools,
+            $occurredOn,
+            $referenceCode,
         ) {
             $vault->refresh();
             $vault->balance_usd = round((float) $vault->balance_usd + $amountUsd, 2);
@@ -110,43 +123,51 @@ class VaultService
                 'profit_pool_usd' => (float) $allocation->profit_pool_usd,
             ];
 
-            $allocation->expenses_pool_usd = round((float) $allocation->expenses_pool_usd + $split['expenses_usd'], 2);
-            $allocation->payroll_pool_usd = round((float) $allocation->payroll_pool_usd + $split['payroll_usd'], 2);
-            $allocation->retention_pool_usd = round((float) $allocation->retention_pool_usd + $split['retention_usd'], 2);
-            $allocation->penalty_pool_usd = round((float) $allocation->penalty_pool_usd + $split['penalty_usd'], 2);
-            $allocation->profit_pool_usd = round((float) $allocation->profit_pool_usd + $split['profit_usd'], 2);
-            $allocation->save();
+            $allocationTxn = null;
+            if ($allocatePools) {
+                $allocation->expenses_pool_usd = round((float) $allocation->expenses_pool_usd + $split['expenses_usd'], 2);
+                $allocation->payroll_pool_usd = round((float) $allocation->payroll_pool_usd + $split['payroll_usd'], 2);
+                $allocation->retention_pool_usd = round((float) $allocation->retention_pool_usd + $split['retention_usd'], 2);
+                $allocation->penalty_pool_usd = round((float) $allocation->penalty_pool_usd + $split['penalty_usd'], 2);
+                $allocation->profit_pool_usd = round((float) $allocation->profit_pool_usd + $split['profit_usd'], 2);
+                $allocation->save();
+            }
 
             $depositTxn = Transaction::query()->create([
                 'vault_id' => $vault->id,
                 'project_id' => $project->id,
-                'type' => Transaction::TYPE_DEPOSIT,
+                'type' => $ledgerType,
+                'occurred_on' => $occurredOn,
                 'amount_usd' => $amountUsd,
                 'amount_iqd' => $amountIqd,
                 'exchange_rate' => $rate,
                 'description' => $description ?? 'Vault deposit',
+                'reference_code' => $referenceCode,
                 'created_by' => $createdBy,
             ]);
 
-            $allocationTxn = Transaction::query()->create([
-                'vault_id' => $vault->id,
-                'project_id' => $project->id,
-                'type' => Transaction::TYPE_ALLOCATION,
-                'amount_usd' => $amountUsd,
-                'amount_iqd' => $amountIqd,
-                'exchange_rate' => $rate,
-                'description' => sprintf(
-                    'Pool split expenses %.2f / payroll %.2f / retention %.2f / penalty %.2f / profit %.2f',
-                    $split['expenses_usd'],
-                    $split['payroll_usd'],
-                    $split['retention_usd'],
-                    $split['penalty_usd'],
-                    $split['profit_usd'],
-                ),
-                'reference_type' => $depositTxn->getMorphClass(),
-                'reference_id' => $depositTxn->id,
-                'created_by' => $createdBy,
-            ]);
+            if ($allocatePools) {
+                $allocationTxn = Transaction::query()->create([
+                    'vault_id' => $vault->id,
+                    'project_id' => $project->id,
+                    'type' => Transaction::TYPE_ALLOCATION,
+                    'occurred_on' => $occurredOn,
+                    'amount_usd' => $amountUsd,
+                    'amount_iqd' => $amountIqd,
+                    'exchange_rate' => $rate,
+                    'description' => sprintf(
+                        'Pool split expenses %.2f / payroll %.2f / retention %.2f / penalty %.2f / profit %.2f',
+                        $split['expenses_usd'],
+                        $split['payroll_usd'],
+                        $split['retention_usd'],
+                        $split['penalty_usd'],
+                        $split['profit_usd'],
+                    ),
+                    'reference_type' => $depositTxn->getMorphClass(),
+                    'reference_id' => $depositTxn->id,
+                    'created_by' => $createdBy,
+                ]);
+            }
 
             $causer = $createdBy ? \App\Models\User::query()->find($createdBy) : null;
 
@@ -166,26 +187,28 @@ class VaultService
                 $causer,
             );
 
-            $this->audit->log(
-                AuditActions::ALLOCATION_CHANGED,
-                sprintf('Allocation pools credited from deposit (%.2f USD) on project #%d', $amountUsd, $project->id),
-                $allocation,
-                [
-                    'project_id' => $project->id,
-                    'reason' => 'vault_deposit',
-                    'before' => $poolsBefore,
-                    'after' => [
-                        'expenses_pool_usd' => (float) $allocation->expenses_pool_usd,
-                        'payroll_pool_usd' => (float) $allocation->payroll_pool_usd,
-                        'retention_pool_usd' => (float) $allocation->retention_pool_usd,
-                        'penalty_pool_usd' => (float) $allocation->penalty_pool_usd,
-                        'profit_pool_usd' => (float) $allocation->profit_pool_usd,
+            if ($allocatePools) {
+                $this->audit->log(
+                    AuditActions::ALLOCATION_CHANGED,
+                    sprintf('Allocation pools credited from deposit (%.2f USD) on project #%d', $amountUsd, $project->id),
+                    $allocation,
+                    [
+                        'project_id' => $project->id,
+                        'reason' => 'vault_deposit',
+                        'before' => $poolsBefore,
+                        'after' => [
+                            'expenses_pool_usd' => (float) $allocation->expenses_pool_usd,
+                            'payroll_pool_usd' => (float) $allocation->payroll_pool_usd,
+                            'retention_pool_usd' => (float) $allocation->retention_pool_usd,
+                            'penalty_pool_usd' => (float) $allocation->penalty_pool_usd,
+                            'profit_pool_usd' => (float) $allocation->profit_pool_usd,
+                        ],
+                        'split' => $split,
+                        'deposit_transaction_id' => $depositTxn->id,
                     ],
-                    'split' => $split,
-                    'deposit_transaction_id' => $depositTxn->id,
-                ],
-                $causer,
-            );
+                    $causer,
+                );
+            }
 
             return [
                 'vault' => $vault->refresh(),
@@ -196,7 +219,13 @@ class VaultService
                 'rate' => $rate,
                 'amount_usd' => $amountUsd,
                 'amount_iqd' => $amountIqd,
-                'split' => $split,
+                'split' => $allocatePools ? $split : [
+                    'expenses_usd' => 0.0,
+                    'payroll_usd' => 0.0,
+                    'retention_usd' => 0.0,
+                    'penalty_usd' => 0.0,
+                    'profit_usd' => 0.0,
+                ],
                 'percentages' => $percentages,
                 'ability' => [
                     'vault_balance_usd' => (float) $vault->balance_usd,
@@ -208,7 +237,9 @@ class VaultService
                         'penalty_usd' => (float) $allocation->penalty_pool_usd,
                         'profit_usd' => (float) $allocation->profit_pool_usd,
                     ],
-                    'note' => 'Full ability-to-pay / liquidity validation lands in Phase 3.3 (LiquidityService).',
+                    'note' => $allocatePools
+                        ? 'Pool allocation applied (optional helper). Liquidity via LiquidityService.'
+                        : 'Deposit posted without pool allocation (ledger-first).',
                 ],
             ];
         });

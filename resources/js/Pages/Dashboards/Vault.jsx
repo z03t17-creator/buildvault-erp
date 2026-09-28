@@ -146,6 +146,7 @@ export default function Vault({
     const { flash, insuranceSettings } = usePage().props;
     const canAudit = useCan('vault.audit');
     const canRetention = useCan('vault.retention');
+    const canLedger = useCan('vault.ledger');
     const holdbackPct = insuranceSettings?.holdback_pct ?? 10;
     const maturityMonths = insuranceSettings?.maturity_months ?? 6;
 
@@ -160,6 +161,11 @@ export default function Vault({
                             <Link href={route('dashboard')}>
                                 <SecondaryButton type="button">{t('home')}</SecondaryButton>
                             </Link>
+                            {canLedger && (
+                                <Link href={route('vault.transactions')}>
+                                    <SecondaryButton type="button">{t('vault_ledger')}</SecondaryButton>
+                                </Link>
+                            )}
                             {canAudit && (
                                 <Link href={route('audit.index')}>
                                     <SecondaryButton type="button">{t('audit_log')}</SecondaryButton>
@@ -199,6 +205,36 @@ export default function Vault({
                                     pending: formatIqd(liq.pending_payouts_iqd, iqd),
                                 })}
                             </p>
+                            <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                        {t('current_balance')}
+                                    </p>
+                                    <MoneyAmount value={vault?.balance_iqd} label={iqd} size="md" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                        {t('available_balance')}
+                                    </p>
+                                    <MoneyAmount value={liq.available_iqd} label={iqd} size="md" />
+                                </div>
+                                <div className="flex flex-col gap-1">
+                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                        {t('reserved_balance')}
+                                    </p>
+                                    <MoneyAmount value={liq.reserved_insurance_iqd} label={iqd} size="md" />
+                                </div>
+                            </div>
+                            {canLedger && (
+                                <p className="mt-3">
+                                    <Link
+                                        href={route('vault.transactions')}
+                                        className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
+                                    >
+                                        {t('view_full_ledger')}
+                                    </Link>
+                                </p>
+                            )}
                         </div>
                     </section>
 

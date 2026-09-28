@@ -4,12 +4,14 @@ namespace Tests\Feature;
 
 use App\Models\EmployeeAdvance;
 use App\Models\Project;
+use App\Models\Vault;
 use App\Models\Worker;
 use App\Support\Roles;
 use Database\Seeders\DemoAdvancesSeeder;
 use Database\Seeders\DemoHierarchySeeder;
 use Database\Seeders\DemoUsersSeeder;
 use Database\Seeders\RoleSeeder;
+use Database\Seeders\VaultSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Inertia\Testing\AssertableInertia as Assert;
@@ -28,6 +30,12 @@ class EmployeeAdvancePhase7Test extends TestCase
                 'result' => 'success',
                 'rates' => ['IQD' => 1310],
             ], 200),
+        ]);
+
+        Vault::query()->create([
+            'name' => VaultSeeder::NAME,
+            'balance_usd' => 50_000,
+            'balance_iqd' => 65_500_000,
         ]);
     }
 
@@ -157,6 +165,11 @@ class EmployeeAdvancePhase7Test extends TestCase
     public function test_demo_advances_seeder_is_idempotent(): void
     {
         $this->seed(RoleSeeder::class);
+        $this->seed(VaultSeeder::class);
+        Vault::query()->where('name', VaultSeeder::NAME)->update([
+            'balance_usd' => 50_000,
+            'balance_iqd' => 65_500_000,
+        ]);
         $this->seed(DemoHierarchySeeder::class);
         $this->seed(DemoUsersSeeder::class);
         $this->seed(DemoAdvancesSeeder::class);

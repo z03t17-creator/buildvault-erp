@@ -23,6 +23,15 @@ class VaultPolicy
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
+    /**
+     * Phase 12 — business transaction ledger (Boss / Accountant / Super Admin).
+     * Stock Manager is intentionally excluded.
+     */
+    public function viewLedger(User $user): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
+    }
+
     public function refreshFx(User $user): bool
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);

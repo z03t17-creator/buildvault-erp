@@ -24,6 +24,7 @@ use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TowerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VaultDashboardController;
+use App\Http\Controllers\VaultTransactionController;
 use App\Http\Controllers\WorkerController;
 use App\Models\Document;
 use App\Models\EmployeeAdvance;
@@ -63,6 +64,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Vault / money dashboards
     Route::middleware('can:viewDashboard,'.Vault::class)->group(function () {
         Route::get('/dashboards/vault', [VaultDashboardController::class, 'show'])->name('dashboards.vault');
+    });
+    Route::middleware('can:viewLedger,'.Vault::class)->group(function () {
+        Route::get('/vault/transactions', [VaultTransactionController::class, 'index'])
+            ->name('vault.transactions');
     });
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])
         ->middleware('can:refreshFx,'.Vault::class)

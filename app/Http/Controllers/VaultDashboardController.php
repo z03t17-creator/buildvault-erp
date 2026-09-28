@@ -235,24 +235,17 @@ class VaultDashboardController extends Controller
 
         $rows = collect();
         if ($vault) {
-            $rows = Transaction::query()
+                $rows = Transaction::query()
                 ->where('vault_id', $vault->id)
                 ->whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
                 ->selectRaw("
                     DATE(created_at) as day,
-                    SUM(CASE WHEN type IN (?, ?) THEN amount_usd ELSE 0 END) as inflow,
-                    SUM(CASE WHEN type = ? THEN amount_usd ELSE 0 END) as outflow,
-                    SUM(CASE WHEN type IN (?, ?) THEN amount_iqd ELSE 0 END) as inflow_iqd,
-                    SUM(CASE WHEN type = ? THEN amount_iqd ELSE 0 END) as outflow_iqd
-                ", [
-                    Transaction::TYPE_DEPOSIT,
-                    Transaction::TYPE_ADJUSTMENT,
-                    Transaction::TYPE_WITHDRAWAL,
-                    Transaction::TYPE_DEPOSIT,
-                    Transaction::TYPE_ADJUSTMENT,
-                    Transaction::TYPE_WITHDRAWAL,
-                ])
+                    SUM(CASE WHEN type IN (".$this->sqlIn(Transaction::CASH_INFLOW_TYPES).") THEN amount_usd ELSE 0 END) as inflow,
+                    SUM(CASE WHEN type IN (".$this->sqlIn(Transaction::CASH_OUTFLOW_TYPES).") THEN amount_usd ELSE 0 END) as outflow,
+                    SUM(CASE WHEN type IN (".$this->sqlIn(Transaction::CASH_INFLOW_TYPES).") THEN amount_iqd ELSE 0 END) as inflow_iqd,
+                    SUM(CASE WHEN type IN (".$this->sqlIn(Transaction::CASH_OUTFLOW_TYPES).") THEN amount_iqd ELSE 0 END) as outflow_iqd
+                ")
                 ->groupBy(DB::raw('DATE(created_at)'))
                 ->orderBy('day')
                 ->get()
@@ -280,5 +273,15 @@ class VaultDashboardController extends Controller
         }
 
         return $series;
+    }
+
+    /**
+     * @param  list<string>  $values
+     */
+    protected function sqlIn(array $values): string
+    {
+        return collect($values)
+            ->map(fn (string $v) => "'".str_replace("'", "''", $v)."'")
+            ->implode(', ');
     }
 }

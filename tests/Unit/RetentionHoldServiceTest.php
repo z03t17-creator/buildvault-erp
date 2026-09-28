@@ -146,7 +146,7 @@ class RetentionHoldServiceTest extends TestCase
         $this->assertSame('2150.00', (string) $allocation->payroll_pool_usd);
 
         $this->assertDatabaseHas('transactions', [
-            'type' => Transaction::TYPE_ADJUSTMENT,
+            'type' => Transaction::TYPE_INSURANCE,
             'reference_id' => $hold->id,
             'amount_usd' => 150,
         ]);

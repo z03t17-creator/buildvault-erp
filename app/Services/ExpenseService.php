@@ -211,7 +211,8 @@ class ExpenseService
             $txn = Transaction::query()->create([
                 'vault_id' => $vault->id,
                 'project_id' => $project->id,
-                'type' => Transaction::TYPE_WITHDRAWAL,
+                'type' => Transaction::TYPE_EXPENSE,
+                'occurred_on' => $expense->expense_date?->toDateString() ?? now()->toDateString(),
                 'amount_usd' => $amountUsd,
                 'amount_iqd' => $amountIqd,
                 'exchange_rate' => $rate,
@@ -221,6 +222,7 @@ class ExpenseService
                     $expense->category,
                     $expense->supplier ? ' · '.$expense->supplier : '',
                 ),
+                'reference_code' => 'EXP-'.$expense->id,
                 'reference_type' => $expense->getMorphClass(),
                 'reference_id' => $expense->id,
                 'created_by' => $approver?->id ?? $expense->created_by,

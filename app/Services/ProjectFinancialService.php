@@ -112,7 +112,7 @@ class ProjectFinancialService
     {
         $total = (float) Transaction::query()
             ->where('project_id', $project->id)
-            ->where('type', Transaction::TYPE_DEPOSIT)
+            ->whereIn('type', Transaction::MONEY_RECEIVED_TYPES)
             ->sum('amount_iqd');
 
         return round($total, 2);
@@ -201,12 +201,19 @@ class ProjectFinancialService
                 $data['vault'] ?? null,
                 $enteredBy,
                 $description !== 'Project receipt' ? $description : 'Project money received',
+                Transaction::TYPE_MONEY_RECEIVED,
+                true,
+                $data['received_on'] ?? now()->toDateString(),
+                $data['reference'] ?? null,
             );
 
             // Prefer the submitted IQD amount on the deposit ledger row (FX rounding).
             $depositTxn = $deposit['deposit_transaction'];
             $depositTxn->amount_iqd = $amountIqd;
             $depositTxn->exchange_rate = $rate;
+            $depositTxn->type = Transaction::TYPE_MONEY_RECEIVED;
+            $depositTxn->occurred_on = $data['received_on'] ?? $depositTxn->occurred_on;
+            $depositTxn->reference_code = $data['reference'] ?? $depositTxn->reference_code;
             $depositTxn->save();
 
             $receipt = ProjectReceipt::query()->create([

@@ -181,7 +181,7 @@ class ProjectFinancialServiceTest extends TestCase
 
         $this->assertDatabaseHas('transactions', [
             'project_id' => $this->project->id,
-            'type' => Transaction::TYPE_DEPOSIT,
+            'type' => Transaction::TYPE_MONEY_RECEIVED,
             'amount_iqd' => 1_310_000,
         ]);
     }
@@ -216,7 +216,7 @@ class ProjectFinancialServiceTest extends TestCase
 
         $this->assertLessThan($before, $after);
         $this->assertSame(1, Transaction::query()
-            ->where('type', Transaction::TYPE_WITHDRAWAL)
+            ->where('type', Transaction::TYPE_EXPENSE)
             ->where('reference_type', $expense->getMorphClass())
             ->where('reference_id', $expense->id)
             ->count());

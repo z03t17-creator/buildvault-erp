@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\EmployeeAdvance;
 use App\Models\Project;
 use App\Models\User;
+use App\Models\Vault;
 use App\Models\Worker;
 use App\Services\EmployeeAdvanceService;
 use App\Support\Roles;
@@ -55,6 +56,15 @@ class DemoAdvancesSeeder extends Seeder
 
         if (! $engineer || ! $laborer) {
             return;
+        }
+
+        // Advances debit vault cash — ensure demo vault can fund seed rows.
+        $vault = Vault::query()->where('name', VaultSeeder::NAME)->first()
+            ?? Vault::query()->orderBy('id')->first();
+        if ($vault && (float) $vault->balance_iqd < 1_000_000) {
+            $vault->balance_usd = round((float) $vault->balance_usd + 10_000, 2);
+            $vault->balance_iqd = round((float) $vault->balance_iqd + 13_100_000, 2);
+            $vault->save();
         }
 
         $service = app(EmployeeAdvanceService::class);
