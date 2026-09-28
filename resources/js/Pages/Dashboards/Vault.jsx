@@ -118,14 +118,14 @@ function CashFlowChart({ series, t }) {
 
 function HealthBadge({ item }) {
     return (
-        <div className="bv-card rounded-sm px-4 py-3">
-            <div className="flex items-center justify-between gap-2">
+        <div className="bv-card flex flex-col gap-1 rounded-sm px-4 py-3">
+            <div className="flex items-start justify-between gap-2">
                 <p className="font-display text-base font-semibold tracking-wide text-slate-900 dark:text-white">
                     {item.label}
                 </p>
                 <StatusBadge status={item.status} />
             </div>
-            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{item.detail}</p>
+            <p className="text-sm text-slate-700 dark:text-slate-300">{item.detail}</p>
         </div>
     );
 }
@@ -236,19 +236,28 @@ export default function Vault({
                             )}
                         </div>
                         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <Stat label={t('retention_pool')} value={<MoneyAmount value={ins.retention_pool_iqd} label={iqd} size="lg" />} />
+                            <Stat
+                                label={t('retention_pool')}
+                                amount={ins.retention_pool_iqd}
+                                iqd={iqd}
+                            />
                             <Stat
                                 label={t('holding')}
-                                value={`${formatIqd(ins.holding_iqd, iqd)} · ${ins.holding_count || 0}`}
+                                amount={ins.holding_iqd}
+                                count={ins.holding_count || 0}
+                                iqd={iqd}
                             />
                             <Stat
                                 label={t('matured')}
-                                value={`${formatIqd(ins.matured_iqd, iqd)} · ${ins.matured_count || 0}`}
+                                amount={ins.matured_iqd}
+                                count={ins.matured_count || 0}
+                                iqd={iqd}
                                 accent={ins.matured_count > 0 ? 'amber' : null}
                             />
                             <Stat
                                 label={t('reserved_liq')}
-                                value={<MoneyAmount value={liq.reserved_insurance_iqd} label={iqd} size="lg" />}
+                                amount={liq.reserved_insurance_iqd}
+                                iqd={iqd}
                             />
                         </div>
                     </section>
@@ -265,17 +274,13 @@ export default function Vault({
                                 [t('pool_penalty'), pool.penalty_iqd],
                                 [t('pool_profit'), pool.profit_iqd],
                             ].map(([label, value]) => (
-                                <div
+                                <Stat
                                     key={label}
+                                    label={label}
+                                    amount={value}
+                                    iqd={iqd}
                                     className="bv-card bg-slate-50/80 px-3 py-3 dark:bg-slate-900/50"
-                                >
-                                    <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
-                                        {label}
-                                    </p>
-                                    <p className="mt-1">
-                                        <MoneyAmount value={value} label={iqd} size="lg" />
-                                    </p>
-                                </div>
+                                />
                             ))}
                         </div>
                     </section>
@@ -295,16 +300,35 @@ export default function Vault({
     );
 }
 
-function Stat({ label, value, accent }) {
+/**
+ * Metric cell: label above amount as one unit.
+ * Count stays outside MoneyAmount so RTL never reorders digits into the IQD label.
+ */
+function Stat({ label, amount, count, iqd, accent, className = '' }) {
     const accentClass =
-        accent === 'amber'
-            ? 'text-amber-800 dark:text-amber-200'
-            : 'text-slate-900 dark:text-white';
+        accent === 'amber' ? 'text-amber-800 dark:text-amber-200' : undefined;
 
     return (
-        <div>
-            <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">{label}</p>
-            <p dir="ltr" className={`mt-1 font-sans text-xl font-semibold tracking-normal tabular-nums sm:text-2xl ${accentClass}`}>{value}</p>
+        <div className={`flex flex-col gap-1 ${className}`.trim()}>
+            <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
+                {label}
+            </p>
+            <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                <MoneyAmount
+                    value={amount}
+                    label={iqd}
+                    size="lg"
+                    className={accentClass}
+                />
+                {count != null && (
+                    <span
+                        dir="ltr"
+                        className="text-sm font-medium text-slate-500 dark:text-slate-400"
+                    >
+                        · {Number(count) || 0}
+                    </span>
+                )}
+            </div>
         </div>
     );
 }
