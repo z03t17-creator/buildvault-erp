@@ -244,14 +244,19 @@ export default function AuthenticatedLayout({ header, children }) {
                         </div>
                     </div>
 
-                    {/* Desktop primary nav — second row, clear hierarchy */}
+                    {/* Desktop primary nav — second row, clear hierarchy.
+                        More must sit OUTSIDE overflow-x-auto: CSS forces overflow-y
+                        to auto when overflow-x is non-visible, which clipped the
+                        absolute Dropdown panel so "More" appeared dead on live. */}
                     <div className="hidden border-t border-slate-200/70 py-1 lg:block dark:border-slate-800">
-                        <div className="flex items-center gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            {primaryItems.map((item) => (
-                                <NavLink key={item.key} href={item.href} active={item.active}>
-                                    {item.label}
-                                </NavLink>
-                            ))}
+                        <div className="flex items-center gap-1">
+                            <div className="flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pb-0.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                                {primaryItems.map((item) => (
+                                    <NavLink key={item.key} href={item.href} active={item.active}>
+                                        {item.label}
+                                    </NavLink>
+                                ))}
+                            </div>
 
                             {secondaryItems.length > 0 && (
                                 <div className="relative ms-1 shrink-0">
@@ -286,9 +291,17 @@ export default function AuthenticatedLayout({ header, children }) {
                                                 </svg>
                                             </button>
                                         </Dropdown.Trigger>
-                                        <Dropdown.Content align="left" width="48">
+                                        <Dropdown.Content
+                                            align="left"
+                                            width="48"
+                                            contentClasses="max-h-[70vh] overflow-y-auto py-1 bg-white dark:bg-slate-900"
+                                        >
                                             {secondaryItems.map((item) => (
-                                                <Dropdown.Link key={item.key} href={item.href}>
+                                                <Dropdown.Link
+                                                    key={item.key}
+                                                    href={item.href}
+                                                    className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
+                                                >
                                                     <span className="inline-flex items-center gap-2">
                                                         {item.label}
                                                         {item.badge != null && (
