@@ -7,10 +7,23 @@ import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
-export default function Index({ projects }) {
+function formatIqd(n, iqdLabel = 'IQD') {
+    return (
+        new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0,
+        }).format(Number(n) || 0) +
+        ' ' +
+        iqdLabel
+    );
+}
+
+export default function Index({ projects, canViewFinancials }) {
     const t = useTranslations();
     const canCreate = useCan('projects.create');
+    const canFinanceAbility = useCan('projects.viewFinancials');
     const list = projects || [];
+    const iqd = t('IQD');
+    const showFinance = canViewFinancials ?? canFinanceAbility;
 
     return (
         <AuthenticatedLayout
@@ -46,40 +59,64 @@ export default function Index({ projects }) {
                         />
                     ) : (
                         <ul className="bv-surface divide-y divide-slate-200 dark:divide-slate-800">
-                            {list.map((project) => (
-                                <li key={project.id}>
-                                    <Link
-                                        href={route('projects.show', project.id)}
-                                        className="flex flex-col gap-3 px-5 py-4 transition duration-200 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 sm:flex-row sm:items-center sm:justify-between"
-                                    >
-                                        <div className="min-w-0">
-                                            <div className="flex flex-wrap items-center gap-2">
-                                                <span className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-                                                    {project.name}
-                                                </span>
-                                                <StatusBadge status={project.status} />
+                            {list.map((project) => {
+                                const fin = project.financial_summary;
+                                return (
+                                    <li key={project.id}>
+                                        <Link
+                                            href={route('projects.show', project.id)}
+                                            className="flex flex-col gap-3 px-5 py-4 transition duration-200 hover:bg-emerald-50/60 dark:hover:bg-emerald-950/20 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div className="min-w-0">
+                                                <div className="flex flex-wrap items-center gap-2">
+                                                    <span className="font-display text-xl font-semibold text-slate-900 dark:text-white">
+                                                        {project.name}
+                                                    </span>
+                                                    <StatusBadge status={project.status} />
+                                                </div>
+                                                <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
+                                                    {[project.client, project.location].filter(Boolean).join(' · ') ||
+                                                        t('location') + ': —'}
+                                                </p>
                                             </div>
-                                            <p className="mt-1 truncate text-sm text-slate-500 dark:text-slate-400">
-                                                {project.location || t('location') + ': —'}
-                                            </p>
-                                        </div>
-                                        <div className="flex gap-6 text-sm text-slate-600 dark:text-slate-300">
-                                            <div>
-                                                <span className="block text-xs uppercase tracking-wider text-slate-400">
-                                                    {t('towers_count')}
-                                                </span>
-                                                <span className="font-semibold">{project.towers_count ?? 0}</span>
+                                            <div className="flex flex-wrap gap-6 text-sm text-slate-600 dark:text-slate-300">
+                                                {showFinance && fin ? (
+                                                    <>
+                                                        <div>
+                                                            <span className="block text-xs uppercase tracking-wider text-slate-400">
+                                                                {t('contract_value')}
+                                                            </span>
+                                                            <span className="font-semibold tabular-nums">
+                                                                {formatIqd(fin.contract_value_iqd, iqd)}
+                                                            </span>
+                                                        </div>
+                                                        <div>
+                                                            <span className="block text-xs uppercase tracking-wider text-slate-400">
+                                                                {t('money_received')}
+                                                            </span>
+                                                            <span className="font-semibold tabular-nums">
+                                                                {formatIqd(fin.money_received_iqd, iqd)}
+                                                            </span>
+                                                        </div>
+                                                    </>
+                                                ) : null}
+                                                <div>
+                                                    <span className="block text-xs uppercase tracking-wider text-slate-400">
+                                                        {t('towers_count')}
+                                                    </span>
+                                                    <span className="font-semibold">{project.towers_count ?? 0}</span>
+                                                </div>
+                                                <div>
+                                                    <span className="block text-xs uppercase tracking-wider text-slate-400">
+                                                        {t('workers_count')}
+                                                    </span>
+                                                    <span className="font-semibold">{project.workers_count ?? 0}</span>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <span className="block text-xs uppercase tracking-wider text-slate-400">
-                                                    {t('workers_count')}
-                                                </span>
-                                                <span className="font-semibold">{project.workers_count ?? 0}</span>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                </li>
-                            ))}
+                                        </Link>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     )}
                 </div>

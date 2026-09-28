@@ -40,4 +40,27 @@ class ProjectPolicy
     {
         return $user->hasRole(Roles::SUPER_ADMIN);
     }
+
+    /**
+     * Financial summary on project show/list (IQD). Stock Manager excluded.
+     */
+    public function viewFinancials(User $user, ?Project $project = null): bool
+    {
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
+    }
+
+    /**
+     * Record money received (vault deposit + receipt). Boss views only.
+     */
+    public function recordReceipt(User $user, ?Project $project = null): bool
+    {
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+        ]);
+    }
 }

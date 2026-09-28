@@ -12,10 +12,15 @@ export default function Create({ statuses }) {
     const t = useTranslations();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
+        client: '',
         description: '',
         location: '',
+        contract_number: '',
         status: 'planning',
-        total_budget_usd: '',
+        start_date: '',
+        end_date: '',
+        contract_value_iqd: '',
+        budget_iqd: '',
     });
 
     return (
@@ -46,8 +51,30 @@ export default function Create({ statuses }) {
                         <InputError message={errors.name} className="mt-1" />
                     </div>
                     <div>
+                        <InputLabel htmlFor="client" value={t('client')} />
+                        <TextInput id="client" className="mt-1 block w-full" value={data.client} onChange={(e) => setData('client', e.target.value)} />
+                        <InputError message={errors.client} className="mt-1" />
+                    </div>
+                    <div>
                         <InputLabel htmlFor="location" value={t('location')} />
                         <TextInput id="location" className="mt-1 block w-full" value={data.location} onChange={(e) => setData('location', e.target.value)} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="contract_number" value={t('contract_number')} />
+                        <TextInput id="contract_number" className="mt-1 block w-full" value={data.contract_number} onChange={(e) => setData('contract_number', e.target.value)} />
+                        <InputError message={errors.contract_number} className="mt-1" />
+                    </div>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor="start_date" value={t('start_date')} />
+                            <TextInput id="start_date" type="date" className="mt-1 block w-full" value={data.start_date} onChange={(e) => setData('start_date', e.target.value)} />
+                            <InputError message={errors.start_date} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="end_date" value={t('end_date')} />
+                            <TextInput id="end_date" type="date" className="mt-1 block w-full" value={data.end_date} onChange={(e) => setData('end_date', e.target.value)} />
+                            <InputError message={errors.end_date} className="mt-1" />
+                        </div>
                     </div>
                     <div>
                         <InputLabel htmlFor="status" value={t('status')} />
@@ -72,9 +99,17 @@ export default function Create({ statuses }) {
                             onChange={(e) => setData('description', e.target.value)}
                         />
                     </div>
-                    <div>
-                        <InputLabel htmlFor="budget" value={t('budget_iqd')} />
-                        <TextInput id="budget" type="number" step="0.01" className="mt-1 block w-full" value={data.total_budget_usd} onChange={(e) => setData('total_budget_usd', e.target.value)} />
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <div>
+                            <InputLabel htmlFor="contract_value_iqd" value={t('contract_value_iqd')} />
+                            <TextInput id="contract_value_iqd" type="number" step="1" min="0" className="mt-1 block w-full" value={data.contract_value_iqd} onChange={(e) => setData('contract_value_iqd', e.target.value)} />
+                            <InputError message={errors.contract_value_iqd} className="mt-1" />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="budget_iqd" value={t('budget_iqd')} />
+                            <TextInput id="budget_iqd" type="number" step="1" min="0" className="mt-1 block w-full" value={data.budget_iqd} onChange={(e) => setData('budget_iqd', e.target.value)} />
+                            <InputError message={errors.budget_iqd} className="mt-1" />
+                        </div>
                     </div>
                     <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
                 </form>

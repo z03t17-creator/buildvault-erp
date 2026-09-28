@@ -33,6 +33,12 @@ final class Permissions
 
     public const PROJECTS_DELETE = 'projects.delete';
 
+    /** Phase 5 — project financial summary (Boss / Accountant / Super Admin). */
+    public const PROJECTS_VIEW_FINANCIALS = 'projects.viewFinancials';
+
+    /** Phase 5 — record money received (Accountant / Super Admin). */
+    public const PROJECTS_RECORD_RECEIPT = 'projects.recordReceipt';
+
     public const TOWERS_VIEW_ANY = 'towers.viewAny';
 
     public const TOWERS_CREATE = 'towers.create';
@@ -113,6 +119,8 @@ final class Permissions
         self::PROJECTS_CREATE,
         self::PROJECTS_UPDATE,
         self::PROJECTS_DELETE,
+        self::PROJECTS_VIEW_FINANCIALS,
+        self::PROJECTS_RECORD_RECEIPT,
         self::TOWERS_VIEW_ANY,
         self::TOWERS_CREATE,
         self::TOWERS_UPDATE,
@@ -167,6 +175,7 @@ final class Permissions
                 self::PROJECTS_VIEW_ANY,
                 self::PROJECTS_CREATE,
                 self::PROJECTS_UPDATE,
+                self::PROJECTS_VIEW_FINANCIALS,
                 self::TOWERS_VIEW_ANY,
                 self::TOWERS_CREATE,
                 self::TOWERS_UPDATE,
@@ -199,6 +208,8 @@ final class Permissions
                 self::VAULT_PAYROLL,
                 self::VAULT_RETENTION,
                 self::PROJECTS_VIEW_ANY,
+                self::PROJECTS_VIEW_FINANCIALS,
+                self::PROJECTS_RECORD_RECEIPT,
                 self::TOWERS_VIEW_ANY,
                 self::FLOORS_VIEW_ANY,
                 self::WORKERS_VIEW_ANY,

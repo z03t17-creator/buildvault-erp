@@ -44,6 +44,8 @@ final class UserAbilities
             'projects.create' => $gate->allows('create', Project::class),
             'projects.update' => $gate->allows('update', new Project),
             'projects.delete' => $gate->allows('delete', new Project),
+            'projects.viewFinancials' => $gate->allows('viewFinancials', new Project),
+            'projects.recordReceipt' => $gate->allows('recordReceipt', new Project),
             'towers.viewAny' => $gate->allows('viewAny', Tower::class),
             'towers.create' => $gate->allows('create', Tower::class),
             'towers.update' => $gate->allows('update', new Tower),

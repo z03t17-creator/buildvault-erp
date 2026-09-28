@@ -33,6 +33,8 @@ class Project extends Model
      */
     protected $attributes = [
         'total_budget_usd' => 0,
+        'contract_value_iqd' => 0,
+        'budget_iqd' => 0,
         'allocation_expenses_pct' => 45.00,
         'allocation_payroll_pct' => 30.00,
         'allocation_insurance_pct' => 10.00,
@@ -46,10 +48,14 @@ class Project extends Model
      */
     protected $fillable = [
         'name',
+        'client',
         'description',
         'logo_path',
         'location',
+        'contract_number',
         'total_budget_usd',
+        'contract_value_iqd',
+        'budget_iqd',
         'allocation_expenses_pct',
         'allocation_payroll_pct',
         'allocation_insurance_pct',
@@ -67,6 +73,8 @@ class Project extends Model
     {
         return [
             'total_budget_usd' => 'decimal:2',
+            'contract_value_iqd' => 'decimal:2',
+            'budget_iqd' => 'decimal:2',
             'allocation_expenses_pct' => 'decimal:2',
             'allocation_payroll_pct' => 'decimal:2',
             'allocation_insurance_pct' => 'decimal:2',
@@ -120,6 +128,11 @@ class Project extends Model
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);
+    }
+
+    public function receipts(): HasMany
+    {
+        return $this->hasMany(ProjectReceipt::class);
     }
 }
 

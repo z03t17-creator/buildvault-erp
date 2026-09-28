@@ -21,10 +21,15 @@ class DemoHierarchySeeder extends Seeder
             ['name' => self::PROJECT_NAME],
             [
                 'description' => 'Sample hierarchy for attendance / payroll demos',
+                'client' => 'Zhako Holdings',
                 'location' => 'Erbil',
+                'contract_number' => 'ZH-2026-001',
                 'status' => Project::STATUS_ACTIVE,
                 'total_budget_usd' => 250000,
+                'contract_value_iqd' => 500_000_000,
+                'budget_iqd' => 327_500_000,
                 'start_date' => now()->subMonths(2)->toDateString(),
+                'end_date' => now()->addMonths(10)->toDateString(),
             ],
         );
 

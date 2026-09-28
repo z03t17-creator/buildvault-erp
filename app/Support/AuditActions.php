@@ -31,6 +31,8 @@ final class AuditActions
 
     public const USER_PASSWORD_RESET = 'user.password_reset';
 
+    public const PROJECT_RECEIPT = 'project.receipt';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
@@ -44,6 +46,7 @@ final class AuditActions
         self::USER_DISABLED,
         self::USER_ENABLED,
         self::USER_PASSWORD_RESET,
+        self::PROJECT_RECEIPT,
     ];
 
     /** @var array<string, string> */
@@ -59,5 +62,6 @@ final class AuditActions
         self::USER_DISABLED => 'User disabled',
         self::USER_ENABLED => 'User enabled',
         self::USER_PASSWORD_RESET => 'User password reset',
+        self::PROJECT_RECEIPT => 'Project money received',
     ];
 }

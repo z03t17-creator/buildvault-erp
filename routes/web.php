@@ -106,6 +106,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('can:viewAny,'.Project::class)->group(function () {
         Route::resource('projects', ProjectController::class);
+        Route::post('/projects/{project}/receipts', [ProjectController::class, 'storeReceipt'])
+            ->name('projects.receipts.store');
         Route::resource('projects.towers', TowerController::class)->shallow();
         Route::resource('towers.floors', FloorController::class)->shallow();
     });

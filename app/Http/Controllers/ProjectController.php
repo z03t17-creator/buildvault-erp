@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\Project\StoreProjectReceiptRequest;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Project;
 use App\Services\ExchangeRateService;
+use App\Services\ProjectFinancialService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -14,15 +17,39 @@ class ProjectController extends Controller
 {
     public function __construct(
         private readonly ExchangeRateService $exchangeRates,
+        private readonly ProjectFinancialService $financials,
     ) {}
+
     public function index(): Response
     {
         $this->authorize('viewAny', Project::class);
 
-        $query = Project::query()->withCount(['towers', 'workers'])->orderByDesc('id');
+        $canFinancials = Gate::allows('viewFinancials', new Project);
+
+        $projects = Project::query()
+            ->withCount(['towers', 'workers'])
+            ->orderByDesc('id')
+            ->get()
+            ->map(function (Project $project) use ($canFinancials) {
+                $row = $project->toArray();
+                $row['towers_count'] = $project->towers_count;
+                $row['workers_count'] = $project->workers_count;
+                if ($canFinancials) {
+                    $summary = $this->financials->summary($project);
+                    $row['financial_summary'] = [
+                        'contract_value_iqd' => $summary['contract_value_iqd'],
+                        'money_received_iqd' => $summary['money_received_iqd'],
+                        'remaining_vs_contract_iqd' => $summary['remaining_vs_contract_iqd'],
+                        'net_position_iqd' => $summary['net_position_iqd'],
+                    ];
+                }
+
+                return $row;
+            });
 
         return Inertia::render('Projects/Index', [
-            'projects' => $query->get(),
+            'projects' => $projects,
+            'canViewFinancials' => $canFinancials,
         ]);
     }
 
@@ -50,11 +77,21 @@ class ProjectController extends Controller
     {
         $this->authorize('view', $project);
 
-        $project->load(['towers.floors', 'workers']);
+        $project->load([
+            'towers.floors',
+            'workers',
+            'receipts' => fn ($q) => $q->with('enteredBy:id,name')->orderByDesc('received_on')->orderByDesc('id'),
+        ]);
+
+        $canFinancials = Gate::allows('viewFinancials', $project);
+        $canRecordReceipt = Gate::allows('recordReceipt', $project);
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
             'exchangeRate' => $this->exchangeRates->getUsdToIqd(),
+            'financialSummary' => $canFinancials ? $this->financials->summary($project) : null,
+            'canViewFinancials' => $canFinancials,
+            'canRecordReceipt' => $canRecordReceipt,
         ]);
     }
 
@@ -88,5 +125,19 @@ class ProjectController extends Controller
         return redirect()
             ->route('projects.index')
             ->with('success', 'Project deleted.');
+    }
+
+    public function storeReceipt(StoreProjectReceiptRequest $request, Project $project): RedirectResponse
+    {
+        $this->authorize('recordReceipt', $project);
+
+        $this->financials->recordReceipt($project, [
+            ...$request->validated(),
+            'entered_by' => $request->user()?->id,
+        ]);
+
+        return redirect()
+            ->route('projects.show', $project)
+            ->with('success', __('Money received recorded.'));
     }
 }
