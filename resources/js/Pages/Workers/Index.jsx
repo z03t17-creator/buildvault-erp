@@ -15,7 +15,7 @@ export default function Index({ workers }) {
             header={
                 <PageHeader
                     title={t('workers')}
-                    subtitle="Crew roster"
+                    subtitle={t('crew_roster')}
                     actions={
                         <Link href={route('workers.create')}>
                             <PrimaryButton type="button">{t('create_worker')}</PrimaryButton>

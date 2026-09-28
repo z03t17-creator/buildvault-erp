@@ -5,12 +5,16 @@ namespace App\Http\Controllers;
 use App\Http\Requests\Project\StoreProjectRequest;
 use App\Http\Requests\Project\UpdateProjectRequest;
 use App\Models\Project;
+use App\Services\ExchangeRateService;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 
 class ProjectController extends Controller
 {
+    public function __construct(
+        private readonly ExchangeRateService $exchangeRates,
+    ) {}
     public function index(): Response
     {
         $this->authorize('viewAny', Project::class);
@@ -54,6 +58,7 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Show', [
             'project' => $project,
+            'exchangeRate' => $this->exchangeRates->getUsdToIqd(),
         ]);
     }
 

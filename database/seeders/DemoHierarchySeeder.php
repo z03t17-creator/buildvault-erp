@@ -17,7 +17,7 @@ class DemoHierarchySeeder extends Seeder
 
     public function run(): void
     {
-        $project = Project::query()->firstOrCreate(
+        $project = Project::query()->updateOrCreate(
             ['name' => self::PROJECT_NAME],
             [
                 'description' => 'Sample hierarchy for attendance / payroll demos',
@@ -37,6 +37,9 @@ class DemoHierarchySeeder extends Seeder
         );
         Floor::query()->firstOrCreate(
             ['tower_id' => $tower->id, 'name' => 'Floor 1'],
+        );
+        Floor::query()->firstOrCreate(
+            ['tower_id' => $tower->id, 'name' => 'Floor 2'],
         );
 
         $workers = [
@@ -67,6 +70,27 @@ class DemoHierarchySeeder extends Seeder
                 'daily_rate_usd' => 25,
                 'overtime_rate_usd' => 35,
                 'national_id_number' => 'DEMO-LAB-002',
+            ],
+            [
+                'name' => 'Demo Laborer Three',
+                'role' => Worker::ROLE_LABORER,
+                'daily_rate_usd' => 28,
+                'overtime_rate_usd' => 40,
+                'national_id_number' => 'DEMO-LAB-003',
+            ],
+            [
+                'name' => 'Demo Subcontractor',
+                'role' => Worker::ROLE_SUBCONTRACTOR,
+                'daily_rate_usd' => 70,
+                'overtime_rate_usd' => 95,
+                'national_id_number' => 'DEMO-SUB-001',
+            ],
+            [
+                'name' => 'Demo Site Guard',
+                'role' => Worker::ROLE_LABORER,
+                'daily_rate_usd' => 22,
+                'overtime_rate_usd' => 30,
+                'national_id_number' => 'DEMO-LAB-004',
             ],
         ];
 

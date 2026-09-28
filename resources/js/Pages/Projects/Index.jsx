@@ -15,7 +15,7 @@ export default function Index({ projects }) {
             header={
                 <PageHeader
                     title={t('projects')}
-                    subtitle="BuildVault · site hierarchy"
+                    subtitle={t('site_hierarchy')}
                     actions={
                         <Link href={route('projects.create')}>
                             <PrimaryButton type="button">{t('create_project')}</PrimaryButton>

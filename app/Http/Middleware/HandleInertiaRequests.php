@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Models\RetentionHold;
+use App\Services\InsuranceSettings;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -31,10 +32,15 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $maturedCount = 0;
+        $insuranceSettings = [
+            'holdback_pct' => InsuranceSettings::DEFAULT_HOLDBACK_PCT,
+            'maturity_months' => InsuranceSettings::DEFAULT_MATURITY_MONTHS,
+        ];
         if ($request->user()) {
             $maturedCount = RetentionHold::query()
                 ->where('status', RetentionHold::STATUS_MATURED)
                 ->count();
+            $insuranceSettings = app(InsuranceSettings::class)->all();
         }
 
         return [
@@ -45,6 +51,7 @@ class HandleInertiaRequests extends Middleware
             'alerts' => [
                 'maturedRetentionCount' => $maturedCount,
             ],
+            'insuranceSettings' => $insuranceSettings,
             'flash' => [
                 'success' => $request->session()->get('success'),
                 'error' => $request->session()->get('error'),

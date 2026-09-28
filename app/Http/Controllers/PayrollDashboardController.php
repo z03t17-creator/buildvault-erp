@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Project;
 use App\Models\Vault;
 use App\Models\Worker;
+use App\Services\ExchangeRateService;
 use App\Services\PayrollService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class PayrollDashboardController extends Controller
 {
     public function __construct(
         private readonly PayrollService $payroll,
+        private readonly ExchangeRateService $exchangeRates,
     ) {}
 
     public function show(Request $request): Response
@@ -34,6 +36,9 @@ class PayrollDashboardController extends Controller
         $projectId = $request->query('project_id');
         $projectId = $projectId !== null && $projectId !== '' ? (int) $projectId : null;
 
+        $rate = $this->exchangeRates->getUsdToIqd();
+        $toIqd = static fn (float $usd): float => round($usd * $rate, 0);
+
         $workersQuery = Worker::query()
             ->with('project:id,name')
             ->orderBy('name');
@@ -44,7 +49,7 @@ class PayrollDashboardController extends Controller
 
         $workers = $workersQuery->get();
 
-        $rows = $workers->map(function (Worker $worker) use ($from, $to) {
+        $rows = $workers->map(function (Worker $worker) use ($from, $to, $toIqd) {
             $calc = $this->payroll->calculate($worker, $from, $to);
             $penalties = round(
                 (float) $calc['late_penalty_usd'] + (float) $calc['absence_penalty_usd'],
@@ -68,6 +73,10 @@ class PayrollDashboardController extends Controller
                 'absence_penalty_usd' => $calc['absence_penalty_usd'],
                 'penalties_usd' => $penalties,
                 'net_pay_usd' => $calc['net_pay_usd'],
+                'base_pay_iqd' => $toIqd((float) $calc['base_pay_usd']),
+                'overtime_pay_iqd' => $toIqd((float) $calc['overtime_pay_usd']),
+                'penalties_iqd' => $toIqd($penalties),
+                'net_pay_iqd' => $toIqd((float) $calc['net_pay_usd']),
             ];
         })->values();
 
@@ -77,6 +86,8 @@ class PayrollDashboardController extends Controller
             'overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
             'penalties_usd' => round((float) $rows->sum('penalties_usd'), 2),
             'net_pay_usd' => round((float) $rows->sum('net_pay_usd'), 2),
+            'penalties_iqd' => (float) $rows->sum('penalties_iqd'),
+            'net_pay_iqd' => (float) $rows->sum('net_pay_iqd'),
         ];
 
         return Inertia::render('Dashboards/Payroll', [
@@ -88,6 +99,7 @@ class PayrollDashboardController extends Controller
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'rows' => $rows,
             'totals' => $totals,
+            'exchangeRate' => $rate,
         ]);
     }
 }

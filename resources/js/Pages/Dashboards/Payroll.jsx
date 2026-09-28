@@ -1,15 +1,19 @@
 import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
+import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
 
-function formatUsd(n) {
-    return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        maximumFractionDigits: 2,
-    }).format(Number(n) || 0);
+function formatIqd(n, iqdLabel = 'IQD') {
+    return (
+        new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0,
+        }).format(Number(n) || 0) +
+        ' ' +
+        iqdLabel
+    );
 }
 
 const selectClass =
@@ -25,6 +29,8 @@ export default function Payroll({
     rows,
     totals,
 }) {
+    const t = useTranslations();
+    const iqd = t('IQD');
     const [selectedMonth, setSelectedMonth] = useState(month || '');
     const [selectedProject, setSelectedProject] = useState(projectId ? String(projectId) : '');
 
@@ -46,17 +52,17 @@ export default function Payroll({
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title="Payroll"
-                    subtitle={`${monthLabel || month} · present days, OT, penalties, net`}
+                    title={t('payroll')}
+                    subtitle={t('payroll_subtitle', { month: monthLabel || month })}
                     actions={
                         <Link href={route('dashboards.vault')}>
-                            <SecondaryButton type="button">Vault</SecondaryButton>
+                            <SecondaryButton type="button">{t('vault')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={`Payroll · ${monthLabel || month}`} />
+            <Head title={`${t('payroll')} · ${monthLabel || month}`} />
 
             <div className="py-8">
                 <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
@@ -64,7 +70,7 @@ export default function Payroll({
                         <div className="flex flex-wrap gap-4">
                             <div>
                                 <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                                    Month
+                                    {t('month')}
                                 </label>
                                 <input
                                     type="month"
@@ -78,7 +84,7 @@ export default function Payroll({
                             </div>
                             <div>
                                 <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
-                                    Project
+                                    {t('project')}
                                 </label>
                                 <select
                                     className={`mt-1 block min-w-[12rem] ${selectClass}`}
@@ -88,7 +94,7 @@ export default function Payroll({
                                         applyFilters(selectedMonth, e.target.value);
                                     }}
                                 >
-                                    <option value="">All projects</option>
+                                    <option value="">{t('all_projects')}</option>
                                     {(projects || []).map((p) => (
                                         <option key={p.id} value={p.id}>{p.name}</option>
                                     ))}
@@ -96,15 +102,15 @@ export default function Payroll({
                             </div>
                         </div>
                         <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Period {from} → {to}
+                            {t('period')} {from} → {to}
                         </p>
                     </section>
 
                     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                        <SummaryCard label="Workers" value={String(sum.workers ?? 0)} />
-                        <SummaryCard label="Present days" value={String(sum.days_present ?? 0)} />
-                        <SummaryCard label="OT hours" value={Number(sum.overtime_hours || 0).toFixed(2)} />
-                        <SummaryCard label="Net payroll" value={formatUsd(sum.net_pay_usd)} accent />
+                        <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
+                        <SummaryCard label={t('present_days')} value={String(sum.days_present ?? 0)} />
+                        <SummaryCard label={t('ot_hours_label')} value={Number(sum.overtime_hours || 0).toFixed(2)} />
+                        <SummaryCard label={t('net_payroll')} value={formatIqd(sum.net_pay_iqd, iqd)} accent />
                     </section>
 
                     <section className="bv-surface">
@@ -112,14 +118,14 @@ export default function Payroll({
                         <table className="bv-table min-w-[48rem]">
                             <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
                                 <tr>
-                                    <th className="px-3 py-2 text-start">Worker</th>
-                                    <th className="px-3 py-2 text-start">Project</th>
-                                    <th className="px-3 py-2 text-end">Present</th>
-                                    <th className="px-3 py-2 text-end">OT hrs</th>
-                                    <th className="px-3 py-2 text-end">Penalties</th>
-                                    <th className="px-3 py-2 text-end">Base</th>
-                                    <th className="px-3 py-2 text-end">OT pay</th>
-                                    <th className="px-3 py-2 text-end">Net</th>
+                                    <th className="px-3 py-2 text-start">{t('Worker')}</th>
+                                    <th className="px-3 py-2 text-start">{t('Project')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_present')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_ot_hrs')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_penalties')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_base')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_ot_pay')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_net')}</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -133,7 +139,9 @@ export default function Payroll({
                                                 {row.name}
                                             </Link>
                                             {row.role && (
-                                                <span className="ms-2 text-xs capitalize text-slate-400">{row.role}</span>
+                                                <span className="ms-2 inline-flex align-middle">
+                                                    <StatusBadge status={row.role} />
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-slate-600 dark:text-slate-300">
@@ -142,26 +150,26 @@ export default function Payroll({
                                         <td className="px-3 py-2 text-end tabular-nums">{row.days_present}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(row.overtime_hours).toFixed(2)}</td>
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            {formatUsd(row.penalties_usd)}
+                                            {formatIqd(row.penalties_iqd, iqd)}
                                             {(row.late_minutes > 0 || row.unexcused_absences > 0) && (
                                                 <div className="text-[10px] text-slate-400">
-                                                    {row.late_minutes > 0 ? `${row.late_minutes}m late` : ''}
+                                                    {row.late_minutes > 0 ? t('minutes_late', { n: row.late_minutes }) : ''}
                                                     {row.late_minutes > 0 && row.unexcused_absences > 0 ? ' · ' : ''}
-                                                    {row.unexcused_absences > 0 ? `${row.unexcused_absences} absent` : ''}
+                                                    {row.unexcused_absences > 0 ? t('days_absent', { n: row.unexcused_absences }) : ''}
                                                 </div>
                                             )}
                                         </td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatUsd(row.base_pay_usd)}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatUsd(row.overtime_pay_usd)}</td>
+                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.base_pay_iqd, iqd)}</td>
+                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.overtime_pay_iqd, iqd)}</td>
                                         <td className="px-3 py-2 text-end font-display text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                                            {formatUsd(row.net_pay_usd)}
+                                            {formatIqd(row.net_pay_iqd, iqd)}
                                         </td>
                                     </tr>
                                 ))}
                                 {!list.length && (
                                     <tr>
                                         <td colSpan={8} className="px-3 py-10 text-center text-slate-500">
-                                            No workers for this filter. Add crew or widen the project filter.
+                                            {t('payroll_empty')}
                                         </td>
                                     </tr>
                                 )}
@@ -169,15 +177,15 @@ export default function Payroll({
                             {list.length > 0 && (
                                 <tfoot className="border-t border-slate-200 bg-slate-50/80 text-sm font-semibold dark:border-slate-800 dark:bg-slate-950/50">
                                     <tr>
-                                        <td className="px-3 py-2" colSpan={2}>Totals</td>
+                                        <td className="px-3 py-2" colSpan={2}>{t('totals')}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{sum.days_present}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(sum.overtime_hours || 0).toFixed(2)}</td>
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            {formatUsd(sum.penalties_usd)}
+                                            {formatIqd(sum.penalties_iqd, iqd)}
                                         </td>
                                         <td className="px-3 py-2" colSpan={2} />
                                         <td className="px-3 py-2 text-end font-display text-base tabular-nums text-emerald-700 dark:text-emerald-400">
-                                            {formatUsd(sum.net_pay_usd)}
+                                            {formatIqd(sum.net_pay_iqd, iqd)}
                                         </td>
                                     </tr>
                                 </tfoot>

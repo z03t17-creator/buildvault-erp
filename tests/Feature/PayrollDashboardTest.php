@@ -7,11 +7,28 @@ use App\Models\Project;
 use App\Models\User;
 use App\Models\Worker;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PayrollDashboardTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Http::fake([
+            'api.exchangerate-api.com/*' => Http::response([
+                'result' => 'success',
+                'rates' => ['IQD' => 1310],
+            ], 200),
+            '*' => Http::response([
+                'result' => 'success',
+                'rates' => ['IQD' => 1310],
+            ], 200),
+        ]);
+    }
 
     public function test_payroll_dashboard_monthly_summary_per_worker(): void
     {
@@ -63,7 +80,11 @@ class PayrollDashboardTest extends TestCase
             ->where('rows.0.overtime_hours', fn ($v) => (float) $v === 2.0)
             ->where('rows.0.penalties_usd', fn ($v) => (float) $v === 55.0) // 20*0.25 + 50 absence
             ->where('rows.0.net_pay_usd', fn ($v) => (float) $v === 195.0) // 100 base + 150 OT - 55
-            ->where('totals.net_pay_usd', fn ($v) => (float) $v === 195.0));
+            ->where('totals.net_pay_usd', fn ($v) => (float) $v === 195.0)
+            ->where('rows.0.penalties_iqd', fn ($v) => (float) $v === 72050.0)
+            ->where('rows.0.net_pay_iqd', fn ($v) => (float) $v === 255450.0)
+            ->where('totals.net_pay_iqd', fn ($v) => (float) $v === 255450.0)
+            ->where('exchangeRate', 1310));
     }
 
     public function test_payroll_dashboard_filters_by_project(): void

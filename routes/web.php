@@ -113,6 +113,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
 
     Route::get('/retention-holds', [RetentionHoldController::class, 'index'])->name('retention-holds.index');
+    Route::put('/retention-holds/settings', [RetentionHoldController::class, 'updateSettings'])
+        ->name('retention-holds.settings');
     Route::post('/retention-holds/{retentionHold}/release', [RetentionHoldController::class, 'release'])
         ->name('retention-holds.release');
 });

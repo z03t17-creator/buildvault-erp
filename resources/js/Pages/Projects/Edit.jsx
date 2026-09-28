@@ -58,7 +58,7 @@ export default function Edit({ project, statuses }) {
                             onChange={(e) => setData('status', e.target.value)}
                         >
                             {(statuses || []).map((s) => (
-                                <option key={s} value={s}>{s.replace(/_/g, ' ')}</option>
+                                <option key={s} value={s}>{t(`status_${s}`, s.replace(/_/g, ' '))}</option>
                             ))}
                         </select>
                     </div>
@@ -73,7 +73,7 @@ export default function Edit({ project, statuses }) {
                         />
                     </div>
                     <div>
-                        <InputLabel htmlFor="budget" value={t('budget_usd')} />
+                        <InputLabel htmlFor="budget" value={t('budget_iqd')} />
                         <TextInput id="budget" type="number" step="0.01" className="mt-1 block w-full" value={data.total_budget_usd} onChange={(e) => setData('total_budget_usd', e.target.value)} />
                     </div>
                     <PrimaryButton disabled={processing}>{t('update')}</PrimaryButton>

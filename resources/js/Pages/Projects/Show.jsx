@@ -5,7 +5,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, usePage } from '@inertiajs/react';
 
 function Meta({ label, value }) {
     return (
@@ -16,8 +16,21 @@ function Meta({ label, value }) {
     );
 }
 
-export default function Show({ project }) {
+function formatIqd(n, iqdLabel = 'IQD') {
+    return (
+        new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0,
+        }).format(Number(n) || 0) +
+        ' ' +
+        iqdLabel
+    );
+}
+
+export default function Show({ project, exchangeRate }) {
     const t = useTranslations();
+    const iqd = t('IQD');
+    const rate = exchangeRate || 1310;
+    const budgetIqd = Math.round(Number(project.total_budget_usd || 0) * Number(rate));
     const towers = project.towers || [];
     const workers = project.workers || [];
 
@@ -58,7 +71,7 @@ export default function Show({ project }) {
                             {project.description || '—'}
                         </p>
                         <dl className="mt-6 grid gap-4 sm:grid-cols-3">
-                            <Meta label={t('budget_usd')} value={project.total_budget_usd} />
+                            <Meta label={t('budget_iqd')} value={formatIqd(budgetIqd, iqd)} />
                             <Meta label={t('towers_count')} value={towers.length} />
                             <Meta label={t('workers_count')} value={workers.length} />
                         </dl>

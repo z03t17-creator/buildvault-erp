@@ -15,7 +15,7 @@ class CheckRetentionMaturity extends Command
     /**
      * @var string
      */
-    protected $description = 'Mark insurance retention holds as matured when the 6-month date is reached';
+    protected $description = 'Mark insurance retention holds as matured when the configured return date is reached';
 
     public function handle(RetentionHoldService $holds): int
     {

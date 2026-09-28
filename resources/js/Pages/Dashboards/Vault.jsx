@@ -150,7 +150,9 @@ export default function Vault({
     const liq = liquidity || {};
     const ins = insurance || {};
     const pool = pools || {};
-    const { flash } = usePage().props;
+    const { flash, insuranceSettings } = usePage().props;
+    const holdbackPct = insuranceSettings?.holdback_pct ?? 10;
+    const maturityMonths = insuranceSettings?.maturity_months ?? 6;
 
     return (
         <AuthenticatedLayout
@@ -221,7 +223,10 @@ export default function Vault({
                                     {t('insurance_reserve')}
                                 </h3>
                                 <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                    {t('insurance_reserve_hint')}
+                                    {t('insurance_reserve_hint', {
+                                        percent: holdbackPct,
+                                        months: maturityMonths,
+                                    })}
                                 </p>
                             </div>
                             <Link

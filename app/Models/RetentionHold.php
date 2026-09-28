@@ -22,7 +22,7 @@ class RetentionHold extends Model
     ];
 
     /**
-     * Months until insurance is returned to staff (locked product rule).
+     * Default months until insurance is returned to staff (overridable via settings).
      */
     public const MATURITY_MONTHS = 6;
 
@@ -62,11 +62,13 @@ class RetentionHold extends Model
     }
 
     /**
-     * Default maturity = hold_start + 6 months (shared insurance reserve).
+     * Maturity = hold_start + configured months (default 6; admin-editable).
      */
-    public static function maturityFrom(Carbon|string $holdStart): Carbon
+    public static function maturityFrom(Carbon|string $holdStart, ?int $months = null): Carbon
     {
-        return Carbon::parse($holdStart)->startOfDay()->addMonthsNoOverflow(self::MATURITY_MONTHS);
+        $months ??= app(\App\Services\InsuranceSettings::class)->maturityMonths();
+
+        return Carbon::parse($holdStart)->startOfDay()->addMonthsNoOverflow(max(1, $months));
     }
 
     public function vault(): BelongsTo

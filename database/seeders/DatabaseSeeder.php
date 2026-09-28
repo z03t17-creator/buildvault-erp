@@ -18,8 +18,10 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             UserSeeder::class,
             VaultSeeder::class,
+            InsuranceSettingsSeeder::class,
             DemoHierarchySeeder::class,
             AttendanceSeeder::class,
+            DemoInsuranceSeeder::class,
             DemoUsersSeeder::class,
         ]);
     }

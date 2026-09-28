@@ -20,6 +20,7 @@ class PayoutService
         private readonly ExchangeRateService $exchangeRates,
         private readonly PenaltyService $penalties,
         private readonly AuditLogger $audit,
+        private readonly InsuranceSettings $insurance,
     ) {}
 
     /**
@@ -241,7 +242,7 @@ class PayoutService
     }
 
     /**
-     * Default holdback: insurance % of payroll payouts with a worker (shared 10% reserve).
+     * Default holdback: configurable insurance % of payroll payouts with a worker.
      */
     protected function defaultHoldback(Project $project, string $category, float $amountUsd, mixed $workerId): float
     {
@@ -249,7 +250,7 @@ class PayoutService
             return 0.0;
         }
 
-        $pct = (float) $project->allocation_insurance_pct;
+        $pct = $this->insurance->holdbackPercent();
 
         return round($amountUsd * ($pct / 100), 2);
     }
