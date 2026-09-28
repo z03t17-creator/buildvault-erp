@@ -21,11 +21,6 @@ class Floor extends Model
         return $this->belongsTo(Tower::class);
     }
 
-    public function attendances(): HasMany
-    {
-        return $this->hasMany(Attendance::class);
-    }
-
     public function payouts(): HasMany
     {
         return $this->hasMany(Payout::class);

@@ -63,10 +63,6 @@ final class Permissions
 
     public const WORKERS_DELETE = 'workers.delete';
 
-    public const ATTENDANCE_VIEW_ANY = 'attendance.viewAny';
-
-    public const ATTENDANCE_MANAGE = 'attendance.manage';
-
     public const PAYOUTS_VIEW_ANY = 'payouts.viewAny';
 
     public const PAYOUTS_CREATE = 'payouts.create';
@@ -175,8 +171,6 @@ final class Permissions
         self::WORKERS_CREATE,
         self::WORKERS_UPDATE,
         self::WORKERS_DELETE,
-        self::ATTENDANCE_VIEW_ANY,
-        self::ATTENDANCE_MANAGE,
         self::PAYOUTS_VIEW_ANY,
         self::PAYOUTS_CREATE,
         self::PAYOUTS_APPROVE,
@@ -248,8 +242,6 @@ final class Permissions
                 self::WORKERS_CREATE,
                 self::WORKERS_UPDATE,
                 self::WORKERS_DELETE,
-                self::ATTENDANCE_VIEW_ANY,
-                self::ATTENDANCE_MANAGE,
                 self::PAYOUTS_VIEW_ANY,
                 self::PENALTIES_VIEW_ANY,
                 self::ADVANCES_VIEW_ANY,
@@ -276,7 +268,6 @@ final class Permissions
                 self::TOWERS_VIEW_ANY,
                 self::FLOORS_VIEW_ANY,
                 self::WORKERS_VIEW_ANY,
-                self::ATTENDANCE_VIEW_ANY,
                 self::PAYOUTS_VIEW_ANY,
                 self::PAYOUTS_CREATE,
                 self::PAYOUTS_APPROVE,

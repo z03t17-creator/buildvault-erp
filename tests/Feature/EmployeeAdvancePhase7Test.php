@@ -127,7 +127,7 @@ class EmployeeAdvancePhase7Test extends TestCase
             'overtime_rate_usd' => 100,
         ]);
 
-        // 1 present day → base 100; 10% insurance = 10; advance 13100 IQD = 10 USD @ 1310
+        // base 100; 10% insurance = 10; advance 13100 IQD = 10 USD @ 1310
         EmployeeAdvance::query()->create([
             'worker_id' => $worker->id,
             'project_id' => $project->id,
@@ -138,16 +138,6 @@ class EmployeeAdvancePhase7Test extends TestCase
             'repayment_method' => EmployeeAdvance::REPAY_PAYROLL,
             'status' => EmployeeAdvance::STATUS_OPEN,
             'entered_by' => $admin->id,
-        ]);
-
-        \App\Models\Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-01',
-            'status' => \App\Models\Attendance::STATUS_PRESENT,
-            'late_minutes' => 0,
-            'overtime_hours' => 0,
-            'check_in' => '08:00',
-            'check_out' => '17:00',
         ]);
 
         $this->actingAs($admin)

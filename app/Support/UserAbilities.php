@@ -2,7 +2,6 @@
 
 namespace App\Support;
 
-use App\Models\Attendance;
 use App\Models\Document;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
@@ -68,8 +67,6 @@ final class UserAbilities
             'workers.create' => $gate->allows('create', Worker::class),
             'workers.update' => $gate->allows('update', new Worker),
             'workers.delete' => $gate->allows('delete', new Worker),
-            'attendance.viewAny' => $gate->allows('viewAny', Attendance::class),
-            'attendance.manage' => $gate->allows('manage', Attendance::class),
             'payouts.viewAny' => $gate->allows('viewAny', Payout::class),
             'payouts.create' => $gate->allows('create', Payout::class),
             'payouts.approve' => $gate->allows('approve', new Payout),

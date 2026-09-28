@@ -24,6 +24,7 @@ class StoreWorkerRequest extends FormRequest
             'role' => ['nullable', 'string', Rule::in(Worker::ROLES)],
             'daily_rate_usd' => ['nullable', 'numeric', 'min:0'],
             'overtime_rate_usd' => ['nullable', 'numeric', 'min:0'],
+            'manual_ot_hours' => ['nullable', 'numeric', 'min:0'],
             'spending_limit_usd' => ['nullable', 'numeric', 'min:0'],
             'phone' => ['nullable', 'string', 'max:50'],
             'national_id_number' => ['nullable', 'string', 'max:100'],

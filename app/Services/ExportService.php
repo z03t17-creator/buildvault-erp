@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Attendance;
 use App\Models\Document;
 use App\Models\Payout;
 use App\Models\Project;
@@ -23,17 +22,11 @@ class ExportService
     ) {}
 
     /**
-     * Multi-sheet project workbook: attendances, payouts, holds, documents.
+     * Multi-sheet project workbook: payouts, holds, documents.
      */
     public function downloadProjectExcel(Project $project): BinaryFileResponse
     {
         $project->loadMissing(['workers:id,name,project_id']);
-
-        $attendances = Attendance::query()
-            ->whereHas('worker', fn ($q) => $q->where('project_id', $project->id))
-            ->with(['worker:id,name', 'floor:id,name'])
-            ->orderBy('date')
-            ->get();
 
         $payouts = Payout::query()
             ->where('project_id', $project->id)
@@ -54,20 +47,6 @@ class ExportService
             ->get();
 
         $sheets = [
-            [
-                'name' => 'Attendances',
-                'headers' => ['worker', 'date', 'check_in', 'check_out', 'status', 'late_minutes', 'overtime_hours', 'floor'],
-                'rows' => $attendances->map(fn (Attendance $a) => [
-                    $a->worker?->name,
-                    optional($a->date)->toDateString(),
-                    $a->check_in,
-                    $a->check_out,
-                    $a->status,
-                    $a->late_minutes,
-                    $a->overtime_hours,
-                    $a->floor?->name,
-                ])->all(),
-            ],
             [
                 'name' => 'Payouts',
                 'headers' => ['id', 'category', 'worker', 'amount_usd', 'amount_iqd', 'exchange_rate', 'retention_holdback', 'status', 'notes'],
@@ -125,7 +104,7 @@ class ExportService
     }
 
     /**
-     * Worker profile PDF with attendance + payroll summary for a period.
+     * Worker profile PDF with payroll summary for a period.
      */
     public function downloadWorkerPdf(
         Worker $worker,
@@ -135,14 +114,6 @@ class ExportService
         $worker->loadMissing(['project:id,name']);
         $from = Carbon::parse($from)->startOfDay();
         $to = Carbon::parse($to)->endOfDay();
-
-        $attendances = Attendance::query()
-            ->where('worker_id', $worker->id)
-            ->whereDate('date', '>=', $from->toDateString())
-            ->whereDate('date', '<=', $to->toDateString())
-            ->with('floor:id,name')
-            ->orderBy('date')
-            ->get();
 
         $documents = Document::query()
             ->where('worker_id', $worker->id)
@@ -165,7 +136,6 @@ class ExportService
             'worker' => $worker,
             'from' => $from->toDateString(),
             'to' => $to->toDateString(),
-            'attendances' => $attendances,
             'documents' => $documents,
             'payroll' => $payroll,
             'payouts' => $payouts,
@@ -200,8 +170,8 @@ class ExportService
 
     protected function safeFilename(string $name): string
     {
-        $slug = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $name) ?: 'export';
+        $safe = preg_replace('/[^A-Za-z0-9_\-]+/', '_', $name) ?: 'export';
 
-        return trim($slug, '_');
+        return trim($safe, '_');
     }
 }

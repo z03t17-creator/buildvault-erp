@@ -44,7 +44,7 @@ export default function Index({ projects, workers, payouts, default_month }) {
                                 Per-project Excel
                             </h3>
                             <p className="mt-1 text-sm text-slate-500">
-                                Sheets: attendances, payouts, insurance holds, documents.
+                                Sheets: payouts, insurance holds, documents.
                             </p>
                             <div className="mt-4">
                                 <InputLabel value="Project" />
@@ -78,7 +78,7 @@ export default function Index({ projects, workers, payouts, default_month }) {
                                 Per-worker PDF
                             </h3>
                             <p className="mt-1 text-sm text-slate-500">
-                                Profile, photo/ID refs, attendance, payroll summary for the month.
+                                Profile, photo/ID refs, payroll summary for the month.
                             </p>
                             <div className="mt-4 grid gap-3 sm:grid-cols-2">
                                 <div>

@@ -20,6 +20,7 @@ export default function Create({ projects, roles }) {
         project_id: '',
         daily_rate_usd: '',
         overtime_rate_usd: '',
+        manual_ot_hours: '',
         spending_limit_usd: '',
         phone: '',
         national_id_number: '',
@@ -79,6 +80,19 @@ export default function Create({ projects, roles }) {
                         <div>
                             <InputLabel htmlFor="overtime_rate_usd" value={t('overtime_rate')} />
                             <MoneyInput id="overtime_rate_usd" allowDecimals className="mt-1 block w-full" value={data.overtime_rate_usd} onValueChange={(raw) => setData('overtime_rate_usd', raw)} />
+                        </div>
+                        <div>
+                            <InputLabel htmlFor="manual_ot_hours" value={t('manual_ot_hours')} />
+                            <TextInput
+                                id="manual_ot_hours"
+                                type="number"
+                                step="0.25"
+                                min="0"
+                                className="mt-1 block w-full"
+                                value={data.manual_ot_hours}
+                                onChange={(e) => setData('manual_ot_hours', e.target.value)}
+                            />
+                            <InputError message={errors.manual_ot_hours} className="mt-1" />
                         </div>
                         <div>
                             <InputLabel htmlFor="phone" value={t('phone')} />

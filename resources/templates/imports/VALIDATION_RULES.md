@@ -37,24 +37,6 @@ Headers: `name`, `location`, `status`, `total_budget_usd`, `start_date`, `end_da
 - status defaults to planning when empty.
 - Dates use YYYY-MM-DD.
 
-## Attendances (`attendances`)
-
-Headers: `worker_name`, `date`, `check_in`, `check_out`, `status`, `late_minutes`, `overtime_hours`, `floor_name`
-
-| Column | Rule |
-|---|---|
-| `worker_name` | `required|string|exists:workers,name` |
-| `date` | `required|date` |
-| `check_in` | `nullable|date_format:H:i` |
-| `check_out` | `nullable|date_format:H:i|after:check_in` |
-| `status` | `nullable|in:present,late,absent_unexcused,leave_paid,leave_sick` |
-| `late_minutes` | `nullable|integer|min:0` |
-| `overtime_hours` | `nullable|numeric|min:0` |
-| `floor_name` | `nullable|string|exists:floors,name` |
-
-- worker_name must match an existing worker.
-- Duplicate worker+date rows are rejected.
-
 ## Payouts (`payouts`)
 
 Headers: `project_name`, `category`, `amount_usd`, `worker_name`, `retention_holdback`, `notes`

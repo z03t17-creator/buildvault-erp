@@ -31,7 +31,6 @@ class DatabaseSeeder extends Seeder
         // Ordered once — demo seeders must not re-$this->call each other.
         $this->call([
             DemoHierarchySeeder::class,
-            AttendanceSeeder::class,
             DemoUsersSeeder::class,
             DemoInsuranceSeeder::class,
             DemoExpensesSeeder::class,

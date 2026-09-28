@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Attendance;
 use App\Models\EmployeeAdvance;
 use App\Models\Penalty;
 use App\Models\Project;
@@ -49,16 +48,6 @@ class PayrollInsurancePhase8Test extends TestCase
             'name' => 'Triple Deduct Worker',
             'daily_rate_usd' => 100,
             'overtime_rate_usd' => 100,
-        ]);
-
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-01',
-            'status' => Attendance::STATUS_PRESENT,
-            'late_minutes' => 0,
-            'overtime_hours' => 0,
-            'check_in' => '08:00',
-            'check_out' => '17:00',
         ]);
 
         // Advance 13,100 IQD = 10 USD @ 1310
@@ -159,16 +148,6 @@ class PayrollInsurancePhase8Test extends TestCase
             'name' => 'Suggest Worker',
             'daily_rate_usd' => 50,
             'overtime_rate_usd' => 50,
-        ]);
-
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => now()->toDateString(),
-            'status' => Attendance::STATUS_PRESENT,
-            'late_minutes' => 0,
-            'overtime_hours' => 0,
-            'check_in' => '08:00',
-            'check_out' => '17:00',
         ]);
 
         $this->actingAs($accountant)

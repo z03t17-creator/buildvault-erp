@@ -20,7 +20,7 @@ class DemoHierarchySeeder extends Seeder
         $project = Project::query()->updateOrCreate(
             ['name' => self::PROJECT_NAME],
             [
-                'description' => 'Sample hierarchy for attendance / payroll demos',
+                'description' => 'Sample hierarchy for payroll demos',
                 'client' => 'Zhako Holdings',
                 'location' => 'Erbil',
                 'contract_number' => 'ZH-2026-001',

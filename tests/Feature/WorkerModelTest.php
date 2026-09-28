@@ -34,7 +34,6 @@ class WorkerModelTest extends TestCase
         $this->assertSame('45.50', (string) $worker->daily_rate_usd);
         $this->assertSame('60.25', (string) $worker->overtime_rate_usd);
         $this->assertSame('0.00', (string) $worker->spending_limit_usd);
-        $this->assertTrue(method_exists($worker, 'attendances'));
         $this->assertTrue(method_exists($worker, 'payouts'));
     }
 

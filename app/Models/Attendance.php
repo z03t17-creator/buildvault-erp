@@ -5,6 +5,9 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * Legacy attendance rows. Table retained for existing DBs; unused by payroll/UI.
+ */
 class Attendance extends Model
 {
     public const STATUS_PRESENT = 'present';

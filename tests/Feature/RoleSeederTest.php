@@ -59,7 +59,6 @@ class RoleSeederTest extends TestCase
         $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_MANAGE_ITEMS));
         $this->assertFalse($stock->hasPermissionTo(Permissions::WORKERS_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::PAYOUTS_VIEW_ANY));
-        $this->assertFalse($stock->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_VIEW));
     }
 

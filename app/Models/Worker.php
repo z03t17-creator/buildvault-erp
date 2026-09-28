@@ -32,6 +32,7 @@ class Worker extends Model
         'role' => self::ROLE_LABORER,
         'daily_rate_usd' => 0,
         'overtime_rate_usd' => 0,
+        'manual_ot_hours' => 0,
         'spending_limit_usd' => 0,
     ];
 
@@ -45,6 +46,7 @@ class Worker extends Model
         'role',
         'daily_rate_usd',
         'overtime_rate_usd',
+        'manual_ot_hours',
         'spending_limit_usd',
         'phone',
         'national_id_number',
@@ -66,6 +68,7 @@ class Worker extends Model
         return [
             'daily_rate_usd' => 'decimal:2',
             'overtime_rate_usd' => 'decimal:2',
+            'manual_ot_hours' => 'decimal:2',
             'spending_limit_usd' => 'decimal:2',
         ];
     }
@@ -93,14 +96,6 @@ class Worker extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    /**
-     * Attendance rows (table/model fleshed out in Phase 2.3).
-     */
-    public function attendances(): HasMany
-    {
-        return $this->hasMany(Attendance::class);
     }
 
     public function payouts(): HasMany

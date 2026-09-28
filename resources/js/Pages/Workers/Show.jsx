@@ -116,6 +116,11 @@ export default function Show({ worker }) {
                         <Field label={`${t('overtime_rate')} (${iqd})`}>
                             <MoneyAmount value={worker.overtime_rate_usd} label={iqd} size="sm" showLabel={false} />
                         </Field>
+                        <Field label={t('manual_ot_hours')}>
+                            <span dir="ltr" className="font-sans tabular-nums">
+                                {Number(worker.manual_ot_hours || 0).toFixed(2)}
+                            </span>
+                        </Field>
                         <Field label={`${t('spending_limit')} (${iqd})`}>
                             <MoneyAmount value={worker.spending_limit_usd} label={iqd} size="sm" showLabel={false} />
                         </Field>

@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Attendance;
-use App\Models\Floor;
 use App\Models\Import;
 use App\Models\ImportDetail;
 use App\Models\Payout;
@@ -115,43 +113,6 @@ class ImportService
                 'notes' => [
                     'status defaults to planning when empty.',
                     'Dates use YYYY-MM-DD.',
-                ],
-            ],
-            Import::TYPE_ATTENDANCES => [
-                'label' => 'Attendances',
-                'headers' => [
-                    'worker_name',
-                    'date',
-                    'check_in',
-                    'check_out',
-                    'status',
-                    'late_minutes',
-                    'overtime_hours',
-                    'floor_name',
-                ],
-                'sample' => [
-                    'Ali Hassan',
-                    '2026-09-15',
-                    '08:00',
-                    '17:00',
-                    Attendance::STATUS_PRESENT,
-                    '0',
-                    '0',
-                    'Floor 1',
-                ],
-                'rules' => [
-                    'worker_name' => 'required|string|exists:workers,name',
-                    'date' => 'required|date',
-                    'check_in' => 'nullable|date_format:H:i',
-                    'check_out' => 'nullable|date_format:H:i|after:check_in',
-                    'status' => 'nullable|in:'.implode(',', Attendance::STATUSES),
-                    'late_minutes' => 'nullable|integer|min:0',
-                    'overtime_hours' => 'nullable|numeric|min:0',
-                    'floor_name' => 'nullable|string|exists:floors,name',
-                ],
-                'notes' => [
-                    'worker_name must match an existing worker.',
-                    'Duplicate worker+date rows are rejected.',
                 ],
             ],
             Import::TYPE_PAYOUTS => [
@@ -616,22 +577,6 @@ class ImportService
             }
         }
 
-        if ($type === Import::TYPE_ATTENDANCES && ! empty($row['worker_name']) && ! empty($row['date'])) {
-            $worker = Worker::query()->where('name', $row['worker_name'])->first();
-            if ($worker) {
-                $dateKey = 'att:'.$worker->id.':'.$row['date'];
-                if (isset($batchKeys[$dateKey])) {
-                    $errors['date'][] = 'Duplicate worker+date in this file.';
-                } else {
-                    $batchKeys[$dateKey] = true;
-                }
-
-                if (Attendance::query()->where('worker_id', $worker->id)->whereDate('date', $row['date'])->exists()) {
-                    $errors['date'][] = 'Attendance already exists for this worker and date.';
-                }
-            }
-        }
-
         $payload = $row;
 
         return [
@@ -644,7 +589,7 @@ class ImportService
     /**
      * @param  array<string, mixed>  $payload
      */
-    public function applyRow(string $type, array $payload, ?int $userId = null): Project|Worker|Attendance|Payout
+    public function applyRow(string $type, array $payload, ?int $userId = null): Project|Worker|Payout
     {
         return match ($type) {
             Import::TYPE_PROJECTS => Project::query()->create([
@@ -668,18 +613,6 @@ class ImportService
                 'phone' => $payload['phone'] ?? null,
                 'national_id_number' => $payload['national_id_number'] ?? null,
             ]),
-            Import::TYPE_ATTENDANCES => Attendance::query()->create([
-                'worker_id' => Worker::query()->where('name', $payload['worker_name'])->value('id'),
-                'floor_id' => ! empty($payload['floor_name'])
-                    ? Floor::query()->where('name', $payload['floor_name'])->value('id')
-                    : null,
-                'date' => $payload['date'],
-                'check_in' => $payload['check_in'] ?? null,
-                'check_out' => $payload['check_out'] ?? null,
-                'status' => $payload['status'] ?: Attendance::STATUS_PRESENT,
-                'late_minutes' => $payload['late_minutes'] ?? 0,
-                'overtime_hours' => $payload['overtime_hours'] ?? 0,
-            ]),
             Import::TYPE_PAYOUTS => $this->payouts->create([
                 'project_id' => Project::query()->where('name', $payload['project_name'])->value('id'),
                 'category' => $payload['category'],
@@ -697,19 +630,14 @@ class ImportService
         };
     }
 
-    protected function canSafelyDelete(Project|Worker|Attendance|Payout $record): bool
+    protected function canSafelyDelete(Project|Worker|Payout $record): bool
     {
         if ($record instanceof Payout) {
             return $record->status === Payout::STATUS_PENDING;
         }
 
-        if ($record instanceof Attendance) {
-            return true;
-        }
-
         if ($record instanceof Worker) {
-            return ! $record->attendances()->exists()
-                && ! $record->payouts()->exists();
+            return ! $record->payouts()->exists();
         }
 
         if ($record instanceof Project) {

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Attendance;
 use App\Models\Document;
 use App\Models\Payout;
 use App\Models\Project;
@@ -49,14 +48,6 @@ class ExportDownloadTest extends TestCase
             'name' => 'Excel Worker',
         ]);
 
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-15',
-            'status' => Attendance::STATUS_PRESENT,
-            'check_in' => '08:00',
-            'check_out' => '17:00',
-        ]);
-
         Document::query()->create([
             'project_id' => $project->id,
             'worker_id' => $worker->id,
@@ -89,12 +80,6 @@ class ExportDownloadTest extends TestCase
             'project_id' => $project->id,
             'name' => 'PDF Worker',
             'daily_rate_usd' => 50,
-        ]);
-
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => Carbon::parse('2026-09-10')->toDateString(),
-            'status' => Attendance::STATUS_PRESENT,
         ]);
 
         $response = $this->actingAs($user)->get(route('exports.worker', [

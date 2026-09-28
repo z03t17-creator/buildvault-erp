@@ -62,16 +62,10 @@ class PayrollDashboardController extends Controller
                 'project' => $worker->project
                     ? ['id' => $worker->project->id, 'name' => $worker->project->name]
                     : null,
-                'days_present' => $calc['days_present'],
                 'overtime_hours' => $calc['overtime_hours'],
-                'late_minutes' => $calc['late_minutes'],
-                'unexcused_absences' => $calc['unexcused_absences'],
                 'base_pay_usd' => $calc['base_pay_usd'],
                 'overtime_pay_usd' => $calc['overtime_pay_usd'],
                 'gross_pay_usd' => $calc['gross_pay_usd'],
-                'late_penalty_usd' => $calc['late_penalty_usd'],
-                'absence_penalty_usd' => $calc['absence_penalty_usd'],
-                'attendance_penalties_usd' => $calc['attendance_penalties_usd'],
                 'recorded_penalties_usd' => $calc['recorded_penalties_usd'],
                 'recorded_penalties_iqd' => $calc['recorded_penalties_iqd'],
                 'penalties_usd' => $penalties,
@@ -91,7 +85,6 @@ class PayrollDashboardController extends Controller
 
         $totals = [
             'workers' => $rows->count(),
-            'days_present' => (int) $rows->sum('days_present'),
             'overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
             'penalties_usd' => round((float) $rows->sum('penalties_usd'), 2),
             'advances_iqd' => (float) $rows->sum('advances_iqd'),
@@ -100,6 +93,8 @@ class PayrollDashboardController extends Controller
             'penalties_iqd' => (float) $rows->sum('penalties_iqd'),
             'gross_pay_iqd' => (float) $rows->sum('gross_pay_iqd'),
             'net_pay_iqd' => (float) $rows->sum('net_pay_iqd'),
+            'base_pay_iqd' => (float) $rows->sum('base_pay_iqd'),
+            'overtime_pay_iqd' => (float) $rows->sum('overtime_pay_iqd'),
         ];
 
         return Inertia::render('Dashboards/Payroll', [

@@ -33,7 +33,6 @@ class AuthorizationNavTest extends TestCase
         $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_VIEW));
         $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_PAYROLL));
         $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_BACKUPS));
-        $this->assertFalse($stock->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::PAYOUTS_VIEW_ANY));
         $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_VIEW_ANY));
         $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_STOCK_OUT));

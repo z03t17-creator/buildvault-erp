@@ -12,15 +12,12 @@ class Import extends Model
 
     public const TYPE_PROJECTS = 'projects';
 
-    public const TYPE_ATTENDANCES = 'attendances';
-
     public const TYPE_PAYOUTS = 'payouts';
 
     /** @var list<string> */
     public const TYPES = [
         self::TYPE_WORKERS,
         self::TYPE_PROJECTS,
-        self::TYPE_ATTENDANCES,
         self::TYPE_PAYOUTS,
     ];
 

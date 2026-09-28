@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\Attendance;
 use App\Models\Project;
 use App\Models\Setting;
-use App\Models\User;
 use App\Models\Worker;
 use App\Services\InsuranceSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,30 +41,9 @@ class PayrollDashboardTest extends TestCase
         $worker = Worker::query()->create([
             'project_id' => $project->id,
             'name' => 'Pay Dash Worker',
-            'daily_rate_usd' => 50,
+            'daily_rate_usd' => 100,
             'overtime_rate_usd' => 75,
-        ]);
-
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-01',
-            'status' => Attendance::STATUS_PRESENT,
-            'late_minutes' => 0,
-            'overtime_hours' => 2,
-        ]);
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-02',
-            'status' => Attendance::STATUS_LATE,
-            'late_minutes' => 20,
-            'overtime_hours' => 0,
-        ]);
-        Attendance::query()->create([
-            'worker_id' => $worker->id,
-            'date' => '2026-09-03',
-            'status' => Attendance::STATUS_ABSENT_UNEXCUSED,
-            'late_minutes' => 0,
-            'overtime_hours' => 0,
+            'manual_ot_hours' => 2,
         ]);
 
         $response = $this->actingAs($user)->get(route('dashboards.payroll', [
@@ -81,15 +58,16 @@ class PayrollDashboardTest extends TestCase
             ->where('to', '2026-09-30')
             ->has('rows', 1)
             ->where('rows.0.worker_id', $worker->id)
-            ->where('rows.0.days_present', 2)
             ->where('rows.0.overtime_hours', fn ($v) => (float) $v === 2.0)
-            ->where('rows.0.penalties_usd', fn ($v) => (float) $v === 55.0) // 20*0.25 + 50 absence
-            ->where('rows.0.net_pay_usd', fn ($v) => (float) $v === 195.0) // 100 base + 150 OT - 55
-            ->where('totals.net_pay_usd', fn ($v) => (float) $v === 195.0)
-            ->where('rows.0.penalties_iqd', fn ($v) => (float) $v === 72050.0)
-            ->where('rows.0.net_pay_iqd', fn ($v) => (float) $v === 255450.0)
-            ->where('totals.net_pay_iqd', fn ($v) => (float) $v === 255450.0)
-            ->where('exchangeRate', 1310));
+            ->where('rows.0.base_pay_usd', fn ($v) => (float) $v === 100.0)
+            ->where('rows.0.overtime_pay_usd', fn ($v) => (float) $v === 150.0)
+            ->where('rows.0.penalties_usd', fn ($v) => (float) $v === 0.0)
+            ->where('rows.0.net_pay_usd', fn ($v) => (float) $v === 250.0)
+            ->where('totals.net_pay_usd', fn ($v) => (float) $v === 250.0)
+            ->where('rows.0.net_pay_iqd', fn ($v) => (float) $v === 327500.0)
+            ->where('totals.net_pay_iqd', fn ($v) => (float) $v === 327500.0)
+            ->where('exchangeRate', 1310)
+            ->missing('rows.0.days_present'));
     }
 
     public function test_payroll_dashboard_filters_by_project(): void

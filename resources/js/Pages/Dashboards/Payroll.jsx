@@ -211,6 +211,13 @@ export default function Payroll({
                                             size="sm"
                                             showLabel={false}
                                         />
+                                        {Number(row.overtime_hours) > 0 && (
+                                            <div className="mt-0.5 text-[11px] font-normal text-slate-400">
+                                                {t('manual_ot_hours_line', {
+                                                    hours: Number(row.overtime_hours).toFixed(2),
+                                                })}
+                                            </div>
+                                        )}
                                     </Td>
                                     <Td align="end" className="text-rose-700 dark:text-rose-300">
                                         <MoneyAmount

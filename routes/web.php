@@ -143,7 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('workers', WorkerController::class);
     });
 
-    // Phase 10 — Stock / inventory (Attendance UI removed; payroll still uses attendance data)
+    // Phase 10 — Stock / inventory (attendance UI/data removed from product surface)
     Route::middleware('can:viewAny,'.StockItem::class)->group(function () {
         Route::get('/stock', StockDashboardController::class)->name('stock.dashboard');
         Route::get('/stock/items', [StockItemController::class, 'index'])->name('stock.items.index');
