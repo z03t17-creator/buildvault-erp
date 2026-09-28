@@ -1,6 +1,10 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -8,11 +12,14 @@ import { Head, Link } from '@inertiajs/react';
 
 function Stat({ label, value }) {
     return (
-        <div className="border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
+        <div className="rounded-lg border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </div>
-            <div className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white">
+            <div
+                dir="ltr"
+                className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white"
+            >
                 {value}
             </div>
         </div>
@@ -26,6 +33,7 @@ export default function Dashboard({ summary, recentMovements }) {
     const canOut = useCan('stock.stockOut');
     const canManage = useCan('stock.manageItems');
     const movements = recentMovements || [];
+    const categories = summary?.by_category || [];
 
     return (
         <AuthenticatedLayout
@@ -51,13 +59,20 @@ export default function Dashboard({ summary, recentMovements }) {
             }
         >
             <Head title={t('stock_dashboard')} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+            <PageShell className="!space-y-8">
+                <DataPanel>
                     <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
                         <Stat
                             label={t('stock_value_iqd')}
-                            value={<MoneyAmount value={summary?.stock_value_iqd ?? 0} label={iqd} size="xl" />}
+                            value={
+                                <MoneyAmount
+                                    value={summary?.stock_value_iqd ?? 0}
+                                    label={iqd}
+                                    size="xl"
+                                    showLabel={false}
+                                />
+                            }
                         />
                         <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
                         <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
@@ -66,80 +81,95 @@ export default function Dashboard({ summary, recentMovements }) {
                         <Stat label={t('stock_today_in_count')} value={summary?.today_in_count ?? 0} />
                         <Stat label={t('stock_today_out_count')} value={summary?.today_out_count ?? 0} />
                     </div>
-
-                    <div className="flex flex-wrap gap-2">
-                        <Link
-                            href={route('stock.items.index')}
-                            className="inline-flex border border-slate-200 bg-white px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-900"
-                        >
-                            {t('stock_products')}
+                    <div className="mt-4 flex flex-wrap gap-2">
+                        <Link href={route('stock.items.index')}>
+                            <SecondaryButton type="button">{t('stock_products')}</SecondaryButton>
                         </Link>
-                        <Link
-                            href={route('stock.suppliers.index')}
-                            className="inline-flex border border-slate-200 bg-white px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-900"
-                        >
-                            {t('suppliers')}
+                        <Link href={route('stock.suppliers.index')}>
+                            <SecondaryButton type="button">{t('suppliers')}</SecondaryButton>
                         </Link>
-                        <Link
-                            href={route('stock.movements.index')}
-                            className="inline-flex border border-slate-200 bg-white px-3 py-2 text-sm font-medium dark:border-slate-700 dark:bg-slate-900"
-                        >
-                            {t('stock_movements')}
+                        <Link href={route('stock.movements.index')}>
+                            <SecondaryButton type="button">{t('stock_movements')}</SecondaryButton>
                         </Link>
                         {canManage && (
-                            <Link
-                                href={route('stock.items.create')}
-                                className="inline-flex border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm font-medium text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100"
-                            >
-                                {t('new_product')}
+                            <Link href={route('stock.items.create')}>
+                                <SecondaryButton type="button">{t('new_product')}</SecondaryButton>
                             </Link>
                         )}
                     </div>
+                </DataPanel>
 
-                    <section>
-                        <h3 className="mb-3 font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            {t('stock_recent_movements')}
-                        </h3>
-                        <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                            <table className="min-w-full text-sm">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                    <tr>
-                                        <th className="px-3 py-2 text-start">{t('type')}</th>
-                                        <th className="px-3 py-2 text-start">{t('product')}</th>
-                                        <th className="px-3 py-2 text-start">{t('quantity')}</th>
-                                        <th className="px-3 py-2 text-start">{t('date')}</th>
-                                        <th className="px-3 py-2 text-start">{t('user')}</th>
-                                        <th className="px-3 py-2 text-start">{t('project')}</th>
-                                        <th className="px-3 py-2 text-start">{t('qty_change')}</th>
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <DataPanel title={t('role_panel_stock_by_category')} padded={false}>
+                        <DataTable minWidth="24rem" caption={t('role_panel_stock_by_category')}>
+                            <thead>
+                                <tr>
+                                    <Th>{t('category')}</Th>
+                                    <Th align="end">{t('role_stat_items')}</Th>
+                                    <Th align="end">{t('stock_value_iqd')}</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {categories.map((c) => (
+                                    <tr key={c.category}>
+                                        <Td>
+                                            {c.category === 'uncategorized'
+                                                ? t('uncategorized')
+                                                : c.category}
+                                        </Td>
+                                        <Td align="end">{c.items_count}</Td>
+                                        <Td align="end">
+                                            <MoneyAmount
+                                                value={c.value_iqd}
+                                                label={iqd}
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {movements.map((m) => (
-                                        <tr key={m.id}>
-                                            <td className="px-3 py-2 uppercase">{m.type}</td>
-                                            <td className="px-3 py-2">{m.item?.name || '—'}</td>
-                                            <td className="px-3 py-2 tabular-nums">{m.quantity}</td>
-                                            <td className="px-3 py-2 tabular-nums">{m.moved_on}</td>
-                                            <td className="px-3 py-2">{m.user?.name || '—'}</td>
-                                            <td className="px-3 py-2">{m.project?.name || '—'}</td>
-                                            <td className="px-3 py-2 tabular-nums">
-                                                {m.previous_qty} → {m.new_qty}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {!movements.length && (
-                                        <tr>
-                                            <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
-                                                {t('no_stock_movements')}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
+                                ))}
+                                {!categories.length && (
+                                    <tr>
+                                        <Td colSpan={3} muted className="py-8 text-center">
+                                            {t('no_stock_movements')}
+                                        </Td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+
+                    <DataPanel title={t('stock_recent_movements')} padded={false}>
+                        <DataTable minWidth="28rem" caption={t('stock_recent_movements')}>
+                            <thead>
+                                <tr>
+                                    <Th>{t('type')}</Th>
+                                    <Th>{t('product')}</Th>
+                                    <Th align="end">{t('quantity')}</Th>
+                                    <Th>{t('date')}</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {movements.map((m) => (
+                                    <tr key={m.id}>
+                                        <Td className="uppercase">{m.type}</Td>
+                                        <Td>{m.item?.name || '—'}</Td>
+                                        <Td align="end">{m.quantity}</Td>
+                                        <Td muted>{m.moved_on || '—'}</Td>
+                                    </tr>
+                                ))}
+                                {!movements.length && (
+                                    <tr>
+                                        <Td colSpan={4} muted className="py-8 text-center">
+                                            {t('no_stock_movements')}
+                                        </Td>
+                                    </tr>
+                                )}
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
                 </div>
-            </div>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

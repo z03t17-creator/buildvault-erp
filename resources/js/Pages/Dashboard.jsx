@@ -1,174 +1,499 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
+import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, usePage } from '@inertiajs/react';
 
-function Stat({ label, value }) {
+function Stat({ label, value, hint }) {
     return (
-        <div className="border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
-            <div className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
+        <div className="rounded-lg border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
+            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </div>
-            <div dir="ltr" className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white sm:text-3xl">
+            <div
+                dir="ltr"
+                className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white sm:text-3xl"
+            >
                 {value}
             </div>
+            {hint && (
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+            )}
         </div>
+    );
+}
+
+function MoneyStat({ label, value, iqd, accent = false }) {
+    return (
+        <Stat
+            label={label}
+            value={
+                value == null ? (
+                    '—'
+                ) : (
+                    <MoneyAmount value={value} label={iqd} size="xl" showLabel={false} accent={accent} />
+                )
+            }
+            hint={iqd}
+        />
     );
 }
 
 function Shortcut({ href, label }) {
     return (
-        <Link
-            href={href}
-            className="inline-flex items-center border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-800 transition hover:border-emerald-400/70 hover:text-emerald-800 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:border-emerald-600/50 dark:hover:text-emerald-300"
-        >
-            {label}
+        <Link href={href}>
+            <SecondaryButton type="button">{label}</SecondaryButton>
         </Link>
     );
 }
 
+function formatWhen(iso) {
+    if (!iso) return '—';
+    try {
+        return new Intl.DateTimeFormat(undefined, {
+            dateStyle: 'medium',
+            timeStyle: 'short',
+        }).format(new Date(iso));
+    } catch {
+        return iso;
+    }
+}
+
 function SuperAdminHome({ summary, t }) {
+    const logins = summary?.last_logins || [];
+    const activity = summary?.recent_activity || [];
+    const health = summary?.health || {};
+    const backup = summary?.backup;
+
     return (
-        <section className="space-y-4">
-            <div>
-                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('role_home_admin_title')}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {t('role_home_admin_hint')}
-                </p>
+        <div className="space-y-6">
+            <DataPanel title={t('role_home_admin_title')} subtitle={t('role_home_admin_hint')}>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Stat label={t('role_stat_users')} value={summary?.users ?? 0} />
+                    <Stat label={t('role_stat_users_active')} value={summary?.users_active ?? 0} />
+                    <Stat label={t('role_stat_users_disabled')} value={summary?.users_disabled ?? 0} />
+                    <Stat label={t('role_stat_audit_events')} value={summary?.audit_events ?? 0} />
+                </div>
+            </DataPanel>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <DataPanel title={t('role_panel_last_logins')} padded={false}>
+                    <DataTable minWidth="28rem" caption={t('role_panel_last_logins')}>
+                        <thead>
+                            <tr>
+                                <Th>{t('full_name')}</Th>
+                                <Th>{t('last_login')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {logins.map((u) => (
+                                <tr key={u.id}>
+                                    <Td>
+                                        <div className="font-medium">{u.name}</div>
+                                        <div className="text-xs text-slate-500">{u.email}</div>
+                                    </Td>
+                                    <Td muted>{formatWhen(u.last_login_at)}</Td>
+                                </tr>
+                            ))}
+                            {!logins.length && (
+                                <tr>
+                                    <Td colSpan={2} muted className="py-8 text-center">
+                                        {t('role_empty_logins')}
+                                    </Td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                </DataPanel>
+
+                <DataPanel title={t('role_panel_recent_activity')} padded={false}>
+                    <DataTable minWidth="28rem" caption={t('role_panel_recent_activity')}>
+                        <thead>
+                            <tr>
+                                <Th>{t('audit')}</Th>
+                                <Th>{t('date')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {activity.map((a) => (
+                                <tr key={a.id}>
+                                    <Td>
+                                        <div className="font-medium">{a.event || a.description}</div>
+                                        <div className="text-xs text-slate-500">
+                                            {a.causer_name || '—'}
+                                        </div>
+                                    </Td>
+                                    <Td muted>{formatWhen(a.created_at)}</Td>
+                                </tr>
+                            ))}
+                            {!activity.length && (
+                                <tr>
+                                    <Td colSpan={2} muted className="py-8 text-center">
+                                        {t('role_empty_activity')}
+                                    </Td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                </DataPanel>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Stat label={t('role_stat_users')} value={summary?.users ?? 0} />
-                <Stat label={t('role_stat_projects')} value={summary?.projects ?? 0} />
-                <Stat label={t('role_stat_workers')} value={summary?.workers ?? 0} />
-                <Stat label={t('role_stat_pending_payouts')} value={summary?.pending_payouts ?? 0} />
-                <Stat label={t('role_stat_matured_holds')} value={summary?.matured_holds ?? 0} />
-                <Stat label={t('role_stat_audit_events')} value={summary?.audit_events ?? 0} />
-            </div>
-        </section>
+
+            <DataPanel
+                title={t('role_panel_system_health')}
+                subtitle={t('role_panel_system_health_hint')}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        <Shortcut href={route('users.index')} label={t('users')} />
+                        <Shortcut href={route('audit.index')} label={t('audit')} />
+                        <Shortcut href={route('backups.index')} label={t('backups')} />
+                        <Shortcut href={route('retention-holds.index')} label={t('settings')} />
+                    </div>
+                }
+            >
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Stat
+                        label={t('role_health_ledger')}
+                        value={health.ledger_ok ? t('role_health_ok') : t('role_health_check')}
+                    />
+                    <Stat label={t('role_stat_pending_payouts')} value={health.pending_payouts ?? 0} />
+                    <Stat label={t('role_stat_matured_holds')} value={health.matured_holds ?? 0} />
+                    <Stat
+                        label={t('role_stat_backup')}
+                        value={
+                            backup
+                                ? t(`status_${backup.status}`, backup.status)
+                                : t('role_backup_none')
+                        }
+                        hint={backup?.finished_at ? formatWhen(backup.finished_at) : undefined}
+                    />
+                </div>
+            </DataPanel>
+        </div>
     );
 }
 
 function BossHome({ summary, t, iqd }) {
+    const cards = summary?.project_cards || [];
+
     return (
-        <section className="space-y-4">
-            <div>
-                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('role_home_boss_title')}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {t('role_home_boss_hint')}
-                </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Stat
-                    label={t('balance_iqd')}
-                    value={
-                        summary?.vault_balance_iqd == null
-                            ? '—'
-                            : <MoneyAmount value={summary.vault_balance_iqd} label={iqd} size="xl" />
-                    }
-                />
-                <Stat
-                    label={t('role_stat_available')}
-                    value={
-                        summary?.available_iqd == null
-                            ? '—'
-                            : <MoneyAmount value={summary.available_iqd} label={iqd} size="xl" />
-                    }
-                />
-                <Stat
-                    label={t('role_stat_pending_payouts_money')}
-                    value={
-                        summary?.pending_payouts_iqd == null
-                            ? '—'
-                            : <MoneyAmount value={summary.pending_payouts_iqd} label={iqd} size="xl" />
-                    }
-                />
-                <Stat
-                    label={t('insurance_reserve')}
-                    value={
-                        summary?.reserved_insurance_iqd == null
-                            ? '—'
-                            : <MoneyAmount value={summary.reserved_insurance_iqd} label={iqd} size="xl" />
-                    }
-                />
-                <Stat label={t('role_stat_projects')} value={summary?.projects ?? 0} />
-                <Stat label={t('role_stat_workers')} value={summary?.workers ?? 0} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
-                <Shortcut href={route('dashboards.payroll')} label={t('payroll_summary')} />
-                <Shortcut href={route('projects.index')} label={t('projects')} />
-                <Shortcut href={route('exports.index')} label={t('exports')} />
-            </div>
-        </section>
+        <div className="space-y-6">
+            <DataPanel
+                title={t('role_home_boss_title')}
+                subtitle={t('role_home_boss_hint')}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
+                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
+                        <Shortcut href={route('projects.index')} label={t('projects')} />
+                        <Shortcut href={route('reports.index')} label={t('reports')} />
+                    </div>
+                }
+            >
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <MoneyStat label={t('money_received')} value={summary?.money_received_iqd} iqd={iqd} accent />
+                    <MoneyStat label={t('role_stat_money_spent')} value={summary?.money_spent_iqd} iqd={iqd} />
+                    <MoneyStat label={t('role_stat_available')} value={summary?.available_iqd} iqd={iqd} accent />
+                    <MoneyStat
+                        label={t('insurance_reserve')}
+                        value={summary?.reserved_insurance_iqd}
+                        iqd={iqd}
+                    />
+                    <MoneyStat label={t('balance_iqd')} value={summary?.vault_balance_iqd} iqd={iqd} />
+                    <MoneyStat label={t('payroll_cost')} value={summary?.payroll_totals_iqd} iqd={iqd} />
+                    <MoneyStat label={t('role_stat_advances')} value={summary?.advances_iqd} iqd={iqd} />
+                    <MoneyStat
+                        label={t('material_cost')}
+                        value={summary?.stock_material_spend_iqd}
+                        iqd={iqd}
+                    />
+                </div>
+            </DataPanel>
+
+            <DataPanel
+                title={t('role_panel_project_profit')}
+                subtitle={t('role_panel_project_profit_hint')}
+            >
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    {cards.map((p) => (
+                        <Link
+                            key={p.id}
+                            href={route('projects.show', p.id)}
+                            className="block rounded-lg border border-slate-200/80 bg-slate-50/60 p-4 transition hover:border-emerald-400/60 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700/50"
+                        >
+                            <div className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                {p.name}
+                            </div>
+                            <dl className="mt-3 space-y-1.5 text-sm">
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-slate-500">{t('money_received')}</dt>
+                                    <dd>
+                                        <MoneyAmount
+                                            value={p.money_received_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-slate-500">{t('material_cost')}</dt>
+                                    <dd>
+                                        <MoneyAmount
+                                            value={p.material_cost_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3">
+                                    <dt className="text-slate-500">{t('payroll_cost')}</dt>
+                                    <dd>
+                                        <MoneyAmount
+                                            value={p.payroll_cost_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </dd>
+                                </div>
+                                <div className="flex items-center justify-between gap-3 border-t border-slate-200/80 pt-2 dark:border-slate-700">
+                                    <dt className="font-medium text-slate-700 dark:text-slate-200">
+                                        {t('net_position')}
+                                    </dt>
+                                    <dd>
+                                        <MoneyAmount
+                                            value={p.net_position_iqd}
+                                            label={iqd}
+                                            size="md"
+                                            showLabel={false}
+                                            accent={Number(p.net_position_iqd) >= 0}
+                                        />
+                                    </dd>
+                                </div>
+                            </dl>
+                        </Link>
+                    ))}
+                    {!cards.length && (
+                        <p className="text-sm text-slate-500 dark:text-slate-400 sm:col-span-2">
+                            {t('role_empty_projects')}
+                        </p>
+                    )}
+                </div>
+            </DataPanel>
+        </div>
     );
 }
 
-function AccountantHome({ summary, t }) {
+function AccountantHome({ summary, t, iqd }) {
+    const txns = summary?.recent_transactions || [];
+
     return (
-        <section className="space-y-4">
-            <div>
-                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('role_home_accountant_title')}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {t('role_home_accountant_hint')}
-                </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Stat label={t('role_stat_pending_payouts')} value={summary?.pending_payouts ?? 0} />
-                <Stat label={t('role_stat_matured_holds')} value={summary?.matured_holds ?? 0} />
-                <Stat label={t('role_stat_projects')} value={summary?.projects ?? 0} />
-                <Stat label={t('role_stat_workers')} value={summary?.workers ?? 0} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <Shortcut href={route('payouts.create')} label={t('role_shortcut_create_payout')} />
-                <Shortcut href={route('payouts.index')} label={t('payouts')} />
-                <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
-                <Shortcut href={route('imports.index')} label={t('imports')} />
-                <Shortcut href={route('exports.index')} label={t('exports')} />
-                <Shortcut href={route('retention-holds.index')} label={t('insurance')} />
-            </div>
-        </section>
+        <div className="space-y-6">
+            <DataPanel
+                title={t('role_home_accountant_title')}
+                subtitle={t('role_home_accountant_hint')}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
+                        <Shortcut href={route('expenses.index')} label={t('expenses')} />
+                        <Shortcut href={route('dashboards.payroll')} label={t('payroll_summary')} />
+                        <Shortcut href={route('payouts.index')} label={t('payouts')} />
+                    </div>
+                }
+            >
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <MoneyStat
+                        label={t('role_stat_available_payment')}
+                        value={summary?.available_payment_iqd}
+                        iqd={iqd}
+                        accent
+                    />
+                    <MoneyStat label={t('money_received')} value={summary?.money_received_iqd} iqd={iqd} />
+                    <Stat
+                        label={t('role_stat_payroll_due')}
+                        value={summary?.payroll_due_count ?? 0}
+                    />
+                    <MoneyStat
+                        label={t('role_stat_payroll_due_money')}
+                        value={summary?.payroll_due_iqd}
+                        iqd={iqd}
+                    />
+                    <Stat label={t('role_stat_pending_calcs')} value={summary?.pending_calculations ?? 0} />
+                    <MoneyStat label={t('role_stat_advances')} value={summary?.advances_open_iqd} iqd={iqd} />
+                    <MoneyStat
+                        label={t('role_stat_penalties')}
+                        value={summary?.penalties_pending_iqd}
+                        iqd={iqd}
+                    />
+                    <MoneyStat label={t('insurance_reserve')} value={summary?.insurance_held_iqd} iqd={iqd} />
+                    <MoneyStat
+                        label={t('role_stat_pending_expenses')}
+                        value={summary?.pending_expenses_iqd}
+                        iqd={iqd}
+                    />
+                    <Stat
+                        label={t('role_stat_matured_holds')}
+                        value={summary?.insurance_matured_count ?? 0}
+                    />
+                </div>
+            </DataPanel>
+
+            <DataPanel title={t('role_panel_recent_txns')} padded={false}>
+                <DataTable minWidth="36rem" caption={t('role_panel_recent_txns')}>
+                    <thead>
+                        <tr>
+                            <Th>{t('date')}</Th>
+                            <Th>{t('type')}</Th>
+                            <Th>{t('project')}</Th>
+                            <Th align="end">{t('amount_iqd')}</Th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {txns.map((row) => (
+                            <tr key={row.id}>
+                                <Td muted>{row.occurred_on || '—'}</Td>
+                                <Td>{t(`txn_type_${row.type}`, row.type)}</Td>
+                                <Td muted>{row.project_name || '—'}</Td>
+                                <Td align="end">
+                                    <MoneyAmount
+                                        value={row.amount_iqd}
+                                        label={iqd}
+                                        size="sm"
+                                        showLabel={false}
+                                    />
+                                </Td>
+                            </tr>
+                        ))}
+                        {!txns.length && (
+                            <tr>
+                                <Td colSpan={4} muted className="py-8 text-center">
+                                    {t('role_empty_transactions')}
+                                </Td>
+                            </tr>
+                        )}
+                    </tbody>
+                </DataTable>
+            </DataPanel>
+        </div>
     );
 }
 
 function StockManagerHome({ summary, t, iqd }) {
+    const movements = summary?.recent_movements || [];
+    const categories = summary?.by_category || [];
+    const canIn = useCan('stock.stockIn');
+    const canOut = useCan('stock.stockOut');
+
     return (
-        <section className="space-y-4">
-            <div>
-                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                    {t('role_home_stock_title')}
-                </h3>
-                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    {t('role_home_stock_hint')}
-                </p>
+        <div className="space-y-6">
+            <DataPanel
+                title={t('role_home_stock_title')}
+                subtitle={t('role_home_stock_hint')}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        {canIn && (
+                            <Link href={route('stock.in.create')}>
+                                <PrimaryButton type="button">{t('stock_in')}</PrimaryButton>
+                            </Link>
+                        )}
+                        {canOut && (
+                            <Link href={route('stock.out.create')}>
+                                <PrimaryButton type="button">{t('stock_out_action')}</PrimaryButton>
+                            </Link>
+                        )}
+                        <Shortcut href={route('stock.items.index')} label={t('stock_products')} />
+                        <Shortcut href={route('stock.movements.index')} label={t('stock_movements')} />
+                    </div>
+                }
+            >
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
+                    <MoneyStat label={t('stock_value_iqd')} value={summary?.stock_value_iqd ?? 0} iqd={iqd} />
+                    <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
+                    <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
+                    <Stat label={t('stock_today_in')} value={summary?.today_in_qty ?? 0} />
+                    <Stat label={t('stock_today_out')} value={summary?.today_out_qty ?? 0} />
+                </div>
+            </DataPanel>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <DataPanel title={t('role_panel_stock_by_category')} padded={false}>
+                    <DataTable minWidth="24rem" caption={t('role_panel_stock_by_category')}>
+                        <thead>
+                            <tr>
+                                <Th>{t('category')}</Th>
+                                <Th align="end">{t('role_stat_items')}</Th>
+                                <Th align="end">{t('stock_value_iqd')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {categories.map((c) => (
+                                <tr key={c.category}>
+                                    <Td>
+                                        {c.category === 'uncategorized'
+                                            ? t('uncategorized')
+                                            : c.category}
+                                    </Td>
+                                    <Td align="end">{c.items_count}</Td>
+                                    <Td align="end">
+                                        <MoneyAmount
+                                            value={c.value_iqd}
+                                            label={iqd}
+                                            size="sm"
+                                            showLabel={false}
+                                        />
+                                    </Td>
+                                </tr>
+                            ))}
+                            {!categories.length && (
+                                <tr>
+                                    <Td colSpan={3} muted className="py-8 text-center">
+                                        {t('no_stock_movements')}
+                                    </Td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                </DataPanel>
+
+                <DataPanel title={t('stock_recent_movements')} padded={false}>
+                    <DataTable minWidth="28rem" caption={t('stock_recent_movements')}>
+                        <thead>
+                            <tr>
+                                <Th>{t('type')}</Th>
+                                <Th>{t('product')}</Th>
+                                <Th align="end">{t('quantity')}</Th>
+                                <Th>{t('date')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {movements.map((m) => (
+                                <tr key={m.id}>
+                                    <Td className="uppercase">{m.type}</Td>
+                                    <Td>{m.item?.name || '—'}</Td>
+                                    <Td align="end">{m.quantity}</Td>
+                                    <Td muted>{m.moved_on || '—'}</Td>
+                                </tr>
+                            ))}
+                            {!movements.length && (
+                                <tr>
+                                    <Td colSpan={4} muted className="py-8 text-center">
+                                        {t('no_stock_movements')}
+                                    </Td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                </DataPanel>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
-                <Stat
-                    label={t('stock_value_iqd')}
-                    value={<MoneyAmount value={summary?.stock_value_iqd ?? 0} label={iqd} size="xl" />}
-                />
-                <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
-                <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
-                <Stat label={t('stock_today_in')} value={summary?.today_in_qty ?? 0} />
-                <Stat label={t('stock_today_out')} value={summary?.today_out_qty ?? 0} />
-            </div>
-            <div className="flex flex-wrap gap-2">
-                <Shortcut href={route('stock.dashboard')} label={t('stock_dashboard')} />
-                <Shortcut href={route('stock.items.index')} label={t('stock_products')} />
-                <Shortcut href={route('stock.in.create')} label={t('stock_in')} />
-                <Shortcut href={route('stock.out.create')} label={t('stock_out_action')} />
-                <Shortcut href={route('stock.suppliers.index')} label={t('suppliers')} />
-                <Shortcut href={route('stock.movements.index')} label={t('stock_movements')} />
-            </div>
-        </section>
+        </div>
     );
 }
 
@@ -176,117 +501,95 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
     const t = useTranslations();
     const page = usePage();
     const role = roleHome || page.props.auth?.role;
-    const canVault = useCan('vault.view');
-    const canPayroll = useCan('vault.payroll');
     const canRetention = useCan('vault.retention');
     const alerts = canRetention ? maturedHolds || [] : [];
     const iqd = t('IQD');
 
+    const subtitle =
+        role === 'Super Admin'
+            ? t('role_home_admin_hint')
+            : role === 'Boss / Contractor'
+              ? t('role_home_boss_hint')
+              : role === 'Accountant'
+                ? t('role_home_accountant_hint')
+                : role === 'Stock Manager'
+                  ? t('role_home_stock_hint')
+                  : t('product_tagline');
+
     return (
         <AuthenticatedLayout
-            header={
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
-                    <h2 className="font-display text-2xl font-semibold leading-tight tracking-tight text-slate-900 dark:text-white">
-                        {t('dashboard')}
-                    </h2>
-                    <p className="text-sm text-slate-500 dark:text-slate-400" dir="auto">
-                        {t('product_tagline')}
-                    </p>
-                </div>
-            }
+            header={<PageHeader title={t('dashboard')} subtitle={subtitle} />}
         >
             <Head title={t('dashboard')} />
 
-            <div className="py-10">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    {alerts.length > 0 && (
-                        <section className="border border-amber-300/80 bg-amber-50/90 p-5 dark:border-amber-700/60 dark:bg-amber-950/40">
-                            <div className="flex flex-wrap items-start justify-between gap-3">
-                                <div>
-                                    <h3 className="font-display text-lg font-semibold text-amber-950 dark:text-amber-100">
-                                        {t('insurance_ready')}
-                                    </h3>
-                                    <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
-                                        {t('insurance_ready_hint', { count: alerts.length })}
-                                    </p>
-                                </div>
-                                <Link
-                                    href={route('retention-holds.index')}
-                                    className="text-sm font-medium text-amber-900 underline dark:text-amber-200"
-                                >
-                                    {t('view_all_holds')}
-                                </Link>
-                            </div>
-                            <ul className="mt-4 divide-y divide-amber-200/80 dark:divide-amber-800/60">
-                                {alerts.map((hold) => (
-                                    <li
-                                        key={hold.id}
-                                        className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
-                                    >
-                                        <div>
-                                            <span className="font-medium text-slate-900 dark:text-slate-100">
-                                                {hold.worker?.name || `${t('worker')} #${hold.worker_id}`}
-                                            </span>
-                                            <span className="text-slate-500">
-                                                {' '}
-                                                · {hold.project?.name}
-                                            </span>
-                                            <div className="mt-0.5 tabular-nums text-slate-700 dark:text-slate-300">
-                                                <MoneyAmount value={hold.amount_iqd ?? hold.amount_usd} label={iqd} size="sm" />
-                                                {' · '}
-                                                {t('matured_on', { date: hold.maturity_date })}
-                                            </div>
-                                        </div>
-                                        <PrimaryButton
-                                            type="button"
-                                            onClick={() =>
-                                                router.post(route('retention-holds.release', hold.id))
-                                            }
-                                        >
-                                            {t('release_to_payroll')}
-                                        </PrimaryButton>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    )}
-
-                    {role === 'Super Admin' && (
-                        <SuperAdminHome summary={summary} t={t} />
-                    )}
-                    {role === 'Boss / Contractor' && (
-                        <BossHome summary={summary} t={t} iqd={iqd} />
-                    )}
-                    {role === 'Accountant' && (
-                        <AccountantHome summary={summary} t={t} />
-                    )}
-                    {role === 'Stock Manager' && (
-                        <StockManagerHome summary={summary} t={t} iqd={iqd} />
-                    )}
-
-                    {role !== 'Stock Manager' && (
-                        <section className="flex flex-col items-center justify-center gap-6 border border-slate-200/80 bg-white/80 px-6 py-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/70 sm:py-12">
-                            <div className="flex flex-wrap items-center justify-center gap-3">
-                                {canVault && (
-                                    <Link href={route('dashboards.vault')}>
-                                        <PrimaryButton type="button">{t('open_zhako_vault')}</PrimaryButton>
-                                    </Link>
-                                )}
-                                {canPayroll && (
-                                    <Link href={route('dashboards.payroll')}>
-                                        <PrimaryButton type="button">{t('payroll_summary')}</PrimaryButton>
-                                    </Link>
-                                )}
-                            </div>
-                            {canRetention && alerts.length === 0 && (
-                                <p className="text-sm text-slate-500 dark:text-slate-400">
-                                    {t('no_matured_holds')}
+            <PageShell className="!space-y-8">
+                {alerts.length > 0 && (
+                    <section className="rounded-lg border border-amber-300/80 bg-amber-50/90 p-5 dark:border-amber-700/60 dark:bg-amber-950/40">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div>
+                                <h3 className="font-display text-lg font-semibold text-amber-950 dark:text-amber-100">
+                                    {t('insurance_ready')}
+                                </h3>
+                                <p className="mt-1 text-sm text-amber-900/80 dark:text-amber-200/80">
+                                    {t('insurance_ready_hint', { count: alerts.length })}
                                 </p>
-                            )}
-                        </section>
-                    )}
-                </div>
-            </div>
+                            </div>
+                            <Link
+                                href={route('retention-holds.index')}
+                                className="text-sm font-medium text-amber-900 underline dark:text-amber-200"
+                            >
+                                {t('view_all_holds')}
+                            </Link>
+                        </div>
+                        <ul className="mt-4 divide-y divide-amber-200/80 dark:divide-amber-800/60">
+                            {alerts.map((hold) => (
+                                <li
+                                    key={hold.id}
+                                    className="flex flex-wrap items-center justify-between gap-3 py-3 text-sm"
+                                >
+                                    <div>
+                                        <span className="font-medium text-slate-900 dark:text-slate-100">
+                                            {hold.worker?.name || `${t('worker')} #${hold.worker_id}`}
+                                        </span>
+                                        <span className="text-slate-500">
+                                            {' '}
+                                            · {hold.project?.name}
+                                        </span>
+                                        <div className="mt-0.5 text-slate-700 dark:text-slate-300">
+                                            <MoneyAmount
+                                                value={hold.amount_iqd ?? hold.amount_usd}
+                                                label={iqd}
+                                                size="sm"
+                                            />
+                                            {' · '}
+                                            {t('matured_on', { date: hold.maturity_date })}
+                                        </div>
+                                    </div>
+                                    <PrimaryButton
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(route('retention-holds.release', hold.id))
+                                        }
+                                    >
+                                        {t('release_to_payroll')}
+                                    </PrimaryButton>
+                                </li>
+                            ))}
+                        </ul>
+                    </section>
+                )}
+
+                {role === 'Super Admin' && <SuperAdminHome summary={summary} t={t} />}
+                {role === 'Boss / Contractor' && (
+                    <BossHome summary={summary} t={t} iqd={iqd} />
+                )}
+                {role === 'Accountant' && (
+                    <AccountantHome summary={summary} t={t} iqd={iqd} />
+                )}
+                {role === 'Stock Manager' && (
+                    <StockManagerHome summary={summary} t={t} iqd={iqd} />
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }
