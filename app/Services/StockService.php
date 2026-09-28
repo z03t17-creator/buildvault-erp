@@ -10,7 +10,12 @@ use InvalidArgumentException;
 
 /**
  * Stock inventory — IQD purchase prices; ledger movements with previous/new qty.
- * Stock OUT never allows negative on-hand quantity.
+ * Stock OUT never allows negative on-hand quantity and requires a project
+ * so material cost rolls up into ProjectFinancialService.
+ *
+ * Stock IN only updates inventory — it does not create Expense rows or vault
+ * withdrawals. Cash/site purchases go through the Expenses module separately
+ * to avoid double-counting against project financials.
  */
 class StockService
 {
@@ -65,18 +70,55 @@ class StockService
     }
 
     /**
-     * Material cost for a project = sum of OUT movement line values (qty × unit price).
+     * Material cost for a project = DB rollup of OUT line values (qty × unit purchase price).
      */
     public function materialCostForProject(int $projectId): float
     {
-        $movements = StockMovement::query()
+        $total = StockMovement::query()
             ->where('project_id', $projectId)
             ->where('type', StockMovement::TYPE_OUT)
-            ->get(['quantity', 'purchase_price_iqd']);
-
-        $total = $movements->sum(fn (StockMovement $m) => $m->lineValueIqd());
+            ->selectRaw('COALESCE(SUM(quantity * COALESCE(purchase_price_iqd, 0)), 0) as total')
+            ->value('total');
 
         return round((float) $total, 2);
+    }
+
+    /**
+     * Recent stock-OUT materials attributed to a project (for Project Show).
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    public function recentMaterialsForProject(int $projectId, int $limit = 12)
+    {
+        return StockMovement::query()
+            ->where('project_id', $projectId)
+            ->where('type', StockMovement::TYPE_OUT)
+            ->with([
+                'item:id,name,sku,unit',
+                'tower:id,name',
+                'floor:id,name',
+            ])
+            ->orderByDesc('moved_on')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(fn (StockMovement $m) => [
+                'id' => $m->id,
+                'moved_on' => $m->moved_on?->toDateString(),
+                'item_name' => $m->item?->name,
+                'sku' => $m->item?->sku,
+                'unit' => $m->item?->unit,
+                'quantity' => round((float) $m->quantity, 3),
+                'unit_price_iqd' => round((float) ($m->purchase_price_iqd ?? 0), 2),
+                'line_value_iqd' => $m->lineValueIqd(),
+                'previous_qty' => round((float) $m->previous_qty, 3),
+                'new_qty' => round((float) $m->new_qty, 3),
+                'tower' => $m->tower?->name,
+                'floor' => $m->floor?->name,
+                'purpose' => $m->purpose,
+                'receiver' => $m->receiver,
+            ])
+            ->values();
     }
 
     /**
@@ -144,6 +186,13 @@ class StockService
     public function stockOut(array $data, ?User $actor = null): StockMovement
     {
         return DB::transaction(function () use ($data, $actor) {
+            $projectId = $this->nullableId($data['project_id'] ?? null);
+            if ($projectId === null) {
+                throw new InvalidArgumentException(
+                    'Stock-out requires a project so material cost can be attributed.'
+                );
+            }
+
             /** @var StockItem $item */
             $item = StockItem::query()->lockForUpdate()->findOrFail((int) $data['stock_item_id']);
 
@@ -160,6 +209,7 @@ class StockService
             }
 
             $newQty = round($previous - $qty, 3);
+            // Snapshot unit purchase price at issue time for stable project material cost.
             $unitPrice = (float) $item->purchase_price_iqd;
 
             $item->quantity = $newQty;
@@ -172,7 +222,7 @@ class StockService
                 'moved_on' => $this->date($data['moved_on'] ?? now()->toDateString()),
                 'supplier_id' => null,
                 'purchase_price_iqd' => $unitPrice,
-                'project_id' => $this->nullableId($data['project_id'] ?? null),
+                'project_id' => $projectId,
                 'tower_id' => $this->nullableId($data['tower_id'] ?? null),
                 'floor_id' => $this->nullableId($data['floor_id'] ?? null),
                 'invoice_ref' => null,

@@ -117,6 +117,7 @@ class StockPhase10Test extends TestCase
                 'stock_item_id' => $item->id,
                 'quantity' => 100,
                 'moved_on' => '2026-09-28',
+                'project_id' => $project->id,
             ])
             ->assertRedirect(route('stock.out.create'))
             ->assertSessionHasErrors('quantity');

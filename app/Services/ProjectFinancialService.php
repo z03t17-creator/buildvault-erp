@@ -15,8 +15,10 @@ use InvalidArgumentException;
 /**
  * Project-level IQD financial summary and money-received recording.
  *
- * material_cost_iqd = sum of stock-out line values (qty × unit purchase price) for the project.
- * Full Phase 11 project cost linking can deepen this later.
+ * material_cost_iqd = real DB rollup of stock-OUT movements for the project
+ * (quantity × purchase_price_iqd snapshot at issue). Stock IN never adds to
+ * this figure and does not create Expense/vault rows — site cash spend stays
+ * on the Expenses module so costs are not double-counted.
  */
 class ProjectFinancialService
 {
@@ -71,11 +73,21 @@ class ProjectFinancialService
     }
 
     /**
-     * Light Phase 10 hook — stock-out purchase value attributed to the project.
+     * Stock-out purchase value attributed to the project (qty × unit price).
      */
     public function materialCostIqd(Project $project): float
     {
         return $this->stock->materialCostForProject((int) $project->id);
+    }
+
+    /**
+     * Recent materials issued from stock to this project.
+     *
+     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     */
+    public function recentMaterialsUsed(Project $project, int $limit = 12)
+    {
+        return $this->stock->recentMaterialsForProject((int) $project->id, $limit);
     }
 
     /**

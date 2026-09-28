@@ -41,7 +41,7 @@ function FinancialRow({ label, value, iqd, hint, emphasize = false, muted = fals
     );
 }
 
-export default function Show({ project, financialSummary, canViewFinancials, canRecordReceipt }) {
+export default function Show({ project, financialSummary, recentMaterials, canViewFinancials, canRecordReceipt }) {
     const t = useTranslations();
     const canUpdate = useCan('projects.update');
     const canCreateTower = useCan('towers.create');
@@ -50,6 +50,7 @@ export default function Show({ project, financialSummary, canViewFinancials, can
     const towers = project.towers || [];
     const workers = project.workers || [];
     const receipts = project.receipts || [];
+    const materials = recentMaterials || [];
     const summary = financialSummary;
 
     const receiptForm = useForm({
@@ -134,8 +135,7 @@ export default function Show({ project, financialSummary, canViewFinancials, can
                                     label={t('material_cost')}
                                     value={summary.material_cost_iqd}
                                     iqd={iqd}
-                                    hint={t('stub_phase_10_stock')}
-                                    muted
+                                    hint={t('material_cost_hint')}
                                 />
                                 <FinancialRow label={t('payroll_cost')} value={summary.payroll_cost_iqd} iqd={iqd} />
                                 <FinancialRow label={t('other_expenses')} value={summary.other_expenses_iqd} iqd={iqd} />
@@ -154,6 +154,56 @@ export default function Show({ project, financialSummary, canViewFinancials, can
                                     emphasize
                                 />
                             </div>
+                        </section>
+                    )}
+
+                    {canViewFinancials && (
+                        <section className="border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+                            <div className="mb-4">
+                                <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
+                                    {t('recent_materials_used')}
+                                </h3>
+                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                                    {t('recent_materials_used_hint')}
+                                </p>
+                            </div>
+                            {materials.length === 0 ? (
+                                <EmptyState title={t('no_materials_used')} description={t('no_materials_used_hint')} />
+                            ) : (
+                                <ul className="divide-y divide-slate-200 border border-slate-200/80 dark:divide-slate-800 dark:border-slate-700">
+                                    {materials.map((m) => (
+                                        <li
+                                            key={m.id}
+                                            className="flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                                        >
+                                            <div>
+                                                <p className="text-sm font-medium text-slate-900 dark:text-white">
+                                                    {m.item_name || '—'}
+                                                    {m.sku ? (
+                                                        <span className="ms-2 text-xs font-normal text-slate-400">
+                                                            {m.sku}
+                                                        </span>
+                                                    ) : null}
+                                                </p>
+                                                <p className="text-xs text-slate-500">
+                                                    {m.moved_on || '—'}
+                                                    {' · '}
+                                                    {m.quantity} {m.unit || ''}
+                                                    {m.tower ? ` · ${m.tower}` : ''}
+                                                    {m.floor ? ` · ${m.floor}` : ''}
+                                                    {m.purpose ? ` · ${m.purpose}` : ''}
+                                                </p>
+                                                <p className="mt-0.5 text-xs text-slate-400">
+                                                    {t('previous_qty')}: {m.previous_qty}
+                                                    {' → '}
+                                                    {t('remaining_qty')}: {m.new_qty}
+                                                </p>
+                                            </div>
+                                            <MoneyAmount value={m.line_value_iqd} label={iqd} size="md" />
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
                         </section>
                     )}
 

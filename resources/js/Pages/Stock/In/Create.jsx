@@ -1,5 +1,6 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -49,6 +50,9 @@ export default function Create({ items, suppliers, projects, defaults }) {
                     }}
                     className="mx-auto max-w-xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
                 >
+                    <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-400">
+                        {t('stock_in_no_expense_hint')}
+                    </p>
                     <div>
                         <InputLabel value={t('product')} />
                         <select
@@ -119,17 +123,15 @@ export default function Create({ items, suppliers, projects, defaults }) {
                     </div>
                     <div>
                         <InputLabel value={t('purchase_price_iqd')} />
-                        <TextInput
+                        <MoneyInput
                             className="mt-1 block w-full"
-                            type="number"
-                            step="1"
-                            min="0"
                             value={data.purchase_price_iqd}
-                            onChange={(e) => setData('purchase_price_iqd', e.target.value)}
+                            onValueChange={(raw) => setData('purchase_price_iqd', raw)}
                         />
+                        <InputError message={errors.purchase_price_iqd} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel value={t('project')} />
+                        <InputLabel value={`${t('project')} (${t('optional')})`} />
                         <select
                             className={selectClass}
                             value={data.project_id}
@@ -142,6 +144,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                                 </option>
                             ))}
                         </select>
+                        <p className="mt-1 text-xs text-slate-500">{t('stock_in_project_optional_hint')}</p>
                     </div>
                     <div>
                         <InputLabel value={t('invoice_ref')} />

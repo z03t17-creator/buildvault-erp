@@ -90,6 +90,9 @@ class ProjectController extends Controller
             'project' => $project,
             'exchangeRate' => $this->exchangeRates->getUsdToIqd(),
             'financialSummary' => $canFinancials ? $this->financials->summary($project) : null,
+            'recentMaterials' => $canFinancials
+                ? $this->financials->recentMaterialsUsed($project)
+                : [],
             'canViewFinancials' => $canFinancials,
             'canRecordReceipt' => $canRecordReceipt,
         ]);

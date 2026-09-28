@@ -2,6 +2,7 @@
 
 namespace Tests\Unit;
 
+use App\Models\Project;
 use App\Models\StockItem;
 use App\Models\Supplier;
 use App\Services\StockService;
@@ -56,6 +57,8 @@ class StockServiceTest extends TestCase
 
     public function test_stock_out_decreases_quantity_with_previous_and_new(): void
     {
+        $project = Project::query()->create(['name' => 'Unit Site', 'status' => 'active']);
+
         $this->service->stockIn([
             'stock_item_id' => $this->item->id,
             'quantity' => 40,
@@ -66,6 +69,7 @@ class StockServiceTest extends TestCase
             'stock_item_id' => $this->item->id,
             'quantity' => 15,
             'moved_on' => '2026-09-28',
+            'project_id' => $project->id,
             'purpose' => 'Site use',
         ]);
 
@@ -75,10 +79,32 @@ class StockServiceTest extends TestCase
         $this->assertSame('40.000', (string) $movement->previous_qty);
         $this->assertSame('25.000', (string) $movement->new_qty);
         $this->assertSame('10000.00', (string) $movement->purchase_price_iqd);
+        $this->assertSame($project->id, $movement->project_id);
+        $this->assertSame(150000.0, $this->service->materialCostForProject($project->id));
+    }
+
+    public function test_stock_out_requires_project(): void
+    {
+        $this->service->stockIn([
+            'stock_item_id' => $this->item->id,
+            'quantity' => 10,
+            'moved_on' => '2026-09-28',
+        ]);
+
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Stock-out requires a project');
+
+        $this->service->stockOut([
+            'stock_item_id' => $this->item->id,
+            'quantity' => 5,
+            'moved_on' => '2026-09-28',
+        ]);
     }
 
     public function test_stock_out_blocks_negative_quantity(): void
     {
+        $project = Project::query()->create(['name' => 'Neg Block', 'status' => 'active']);
+
         $this->service->stockIn([
             'stock_item_id' => $this->item->id,
             'quantity' => 10,
@@ -92,6 +118,7 @@ class StockServiceTest extends TestCase
             'stock_item_id' => $this->item->id,
             'quantity' => 11,
             'moved_on' => '2026-09-28',
+            'project_id' => $project->id,
         ]);
     }
 

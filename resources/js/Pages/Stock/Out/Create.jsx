@@ -100,7 +100,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                         />
                     </div>
                     <div>
-                        <InputLabel value={t('project')} />
+                        <InputLabel value={`${t('project')} *`} />
                         <select
                             className={selectClass}
                             value={data.project_id}
@@ -109,6 +109,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                 setData('tower_id', '');
                                 setData('floor_id', '');
                             }}
+                            required
                         >
                             <option value="">—</option>
                             {(projects || []).map((p) => (
@@ -117,9 +118,11 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                 </option>
                             ))}
                         </select>
+                        <p className="mt-1 text-xs text-slate-500">{t('stock_out_project_required')}</p>
+                        <InputError message={errors.project_id} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel value={t('tower')} />
+                        <InputLabel value={`${t('tower')} (${t('optional')})`} />
                         <select
                             className={selectClass}
                             value={data.tower_id}
@@ -127,6 +130,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                 setData('tower_id', e.target.value);
                                 setData('floor_id', '');
                             }}
+                            disabled={!data.project_id}
                         >
                             <option value="">—</option>
                             {projectTowers.map((tw) => (
@@ -135,13 +139,15 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                 </option>
                             ))}
                         </select>
+                        <InputError message={errors.tower_id} className="mt-1" />
                     </div>
                     <div>
-                        <InputLabel value={t('floor')} />
+                        <InputLabel value={`${t('floor')} (${t('optional')})`} />
                         <select
                             className={selectClass}
                             value={data.floor_id}
                             onChange={(e) => setData('floor_id', e.target.value)}
+                            disabled={!data.tower_id}
                         >
                             <option value="">—</option>
                             {towerFloors.map((f) => (
@@ -150,6 +156,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                 </option>
                             ))}
                         </select>
+                        <InputError message={errors.floor_id} className="mt-1" />
                     </div>
                     <div>
                         <InputLabel value={t('receiver')} />

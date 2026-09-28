@@ -92,6 +92,41 @@ class DemoStockSeeder extends Seeder
         $service = app(StockService::class);
         $project = Project::query()->where('name', DemoHierarchySeeder::PROJECT_NAME)->first();
 
+        // Stock OUT requires a project for material-cost attribution.
+        if (! $project) {
+            $service->stockIn([
+                'stock_item_id' => $cement->id,
+                'quantity' => 120,
+                'moved_on' => now()->subDays(2)->toDateString(),
+                'supplier_id' => $supplier->id,
+                'purchase_price_iqd' => 12500,
+                'invoice_ref' => 'INV-DEMO-CEM-1',
+                'notes' => self::MARKERS[0].' IN',
+            ], $actor);
+
+            $service->stockIn([
+                'stock_item_id' => $rebar->id,
+                'quantity' => 8,
+                'moved_on' => now()->subDays(2)->toDateString(),
+                'supplier_id' => $supplier->id,
+                'purchase_price_iqd' => 950000,
+                'invoice_ref' => 'INV-DEMO-REB-1',
+                'notes' => self::MARKERS[1].' IN',
+            ], $actor);
+
+            $service->stockIn([
+                'stock_item_id' => $paint->id,
+                'quantity' => 6,
+                'moved_on' => now()->subDay()->toDateString(),
+                'supplier_id' => $supplier->id,
+                'purchase_price_iqd' => 45000,
+                'invoice_ref' => 'INV-DEMO-PNT-1',
+                'notes' => self::MARKERS[2].' IN (low stock demo)',
+            ], $actor);
+
+            return;
+        }
+
         $service->stockIn([
             'stock_item_id' => $cement->id,
             'quantity' => 120,
@@ -126,7 +161,7 @@ class DemoStockSeeder extends Seeder
             'stock_item_id' => $cement->id,
             'quantity' => 30,
             'moved_on' => now()->toDateString(),
-            'project_id' => $project?->id,
+            'project_id' => $project->id,
             'receiver' => 'Site foreman',
             'issuer' => $actor?->name ?? 'Stock Manager',
             'purpose' => 'Foundation pour',
@@ -138,7 +173,7 @@ class DemoStockSeeder extends Seeder
             'stock_item_id' => $rebar->id,
             'quantity' => 1.5,
             'moved_on' => now()->toDateString(),
-            'project_id' => $project?->id,
+            'project_id' => $project->id,
             'receiver' => 'Steel crew',
             'issuer' => $actor?->name ?? 'Stock Manager',
             'purpose' => 'Column cages',
