@@ -304,7 +304,7 @@ function Stat({ label, value, accent }) {
     return (
         <div>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-            <p dir="ltr" className={`mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl ${accentClass}`}>{value}</p>
+            <p dir="ltr" className={`mt-1 font-sans text-xl font-semibold tracking-normal tabular-nums sm:text-2xl ${accentClass}`}>{value}</p>
         </div>
     );
 }

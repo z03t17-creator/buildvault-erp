@@ -84,7 +84,7 @@ export default function Index({ workers }) {
                                             <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
                                                 {worker.project?.name || t('unassigned')}
                                             </td>
-                                            <td dir="ltr" className="px-4 py-3 font-display text-base font-semibold tabular-nums text-slate-800 dark:text-slate-100">
+                                            <td dir="ltr" className="px-4 py-3 font-sans text-base font-semibold tracking-normal tabular-nums text-slate-800 dark:text-slate-100">
                                                 {formatNumber(worker.daily_rate_usd, { decimals: 2 })}
                                             </td>
                                         </tr>

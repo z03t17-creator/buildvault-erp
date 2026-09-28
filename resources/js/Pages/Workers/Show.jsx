@@ -81,7 +81,7 @@ export default function Show({ worker }) {
                             )}
                         </Field>
                         <Field label={t('phone')}>{worker.phone || '—'}</Field>
-                        <Field label={t('daily_rate')}><span dir="ltr" className="font-display text-lg font-semibold tabular-nums">{formatNumber(worker.daily_rate_usd, { decimals: 2 })}</span></Field>
+                        <Field label={t('daily_rate')}><span dir="ltr" className="font-sans text-lg font-semibold tracking-normal tabular-nums">{formatNumber(worker.daily_rate_usd, { decimals: 2 })}</span></Field>
                         <Field label={t('overtime_rate')}>{formatNumber(worker.overtime_rate_usd, { decimals: 2 })}</Field>
                         <Field label={t('spending_limit')}>{worker.spending_limit_usd}</Field>
                         <Field label={t('national_id')}>{worker.national_id_number || '—'}</Field>

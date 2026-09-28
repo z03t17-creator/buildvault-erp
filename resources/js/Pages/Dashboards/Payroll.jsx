@@ -207,7 +207,7 @@ export default function Payroll({
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
                                             <MoneyAmount value={row.advances_iqd} label={iqd} size="sm" />
                                         </td>
-                                        <td className="px-3 py-2 text-end font-display text-base font-semibold tabular-nums text-slate-900 dark:text-white">
+                                        <td className="px-3 py-2 text-end font-sans text-base font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white">
                                             <MoneyAmount value={row.net_pay_iqd} label={iqd} size="sm" />
                                         </td>
                                     </tr>
@@ -236,7 +236,7 @@ export default function Payroll({
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
                                             <MoneyAmount value={sum.advances_iqd} label={iqd} size="sm" />
                                         </td>
-                                        <td className="px-3 py-2 text-end font-display text-base tabular-nums text-emerald-700 dark:text-emerald-400">
+                                        <td className="px-3 py-2 text-end font-sans text-base tracking-normal tabular-nums text-emerald-700 dark:text-emerald-400">
                                             <MoneyAmount value={sum.net_pay_iqd} label={iqd} size="sm" />
                                         </td>
                                     </tr>
@@ -257,7 +257,7 @@ function SummaryCard({ label, value, accent }) {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
             <p
                 dir="ltr"
-                className={`mt-1 font-display text-2xl font-semibold tabular-nums sm:text-3xl ${
+                className={`mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums sm:text-3xl ${
                     accent
                         ? 'text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-900 dark:text-white'

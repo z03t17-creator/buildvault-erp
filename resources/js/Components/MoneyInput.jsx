@@ -63,7 +63,7 @@ const MoneyInput = forwardRef(function MoneyInput(
             value={display}
             onChange={handleChange}
             className={
-                'rounded-md border-slate-300 font-display text-base font-semibold tabular-nums shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 sm:text-lg ' +
+                'rounded-md border-slate-300 font-sans text-base font-semibold tracking-normal tabular-nums shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100 sm:text-lg ' +
                 className
             }
         />

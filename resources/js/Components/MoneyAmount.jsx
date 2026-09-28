@@ -1,15 +1,15 @@
 import { formatIqd, formatNumber } from '@/lib/numberFormat';
 
 const SIZE_CLASS = {
-    sm: 'text-sm font-semibold sm:text-base',
-    md: 'text-base font-semibold sm:text-lg',
-    lg: 'text-lg font-semibold sm:text-xl',
-    xl: 'text-2xl font-semibold sm:text-3xl',
-    hero: 'text-3xl font-semibold tracking-tight sm:text-4xl',
+    sm: 'text-base font-semibold sm:text-lg',
+    md: 'text-lg font-semibold sm:text-xl',
+    lg: 'text-xl font-semibold sm:text-2xl',
+    xl: 'text-3xl font-bold sm:text-4xl',
+    hero: 'text-4xl font-bold tracking-normal sm:text-5xl',
 };
 
 /**
- * Primary money/amount display — larger type, LTR digits for RTL locales.
+ * Primary money/amount display — readable sans digits, LTR for RTL locales.
  *
  * @param {{
  *   value: string|number|null|undefined,
@@ -40,7 +40,7 @@ export default function MoneyAmount({
     return (
         <span
             dir="ltr"
-            className={`inline-block font-display tabular-nums ${sizeClass} ${colorClass} ${className}`.trim()}
+            className={`inline-block font-sans tracking-normal tabular-nums ${sizeClass} ${colorClass} ${className}`.trim()}
         >
             {text}
         </span>

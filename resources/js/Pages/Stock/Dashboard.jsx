@@ -12,7 +12,7 @@ function Stat({ label, value }) {
             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </div>
-            <div className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">
+            <div className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white">
                 {value}
             </div>
         </div>

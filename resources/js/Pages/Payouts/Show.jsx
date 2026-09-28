@@ -50,8 +50,8 @@ export default function Show({ payout }) {
                     <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
                         <div><dt className="text-xs uppercase text-slate-400">Category</dt><dd className="capitalize">{payout.category}</dd></div>
                         <div><dt className="text-xs uppercase text-slate-400">Amount IQD</dt><dd><MoneyAmount value={payout.amount_iqd ?? payout.amount_usd} label={payout.amount_iqd != null ? 'IQD' : 'USD'} size="lg" /></dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Amount USD</dt><dd dir="ltr" className="font-display text-base font-semibold tabular-nums">{payout.amount_usd}</dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Holdback</dt><dd dir="ltr" className="font-display text-base font-semibold tabular-nums">{payout.retention_holdback}</dd></div>
+                        <div><dt className="text-xs uppercase text-slate-400">Amount USD</dt><dd dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.amount_usd}</dd></div>
+                        <div><dt className="text-xs uppercase text-slate-400">Holdback</dt><dd dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.retention_holdback}</dd></div>
                         <div><dt className="text-xs uppercase text-slate-400">Worker</dt><dd>{payout.worker?.name || '—'}</dd></div>
                     </dl>
                     {(payout.retention_holds || []).length > 0 && (
