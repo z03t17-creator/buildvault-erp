@@ -17,6 +17,7 @@ use App\Http\Controllers\PenaltyController;
 use App\Http\Controllers\ProductionRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\StockDashboardController;
 use App\Http\Controllers\StockItemController;
@@ -113,9 +114,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('imports.rollback');
     });
 
+    // Phase 15 — professional reports suite (Boss/Accountant/Admin financial; Stock Manager stock-only)
+    Route::get('/reports', [ReportController::class, 'index'])->name('reports.index');
+    Route::get('/reports/{type}', [ReportController::class, 'show'])->name('reports.show');
+    Route::get('/reports/{type}/export/{format}', [ReportController::class, 'export'])->name('reports.export');
+    Route::redirect('/exports', '/reports')->name('exports.index');
+
     Route::middleware('can:manageExports,'.Vault::class)->group(function () {
-        Route::get('/reports', [ExportController::class, 'index'])->name('reports.index');
-        Route::redirect('/exports', '/reports')->name('exports.index');
         Route::get('/exports/projects/{project}/excel', [ExportController::class, 'projectExcel'])
             ->name('exports.project');
         Route::get('/exports/workers/{worker}/pdf', [ExportController::class, 'workerPdf'])

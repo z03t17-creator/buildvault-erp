@@ -29,10 +29,11 @@ class ExportDownloadTest extends TestCase
             ->assertOk()
             ->assertInertia(fn ($page) => $page
                 ->component('Reports/Index')
-                ->has('projects', 1)
-                ->has('workers', 1)
-                ->has('payouts')
-                ->has('default_month'));
+                ->has('catalog')
+                ->has('legacy.projects', 1)
+                ->has('legacy.workers', 1)
+                ->has('legacy.payouts')
+                ->has('legacy.default_month'));
 
         $this->actingAs($user)
             ->get(route('exports.index'))

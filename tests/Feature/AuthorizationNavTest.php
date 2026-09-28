@@ -48,8 +48,10 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('backups.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('audit.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('imports.index'))->assertForbidden();
-        $this->actingAs($stock)->get(route('reports.index'))->assertForbidden();
-        $this->actingAs($stock)->get(route('exports.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('reports.index'))->assertOk();
+        $this->actingAs($stock)->get(route('exports.index'))->assertRedirect(route('reports.index'));
+        $this->actingAs($stock)->get(route('reports.show', 'inventory'))->assertOk();
+        $this->actingAs($stock)->get(route('reports.show', 'project_financial'))->assertForbidden();
         $this->actingAs($stock)->get(route('retention-holds.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('workers.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('penalties.index'))->assertForbidden();
@@ -104,7 +106,6 @@ class AuthorizationNavTest extends TestCase
                         'docs',
                         'imports',
                         'exports',
-                        'reports',
                         'backups',
                         'audit',
                         'insurance',
@@ -118,7 +119,8 @@ class AuthorizationNavTest extends TestCase
 
                     return in_array('dashboard', $keys, true)
                         && in_array('stock', $keys, true)
-                        && count($keys) === 2;
+                        && in_array('reports', $keys, true)
+                        && count($keys) === 3;
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === false
@@ -130,7 +132,9 @@ class AuthorizationNavTest extends TestCase
                         && ($can['advances.viewAny'] ?? null) === false
                         && ($can['productions.viewAny'] ?? null) === false
                         && ($can['stock.viewAny'] ?? null) === true
-                        && ($can['stock.stockOut'] ?? null) === true;
+                        && ($can['stock.stockOut'] ?? null) === true
+                        && ($can['reports.view'] ?? null) === true
+                        && ($can['vault.exports'] ?? null) === false;
                 })
             );
     }

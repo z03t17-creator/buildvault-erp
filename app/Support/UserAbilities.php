@@ -46,6 +46,8 @@ final class UserAbilities
             'vault.backups' => $gate->allows('manageBackups', Vault::class),
             'vault.imports' => $gate->allows('manageImports', Vault::class),
             'vault.exports' => $gate->allows('manageExports', Vault::class),
+            'reports.view' => $gate->allows('manageExports', Vault::class)
+                || $gate->allows('viewAny', StockItem::class),
             'vault.payroll' => $gate->allows('viewPayroll', Vault::class),
             'vault.retention' => $gate->allows('viewRetention', Vault::class),
             'vault.retentionManage' => $gate->allows('manageRetention', Vault::class),
@@ -130,7 +132,7 @@ final class UserAbilities
             'productions' => $can['productions.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,
-            'reports' => $can['vault.exports'] ?? false,
+            'reports' => ($can['reports.view'] ?? false) || ($can['vault.exports'] ?? false),
             'backups' => $can['vault.backups'] ?? false,
             'audit' => $can['vault.audit'] ?? false,
             'insurance' => ($can['vault.retention'] ?? false) || ($can['vault.retentionManage'] ?? false),

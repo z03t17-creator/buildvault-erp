@@ -186,6 +186,7 @@ class RoleAccessPhase3Test extends TestCase
             );
 
         $this->actingAs($stock)->get(route('stock.dashboard'))->assertOk();
+        $this->actingAs($stock)->get(route('reports.index'))->assertOk();
 
         foreach ([
             'dashboards.vault',
@@ -198,7 +199,6 @@ class RoleAccessPhase3Test extends TestCase
             'retention-holds.index',
             'documents.index',
             'imports.index',
-            'reports.index',
             'backups.index',
             'audit.index',
             'users.index',

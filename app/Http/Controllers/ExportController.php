@@ -10,8 +10,6 @@ use App\Services\ExportService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
-use Inertia\Inertia;
-use Inertia\Response as InertiaResponse;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class ExportController extends Controller
@@ -19,27 +17,6 @@ class ExportController extends Controller
     public function __construct(
         private readonly ExportService $exports,
     ) {}
-
-    public function index(): InertiaResponse
-    {
-        $this->authorize('manageExports', Vault::class);
-
-        return Inertia::render('Reports/Index', [
-            'projects' => Project::query()
-                ->orderBy('name')
-                ->get(['id', 'name', 'status', 'location']),
-            'workers' => Worker::query()
-                ->with('project:id,name')
-                ->orderBy('name')
-                ->get(['id', 'name', 'role', 'project_id']),
-            'payouts' => Payout::query()
-                ->with(['project:id,name', 'worker:id,name'])
-                ->orderByDesc('id')
-                ->limit(50)
-                ->get(['id', 'project_id', 'worker_id', 'category', 'amount_usd', 'amount_iqd', 'status', 'created_at']),
-            'default_month' => now()->format('Y-m'),
-        ]);
-    }
 
     public function projectExcel(Project $project): BinaryFileResponse
     {
