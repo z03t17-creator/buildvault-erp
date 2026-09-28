@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             DemoInsuranceSeeder::class,
             DemoUsersSeeder::class,
             DemoExpensesSeeder::class,
+            DemoAdvancesSeeder::class,
         ]);
     }
 }

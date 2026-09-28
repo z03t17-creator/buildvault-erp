@@ -3,9 +3,14 @@
 namespace Tests\Unit;
 
 use App\Models\Attendance;
+use App\Models\EmployeeAdvance;
+use App\Models\Project;
+use App\Models\Setting;
 use App\Models\Worker;
+use App\Services\InsuranceSettings;
 use App\Services\PayrollService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class PayrollServiceTest extends TestCase
@@ -24,6 +29,16 @@ class PayrollServiceTest extends TestCase
             'payroll.unexcused_absence_penalty_multiplier' => 1.0,
             'payroll.count_leave_paid_as_day' => true,
             'payroll.count_leave_sick_as_day' => false,
+        ]);
+
+        // Keep legacy unit expectations: zero insurance unless a test opts in.
+        Setting::putValue(InsuranceSettings::HOLDBACK_PCT_KEY, 0);
+
+        Http::fake([
+            '*' => Http::response([
+                'result' => 'success',
+                'rates' => ['IQD' => 1310],
+            ], 200),
         ]);
 
         $this->service = new PayrollService;
@@ -151,6 +166,40 @@ class PayrollServiceTest extends TestCase
 
         $this->assertSame(1, $result['days_present']);
         $this->assertSame(10.0, $result['net_pay_usd']);
+    }
+
+    public function test_net_deducts_advances_and_insurance_holdback(): void
+    {
+        Setting::putValue(InsuranceSettings::HOLDBACK_PCT_KEY, 10);
+
+        $project = Project::query()->create(['name' => 'Payroll Deduct Site']);
+        $worker = Worker::query()->create([
+            'project_id' => $project->id,
+            'name' => 'Deduct Worker',
+            'daily_rate_usd' => 100,
+            'overtime_rate_usd' => 100,
+        ]);
+        $this->attendance($worker, '2026-09-01', Attendance::STATUS_PRESENT);
+
+        EmployeeAdvance::query()->create([
+            'worker_id' => $worker->id,
+            'project_id' => $project->id,
+            'amount_iqd' => 13100,
+            'remaining_iqd' => 13100,
+            'advanced_on' => '2026-09-01',
+            'reason' => 'Advance',
+            'repayment_method' => EmployeeAdvance::REPAY_PAYROLL,
+            'status' => EmployeeAdvance::STATUS_OPEN,
+        ]);
+
+        $result = $this->service->calculate($worker, '2026-09-01', '2026-09-01');
+
+        $this->assertSame(100.0, $result['gross_pay_usd']);
+        $this->assertSame(10.0, $result['insurance_holdback_usd']);
+        $this->assertSame(13100.0, $result['advances_iqd']);
+        $this->assertSame(10.0, $result['advances_usd']);
+        // 100 - 0 penalties - 10 advances - 10 holdback
+        $this->assertSame(80.0, $result['net_pay_usd']);
     }
 
     private function worker(float $daily, float $ot): Worker

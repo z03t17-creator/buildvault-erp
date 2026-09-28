@@ -110,16 +110,18 @@ export default function Payroll({
                         </p>
                     </section>
 
-                    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                         <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
                         <SummaryCard label={t('present_days')} value={String(sum.days_present ?? 0)} />
                         <SummaryCard label={t('ot_hours_label')} value={Number(sum.overtime_hours || 0).toFixed(2)} />
+                        <SummaryCard label={t('col_advances')} value={formatIqd(sum.advances_iqd, iqd)} />
+                        <SummaryCard label={t('col_insurance_holdback')} value={formatIqd(sum.insurance_holdback_iqd, iqd)} />
                         <SummaryCard label={t('net_payroll')} value={formatIqd(sum.net_pay_iqd, iqd)} accent />
                     </section>
 
                     <section className="bv-surface">
                         <div className="bv-table-wrap">
-                        <table className="bv-table min-w-[48rem]">
+                        <table className="bv-table min-w-[56rem]">
                             <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
                                 <tr>
                                     <th className="px-3 py-2 text-start">{t('Worker')}</th>
@@ -127,6 +129,8 @@ export default function Payroll({
                                     <th className="px-3 py-2 text-end">{t('col_present')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_ot_hrs')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_penalties')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_advances')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_insurance_holdback')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_base')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_ot_pay')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_net')}</th>
@@ -163,6 +167,17 @@ export default function Payroll({
                                                 </div>
                                             )}
                                         </td>
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(row.advances_iqd, iqd)}
+                                        </td>
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(row.insurance_holdback_iqd, iqd)}
+                                            {row.insurance_holdback_pct != null && (
+                                                <div className="text-[10px] text-slate-400">
+                                                    {Number(row.insurance_holdback_pct).toFixed(0)}%
+                                                </div>
+                                            )}
+                                        </td>
                                         <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.base_pay_iqd, iqd)}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.overtime_pay_iqd, iqd)}</td>
                                         <td className="px-3 py-2 text-end font-display text-base font-semibold tabular-nums text-slate-900 dark:text-white">
@@ -172,7 +187,7 @@ export default function Payroll({
                                 ))}
                                 {!list.length && (
                                     <tr>
-                                        <td colSpan={8} className="px-3 py-10 text-center text-slate-500">
+                                        <td colSpan={10} className="px-3 py-10 text-center text-slate-500">
                                             {t('payroll_empty')}
                                         </td>
                                     </tr>
@@ -186,6 +201,12 @@ export default function Payroll({
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(sum.overtime_hours || 0).toFixed(2)}</td>
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
                                             {formatIqd(sum.penalties_iqd, iqd)}
+                                        </td>
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(sum.advances_iqd, iqd)}
+                                        </td>
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(sum.insurance_holdback_iqd, iqd)}
                                         </td>
                                         <td className="px-3 py-2" colSpan={2} />
                                         <td className="px-3 py-2 text-end font-display text-base tabular-nums text-emerald-700 dark:text-emerald-400">

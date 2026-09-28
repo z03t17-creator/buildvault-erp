@@ -53,6 +53,11 @@ const STYLES = {
     applied: CRIMSON,
     waived: SLATE,
 
+    // Advances (سلفە)
+    open: AMBER,
+    repaid: EMERALD,
+    cancelled: SLATE,
+
     // Imports
     processing: AMBER,
     failed: CRIMSON,

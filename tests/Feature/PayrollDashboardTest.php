@@ -4,8 +4,10 @@ namespace Tests\Feature;
 
 use App\Models\Attendance;
 use App\Models\Project;
+use App\Models\Setting;
 use App\Models\User;
 use App\Models\Worker;
+use App\Services\InsuranceSettings;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -17,6 +19,9 @@ class PayrollDashboardTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        // Match historical assertion math (holdback covered in Phase 7 advance tests).
+        Setting::putValue(InsuranceSettings::HOLDBACK_PCT_KEY, 0);
 
         Http::fake([
             'api.exchangerate-api.com/*' => Http::response([

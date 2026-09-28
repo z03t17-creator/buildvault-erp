@@ -77,6 +77,13 @@ function buildNavItems(t, maturedCount) {
             primary: false,
         },
         {
+            key: 'advances',
+            href: route('advances.index'),
+            active: route().current('advances.*'),
+            label: t('advances'),
+            primary: false,
+        },
+        {
             key: 'docs',
             href: route('documents.index'),
             active: route().current('documents.*'),

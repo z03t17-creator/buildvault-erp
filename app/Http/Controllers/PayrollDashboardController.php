@@ -55,6 +55,8 @@ class PayrollDashboardController extends Controller
                 (float) $calc['late_penalty_usd'] + (float) $calc['absence_penalty_usd'],
                 2,
             );
+            $advancesIqd = (float) $calc['advances_iqd'];
+            $holdbackUsd = (float) $calc['insurance_holdback_usd'];
 
             return [
                 'worker_id' => $worker->id,
@@ -69,13 +71,20 @@ class PayrollDashboardController extends Controller
                 'unexcused_absences' => $calc['unexcused_absences'],
                 'base_pay_usd' => $calc['base_pay_usd'],
                 'overtime_pay_usd' => $calc['overtime_pay_usd'],
+                'gross_pay_usd' => $calc['gross_pay_usd'],
                 'late_penalty_usd' => $calc['late_penalty_usd'],
                 'absence_penalty_usd' => $calc['absence_penalty_usd'],
                 'penalties_usd' => $penalties,
+                'advances_iqd' => $advancesIqd,
+                'advances_usd' => $calc['advances_usd'],
+                'insurance_holdback_pct' => $calc['insurance_holdback_pct'],
+                'insurance_holdback_usd' => $holdbackUsd,
                 'net_pay_usd' => $calc['net_pay_usd'],
                 'base_pay_iqd' => $toIqd((float) $calc['base_pay_usd']),
                 'overtime_pay_iqd' => $toIqd((float) $calc['overtime_pay_usd']),
+                'gross_pay_iqd' => $toIqd((float) $calc['gross_pay_usd']),
                 'penalties_iqd' => $toIqd($penalties),
+                'insurance_holdback_iqd' => $toIqd($holdbackUsd),
                 'net_pay_iqd' => $toIqd((float) $calc['net_pay_usd']),
             ];
         })->values();
@@ -85,6 +94,8 @@ class PayrollDashboardController extends Controller
             'days_present' => (int) $rows->sum('days_present'),
             'overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
             'penalties_usd' => round((float) $rows->sum('penalties_usd'), 2),
+            'advances_iqd' => (float) $rows->sum('advances_iqd'),
+            'insurance_holdback_iqd' => (float) $rows->sum('insurance_holdback_iqd'),
             'net_pay_usd' => round((float) $rows->sum('net_pay_usd'), 2),
             'penalties_iqd' => (float) $rows->sum('penalties_iqd'),
             'net_pay_iqd' => (float) $rows->sum('net_pay_iqd'),

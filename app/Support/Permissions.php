@@ -85,6 +85,17 @@ final class Permissions
 
     public const PENALTIES_LINK = 'penalties.link';
 
+    /** Phase 7 — employee advances (سلفە). */
+    public const ADVANCES_VIEW_ANY = 'advances.viewAny';
+
+    public const ADVANCES_CREATE = 'advances.create';
+
+    public const ADVANCES_UPDATE = 'advances.update';
+
+    public const ADVANCES_REPAY = 'advances.repay';
+
+    public const ADVANCES_CANCEL = 'advances.cancel';
+
     public const DOCUMENTS_VIEW_ANY = 'documents.viewAny';
 
     public const DOCUMENTS_CREATE = 'documents.create';
@@ -155,6 +166,11 @@ final class Permissions
         self::PENALTIES_CREATE,
         self::PENALTIES_WAIVE,
         self::PENALTIES_LINK,
+        self::ADVANCES_VIEW_ANY,
+        self::ADVANCES_CREATE,
+        self::ADVANCES_UPDATE,
+        self::ADVANCES_REPAY,
+        self::ADVANCES_CANCEL,
         self::DOCUMENTS_VIEW_ANY,
         self::DOCUMENTS_CREATE,
         self::DOCUMENTS_DELETE,
@@ -209,6 +225,7 @@ final class Permissions
                 self::PAYOUTS_VIEW_ANY,
                 self::PENALTIES_VIEW_ANY,
                 self::PENALTIES_CREATE,
+                self::ADVANCES_VIEW_ANY,
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
@@ -240,6 +257,11 @@ final class Permissions
                 self::PENALTIES_CREATE,
                 self::PENALTIES_WAIVE,
                 self::PENALTIES_LINK,
+                self::ADVANCES_VIEW_ANY,
+                self::ADVANCES_CREATE,
+                self::ADVANCES_UPDATE,
+                self::ADVANCES_REPAY,
+                self::ADVANCES_CANCEL,
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,

@@ -3,18 +3,22 @@
 namespace App\Services;
 
 use App\Models\Attendance;
+use App\Models\EmployeeAdvance;
 use App\Models\Worker;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\App;
 
 class PayrollService
 {
     /**
      * Calculate net pay for a worker over an inclusive date range.
      *
-     * Net = (Days Present × Daily Rate) + (OT Hours × OT Rate)
-     *     − (Late Penalties + Unexcused Absence Penalties)
+     * Net = (Days × Daily Rate) + (OT × OT Rate)
+     *     − (Late + Absence penalties)
+     *     − open payroll advances (IQD → USD via FX)
+     *     − insurance holdback (% of gross)
      *
      * @return array{
      *     worker_id: int,
@@ -28,8 +32,13 @@ class PayrollService
      *     overtime_rate_usd: float,
      *     base_pay_usd: float,
      *     overtime_pay_usd: float,
+     *     gross_pay_usd: float,
      *     late_penalty_usd: float,
      *     absence_penalty_usd: float,
+     *     advances_iqd: float,
+     *     advances_usd: float,
+     *     insurance_holdback_pct: float,
+     *     insurance_holdback_usd: float,
      *     net_pay_usd: float,
      * }
      */
@@ -75,10 +84,18 @@ class PayrollService
 
         $basePay = round($daysPresent * $dailyRate, 2);
         $otPay = round($overtimeHours * $otRate, 2);
+        $gross = round($basePay + $otPay, 2);
         $latePenalty = round($lateMinutes * $this->latePenaltyPerMinute(), 2);
         $absencePenalty = round($unexcusedAbsences * $this->absencePenaltyAmount($worker), 2);
 
-        $net = round($basePay + $otPay - $latePenalty - $absencePenalty, 2);
+        $advancesIqd = $this->openPayrollAdvancesIqd($worker);
+        $fx = $this->usdToIqdRate();
+        $advancesUsd = $fx > 0 ? round($advancesIqd / $fx, 2) : 0.0;
+
+        $holdbackPct = $this->insuranceHoldbackPercent();
+        $insuranceHoldback = round($gross * ($holdbackPct / 100.0), 2);
+
+        $net = round($gross - $latePenalty - $absencePenalty - $advancesUsd - $insuranceHoldback, 2);
 
         return [
             'worker_id' => $worker->id,
@@ -92,10 +109,46 @@ class PayrollService
             'overtime_rate_usd' => $otRate,
             'base_pay_usd' => $basePay,
             'overtime_pay_usd' => $otPay,
+            'gross_pay_usd' => $gross,
             'late_penalty_usd' => $latePenalty,
             'absence_penalty_usd' => $absencePenalty,
+            'advances_iqd' => $advancesIqd,
+            'advances_usd' => $advancesUsd,
+            'insurance_holdback_pct' => $holdbackPct,
+            'insurance_holdback_usd' => $insuranceHoldback,
             'net_pay_usd' => $net,
         ];
+    }
+
+    protected function openPayrollAdvancesIqd(Worker $worker): float
+    {
+        if (! $worker->exists) {
+            return 0.0;
+        }
+
+        return round((float) EmployeeAdvance::query()
+            ->where('worker_id', $worker->id)
+            ->where('status', EmployeeAdvance::STATUS_OPEN)
+            ->where('repayment_method', EmployeeAdvance::REPAY_PAYROLL)
+            ->sum('remaining_iqd'), 2);
+    }
+
+    protected function insuranceHoldbackPercent(): float
+    {
+        try {
+            return App::make(InsuranceSettings::class)->holdbackPercent();
+        } catch (\Throwable) {
+            return InsuranceSettings::DEFAULT_HOLDBACK_PCT;
+        }
+    }
+
+    protected function usdToIqdRate(): float
+    {
+        try {
+            return App::make(ExchangeRateService::class)->getUsdToIqd();
+        } catch (\Throwable) {
+            return ExchangeRateService::FALLBACK_RATE;
+        }
     }
 
     protected function isWorkedDay(Attendance $row): bool

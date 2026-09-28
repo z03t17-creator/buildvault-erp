@@ -54,6 +54,7 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('projects.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('payouts.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('expenses.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('advances.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
     }
 
@@ -93,6 +94,7 @@ class AuthorizationNavTest extends TestCase
                         'payouts',
                         'expenses',
                         'penalties',
+                        'advances',
                         'docs',
                         'imports',
                         'exports',
@@ -115,7 +117,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['workers.viewAny'] ?? null) === false
                         && ($can['projects.viewAny'] ?? null) === false
-                        && ($can['users.viewAny'] ?? null) === false;
+                        && ($can['users.viewAny'] ?? null) === false
+                        && ($can['advances.viewAny'] ?? null) === false;
                 })
             );
     }
@@ -140,6 +143,7 @@ class AuthorizationNavTest extends TestCase
                         'payouts',
                         'expenses',
                         'penalties',
+                        'advances',
                         'docs',
                         'imports',
                         'exports',
@@ -182,6 +186,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('projects', $keys, true)
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
+                        && in_array('advances', $keys, true)
                         && in_array('exports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
@@ -194,6 +199,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['payouts.create'] ?? null) === false
                         && ($can['expenses.create'] ?? null) === false
                         && ($can['expenses.viewAny'] ?? null) === true
+                        && ($can['advances.viewAny'] ?? null) === true
+                        && ($can['advances.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['vault.audit'] ?? null) === false
                         && ($can['users.viewAny'] ?? null) === false;
@@ -218,6 +225,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('payroll', $keys, true)
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
+                        && in_array('advances', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('backups', $keys, true)
                         && in_array('audit', $keys, true)
@@ -227,6 +235,8 @@ class AuthorizationNavTest extends TestCase
                     return ($can['payouts.create'] ?? null) === true
                         && ($can['expenses.create'] ?? null) === true
                         && ($can['expenses.approve'] ?? null) === true
+                        && ($can['advances.create'] ?? null) === true
+                        && ($can['advances.repay'] ?? null) === true
                         && ($can['projects.create'] ?? null) === false
                         && ($can['workers.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === true;

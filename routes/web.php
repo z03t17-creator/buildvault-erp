@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\EmployeeAdvanceController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FloorController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
 use App\Models\Attendance;
 use App\Models\Document;
+use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Payout;
 use App\Models\Penalty;
@@ -168,6 +170,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('penalties.show');
     Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
     Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
+
+    Route::get('/advances', [EmployeeAdvanceController::class, 'index'])
+        ->middleware('can:viewAny,'.EmployeeAdvance::class)
+        ->name('advances.index');
+    Route::middleware('can:create,'.EmployeeAdvance::class)->group(function () {
+        Route::get('/advances/create', [EmployeeAdvanceController::class, 'create'])->name('advances.create');
+        Route::post('/advances', [EmployeeAdvanceController::class, 'store'])->name('advances.store');
+    });
+    Route::get('/advances/{advance}', [EmployeeAdvanceController::class, 'show'])
+        ->middleware('can:viewAny,'.EmployeeAdvance::class)
+        ->name('advances.show');
+    Route::post('/advances/{advance}/repay', [EmployeeAdvanceController::class, 'repay'])
+        ->name('advances.repay');
+    Route::post('/advances/{advance}/cancel', [EmployeeAdvanceController::class, 'cancel'])
+        ->name('advances.cancel');
 
     Route::middleware('can:viewAny,'.User::class)->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
