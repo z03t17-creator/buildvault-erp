@@ -14,6 +14,16 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, HasRoles, Notifiable;
 
+    public const STATUS_ACTIVE = 'active';
+
+    public const STATUS_DISABLED = 'disabled';
+
+    /** @var list<string> */
+    public const STATUSES = [
+        self::STATUS_ACTIVE,
+        self::STATUS_DISABLED,
+    ];
+
     public function worker(): HasOne
     {
         return $this->hasOne(Worker::class);
@@ -29,6 +39,9 @@ class User extends Authenticatable
         'email',
         'password',
         'locale',
+        'status',
+        'phone',
+        'last_login_at',
     ];
 
     /**
@@ -51,6 +64,22 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    public function isActive(): bool
+    {
+        return ($this->status ?? self::STATUS_ACTIVE) === self::STATUS_ACTIVE;
+    }
+
+    public function isDisabled(): bool
+    {
+        return ! $this->isActive();
+    }
+
+    public function markLoggedIn(): void
+    {
+        $this->forceFill(['last_login_at' => now()])->save();
     }
 }

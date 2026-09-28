@@ -18,6 +18,7 @@ class AuditLogController extends Controller
 
         $action = $request->string('action')->toString() ?: null;
         $userId = $request->integer('user_id') ?: null;
+        $subjectUserId = $request->integer('subject_user_id') ?: null;
         $from = $request->string('from')->toString() ?: null;
         $to = $request->string('to')->toString() ?: null;
 
@@ -32,6 +33,10 @@ class AuditLogController extends Controller
         if ($userId) {
             $query->where('causer_type', (new User)->getMorphClass())
                 ->where('causer_id', $userId);
+        }
+        if ($subjectUserId) {
+            $query->where('subject_type', (new User)->getMorphClass())
+                ->where('subject_id', $subjectUserId);
         }
         if ($from) {
             $query->whereDate('created_at', '>=', $from);
@@ -61,6 +66,7 @@ class AuditLogController extends Controller
             'filters' => [
                 'action' => $action && in_array($action, AuditActions::ALL, true) ? $action : null,
                 'user_id' => $userId,
+                'subject_user_id' => $subjectUserId,
                 'from' => $from,
                 'to' => $to,
             ],

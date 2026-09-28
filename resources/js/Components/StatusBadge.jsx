@@ -27,6 +27,7 @@ const STYLES = {
     leave_sick: SLATE,
     planning: SLATE,
     active: EMERALD,
+    disabled: CRIMSON,
     on_hold: AMBER,
     completed: SKY,
     archived: SLATE,

@@ -48,6 +48,16 @@ Same style as a simple Render web service (e.g. `https://judi-group.onrender.com
    | `SESSION_DRIVER` | `database` |
    | `QUEUE_CONNECTION` | `database` |
    | `LOG_CHANNEL` | `stderr` |
+   | `MAIL_MAILER` | `log` for demo (reset links land in logs) or `smtp` / Render SMTP |
+   | `MAIL_HOST` | SMTP host (when not using `log`) |
+   | `MAIL_PORT` | e.g. `587` |
+   | `MAIL_USERNAME` | SMTP username |
+   | `MAIL_PASSWORD` | SMTP password |
+   | `MAIL_ENCRYPTION` | `tls` (or leave blank / use `MAIL_SCHEME`) |
+   | `MAIL_FROM_ADDRESS` | e.g. `noreply@your-domain` |
+   | `MAIL_FROM_NAME` | `BuildVault ERP` |
+
+Forgot-password / reset uses Laravel Breeze tokens. With `MAIL_MAILER=log`, the reset URL is written to the app log (still a complete token flow). Disabled users cannot log in or request a reset.
 
 5. Deploy → wait for build (npm + composer can take several minutes on free).  
 6. Open `https://buildvault-erp.onrender.com/login` — free tier cold-starts may take ~30–60s.

@@ -16,6 +16,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\TowerController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
 use App\Models\Attendance;
@@ -23,6 +24,7 @@ use App\Models\Document;
 use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\Project;
+use App\Models\User;
 use App\Models\Vault;
 use App\Models\Worker;
 use Illuminate\Support\Facades\Auth;
@@ -147,6 +149,26 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('penalties.show');
     Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
     Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
+
+    Route::middleware('can:viewAny,'.User::class)->group(function () {
+        Route::get('/users', [UserController::class, 'index'])->name('users.index');
+        Route::get('/users/create', [UserController::class, 'create'])
+            ->middleware('can:create,'.User::class)
+            ->name('users.create');
+        Route::post('/users', [UserController::class, 'store'])
+            ->middleware('can:create,'.User::class)
+            ->name('users.store');
+        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+        Route::post('/users/{user}/disable', [UserController::class, 'disable'])->name('users.disable');
+        Route::post('/users/{user}/enable', [UserController::class, 'enable'])->name('users.enable');
+        Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
+            ->name('users.reset-password');
+        Route::post('/users/{user}/change-role', [UserController::class, 'changeRole'])
+            ->name('users.change-role');
+    });
 
     Route::middleware('can:manageRetention,'.Vault::class)->group(function () {
         Route::get('/retention-holds', [RetentionHoldController::class, 'index'])->name('retention-holds.index');

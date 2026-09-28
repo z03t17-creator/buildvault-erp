@@ -85,6 +85,19 @@ final class Permissions
 
     public const DOCUMENTS_DELETE = 'documents.delete';
 
+    /** Super Admin only — User Management (Phase 4). */
+    public const USERS_VIEW_ANY = 'users.viewAny';
+
+    public const USERS_CREATE = 'users.create';
+
+    public const USERS_UPDATE = 'users.update';
+
+    public const USERS_DISABLE = 'users.disable';
+
+    public const USERS_RESET_PASSWORD = 'users.resetPassword';
+
+    public const USERS_CHANGE_ROLE = 'users.changeRole';
+
     /** @var list<string> */
     public const ALL = [
         self::VAULT_VIEW,
@@ -126,6 +139,12 @@ final class Permissions
         self::DOCUMENTS_VIEW_ANY,
         self::DOCUMENTS_CREATE,
         self::DOCUMENTS_DELETE,
+        self::USERS_VIEW_ANY,
+        self::USERS_CREATE,
+        self::USERS_UPDATE,
+        self::USERS_DISABLE,
+        self::USERS_RESET_PASSWORD,
+        self::USERS_CHANGE_ROLE,
     ];
 
     /**

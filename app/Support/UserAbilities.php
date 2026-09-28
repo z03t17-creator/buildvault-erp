@@ -70,6 +70,12 @@ final class UserAbilities
             'documents.viewAny' => $gate->allows('viewAny', Document::class),
             'documents.create' => $gate->allows('create', Document::class),
             'documents.delete' => $gate->allows('delete', new Document),
+            'users.viewAny' => $gate->allows('viewAny', User::class),
+            'users.create' => $gate->allows('create', User::class),
+            'users.update' => $gate->allows('update', new User),
+            'users.disable' => $gate->allows('disable', new User),
+            'users.resetPassword' => $gate->allows('resetPassword', new User),
+            'users.changeRole' => $gate->allows('changeRole', new User),
         ];
     }
 
@@ -96,6 +102,7 @@ final class UserAbilities
             'backups' => $can['vault.backups'] ?? false,
             'audit' => $can['vault.audit'] ?? false,
             'insurance' => $can['vault.retention'] ?? false,
+            'users' => $can['users.viewAny'] ?? false,
         ];
 
         return array_values(array_keys(array_filter($map)));

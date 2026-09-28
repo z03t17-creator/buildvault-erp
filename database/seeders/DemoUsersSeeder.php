@@ -41,8 +41,12 @@ class DemoUsersSeeder extends Seeder
                 'password' => Hash::make(self::ACCOUNTANT_PASSWORD),
                 'email_verified_at' => now(),
                 'locale' => 'en',
+                'status' => User::STATUS_ACTIVE,
             ],
         );
+        if ($accountant->status !== User::STATUS_ACTIVE) {
+            $accountant->forceFill(['status' => User::STATUS_ACTIVE])->save();
+        }
         $accountant->syncRoles([Roles::ACCOUNTANT]);
 
         $boss = $this->ensureBossUser();
@@ -55,8 +59,12 @@ class DemoUsersSeeder extends Seeder
                 'password' => Hash::make(self::STOCK_PASSWORD),
                 'email_verified_at' => now(),
                 'locale' => 'en',
+                'status' => User::STATUS_ACTIVE,
             ],
         );
+        if ($stock->status !== User::STATUS_ACTIVE) {
+            $stock->forceFill(['status' => User::STATUS_ACTIVE])->save();
+        }
         $stock->syncRoles([Roles::STOCK_MANAGER]);
         // Stock Manager is not a Worker login — never grant roster privileges via user_id link.
         Worker::query()->where('user_id', $stock->id)->update(['user_id' => null]);
@@ -75,6 +83,7 @@ class DemoUsersSeeder extends Seeder
                 'name' => 'Demo Boss / Contractor',
                 'password' => Hash::make(self::BOSS_PASSWORD),
                 'email_verified_at' => $boss->email_verified_at ?? now(),
+                'status' => User::STATUS_ACTIVE,
             ])->save();
 
             return $boss;
@@ -87,6 +96,7 @@ class DemoUsersSeeder extends Seeder
                 'name' => 'Demo Boss / Contractor',
                 'password' => Hash::make(self::BOSS_PASSWORD),
                 'email_verified_at' => $engineer->email_verified_at ?? now(),
+                'status' => User::STATUS_ACTIVE,
             ])->save();
 
             return $engineer->refresh();
@@ -98,6 +108,7 @@ class DemoUsersSeeder extends Seeder
             'password' => Hash::make(self::BOSS_PASSWORD),
             'email_verified_at' => now(),
             'locale' => 'en',
+            'status' => User::STATUS_ACTIVE,
         ]);
     }
 

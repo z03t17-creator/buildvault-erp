@@ -27,8 +27,13 @@ class UserSeeder extends Seeder
                 'password' => Hash::make(self::ADMIN_PASSWORD),
                 'email_verified_at' => now(),
                 'locale' => 'en',
+                'status' => User::STATUS_ACTIVE,
             ],
         );
+
+        if ($user->status !== User::STATUS_ACTIVE) {
+            $user->forceFill(['status' => User::STATUS_ACTIVE])->save();
+        }
 
         if (! $user->hasRole('Super Admin')) {
             $user->assignRole('Super Admin');

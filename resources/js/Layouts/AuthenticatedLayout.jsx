@@ -98,6 +98,13 @@ function buildNavItems(t, maturedCount) {
             primary: false,
         },
         {
+            key: 'users',
+            href: route('users.index'),
+            active: route().current('users.*'),
+            label: t('users'),
+            primary: false,
+        },
+        {
             key: 'audit',
             href: route('audit.index'),
             active: route().current('audit.*'),

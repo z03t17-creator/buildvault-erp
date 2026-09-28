@@ -97,6 +97,7 @@ class AuthorizationNavTest extends TestCase
                         'backups',
                         'audit',
                         'insurance',
+                        'users',
                     ];
                     foreach ($forbidden as $key) {
                         if (in_array($key, $keys, true)) {
@@ -111,7 +112,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['vault.payroll'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['workers.viewAny'] ?? null) === false
-                        && ($can['projects.viewAny'] ?? null) === false;
+                        && ($can['projects.viewAny'] ?? null) === false
+                        && ($can['users.viewAny'] ?? null) === false;
                 })
             );
     }
@@ -141,6 +143,7 @@ class AuthorizationNavTest extends TestCase
                         'backups',
                         'audit',
                         'insurance',
+                        'users',
                     ] as $key) {
                         if (! in_array($key, $keys, true)) {
                             return false;
@@ -152,7 +155,8 @@ class AuthorizationNavTest extends TestCase
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === true
                         && ($can['vault.backups'] ?? null) === true
-                        && ($can['projects.delete'] ?? null) === true;
+                        && ($can['projects.delete'] ?? null) === true
+                        && ($can['users.viewAny'] ?? null) === true;
                 })
             );
     }
@@ -176,7 +180,8 @@ class AuthorizationNavTest extends TestCase
                         && in_array('payouts', $keys, true)
                         && in_array('exports', $keys, true)
                         && ! in_array('backups', $keys, true)
-                        && ! in_array('audit', $keys, true);
+                        && ! in_array('audit', $keys, true)
+                        && ! in_array('users', $keys, true);
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === true
@@ -184,7 +189,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['workers.create'] ?? null) === true
                         && ($can['payouts.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
-                        && ($can['vault.audit'] ?? null) === false;
+                        && ($can['vault.audit'] ?? null) === false
+                        && ($can['users.viewAny'] ?? null) === false;
                 })
                 ->where('auth.role', Roles::BOSS_CONTRACTOR)
                 ->where('roleHome', Roles::BOSS_CONTRACTOR)

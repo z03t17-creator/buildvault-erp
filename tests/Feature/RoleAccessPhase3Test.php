@@ -77,6 +77,7 @@ class RoleAccessPhase3Test extends TestCase
             'exports.index',
             'backups.index',
             'audit.index',
+            'users.index',
         ] as $name) {
             $this->actingAs($admin)->get(route($name))->assertOk();
         }
@@ -115,6 +116,7 @@ class RoleAccessPhase3Test extends TestCase
         $this->actingAs($boss)->get(route('payouts.create'))->assertForbidden();
         $this->actingAs($boss)->get(route('backups.index'))->assertForbidden();
         $this->actingAs($boss)->get(route('audit.index'))->assertForbidden();
+        $this->actingAs($boss)->get(route('users.index'))->assertForbidden();
 
         $this->actingAs($boss)
             ->get(route('dashboard'))
@@ -152,6 +154,7 @@ class RoleAccessPhase3Test extends TestCase
 
         $this->actingAs($accountant)->get(route('projects.create'))->assertForbidden();
         $this->actingAs($accountant)->get(route('workers.create'))->assertForbidden();
+        $this->actingAs($accountant)->get(route('users.index'))->assertForbidden();
 
         $this->actingAs($accountant)
             ->get(route('dashboard'))
@@ -194,6 +197,7 @@ class RoleAccessPhase3Test extends TestCase
             'exports.index',
             'backups.index',
             'audit.index',
+            'users.index',
         ] as $name) {
             $this->actingAs($stock)->get(route($name))->assertForbidden();
         }
