@@ -53,13 +53,20 @@ class HandleInertiaRequests extends Middleware
             $insuranceSettings = app(InsuranceSettings::class)->all();
         }
 
+        $roles = $user
+            ? $user->getRoleNames()->values()->all()
+            : [];
+
         return [
             ...parent::share($request),
             'auth' => [
                 'user' => $user,
                 'can' => $can,
                 'nav' => $nav,
+                'roles' => $roles,
+                'role' => $roles[0] ?? null,
             ],
+
             'alerts' => [
                 'maturedRetentionCount' => $maturedCount,
             ],

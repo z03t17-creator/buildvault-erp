@@ -174,6 +174,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('workers', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('payouts', $keys, true)
+                        && in_array('exports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true);
                 })
@@ -185,6 +186,37 @@ class AuthorizationNavTest extends TestCase
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['vault.audit'] ?? null) === false;
                 })
+                ->where('auth.role', Roles::BOSS_CONTRACTOR)
+                ->where('roleHome', Roles::BOSS_CONTRACTOR)
+            );
+    }
+
+    public function test_accountant_nav_includes_backups_audit_and_money_ops(): void
+    {
+        $accountant = $this->userWithRole(Roles::ACCOUNTANT);
+
+        $this->actingAs($accountant)
+            ->get(route('dashboard'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('auth.nav', function ($nav) {
+                    $keys = collect($nav)->values()->all();
+
+                    return in_array('vault', $keys, true)
+                        && in_array('payroll', $keys, true)
+                        && in_array('payouts', $keys, true)
+                        && in_array('projects', $keys, true)
+                        && in_array('backups', $keys, true)
+                        && in_array('audit', $keys, true)
+                        && in_array('insurance', $keys, true);
+                })
+                ->where('auth.can', function ($can) {
+                    return ($can['payouts.create'] ?? null) === true
+                        && ($can['projects.create'] ?? null) === false
+                        && ($can['workers.create'] ?? null) === false
+                        && ($can['vault.backups'] ?? null) === true;
+                })
+                ->where('roleHome', Roles::ACCOUNTANT)
             );
     }
 }

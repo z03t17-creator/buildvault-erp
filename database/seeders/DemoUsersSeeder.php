@@ -58,6 +58,8 @@ class DemoUsersSeeder extends Seeder
             ],
         );
         $stock->syncRoles([Roles::STOCK_MANAGER]);
+        // Stock Manager is not a Worker login — never grant roster privileges via user_id link.
+        Worker::query()->where('user_id', $stock->id)->update(['user_id' => null]);
 
         $this->retireLegacyDemoUsers();
     }
