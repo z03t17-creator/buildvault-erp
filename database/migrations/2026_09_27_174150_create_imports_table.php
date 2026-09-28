@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('imports', function (Blueprint $table) {
             $table->id();
-            $table->string('type', 32); // workers|projects|attendances|payouts
+            $table->string('type', 32); // workers|projects|payouts
             $table->string('mode', 16)->default('partial'); // partial|atomic
             $table->string('status', 32)->default('pending'); // pending|processing|completed|failed|rolled_back
             $table->string('original_filename')->nullable();
