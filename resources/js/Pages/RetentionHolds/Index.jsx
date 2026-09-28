@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -7,17 +8,8 @@ import InputLabel from '@/Components/InputLabel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
+import { formatIqd } from '@/lib/numberFormat';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Index({ holds, matured, settings, exchangeRate }) {
     const t = useTranslations();
@@ -41,11 +33,9 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
         months: form.data.maturity_months ?? cfg.maturity_months ?? 6,
     });
 
-    const amountIqd = (h) =>
-        formatIqd(
-            h.amount_iqd ?? Math.round(Number(h.amount_usd || 0) * Number(rate || 1310)),
-            iqd,
-        );
+    const amountValue = (h) =>
+        h.amount_iqd ?? Math.round(Number(h.amount_usd || 0) * Number(rate || 1310));
+    const amountIqd = (h) => formatIqd(amountValue(h), iqd);
 
     if (!canViewRetention && !canRetention) {
         return null;
@@ -163,18 +153,23 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                         <td className="px-3 py-2 tabular-nums">
                                             {h.hold_pct != null ? `${Number(h.hold_pct).toFixed(0)}%` : '—'}
                                         </td>
-                                        <td className="px-3 py-2 tabular-nums">{amountIqd(h)}</td>
+                                        <td className="px-3 py-2"><MoneyAmount value={amountValue(h)} label={iqd} size="md" /></td>
                                         <td className="px-3 py-2">{h.hold_start}</td>
                                         <td className="px-3 py-2">{h.maturity_date}</td>
                                         <td className="px-3 py-2"><StatusBadge status={h.status} /></td>
                                         <td className="px-3 py-2 tabular-nums">
-                                            {h.released_amount_usd != null
-                                                ? formatIqd(
-                                                    h.released_amount_iqd
-                                                        ?? Math.round(Number(h.released_amount_usd) * Number(rate || 1310)),
-                                                    iqd,
-                                                )
-                                                : '—'}
+                                            {h.released_amount_usd != null ? (
+                                                <MoneyAmount
+                                                    value={
+                                                        h.released_amount_iqd
+                                                            ?? Math.round(Number(h.released_amount_usd) * Number(rate || 1310))
+                                                    }
+                                                    label={iqd}
+                                                    size="md"
+                                                />
+                                            ) : (
+                                                '—'
+                                            )}
                                         </td>
                                         <td className="px-3 py-2">
                                             {canRetention && h.status === 'matured' ? (

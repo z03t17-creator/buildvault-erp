@@ -1,21 +1,13 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
+import { formatIqd } from '@/lib/numberFormat';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 const selectClass =
     'rounded-md border-slate-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
@@ -118,14 +110,30 @@ export default function Payroll({
                         <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
                         <SummaryCard label={t('present_days')} value={String(sum.days_present ?? 0)} />
                         <SummaryCard label={t('ot_hours_label')} value={Number(sum.overtime_hours || 0).toFixed(2)} />
-                        <SummaryCard label={t('col_penalties')} value={formatIqd(sum.penalties_iqd, iqd)} />
-                        <SummaryCard label={t('col_advances')} value={formatIqd(sum.advances_iqd, iqd)} />
-                        <SummaryCard label={t('col_insurance_holdback')} value={formatIqd(sum.insurance_holdback_iqd, iqd)} />
+                        <SummaryCard
+                            label={t('col_penalties')}
+                            value={<MoneyAmount value={sum.penalties_iqd} label={iqd} size="lg" />}
+                        />
+                        <SummaryCard
+                            label={t('col_advances')}
+                            value={<MoneyAmount value={sum.advances_iqd} label={iqd} size="lg" />}
+                        />
+                        <SummaryCard
+                            label={t('col_insurance_holdback')}
+                            value={<MoneyAmount value={sum.insurance_holdback_iqd} label={iqd} size="lg" />}
+                        />
                     </section>
 
                     <section className="grid gap-3 sm:grid-cols-2">
-                        <SummaryCard label={t('gross_payroll')} value={formatIqd(sum.gross_pay_iqd, iqd)} />
-                        <SummaryCard label={t('net_payroll')} value={formatIqd(sum.net_pay_iqd, iqd)} accent />
+                        <SummaryCard
+                            label={t('gross_payroll')}
+                            value={<MoneyAmount value={sum.gross_pay_iqd} label={iqd} size="xl" />}
+                        />
+                        <SummaryCard
+                            label={t('net_payroll')}
+                            value={<MoneyAmount value={sum.net_pay_iqd} label={iqd} size="xl" accent />}
+                            accent
+                        />
                     </section>
 
                     <section className="bv-surface">
@@ -166,10 +174,10 @@ export default function Payroll({
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums">{row.days_present}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(row.overtime_hours).toFixed(2)}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.base_pay_iqd, iqd)}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.overtime_pay_iqd, iqd)}</td>
+                                        <td className="px-3 py-2 text-end tabular-nums"><MoneyAmount value={row.base_pay_iqd} label={iqd} size="sm" /></td>
+                                        <td className="px-3 py-2 text-end tabular-nums"><MoneyAmount value={row.overtime_pay_iqd} label={iqd} size="sm" /></td>
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            {formatIqd(row.penalties_iqd, iqd)}
+                                            <MoneyAmount value={row.penalties_iqd} label={iqd} size="sm" />
                                             {(row.late_minutes > 0 || row.unexcused_absences > 0 || Number(row.recorded_penalties_iqd) > 0) && (
                                                 <div className="text-[10px] text-slate-400">
                                                     {row.late_minutes > 0 ? t('minutes_late', { n: row.late_minutes }) : ''}
@@ -187,7 +195,7 @@ export default function Payroll({
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(row.insurance_holdback_iqd, iqd)}
+                                            <MoneyAmount value={row.insurance_holdback_iqd} label={iqd} size="sm" />
                                             {row.insurance_holdback_pct != null && (
                                                 <div className="text-[10px] text-slate-400">
                                                     {t('holdback_line', {
@@ -197,10 +205,10 @@ export default function Payroll({
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(row.advances_iqd, iqd)}
+                                            <MoneyAmount value={row.advances_iqd} label={iqd} size="sm" />
                                         </td>
                                         <td className="px-3 py-2 text-end font-display text-base font-semibold tabular-nums text-slate-900 dark:text-white">
-                                            {formatIqd(row.net_pay_iqd, iqd)}
+                                            <MoneyAmount value={row.net_pay_iqd} label={iqd} size="sm" />
                                         </td>
                                     </tr>
                                 ))}
@@ -220,16 +228,16 @@ export default function Payroll({
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(sum.overtime_hours || 0).toFixed(2)}</td>
                                         <td className="px-3 py-2" colSpan={2} />
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                            {formatIqd(sum.penalties_iqd, iqd)}
+                                            <MoneyAmount value={sum.penalties_iqd} label={iqd} size="sm" />
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(sum.insurance_holdback_iqd, iqd)}
+                                            <MoneyAmount value={sum.insurance_holdback_iqd} label={iqd} size="sm" />
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(sum.advances_iqd, iqd)}
+                                            <MoneyAmount value={sum.advances_iqd} label={iqd} size="sm" />
                                         </td>
                                         <td className="px-3 py-2 text-end font-display text-base tabular-nums text-emerald-700 dark:text-emerald-400">
-                                            {formatIqd(sum.net_pay_iqd, iqd)}
+                                            <MoneyAmount value={sum.net_pay_iqd} label={iqd} size="sm" />
                                         </td>
                                     </tr>
                                 </tfoot>
@@ -248,7 +256,8 @@ function SummaryCard({ label, value, accent }) {
         <div className="bv-card bg-gradient-to-br from-white to-slate-50/80 px-4 py-3 dark:from-slate-900 dark:to-slate-950">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
             <p
-                className={`mt-1 font-display text-2xl font-semibold tabular-nums ${
+                dir="ltr"
+                className={`mt-1 font-display text-2xl font-semibold tabular-nums sm:text-3xl ${
                     accent
                         ? 'text-emerald-700 dark:text-emerald-400'
                         : 'text-slate-900 dark:text-white'

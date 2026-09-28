@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -48,7 +49,13 @@ export default function Index({ payouts }) {
                                     </td>
                                     <td className="px-3 py-2">{p.project?.name || '—'}</td>
                                     <td className="px-3 py-2 capitalize">{p.category}</td>
-                                    <td className="px-3 py-2 tabular-nums">{p.amount_usd}</td>
+                                    <td className="px-3 py-2">
+                                        {p.amount_iqd != null ? (
+                                            <MoneyAmount value={p.amount_iqd} label="IQD" size="md" />
+                                        ) : (
+                                            <MoneyAmount value={p.amount_usd} label="USD" size="md" showLabel />
+                                        )}
+                                    </td>
                                     <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                                 </tr>
                             ))}

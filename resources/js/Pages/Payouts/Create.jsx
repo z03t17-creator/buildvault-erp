@@ -3,6 +3,8 @@ import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyAmount from '@/Components/MoneyAmount';
+import MoneyInput from '@/Components/MoneyInput';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -11,16 +13,6 @@ import { useEffect, useMemo } from 'react';
 
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Create({ projects, workers, categories, payrollSuggestions }) {
     const t = useTranslations();
@@ -107,10 +99,10 @@ export default function Create({ projects, workers, categories, payrollSuggestio
                         <div className="rounded-md border border-amber-200/80 bg-amber-50/80 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
                             <p className="font-medium">{t('payroll_net_formula')}</p>
                             <ul className="mt-2 space-y-1 text-xs">
-                                <li>{t('col_penalties')}: {formatIqd(Math.round(Number(suggestion.penalties_usd || 0) * (suggestion.net_pay_iqd && suggestion.net_pay_usd ? suggestion.net_pay_iqd / suggestion.net_pay_usd : 1310)), iqd)}</li>
+                                <li>{t('col_penalties')}: <MoneyAmount value={Math.round(Number(suggestion.penalties_usd || 0) * (suggestion.net_pay_iqd && suggestion.net_pay_usd ? suggestion.net_pay_iqd / suggestion.net_pay_usd : 1310))} label={iqd} size="sm" /></li>
                                 <li>{t('col_insurance_holdback')}: {Number(suggestion.insurance_holdback_pct).toFixed(0)}% · {suggestion.insurance_holdback_usd} USD</li>
-                                <li>{t('col_advances')}: {formatIqd(suggestion.advances_iqd, iqd)}</li>
-                                <li className="font-semibold">{t('col_net')}: {formatIqd(suggestion.net_pay_iqd, iqd)}</li>
+                                <li>{t('col_advances')}: <MoneyAmount value={suggestion.advances_iqd} label={iqd} size="sm" /></li>
+                                <li className="font-semibold">{t('col_net')}: <MoneyAmount value={suggestion.net_pay_iqd} label={iqd} size="md" /></li>
                             </ul>
                             <SecondaryButton
                                 type="button"
@@ -124,7 +116,7 @@ export default function Create({ projects, workers, categories, payrollSuggestio
 
                     <div>
                         <InputLabel value={t('amount_usd') || 'Amount USD'} />
-                        <TextInput type="number" step="0.01" className="mt-1 block w-full" value={data.amount_usd} onChange={(e) => setData('amount_usd', e.target.value)} required />
+                        <MoneyInput allowDecimals className="mt-1 block w-full" value={data.amount_usd} onValueChange={(raw) => setData('amount_usd', raw)} required />
                         <InputError message={errors.amount_usd} className="mt-1" />
                     </div>
                     <div>

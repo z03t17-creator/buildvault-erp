@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyInput from '@/Components/MoneyInput';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -100,26 +101,20 @@ export default function Create({ projects, workers, repaymentMethods, defaults }
                     </div>
                     <div>
                         <InputLabel value={t('amount_iqd')} />
-                        <TextInput
-                            type="number"
-                            step="1"
-                            min="1"
+                        <MoneyInput
                             className="mt-1 block w-full"
                             value={data.amount_iqd}
-                            onChange={(e) => setData('amount_iqd', e.target.value)}
+                            onValueChange={(raw) => setData('amount_iqd', raw)}
                             required
                         />
                         <InputError message={errors.amount_iqd} className="mt-1" />
                     </div>
                     <div>
                         <InputLabel value={t('remaining_iqd')} />
-                        <TextInput
-                            type="number"
-                            step="1"
-                            min="0"
+                        <MoneyInput
                             className="mt-1 block w-full"
                             value={data.remaining_iqd}
-                            onChange={(e) => setData('remaining_iqd', e.target.value)}
+                            onValueChange={(raw) => setData('remaining_iqd', raw)}
                         />
                         <p className="mt-1 text-xs text-slate-500">{t('remaining_iqd_hint')}</p>
                         <InputError message={errors.remaining_iqd} className="mt-1" />

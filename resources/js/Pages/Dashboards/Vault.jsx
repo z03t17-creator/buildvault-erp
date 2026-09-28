@@ -1,20 +1,12 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
+import { formatIqd } from '@/lib/numberFormat';
 import { Head, Link, usePage } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 function CashFlowChart({ series, t }) {
     const data = series || [];
@@ -198,8 +190,8 @@ export default function Vault({
                             <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
                                 {t('balance_iqd')}
                             </p>
-                            <p className="mt-3 font-display text-3xl font-semibold tracking-tight text-slate-900 tabular-nums dark:text-white sm:text-4xl">
-                                {formatIqd(vault?.balance_iqd, iqd)}
+                            <p className="mt-3">
+                                <MoneyAmount value={vault?.balance_iqd} label={iqd} size="hero" />
                             </p>
                             <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
                                 {t('available_pending', {
@@ -244,7 +236,7 @@ export default function Vault({
                             )}
                         </div>
                         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <Stat label={t('retention_pool')} value={formatIqd(ins.retention_pool_iqd, iqd)} />
+                            <Stat label={t('retention_pool')} value={<MoneyAmount value={ins.retention_pool_iqd} label={iqd} size="lg" />} />
                             <Stat
                                 label={t('holding')}
                                 value={`${formatIqd(ins.holding_iqd, iqd)} · ${ins.holding_count || 0}`}
@@ -256,7 +248,7 @@ export default function Vault({
                             />
                             <Stat
                                 label={t('reserved_liq')}
-                                value={formatIqd(liq.reserved_insurance_iqd, iqd)}
+                                value={<MoneyAmount value={liq.reserved_insurance_iqd} label={iqd} size="lg" />}
                             />
                         </div>
                     </section>
@@ -280,8 +272,8 @@ export default function Vault({
                                     <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
                                         {label}
                                     </p>
-                                    <p className="mt-1 font-display text-xl font-semibold tabular-nums text-slate-900 dark:text-white">
-                                        {formatIqd(value, iqd)}
+                                    <p className="mt-1">
+                                        <MoneyAmount value={value} label={iqd} size="lg" />
                                     </p>
                                 </div>
                             ))}
@@ -312,7 +304,7 @@ function Stat({ label, value, accent }) {
     return (
         <div>
             <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
-            <p className={`mt-1 font-display text-xl font-semibold tabular-nums ${accentClass}`}>{value}</p>
+            <p dir="ltr" className={`mt-1 font-display text-xl font-semibold tabular-nums sm:text-2xl ${accentClass}`}>{value}</p>
         </div>
     );
 }

@@ -4,6 +4,7 @@ import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
+import { formatNumber } from '@/lib/numberFormat';
 import { Head, Link } from '@inertiajs/react';
 
 function Field({ label, children }) {
@@ -80,8 +81,8 @@ export default function Show({ worker }) {
                             )}
                         </Field>
                         <Field label={t('phone')}>{worker.phone || '—'}</Field>
-                        <Field label={t('daily_rate')}>{worker.daily_rate_usd}</Field>
-                        <Field label={t('overtime_rate')}>{worker.overtime_rate_usd}</Field>
+                        <Field label={t('daily_rate')}><span dir="ltr" className="font-display text-lg font-semibold tabular-nums">{formatNumber(worker.daily_rate_usd, { decimals: 2 })}</span></Field>
+                        <Field label={t('overtime_rate')}>{formatNumber(worker.overtime_rate_usd, { decimals: 2 })}</Field>
                         <Field label={t('spending_limit')}>{worker.spending_limit_usd}</Field>
                         <Field label={t('national_id')}>{worker.national_id_number || '—'}</Field>
                     </dl>

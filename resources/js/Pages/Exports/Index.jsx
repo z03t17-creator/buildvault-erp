@@ -1,4 +1,5 @@
 import InputLabel from '@/Components/InputLabel';
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -158,11 +159,11 @@ export default function Index({ projects, workers, payouts, default_month }) {
                                                 <td className="px-3 py-2">{p.project?.name || '—'}</td>
                                                 <td className="px-3 py-2">{p.worker?.name || '—'}</td>
                                                 <td className="px-3 py-2">{p.category}</td>
-                                                <td className="px-3 py-2 tabular-nums text-sm">
-                                                    ${Number(p.amount_usd).toFixed(2)}
-                                                    <span className="ms-1 text-slate-500">
-                                                        / {Number(p.amount_iqd).toLocaleString()}
-                                                    </span>
+                                                <td className="px-3 py-2">
+                                                    <MoneyAmount value={p.amount_iqd} label="IQD" size="md" />
+                                                    <div dir="ltr" className="text-xs text-slate-500 tabular-nums">
+                                                        ${Number(p.amount_usd).toFixed(2)} USD
+                                                    </div>
                                                 </td>
                                                 <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                                                 <td className="px-3 py-2 text-end">

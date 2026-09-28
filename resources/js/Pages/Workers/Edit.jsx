@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyInput from '@/Components/MoneyInput';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -74,11 +75,11 @@ export default function Edit({ worker, projects, roles }) {
                         </div>
                         <div>
                             <InputLabel htmlFor="daily_rate_usd" value={t('daily_rate')} />
-                            <TextInput id="daily_rate_usd" type="number" step="0.01" className="mt-1 block w-full" value={data.daily_rate_usd} onChange={(e) => setData('daily_rate_usd', e.target.value)} />
+                            <MoneyInput id="daily_rate_usd" allowDecimals className="mt-1 block w-full" value={data.daily_rate_usd} onValueChange={(raw) => setData('daily_rate_usd', raw)} />
                         </div>
                         <div>
                             <InputLabel htmlFor="overtime_rate_usd" value={t('overtime_rate')} />
-                            <TextInput id="overtime_rate_usd" type="number" step="0.01" className="mt-1 block w-full" value={data.overtime_rate_usd} onChange={(e) => setData('overtime_rate_usd', e.target.value)} />
+                            <MoneyInput id="overtime_rate_usd" allowDecimals className="mt-1 block w-full" value={data.overtime_rate_usd} onValueChange={(raw) => setData('overtime_rate_usd', raw)} />
                         </div>
                         <div>
                             <InputLabel htmlFor="phone" value={t('phone')} />

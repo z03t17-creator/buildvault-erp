@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -6,16 +7,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Show({ penalty, linkablePayouts }) {
     const t = useTranslations();
@@ -61,8 +52,13 @@ export default function Show({ penalty, linkablePayouts }) {
                     <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
                         <div>
                             <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
-                            <dd className="tabular-nums text-rose-700 dark:text-rose-300">
-                                {formatIqd(penalty.amount_iqd_display ?? penalty.amount_iqd, iqd)}
+                            <dd>
+                                <MoneyAmount
+                                    value={penalty.amount_iqd_display ?? penalty.amount_iqd}
+                                    label={iqd}
+                                    size="lg"
+                                    className="text-rose-700 dark:text-rose-300"
+                                />
                             </dd>
                         </div>
                         <div>

@@ -53,8 +53,8 @@
                 <div class="label">{{ __('Amount') }}</div>
                 <div class="amount">${{ number_format((float) $payout->amount_usd, 2) }} USD</div>
                 <div class="dual">
-                    {{ number_format((float) $payout->amount_iqd, 0) }} IQD
-                    · {{ __('Rate') }} {{ number_format((float) $payout->exchange_rate, 2) }}
+                    {{ format_iqd($payout->amount_iqd) }}
+                    · {{ __('Rate') }} {{ format_number($payout->exchange_rate, 2) }}
                 </div>
                 @if((float) $payout->retention_holdback > 0)
                     <div class="sub" style="margin-top:6px">

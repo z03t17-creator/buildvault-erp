@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -5,16 +6,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Index({ penalties }) {
     const t = useTranslations();
@@ -68,8 +59,13 @@ export default function Index({ penalties }) {
                                     <td className="px-3 py-2">{p.project?.name || '—'}</td>
                                     <td className="px-3 py-2">{t(`penalty_type_${p.type}`) || p.type}</td>
                                     <td className="px-3 py-2 tabular-nums">{p.occurred_on || '—'}</td>
-                                    <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
-                                        {formatIqd(p.amount_iqd_display ?? p.amount_iqd, iqd)}
+                                    <td className="px-3 py-2 text-end">
+                                        <MoneyAmount
+                                            value={p.amount_iqd_display ?? p.amount_iqd}
+                                            label={iqd}
+                                            size="md"
+                                            className="text-rose-700 dark:text-rose-300"
+                                        />
                                     </td>
                                     <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
                                 </tr>

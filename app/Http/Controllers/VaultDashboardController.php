@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\Vault;
 use App\Services\ExchangeRateService;
 use App\Services\LiquidityService;
+use App\Support\NumberFormat;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -121,7 +122,7 @@ class VaultDashboardController extends Controller
 
         $rate = $this->exchangeRates->refresh();
 
-        return back()->with('success', sprintf('FX refreshed: 1 USD = %s IQD', number_format($rate, 2)));
+        return back()->with('success', sprintf('FX refreshed: 1 USD = %s IQD', NumberFormat::number($rate, 2)));
     }
 
     public function overrideFx(Request $request): RedirectResponse
@@ -135,7 +136,7 @@ class VaultDashboardController extends Controller
 
         $rate = $this->exchangeRates->override((float) $data['rate'], $data['note'] ?? null);
 
-        return back()->with('success', sprintf('FX overridden: 1 USD = %s IQD', number_format($rate, 2)));
+        return back()->with('success', sprintf('FX overridden: 1 USD = %s IQD', NumberFormat::number($rate, 2)));
     }
 
     /**
@@ -152,7 +153,7 @@ class VaultDashboardController extends Controller
     ): array {
         $balance = $vault ? (float) $vault->balance_usd : 0.0;
         $maturedCount = (int) ($holdStats->get(RetentionHold::STATUS_MATURED)?->cnt ?? 0);
-        $fmt = fn (float $usd): string => number_format(round($usd * $rate, 0), 0);
+        $fmt = fn (float $usd): string => NumberFormat::number(round($usd * $rate, 0));
 
         $liquidityStatus = 'critical';
         $liquidityDetail = __('health_no_liquidity');

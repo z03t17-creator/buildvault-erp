@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyInput from '@/Components/MoneyInput';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -83,13 +84,10 @@ export default function Create({ projects, categories, paymentMethods }) {
                     </div>
                     <div>
                         <InputLabel value={t('amount_iqd')} />
-                        <TextInput
-                            type="number"
-                            step="1"
-                            min="1"
+                        <MoneyInput
                             className="mt-1 block w-full"
                             value={data.amount_iqd}
-                            onChange={(e) => setData('amount_iqd', e.target.value)}
+                            onValueChange={(raw) => setData('amount_iqd', raw)}
                             required
                         />
                         <InputError message={errors.amount_iqd} className="mt-1" />

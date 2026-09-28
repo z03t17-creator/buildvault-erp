@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -5,11 +6,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    if (n == null || Number.isNaN(Number(n))) return '—';
-    return `${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })} ${iqdLabel}`;
-}
 
 export default function Index({ expenses }) {
     const list = expenses || [];
@@ -64,7 +60,9 @@ export default function Index({ expenses }) {
                                             ? t(`expense_category_${e.category}`)
                                             : e.category}
                                     </td>
-                                    <td className="px-3 py-2 tabular-nums">{formatIqd(e.amount_iqd, iqd)}</td>
+                                    <td className="px-3 py-2 text-end">
+                                        {e.amount_iqd == null ? '—' : <MoneyAmount value={e.amount_iqd} label={iqd} size="md" />}
+                                    </td>
                                     <td className="px-3 py-2 tabular-nums">{e.expense_date}</td>
                                     <td className="px-3 py-2">
                                         <StatusBadge status={e.approval_status} />

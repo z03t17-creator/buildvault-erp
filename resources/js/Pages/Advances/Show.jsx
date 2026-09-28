@@ -1,24 +1,15 @@
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyAmount from '@/Components/MoneyAmount';
+import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
-import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Show({ advance }) {
     const t = useTranslations();
@@ -67,12 +58,19 @@ export default function Show({ advance }) {
                     <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
                         <div>
                             <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
-                            <dd className="tabular-nums">{formatIqd(advance.amount_iqd, iqd)}</dd>
+                            <dd>
+                                <MoneyAmount value={advance.amount_iqd} label={iqd} size="lg" />
+                            </dd>
                         </div>
                         <div>
                             <dt className="text-xs uppercase text-slate-400">{t('remaining_iqd')}</dt>
-                            <dd className="tabular-nums text-amber-700 dark:text-amber-300">
-                                {formatIqd(advance.remaining_iqd, iqd)}
+                            <dd>
+                                <MoneyAmount
+                                    value={advance.remaining_iqd}
+                                    label={iqd}
+                                    size="lg"
+                                    className="text-amber-700 dark:text-amber-300"
+                                />
                             </dd>
                         </div>
                         <div>
@@ -113,13 +111,10 @@ export default function Show({ advance }) {
                         >
                             <div>
                                 <InputLabel value={t('repay_amount_iqd')} />
-                                <TextInput
-                                    type="number"
-                                    step="1"
-                                    min="1"
-                                    className="mt-1 block w-40"
+                                <MoneyInput
+                                    className="mt-1 block w-48"
                                     value={repayForm.data.amount_iqd}
-                                    onChange={(e) => repayForm.setData('amount_iqd', e.target.value)}
+                                    onValueChange={(raw) => repayForm.setData('amount_iqd', raw)}
                                     required
                                 />
                                 <InputError message={repayForm.errors.amount_iqd} className="mt-1" />

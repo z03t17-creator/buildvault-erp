@@ -121,8 +121,8 @@
                 <tr>
                     <td>{{ $p->id }}</td>
                     <td>{{ $p->category }}</td>
-                    <td class="num">{{ number_format((float) $p->amount_usd, 2) }}</td>
-                    <td class="num">{{ number_format((float) $p->amount_iqd, 0) }}</td>
+                    <td class="num">{{ format_number($p->amount_usd, 2) }}</td>
+                    <td class="num">{{ format_number($p->amount_iqd) }}</td>
                     <td>{{ $p->status }}</td>
                 </tr>
             @empty

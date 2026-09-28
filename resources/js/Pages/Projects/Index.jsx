@@ -1,4 +1,5 @@
 import EmptyState from '@/Components/EmptyState';
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -6,16 +7,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Index({ projects, canViewFinancials }) {
     const t = useTranslations();
@@ -86,17 +77,13 @@ export default function Index({ projects, canViewFinancials }) {
                                                             <span className="block text-xs uppercase tracking-wider text-slate-400">
                                                                 {t('contract_value')}
                                                             </span>
-                                                            <span className="font-semibold tabular-nums">
-                                                                {formatIqd(fin.contract_value_iqd, iqd)}
-                                                            </span>
+                                                            <MoneyAmount value={fin.contract_value_iqd} label={iqd} size="md" />
                                                         </div>
                                                         <div>
                                                             <span className="block text-xs uppercase tracking-wider text-slate-400">
                                                                 {t('money_received')}
                                                             </span>
-                                                            <span className="font-semibold tabular-nums">
-                                                                {formatIqd(fin.money_received_iqd, iqd)}
-                                                            </span>
+                                                            <MoneyAmount value={fin.money_received_iqd} label={iqd} size="md" />
                                                         </div>
                                                     </>
                                                 ) : null}

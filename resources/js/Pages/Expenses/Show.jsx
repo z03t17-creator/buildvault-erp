@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
@@ -6,11 +7,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    if (n == null || Number.isNaN(Number(n))) return '—';
-    return `${Number(n).toLocaleString(undefined, { maximumFractionDigits: 0 })} ${iqdLabel}`;
-}
 
 export default function Show({ expense }) {
     const canApprove = useCan('expenses.approve');
@@ -78,7 +74,9 @@ export default function Show({ expense }) {
                         </div>
                         <div>
                             <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
-                            <dd className="tabular-nums">{formatIqd(expense.amount_iqd, iqd)}</dd>
+                            <dd>
+                                <MoneyAmount value={expense.amount_iqd} label={iqd} size="lg" />
+                            </dd>
                         </div>
                         <div>
                             <dt className="text-xs uppercase text-slate-400">{t('expense_date')}</dt>

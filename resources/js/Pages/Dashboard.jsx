@@ -1,19 +1,10 @@
 import BrandMark from '@/Components/BrandMark';
+import MoneyAmount from '@/Components/MoneyAmount';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel) {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 function Stat({ label, value }) {
     return (
@@ -21,7 +12,7 @@ function Stat({ label, value }) {
             <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </div>
-            <div className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900 dark:text-white">
+            <div dir="ltr" className="mt-1 font-display text-2xl font-semibold tabular-nums text-slate-900 dark:text-white sm:text-3xl">
                 {value}
             </div>
         </div>
@@ -79,7 +70,7 @@ function BossHome({ summary, t, iqd }) {
                     value={
                         summary?.vault_balance_iqd == null
                             ? '—'
-                            : formatIqd(summary.vault_balance_iqd, iqd)
+                            : <MoneyAmount value={summary.vault_balance_iqd} label={iqd} size="xl" />
                     }
                 />
                 <Stat
@@ -87,7 +78,7 @@ function BossHome({ summary, t, iqd }) {
                     value={
                         summary?.available_iqd == null
                             ? '—'
-                            : formatIqd(summary.available_iqd, iqd)
+                            : <MoneyAmount value={summary.available_iqd} label={iqd} size="xl" />
                     }
                 />
                 <Stat
@@ -95,7 +86,7 @@ function BossHome({ summary, t, iqd }) {
                     value={
                         summary?.pending_payouts_iqd == null
                             ? '—'
-                            : formatIqd(summary.pending_payouts_iqd, iqd)
+                            : <MoneyAmount value={summary.pending_payouts_iqd} label={iqd} size="xl" />
                     }
                 />
                 <Stat
@@ -103,7 +94,7 @@ function BossHome({ summary, t, iqd }) {
                     value={
                         summary?.reserved_insurance_iqd == null
                             ? '—'
-                            : formatIqd(summary.reserved_insurance_iqd, iqd)
+                            : <MoneyAmount value={summary.reserved_insurance_iqd} label={iqd} size="xl" />
                     }
                 />
                 <Stat label={t('role_stat_projects')} value={summary?.projects ?? 0} />
@@ -225,7 +216,7 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
                                                 · {hold.project?.name}
                                             </span>
                                             <div className="mt-0.5 tabular-nums text-slate-700 dark:text-slate-300">
-                                                {formatIqd(hold.amount_iqd ?? hold.amount_usd, iqd)}
+                                                <MoneyAmount value={hold.amount_iqd ?? hold.amount_usd} label={iqd} size="sm" />
                                                 {' · '}
                                                 {t('matured_on', { date: hold.maturity_date })}
                                             </div>

@@ -3,6 +3,7 @@ import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyInput from '@/Components/MoneyInput';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -102,12 +103,12 @@ export default function Create({ statuses }) {
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div>
                             <InputLabel htmlFor="contract_value_iqd" value={t('contract_value_iqd')} />
-                            <TextInput id="contract_value_iqd" type="number" step="1" min="0" className="mt-1 block w-full" value={data.contract_value_iqd} onChange={(e) => setData('contract_value_iqd', e.target.value)} />
+                            <MoneyInput id="contract_value_iqd" className="mt-1 block w-full" value={data.contract_value_iqd} onValueChange={(raw) => setData('contract_value_iqd', raw)} />
                             <InputError message={errors.contract_value_iqd} className="mt-1" />
                         </div>
                         <div>
                             <InputLabel htmlFor="budget_iqd" value={t('budget_iqd')} />
-                            <TextInput id="budget_iqd" type="number" step="1" min="0" className="mt-1 block w-full" value={data.budget_iqd} onChange={(e) => setData('budget_iqd', e.target.value)} />
+                            <MoneyInput id="budget_iqd" className="mt-1 block w-full" value={data.budget_iqd} onValueChange={(raw) => setData('budget_iqd', raw)} />
                             <InputError message={errors.budget_iqd} className="mt-1" />
                         </div>
                     </div>

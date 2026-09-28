@@ -1,3 +1,4 @@
+import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -5,16 +6,6 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-
-function formatIqd(n, iqdLabel = 'IQD') {
-    return (
-        new Intl.NumberFormat('en-US', {
-            maximumFractionDigits: 0,
-        }).format(Number(n) || 0) +
-        ' ' +
-        iqdLabel
-    );
-}
 
 export default function Index({ advances }) {
     const t = useTranslations();
@@ -68,11 +59,16 @@ export default function Index({ advances }) {
                                             </td>
                                             <td className="px-3 py-2">{a.project?.name || '—'}</td>
                                             <td className="px-3 py-2 tabular-nums">{a.advanced_on}</td>
-                                            <td className="px-3 py-2 text-end tabular-nums">
-                                                {formatIqd(a.amount_iqd, iqd)}
+                                            <td className="px-3 py-2 text-end">
+                                                <MoneyAmount value={a.amount_iqd} label={iqd} size="md" />
                                             </td>
-                                            <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                                {formatIqd(a.remaining_iqd, iqd)}
+                                            <td className="px-3 py-2 text-end">
+                                                <MoneyAmount
+                                                    value={a.remaining_iqd}
+                                                    label={iqd}
+                                                    size="md"
+                                                    className="text-amber-700 dark:text-amber-300"
+                                                />
                                             </td>
                                             <td className="px-3 py-2">
                                                 {t(`repay_${a.repayment_method}`) || a.repayment_method}
