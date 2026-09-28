@@ -13,26 +13,21 @@ class AttendancePolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
-            Roles::WORKER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
     public function view(User $user, Attendance $attendance): bool
     {
-        if ($user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER])) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::WORKER)) {
-            return $user->worker && (int) $attendance->worker_id === (int) $user->worker->id;
-        }
-
-        return false;
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
     }
 
     public function manage(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 }

@@ -6,7 +6,7 @@ BuildVault ERP (Zhako SiteLedger) is the construction operations and vault ledge
 
 - **Laravel 11** (PHP 8.3)
 - **Laravel Breeze** with **Inertia.js + React** + **Tailwind CSS**
-- **Spatie Laravel Permission** (Super Admin, Accountant, Site Engineer, Worker)
+- **Spatie Laravel Permission** (Super Admin, Boss / Contractor, Accountant, Stock Manager)
 - Locales: English / کوردی / العربية (RTL for ckb/ar)
 - Host target: [SiteBunker Enterprise](https://sitebunker.net/web-ssd-hosting/) (cPanel, MariaDB, SSH)
 

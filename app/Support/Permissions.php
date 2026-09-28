@@ -129,14 +129,46 @@ final class Permissions
     ];
 
     /**
-     * Role → permission matrix (mirrors existing policies).
-     * Super Admin receives every permission via seeder.
+     * Role → permission matrix (Phase 2 business roles).
+     * Super Admin receives every permission via seeder + Gate::before.
+     * Stock Manager: empty set until stock module ships (dashboard + profile only).
      *
      * @return array<string, list<string>>
      */
     public static function matrix(): array
     {
         return [
+            Roles::BOSS_CONTRACTOR => [
+                // Full business / financial visibility (no user/system admin)
+                self::VAULT_VIEW,
+                self::VAULT_IMPORTS,
+                self::VAULT_EXPORTS,
+                self::VAULT_PAYROLL,
+                self::VAULT_RETENTION,
+                self::PROJECTS_VIEW_ANY,
+                self::PROJECTS_CREATE,
+                self::PROJECTS_UPDATE,
+                self::TOWERS_VIEW_ANY,
+                self::TOWERS_CREATE,
+                self::TOWERS_UPDATE,
+                self::TOWERS_DELETE,
+                self::FLOORS_VIEW_ANY,
+                self::FLOORS_CREATE,
+                self::FLOORS_UPDATE,
+                self::FLOORS_DELETE,
+                self::WORKERS_VIEW_ANY,
+                self::WORKERS_CREATE,
+                self::WORKERS_UPDATE,
+                self::WORKERS_DELETE,
+                self::ATTENDANCE_VIEW_ANY,
+                self::ATTENDANCE_MANAGE,
+                self::PAYOUTS_VIEW_ANY,
+                self::PENALTIES_VIEW_ANY,
+                self::PENALTIES_CREATE,
+                self::DOCUMENTS_VIEW_ANY,
+                self::DOCUMENTS_CREATE,
+                self::DOCUMENTS_DELETE,
+            ],
             Roles::ACCOUNTANT => [
                 self::VAULT_VIEW,
                 self::VAULT_REFRESH_FX,
@@ -165,40 +197,8 @@ final class Permissions
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
             ],
-            Roles::SITE_ENGINEER => [
-                self::VAULT_IMPORTS,
-                self::VAULT_EXPORTS,
-                self::VAULT_PAYROLL,
-                self::PROJECTS_VIEW_ANY,
-                self::PROJECTS_CREATE,
-                self::PROJECTS_UPDATE,
-                self::TOWERS_VIEW_ANY,
-                self::TOWERS_CREATE,
-                self::TOWERS_UPDATE,
-                self::TOWERS_DELETE,
-                self::FLOORS_VIEW_ANY,
-                self::FLOORS_CREATE,
-                self::FLOORS_UPDATE,
-                self::FLOORS_DELETE,
-                self::WORKERS_VIEW_ANY,
-                self::WORKERS_CREATE,
-                self::WORKERS_UPDATE,
-                self::WORKERS_DELETE,
-                self::ATTENDANCE_VIEW_ANY,
-                self::ATTENDANCE_MANAGE,
-                self::PAYOUTS_VIEW_ANY,
-                self::PENALTIES_VIEW_ANY,
-                self::PENALTIES_CREATE,
-                self::DOCUMENTS_VIEW_ANY,
-                self::DOCUMENTS_CREATE,
-                self::DOCUMENTS_DELETE,
-            ],
-            Roles::WORKER => [
-                self::PROJECTS_VIEW_ANY,
-                self::ATTENDANCE_VIEW_ANY,
-                self::PAYOUTS_VIEW_ANY,
-                self::DOCUMENTS_VIEW_ANY,
-            ],
+            // Intentionally empty — stock module is Phase later; not a Worker clone.
+            Roles::STOCK_MANAGER => [],
         ];
     }
 }

@@ -20,10 +20,6 @@ class ProjectController extends Controller
         $this->authorize('viewAny', Project::class);
 
         $query = Project::query()->withCount(['towers', 'workers'])->orderByDesc('id');
-        $user = request()->user();
-        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker?->project_id) {
-            $query->where('id', $user->worker->project_id);
-        }
 
         return Inertia::render('Projects/Index', [
             'projects' => $query->get(),

@@ -13,35 +13,31 @@ class WorkerPolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
     public function view(User $user, Worker $worker): bool
     {
-        if ($user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER])) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::WORKER)) {
-            return (int) $user->worker?->id === (int) $worker->id;
-        }
-
-        return false;
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 
     public function update(User $user, Worker $worker): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 
     public function delete(User $user, Worker $worker): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 }

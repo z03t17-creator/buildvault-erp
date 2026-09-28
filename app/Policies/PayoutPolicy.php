@@ -13,22 +13,17 @@ class PayoutPolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
-            Roles::WORKER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
     public function view(User $user, Payout $payout): bool
     {
-        if ($user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER])) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::WORKER)) {
-            return $user->worker && (int) $payout->worker_id === (int) $user->worker->id;
-        }
-
-        return false;
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
     }
 
     public function create(User $user): bool

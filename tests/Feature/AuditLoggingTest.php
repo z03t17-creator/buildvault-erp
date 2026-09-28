@@ -137,10 +137,10 @@ class AuditLoggingTest extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page->component('Audit/Log'));
 
-        $engineer = $this->userWithRole(Roles::SITE_ENGINEER);
-        $this->actingAs($engineer)->get(route('audit.index'))->assertForbidden();
+        $boss = $this->userWithRole(Roles::BOSS_CONTRACTOR);
+        $this->actingAs($boss)->get(route('audit.index'))->assertForbidden();
 
-        $worker = $this->userWithRole(Roles::WORKER);
-        $this->actingAs($worker)->get(route('audit.index'))->assertForbidden();
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+        $this->actingAs($stock)->get(route('audit.index'))->assertForbidden();
     }
 }

@@ -29,11 +29,6 @@ class PayoutController extends Controller
             ->with(['project:id,name', 'worker:id,name', 'vault:id,name'])
             ->orderByDesc('id');
 
-        $user = request()->user();
-        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
-            $query->where('worker_id', $user->worker->id);
-        }
-
         return Inertia::render('Payouts/Index', [
             'payouts' => $query->get(),
         ]);

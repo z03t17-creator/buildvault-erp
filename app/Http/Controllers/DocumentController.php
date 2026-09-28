@@ -23,15 +23,10 @@ class DocumentController extends Controller
         $type = $request->query('type');
         $projectId = $request->query('project_id');
         $workerId = $request->query('worker_id');
-        $user = $request->user();
 
         $query = Document::query()
             ->with(['project:id,name', 'worker:id,name', 'uploader:id,name'])
             ->orderByDesc('id');
-
-        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
-            $query->where('worker_id', $user->worker->id);
-        }
 
         if ($type && in_array($type, Document::TYPES, true)) {
             $query->where('type', $type);

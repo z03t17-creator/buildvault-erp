@@ -45,5 +45,31 @@ class RoleSeederTest extends TestCase
         $this->assertTrue($accountant->hasPermissionTo(Permissions::PAYOUTS_CREATE));
         $this->assertFalse($accountant->hasPermissionTo(Permissions::PROJECTS_CREATE));
         $this->assertFalse($accountant->hasPermissionTo(Permissions::WORKERS_CREATE));
+
+        $boss = Role::findByName('Boss / Contractor', 'web');
+        $this->assertTrue($boss->hasPermissionTo(Permissions::VAULT_VIEW));
+        $this->assertTrue($boss->hasPermissionTo(Permissions::VAULT_PAYROLL));
+        $this->assertTrue($boss->hasPermissionTo(Permissions::WORKERS_CREATE));
+        $this->assertFalse($boss->hasPermissionTo(Permissions::PAYOUTS_CREATE));
+        $this->assertFalse($boss->hasPermissionTo(Permissions::VAULT_BACKUPS));
+
+        $stock = Role::findByName('Stock Manager', 'web');
+        $this->assertSame(0, $stock->permissions()->count());
+    }
+
+    public function test_role_seeder_renames_legacy_roles_keeping_ids(): void
+    {
+        $legacyEngineer = Role::create(['name' => 'Site Engineer', 'guard_name' => 'web']);
+        $legacyWorker = Role::create(['name' => 'Worker', 'guard_name' => 'web']);
+        $engineerId = $legacyEngineer->id;
+        $workerId = $legacyWorker->id;
+
+        $this->seed(RoleSeeder::class);
+
+        $this->assertDatabaseHas('roles', ['id' => $engineerId, 'name' => 'Boss / Contractor']);
+        $this->assertDatabaseHas('roles', ['id' => $workerId, 'name' => 'Stock Manager']);
+        $this->assertDatabaseMissing('roles', ['name' => 'Site Engineer']);
+        $this->assertDatabaseMissing('roles', ['name' => 'Worker']);
+        $this->assertSame(4, Role::query()->count());
     }
 }

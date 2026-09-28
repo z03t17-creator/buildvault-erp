@@ -30,12 +30,9 @@ class AttendanceController extends Controller
 
         $date = $request->string('date')->toString() ?: now()->toDateString();
         $projectId = $request->integer('project_id') ?: null;
-        $user = $request->user();
 
         $workersQuery = Worker::query()->with('project:id,name')->orderBy('name');
-        if ($user?->hasRole(\App\Support\Roles::WORKER) && $user->worker) {
-            $workersQuery->where('id', $user->worker->id);
-        } elseif ($projectId) {
+        if ($projectId) {
             $workersQuery->where('project_id', $projectId);
         }
         $workers = $workersQuery->get();

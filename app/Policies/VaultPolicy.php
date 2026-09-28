@@ -10,17 +10,17 @@ class VaultPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function view(User $user, Vault $vault): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function viewDashboard(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function refreshFx(User $user): bool
@@ -45,21 +45,21 @@ class VaultPolicy
 
     public function manageImports(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function manageExports(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function viewPayroll(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
     public function manageRetention(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 }

@@ -13,31 +13,26 @@ class DocumentPolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
-            Roles::WORKER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
     public function view(User $user, Document $document): bool
     {
-        if ($user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::SITE_ENGINEER])) {
-            return true;
-        }
-
-        if ($user->hasRole(Roles::WORKER)) {
-            return $user->worker && (int) $document->worker_id === (int) $user->worker->id;
-        }
-
-        return false;
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR, Roles::ACCOUNTANT]);
     }
 
     public function delete(User $user, Document $document): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER, Roles::ACCOUNTANT]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR, Roles::ACCOUNTANT]);
     }
 }

@@ -88,7 +88,9 @@ php artisan migrate:fresh --seed
 | Password | `password` |
 | Role | Super Admin |
 
-This also seeds the central **Zhako** vault with zero balances.
+Additional Phase 2 demo logins (same password `password`): `boss@zhako.test` (Boss / Contractor), `accountant@zhako.test` (Accountant), `stock@zhako.test` (Stock Manager).
+
+This also seeds the central **Zhako** vault with zero balances (demo insurance seed may add sample deposits afterward).
 
 ### 4. Public storage link (worker avatars)
 

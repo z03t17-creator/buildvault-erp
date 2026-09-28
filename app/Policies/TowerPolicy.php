@@ -13,7 +13,7 @@ class TowerPolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
@@ -22,22 +22,22 @@ class TowerPolicy
         return $user->hasAnyRole([
             Roles::SUPER_ADMIN,
             Roles::ACCOUNTANT,
-            Roles::SITE_ENGINEER,
+            Roles::BOSS_CONTRACTOR,
         ]);
     }
 
     public function create(User $user): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 
     public function update(User $user, Tower $tower): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 
     public function delete(User $user, Tower $tower): bool
     {
-        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::SITE_ENGINEER]);
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
 }

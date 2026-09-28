@@ -29,26 +29,31 @@ class AuthorizationNavTest extends TestCase
             );
         }
 
-        $worker = Role::findByName(Roles::WORKER, 'web');
-        $this->assertFalse($worker->hasPermissionTo(Permissions::VAULT_VIEW));
-        $this->assertFalse($worker->hasPermissionTo(Permissions::VAULT_PAYROLL));
-        $this->assertFalse($worker->hasPermissionTo(Permissions::VAULT_BACKUPS));
-        $this->assertTrue($worker->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
+        $stock = Role::findByName(Roles::STOCK_MANAGER, 'web');
+        $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_VIEW));
+        $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_PAYROLL));
+        $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_BACKUPS));
+        $this->assertFalse($stock->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
+        $this->assertFalse($stock->hasPermissionTo(Permissions::PAYOUTS_VIEW_ANY));
+        $this->assertSame(0, $stock->permissions()->count());
     }
 
-    public function test_worker_cannot_hit_vault_or_payroll_admin_routes(): void
+    public function test_stock_manager_cannot_hit_vault_or_payroll_admin_routes(): void
     {
-        $worker = $this->userWithRole(Roles::WORKER);
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
 
-        $this->actingAs($worker)->get(route('dashboards.vault'))->assertForbidden();
-        $this->actingAs($worker)->get(route('dashboards.payroll'))->assertForbidden();
-        $this->actingAs($worker)->get(route('backups.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('audit.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('imports.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('exports.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('retention-holds.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('workers.index'))->assertForbidden();
-        $this->actingAs($worker)->get(route('penalties.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('dashboards.vault'))->assertForbidden();
+        $this->actingAs($stock)->get(route('dashboards.payroll'))->assertForbidden();
+        $this->actingAs($stock)->get(route('backups.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('audit.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('imports.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('exports.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('retention-holds.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('workers.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('penalties.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('projects.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('payouts.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
     }
 
     public function test_super_admin_can_hit_sensitive_routes(): void
@@ -66,11 +71,11 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($admin)->get(route('payouts.index'))->assertOk();
     }
 
-    public function test_worker_nav_prop_does_not_leak_forbidden_links(): void
+    public function test_stock_manager_nav_prop_is_dashboard_only(): void
     {
-        $worker = $this->userWithRole(Roles::WORKER);
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
 
-        $this->actingAs($worker)
+        $this->actingAs($stock)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
@@ -81,8 +86,12 @@ class AuthorizationNavTest extends TestCase
                     $forbidden = [
                         'vault',
                         'payroll',
+                        'projects',
                         'workers',
+                        'attendance',
+                        'payouts',
                         'penalties',
+                        'docs',
                         'imports',
                         'exports',
                         'backups',
@@ -95,14 +104,14 @@ class AuthorizationNavTest extends TestCase
                         }
                     }
 
-                    return in_array('dashboard', $keys, true)
-                        && in_array('attendance', $keys, true);
+                    return $keys === ['dashboard'];
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === false
                         && ($can['vault.payroll'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
-                        && ($can['workers.viewAny'] ?? null) === false;
+                        && ($can['workers.viewAny'] ?? null) === false
+                        && ($can['projects.viewAny'] ?? null) === false;
                 })
             );
     }
@@ -148,29 +157,33 @@ class AuthorizationNavTest extends TestCase
             );
     }
 
-    public function test_engineer_nav_hides_vault_money_and_backups(): void
+    public function test_boss_contractor_nav_shows_vault_hides_backups_and_audit(): void
     {
-        $engineer = $this->userWithRole(Roles::SITE_ENGINEER);
+        $boss = $this->userWithRole(Roles::BOSS_CONTRACTOR);
 
-        $this->actingAs($engineer)
+        $this->actingAs($boss)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('auth.nav', function ($nav) {
                     $keys = collect($nav)->values()->all();
 
-                    return ! in_array('vault', $keys, true)
-                        && ! in_array('backups', $keys, true)
-                        && ! in_array('audit', $keys, true)
-                        && ! in_array('insurance', $keys, true)
+                    return in_array('vault', $keys, true)
                         && in_array('payroll', $keys, true)
+                        && in_array('insurance', $keys, true)
                         && in_array('workers', $keys, true)
-                        && in_array('projects', $keys, true);
+                        && in_array('projects', $keys, true)
+                        && in_array('payouts', $keys, true)
+                        && ! in_array('backups', $keys, true)
+                        && ! in_array('audit', $keys, true);
                 })
                 ->where('auth.can', function ($can) {
-                    return ($can['vault.view'] ?? null) === false
+                    return ($can['vault.view'] ?? null) === true
+                        && ($can['vault.payroll'] ?? null) === true
                         && ($can['workers.create'] ?? null) === true
-                        && ($can['payouts.create'] ?? null) === false;
+                        && ($can['payouts.create'] ?? null) === false
+                        && ($can['vault.backups'] ?? null) === false
+                        && ($can['vault.audit'] ?? null) === false;
                 })
             );
     }

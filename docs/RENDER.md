@@ -68,9 +68,9 @@ This agent environment had **no** `RENDER_API_KEY`, so live deploy must be compl
 | Email | Password | Role |
 |-------|----------|------|
 | `admin@zhako.test` | `password` | Super Admin |
+| `boss@zhako.test` | `password` | Boss / Contractor |
 | `accountant@zhako.test` | `password` | Accountant |
-| `engineer@zhako.test` | `password` | Site Engineer |
-| `worker@zhako.test` | `password` | Worker |
+| `stock@zhako.test` | `password` | Stock Manager |
 
 Test credentials only — rotate before any real company use.
 
