@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Penalty;
 
+use App\Models\Penalty;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StorePenaltyRequest extends FormRequest
 {
@@ -21,8 +23,12 @@ class StorePenaltyRequest extends FormRequest
             'project_id' => ['required', 'exists:projects,id'],
             'floor_id' => ['nullable', 'exists:floors,id'],
             'payout_id' => ['nullable', 'exists:payouts,id'],
+            'type' => ['required', Rule::in(Penalty::TYPES)],
             'reason' => ['required', 'string', 'max:1000'],
-            'amount_usd' => ['required', 'numeric', 'gt:0'],
+            'notes' => ['nullable', 'string', 'max:2000'],
+            'occurred_on' => ['required', 'date'],
+            'amount_iqd' => ['required', 'numeric', 'gt:0'],
+            'amount_usd' => ['nullable', 'numeric', 'gt:0'],
         ];
     }
 }

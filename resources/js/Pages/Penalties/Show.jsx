@@ -4,11 +4,25 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
+import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
+function formatIqd(n, iqdLabel = 'IQD') {
+    return (
+        new Intl.NumberFormat('en-US', {
+            maximumFractionDigits: 0,
+        }).format(Number(n) || 0) +
+        ' ' +
+        iqdLabel
+    );
+}
+
 export default function Show({ penalty, linkablePayouts }) {
+    const t = useTranslations();
+    const iqd = t('IQD');
     const linkForm = useForm({ payout_id: linkablePayouts?.[0]?.id || '' });
     const canWaive = useCan('penalties.waive');
+    const canApply = useCan('penalties.apply');
     const canLink = useCan('penalties.link');
     const canViewAny = useCan('penalties.viewAny');
 
@@ -16,18 +30,23 @@ export default function Show({ penalty, linkablePayouts }) {
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={`Penalty #${penalty.id}`}
+                    title={`${t('penalties')} #${penalty.id}`}
                     subtitle={penalty.worker?.name}
                     actions={
                         <>
                             {canViewAny && (
                                 <Link href={route('penalties.index')}>
-                                    <SecondaryButton>Back</SecondaryButton>
+                                    <SecondaryButton>{t('back')}</SecondaryButton>
                                 </Link>
+                            )}
+                            {penalty.status === 'pending' && canApply && (
+                                <PrimaryButton type="button" onClick={() => router.post(route('penalties.apply', penalty.id))}>
+                                    {t('apply_penalty')}
+                                </PrimaryButton>
                             )}
                             {penalty.status === 'pending' && canWaive && (
                                 <SecondaryButton type="button" onClick={() => router.post(route('penalties.waive', penalty.id))}>
-                                    Waive
+                                    {t('waive_penalty')}
                                 </SecondaryButton>
                             )}
                         </>
@@ -35,16 +54,49 @@ export default function Show({ penalty, linkablePayouts }) {
                 />
             }
         >
-            <Head title={`Penalty #${penalty.id}`} />
+            <Head title={`${t('penalties')} #${penalty.id}`} />
             <div className="py-8">
                 <div className="mx-auto max-w-2xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
                     <StatusBadge status={penalty.status} />
                     <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
-                        <div><dt className="text-xs uppercase text-slate-400">Amount</dt><dd className="tabular-nums">{penalty.amount_usd}</dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Project</dt><dd>{penalty.project?.name}</dd></div>
-                        <div className="sm:col-span-2"><dt className="text-xs uppercase text-slate-400">Reason</dt><dd>{penalty.reason}</dd></div>
                         <div>
-                            <dt className="text-xs uppercase text-slate-400">Payout link</dt>
+                            <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
+                            <dd className="tabular-nums text-rose-700 dark:text-rose-300">
+                                {formatIqd(penalty.amount_iqd_display ?? penalty.amount_iqd, iqd)}
+                            </dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('penalty_type')}</dt>
+                            <dd>{t(`penalty_type_${penalty.type}`) || penalty.type}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('date')}</dt>
+                            <dd>{penalty.occurred_on || '—'}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('project')}</dt>
+                            <dd>{penalty.project?.name}</dd>
+                        </div>
+                        <div className="sm:col-span-2">
+                            <dt className="text-xs uppercase text-slate-400">{t('reason')}</dt>
+                            <dd>{penalty.reason}</dd>
+                        </div>
+                        {penalty.notes && (
+                            <div className="sm:col-span-2">
+                                <dt className="text-xs uppercase text-slate-400">{t('notes')}</dt>
+                                <dd>{penalty.notes}</dd>
+                            </div>
+                        )}
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('created_by')}</dt>
+                            <dd>{penalty.creator?.name || '—'}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('Status')}</dt>
+                            <dd>{penalty.status}</dd>
+                        </div>
+                        <div>
+                            <dt className="text-xs uppercase text-slate-400">{t('payout_link')}</dt>
                             <dd>
                                 {penalty.payout_id ? (
                                     <Link href={route('payouts.show', penalty.payout_id)} className="text-emerald-700 underline dark:text-emerald-400">
@@ -53,7 +105,6 @@ export default function Show({ penalty, linkablePayouts }) {
                                 ) : '—'}
                             </dd>
                         </div>
-                        <div><dt className="text-xs uppercase text-slate-400">Deducted</dt><dd>{penalty.deducted_from_payout ? 'Yes' : 'No'}</dd></div>
                     </dl>
 
                     {canLink && penalty.status === 'pending' && (linkablePayouts || []).length > 0 && !penalty.payout_id && (
@@ -65,18 +116,18 @@ export default function Show({ penalty, linkablePayouts }) {
                             }}
                         >
                             <div>
-                                <label className="text-xs uppercase text-slate-400">Link to payout</label>
+                                <label className="text-xs uppercase text-slate-400">{t('link_payout_optional')}</label>
                                 <select
                                     className="mt-1 block rounded-md border-slate-300 dark:border-slate-600 dark:bg-slate-950"
                                     value={linkForm.data.payout_id}
                                     onChange={(e) => linkForm.setData('payout_id', e.target.value)}
                                 >
                                     {linkablePayouts.map((p) => (
-                                        <option key={p.id} value={p.id}>#{p.id} · {p.amount_usd} · {p.status}</option>
+                                        <option key={p.id} value={p.id}>#{p.id} · {p.status}</option>
                                     ))}
                                 </select>
                             </div>
-                            <PrimaryButton disabled={linkForm.processing}>Link for reconcile deduction</PrimaryButton>
+                            <PrimaryButton disabled={linkForm.processing}>{t('link_for_reconcile')}</PrimaryButton>
                         </form>
                     )}
                 </div>

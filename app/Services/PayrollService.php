@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Attendance;
 use App\Models\EmployeeAdvance;
+use App\Models\Penalty;
 use App\Models\Worker;
 use Carbon\Carbon;
 use Carbon\CarbonInterface;
@@ -16,7 +17,8 @@ class PayrollService
      * Calculate net pay for a worker over an inclusive date range.
      *
      * Net = (Days × Daily Rate) + (OT × OT Rate)
-     *     − (Late + Absence penalties)
+     *     − (Late + Absence attendance penalties)
+     *     − applied/pending recorded penalties in period
      *     − open payroll advances (IQD → USD via FX)
      *     − insurance holdback (% of gross)
      *
@@ -35,6 +37,10 @@ class PayrollService
      *     gross_pay_usd: float,
      *     late_penalty_usd: float,
      *     absence_penalty_usd: float,
+     *     attendance_penalties_usd: float,
+     *     recorded_penalties_usd: float,
+     *     recorded_penalties_iqd: float,
+     *     penalties_usd: float,
      *     advances_iqd: float,
      *     advances_usd: float,
      *     insurance_holdback_pct: float,
@@ -87,6 +93,12 @@ class PayrollService
         $gross = round($basePay + $otPay, 2);
         $latePenalty = round($lateMinutes * $this->latePenaltyPerMinute(), 2);
         $absencePenalty = round($unexcusedAbsences * $this->absencePenaltyAmount($worker), 2);
+        $attendancePenalties = round($latePenalty + $absencePenalty, 2);
+
+        $recorded = $this->recordedPenaltiesInPeriod($worker, $from, $to);
+        $recordedUsd = $recorded['usd'];
+        $recordedIqd = $recorded['iqd'];
+        $penaltiesTotal = round($attendancePenalties + $recordedUsd, 2);
 
         $advancesIqd = $this->openPayrollAdvancesIqd($worker);
         $fx = $this->usdToIqdRate();
@@ -95,7 +107,8 @@ class PayrollService
         $holdbackPct = $this->insuranceHoldbackPercent();
         $insuranceHoldback = round($gross * ($holdbackPct / 100.0), 2);
 
-        $net = round($gross - $latePenalty - $absencePenalty - $advancesUsd - $insuranceHoldback, 2);
+        // base/OT − penalties − insurance holdback − advances = net
+        $net = round($gross - $penaltiesTotal - $insuranceHoldback - $advancesUsd, 2);
 
         return [
             'worker_id' => $worker->id,
@@ -112,12 +125,61 @@ class PayrollService
             'gross_pay_usd' => $gross,
             'late_penalty_usd' => $latePenalty,
             'absence_penalty_usd' => $absencePenalty,
+            'attendance_penalties_usd' => $attendancePenalties,
+            'recorded_penalties_usd' => $recordedUsd,
+            'recorded_penalties_iqd' => $recordedIqd,
+            'penalties_usd' => $penaltiesTotal,
             'advances_iqd' => $advancesIqd,
             'advances_usd' => $advancesUsd,
             'insurance_holdback_pct' => $holdbackPct,
             'insurance_holdback_usd' => $insuranceHoldback,
             'net_pay_usd' => $net,
         ];
+    }
+
+    /**
+     * Pending + applied penalties dated in the pay period (waived excluded).
+     *
+     * @return array{usd: float, iqd: float}
+     */
+    protected function recordedPenaltiesInPeriod(
+        Worker $worker,
+        CarbonInterface $from,
+        CarbonInterface $to,
+    ): array {
+        if (! $worker->exists) {
+            return ['usd' => 0.0, 'iqd' => 0.0];
+        }
+
+        $fx = $this->usdToIqdRate();
+
+        $rows = Penalty::query()
+            ->where('worker_id', $worker->id)
+            ->whereIn('status', [Penalty::STATUS_PENDING, Penalty::STATUS_APPLIED])
+            ->where(function ($q) use ($from, $to) {
+                $q->where(function ($inner) use ($from, $to) {
+                    $inner->whereNotNull('occurred_on')
+                        ->whereDate('occurred_on', '>=', $from->toDateString())
+                        ->whereDate('occurred_on', '<=', $to->toDateString());
+                })->orWhere(function ($inner) use ($from, $to) {
+                    // Legacy rows without occurred_on: use created_at date.
+                    $inner->whereNull('occurred_on')
+                        ->whereDate('created_at', '>=', $from->toDateString())
+                        ->whereDate('created_at', '<=', $to->toDateString());
+                });
+            })
+            ->get(['amount_usd', 'amount_iqd']);
+
+        $usd = round((float) $rows->sum('amount_usd'), 2);
+        $iqd = round((float) $rows->sum(function (Penalty $p) use ($fx) {
+            if ($p->amount_iqd !== null) {
+                return (float) $p->amount_iqd;
+            }
+
+            return round((float) $p->amount_usd * $fx, 2);
+        }), 2);
+
+        return ['usd' => $usd, 'iqd' => $iqd];
     }
 
     protected function openPayrollAdvancesIqd(Worker $worker): float

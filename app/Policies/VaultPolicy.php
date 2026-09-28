@@ -58,8 +58,16 @@ class VaultPolicy
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
-    public function manageRetention(User $user): bool
+    /**
+     * Boss may view insurance holds; Accountant/Admin operate release + settings.
+     */
+    public function viewRetention(User $user): bool
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
+    }
+
+    public function manageRetention(User $user): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }
 }

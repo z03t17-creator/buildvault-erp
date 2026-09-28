@@ -45,7 +45,8 @@ class HandleInertiaRequests extends Middleware
         ];
 
         if ($user) {
-            if (Gate::forUser($user)->allows('manageRetention', Vault::class)) {
+            if (Gate::forUser($user)->allows('viewRetention', Vault::class)
+                || Gate::forUser($user)->allows('manageRetention', Vault::class)) {
                 $maturedCount = RetentionHold::query()
                     ->where('status', RetentionHold::STATUS_MATURED)
                     ->count();

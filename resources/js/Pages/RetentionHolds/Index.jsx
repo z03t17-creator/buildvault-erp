@@ -22,7 +22,8 @@ function formatIqd(n, iqdLabel = 'IQD') {
 export default function Index({ holds, matured, settings, exchangeRate }) {
     const t = useTranslations();
     const page = usePage();
-    const canRetention = useCan('vault.retention');
+    const canRetention = useCan('vault.retentionManage');
+    const canViewRetention = useCan('vault.retention');
     const shared = page.props.insuranceSettings || {};
     const cfg = settings || shared || {};
     const list = holds || [];
@@ -45,6 +46,10 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
             h.amount_iqd ?? Math.round(Number(h.amount_usd || 0) * Number(rate || 1310)),
             iqd,
         );
+
+    if (!canViewRetention && !canRetention) {
+        return null;
+    }
 
     return (
         <AuthenticatedLayout
@@ -138,10 +143,13 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                     <th className="px-3 py-2 text-start">{t('col_id')}</th>
                                     <th className="px-3 py-2 text-start">{t('Worker')}</th>
                                     <th className="px-3 py-2 text-start">{t('Project')}</th>
+                                    <th className="px-3 py-2 text-start">{t('pay_period')}</th>
+                                    <th className="px-3 py-2 text-start">{t('holdback_percent')}</th>
                                     <th className="px-3 py-2 text-start">{t('Amount')}</th>
                                     <th className="px-3 py-2 text-start">{t('hold_start')}</th>
                                     <th className="px-3 py-2 text-start">{t('matures')}</th>
                                     <th className="px-3 py-2 text-start">{t('Status')}</th>
+                                    <th className="px-3 py-2 text-start">{t('released_amount')}</th>
                                     <th className="px-3 py-2 text-start">{t('action')}</th>
                                 </tr>
                             </thead>
@@ -151,10 +159,23 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                         <td className="px-3 py-2">#{h.id}</td>
                                         <td className="px-3 py-2">{h.worker?.name || '—'}</td>
                                         <td className="px-3 py-2">{h.project?.name || '—'}</td>
+                                        <td className="px-3 py-2 tabular-nums">{h.pay_period || '—'}</td>
+                                        <td className="px-3 py-2 tabular-nums">
+                                            {h.hold_pct != null ? `${Number(h.hold_pct).toFixed(0)}%` : '—'}
+                                        </td>
                                         <td className="px-3 py-2 tabular-nums">{amountIqd(h)}</td>
                                         <td className="px-3 py-2">{h.hold_start}</td>
                                         <td className="px-3 py-2">{h.maturity_date}</td>
                                         <td className="px-3 py-2"><StatusBadge status={h.status} /></td>
+                                        <td className="px-3 py-2 tabular-nums">
+                                            {h.released_amount_usd != null
+                                                ? formatIqd(
+                                                    h.released_amount_iqd
+                                                        ?? Math.round(Number(h.released_amount_usd) * Number(rate || 1310)),
+                                                    iqd,
+                                                )
+                                                : '—'}
+                                        </td>
                                         <td className="px-3 py-2">
                                             {canRetention && h.status === 'matured' ? (
                                                 <PrimaryButton
@@ -171,7 +192,7 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                 ))}
                                 {!list.length && (
                                     <tr>
-                                        <td colSpan={8} className="px-3 py-8 text-center text-slate-500">
+                                        <td colSpan={11} className="px-3 py-8 text-center text-slate-500">
                                             {t('no_insurance_holds')}
                                         </td>
                                     </tr>

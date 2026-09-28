@@ -51,10 +51,7 @@ class PayrollDashboardController extends Controller
 
         $rows = $workers->map(function (Worker $worker) use ($from, $to, $toIqd) {
             $calc = $this->payroll->calculate($worker, $from, $to);
-            $penalties = round(
-                (float) $calc['late_penalty_usd'] + (float) $calc['absence_penalty_usd'],
-                2,
-            );
+            $penalties = (float) $calc['penalties_usd'];
             $advancesIqd = (float) $calc['advances_iqd'];
             $holdbackUsd = (float) $calc['insurance_holdback_usd'];
 
@@ -74,6 +71,9 @@ class PayrollDashboardController extends Controller
                 'gross_pay_usd' => $calc['gross_pay_usd'],
                 'late_penalty_usd' => $calc['late_penalty_usd'],
                 'absence_penalty_usd' => $calc['absence_penalty_usd'],
+                'attendance_penalties_usd' => $calc['attendance_penalties_usd'],
+                'recorded_penalties_usd' => $calc['recorded_penalties_usd'],
+                'recorded_penalties_iqd' => $calc['recorded_penalties_iqd'],
                 'penalties_usd' => $penalties,
                 'advances_iqd' => $advancesIqd,
                 'advances_usd' => $calc['advances_usd'],
@@ -98,6 +98,7 @@ class PayrollDashboardController extends Controller
             'insurance_holdback_iqd' => (float) $rows->sum('insurance_holdback_iqd'),
             'net_pay_usd' => round((float) $rows->sum('net_pay_usd'), 2),
             'penalties_iqd' => (float) $rows->sum('penalties_iqd'),
+            'gross_pay_iqd' => (float) $rows->sum('gross_pay_iqd'),
             'net_pay_iqd' => (float) $rows->sum('net_pay_iqd'),
         ];
 
@@ -111,6 +112,7 @@ class PayrollDashboardController extends Controller
             'rows' => $rows,
             'totals' => $totals,
             'exchangeRate' => $rate,
+            'netFormula' => 'base_ot_minus_penalties_insurance_advances',
         ]);
     }
 }

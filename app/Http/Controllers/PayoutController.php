@@ -9,6 +9,8 @@ use App\Models\Payout;
 use App\Models\Project;
 use App\Models\Vault;
 use App\Models\Worker;
+use App\Services\ExchangeRateService;
+use App\Services\PayrollService;
 use App\Services\PayoutService;
 use Illuminate\Http\RedirectResponse;
 use InvalidArgumentException;
@@ -19,6 +21,8 @@ class PayoutController extends Controller
 {
     public function __construct(
         private readonly PayoutService $payouts,
+        private readonly PayrollService $payroll,
+        private readonly ExchangeRateService $exchangeRates,
     ) {}
 
     public function index(): Response
@@ -38,12 +42,39 @@ class PayoutController extends Controller
     {
         $this->authorize('create', Payout::class);
 
+        $from = now()->startOfMonth();
+        $to = now()->endOfMonth();
+        $rate = $this->exchangeRates->getUsdToIqd();
+
+        $payrollSuggestions = Worker::query()
+            ->orderBy('name')
+            ->get(['id', 'name', 'project_id', 'daily_rate_usd', 'overtime_rate_usd'])
+            ->mapWithKeys(function (Worker $worker) use ($from, $to, $rate) {
+                $calc = $this->payroll->calculate($worker, $from, $to);
+
+                return [
+                    $worker->id => [
+                        'net_pay_usd' => $calc['net_pay_usd'],
+                        'net_pay_iqd' => round((float) $calc['net_pay_usd'] * $rate, 0),
+                        'gross_pay_usd' => $calc['gross_pay_usd'],
+                        'penalties_usd' => $calc['penalties_usd'],
+                        'advances_usd' => $calc['advances_usd'],
+                        'advances_iqd' => $calc['advances_iqd'],
+                        'insurance_holdback_usd' => $calc['insurance_holdback_usd'],
+                        'insurance_holdback_pct' => $calc['insurance_holdback_pct'],
+                        'month' => $from->format('Y-m'),
+                    ],
+                ];
+            });
+
         return Inertia::render('Payouts/Create', [
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'workers' => Worker::query()->orderBy('name')->get(['id', 'name', 'project_id']),
             'floors' => Floor::query()->orderBy('name')->get(['id', 'name', 'tower_id']),
             'vaults' => Vault::query()->orderBy('name')->get(['id', 'name']),
             'categories' => Payout::CATEGORIES,
+            'payrollSuggestions' => $payrollSuggestions,
+            'exchangeRate' => $rate,
         ]);
     }
 

@@ -195,12 +195,16 @@ class AuthorizationNavTest extends TestCase
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === true
                         && ($can['vault.payroll'] ?? null) === true
+                        && ($can['vault.retention'] ?? null) === true
+                        && ($can['vault.retentionManage'] ?? null) === false
                         && ($can['workers.create'] ?? null) === true
                         && ($can['payouts.create'] ?? null) === false
                         && ($can['expenses.create'] ?? null) === false
                         && ($can['expenses.viewAny'] ?? null) === true
                         && ($can['advances.viewAny'] ?? null) === true
                         && ($can['advances.create'] ?? null) === false
+                        && ($can['penalties.viewAny'] ?? null) === true
+                        && ($can['penalties.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['vault.audit'] ?? null) === false
                         && ($can['users.viewAny'] ?? null) === false;

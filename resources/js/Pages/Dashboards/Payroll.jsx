@@ -110,12 +110,21 @@ export default function Payroll({
                         </p>
                     </section>
 
+                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                        {t('payroll_net_formula')}
+                    </p>
+
                     <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                         <SummaryCard label={t('workers')} value={String(sum.workers ?? 0)} />
                         <SummaryCard label={t('present_days')} value={String(sum.days_present ?? 0)} />
                         <SummaryCard label={t('ot_hours_label')} value={Number(sum.overtime_hours || 0).toFixed(2)} />
+                        <SummaryCard label={t('col_penalties')} value={formatIqd(sum.penalties_iqd, iqd)} />
                         <SummaryCard label={t('col_advances')} value={formatIqd(sum.advances_iqd, iqd)} />
                         <SummaryCard label={t('col_insurance_holdback')} value={formatIqd(sum.insurance_holdback_iqd, iqd)} />
+                    </section>
+
+                    <section className="grid gap-3 sm:grid-cols-2">
+                        <SummaryCard label={t('gross_payroll')} value={formatIqd(sum.gross_pay_iqd, iqd)} />
                         <SummaryCard label={t('net_payroll')} value={formatIqd(sum.net_pay_iqd, iqd)} accent />
                     </section>
 
@@ -128,11 +137,11 @@ export default function Payroll({
                                     <th className="px-3 py-2 text-start">{t('Project')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_present')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_ot_hrs')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_penalties')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_advances')}</th>
-                                    <th className="px-3 py-2 text-end">{t('col_insurance_holdback')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_base')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_ot_pay')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_penalties')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_insurance_holdback')}</th>
+                                    <th className="px-3 py-2 text-end">{t('col_advances')}</th>
                                     <th className="px-3 py-2 text-end">{t('col_net')}</th>
                                 </tr>
                             </thead>
@@ -157,29 +166,39 @@ export default function Payroll({
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums">{row.days_present}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(row.overtime_hours).toFixed(2)}</td>
+                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.base_pay_iqd, iqd)}</td>
+                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.overtime_pay_iqd, iqd)}</td>
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
                                             {formatIqd(row.penalties_iqd, iqd)}
-                                            {(row.late_minutes > 0 || row.unexcused_absences > 0) && (
+                                            {(row.late_minutes > 0 || row.unexcused_absences > 0 || Number(row.recorded_penalties_iqd) > 0) && (
                                                 <div className="text-[10px] text-slate-400">
                                                     {row.late_minutes > 0 ? t('minutes_late', { n: row.late_minutes }) : ''}
                                                     {row.late_minutes > 0 && row.unexcused_absences > 0 ? ' · ' : ''}
                                                     {row.unexcused_absences > 0 ? t('days_absent', { n: row.unexcused_absences }) : ''}
+                                                    {Number(row.recorded_penalties_iqd) > 0 ? (
+                                                        <>
+                                                            {(row.late_minutes > 0 || row.unexcused_absences > 0) ? ' · ' : ''}
+                                                            {t('recorded_penalties_line', {
+                                                                amount: formatIqd(row.recorded_penalties_iqd, iqd),
+                                                            })}
+                                                        </>
+                                                    ) : null}
+                                                </div>
+                                            )}
+                                        </td>
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(row.insurance_holdback_iqd, iqd)}
+                                            {row.insurance_holdback_pct != null && (
+                                                <div className="text-[10px] text-slate-400">
+                                                    {t('holdback_line', {
+                                                        percent: Number(row.insurance_holdback_pct).toFixed(0),
+                                                    })}
                                                 </div>
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
                                             {formatIqd(row.advances_iqd, iqd)}
                                         </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(row.insurance_holdback_iqd, iqd)}
-                                            {row.insurance_holdback_pct != null && (
-                                                <div className="text-[10px] text-slate-400">
-                                                    {Number(row.insurance_holdback_pct).toFixed(0)}%
-                                                </div>
-                                            )}
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.base_pay_iqd, iqd)}</td>
-                                        <td className="px-3 py-2 text-end tabular-nums">{formatIqd(row.overtime_pay_iqd, iqd)}</td>
                                         <td className="px-3 py-2 text-end font-display text-base font-semibold tabular-nums text-slate-900 dark:text-white">
                                             {formatIqd(row.net_pay_iqd, iqd)}
                                         </td>
@@ -199,16 +218,16 @@ export default function Payroll({
                                         <td className="px-3 py-2" colSpan={2}>{t('totals')}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{sum.days_present}</td>
                                         <td className="px-3 py-2 text-end tabular-nums">{Number(sum.overtime_hours || 0).toFixed(2)}</td>
+                                        <td className="px-3 py-2" colSpan={2} />
                                         <td className="px-3 py-2 text-end tabular-nums text-rose-700 dark:text-rose-300">
                                             {formatIqd(sum.penalties_iqd, iqd)}
                                         </td>
                                         <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                            {formatIqd(sum.advances_iqd, iqd)}
-                                        </td>
-                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
                                             {formatIqd(sum.insurance_holdback_iqd, iqd)}
                                         </td>
-                                        <td className="px-3 py-2" colSpan={2} />
+                                        <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
+                                            {formatIqd(sum.advances_iqd, iqd)}
+                                        </td>
                                         <td className="px-3 py-2 text-end font-display text-base tabular-nums text-emerald-700 dark:text-emerald-400">
                                             {formatIqd(sum.net_pay_iqd, iqd)}
                                         </td>

@@ -139,6 +139,7 @@ class RetentionHoldServiceTest extends TestCase
 
         $this->assertSame(RetentionHold::STATUS_RELEASED, $released->status);
         $this->assertNotNull($released->released_at);
+        $this->assertSame('150.00', (string) $released->released_amount_usd);
 
         $allocation = ProjectAllocation::query()->where('project_id', $this->project->id)->first();
         // 2000 + 150

@@ -41,11 +41,14 @@ class RetentionHold extends Model
         'project_id',
         'worker_id',
         'payout_id',
+        'pay_period',
+        'hold_pct',
         'amount_usd',
         'hold_start',
         'maturity_date',
         'status',
         'released_at',
+        'released_amount_usd',
     ];
 
     /**
@@ -55,6 +58,8 @@ class RetentionHold extends Model
     {
         return [
             'amount_usd' => 'decimal:2',
+            'hold_pct' => 'decimal:2',
+            'released_amount_usd' => 'decimal:2',
             'hold_start' => 'date',
             'maturity_date' => 'date',
             'released_at' => 'datetime',

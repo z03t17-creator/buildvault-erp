@@ -83,6 +83,8 @@ final class Permissions
 
     public const PENALTIES_WAIVE = 'penalties.waive';
 
+    public const PENALTIES_APPLY = 'penalties.apply';
+
     public const PENALTIES_LINK = 'penalties.link';
 
     /** Phase 7 — employee advances (سلفە). */
@@ -165,6 +167,7 @@ final class Permissions
         self::PENALTIES_VIEW_ANY,
         self::PENALTIES_CREATE,
         self::PENALTIES_WAIVE,
+        self::PENALTIES_APPLY,
         self::PENALTIES_LINK,
         self::ADVANCES_VIEW_ANY,
         self::ADVANCES_CREATE,
@@ -224,7 +227,6 @@ final class Permissions
                 self::ATTENDANCE_MANAGE,
                 self::PAYOUTS_VIEW_ANY,
                 self::PENALTIES_VIEW_ANY,
-                self::PENALTIES_CREATE,
                 self::ADVANCES_VIEW_ANY,
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
@@ -256,6 +258,7 @@ final class Permissions
                 self::PENALTIES_VIEW_ANY,
                 self::PENALTIES_CREATE,
                 self::PENALTIES_WAIVE,
+                self::PENALTIES_APPLY,
                 self::PENALTIES_LINK,
                 self::ADVANCES_VIEW_ANY,
                 self::ADVANCES_CREATE,

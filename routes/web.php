@@ -169,6 +169,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:viewAny,'.Penalty::class)
         ->name('penalties.show');
     Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
+    Route::post('/penalties/{penalty}/apply', [PenaltyController::class, 'apply'])->name('penalties.apply');
     Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
 
     Route::get('/advances', [EmployeeAdvanceController::class, 'index'])
@@ -206,8 +207,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('users.change-role');
     });
 
+    Route::get('/retention-holds', [RetentionHoldController::class, 'index'])
+        ->middleware('can:viewRetention,'.Vault::class)
+        ->name('retention-holds.index');
     Route::middleware('can:manageRetention,'.Vault::class)->group(function () {
-        Route::get('/retention-holds', [RetentionHoldController::class, 'index'])->name('retention-holds.index');
         Route::put('/retention-holds/settings', [RetentionHoldController::class, 'updateSettings'])
             ->name('retention-holds.settings');
         Route::post('/retention-holds/{retentionHold}/release', [RetentionHoldController::class, 'release'])

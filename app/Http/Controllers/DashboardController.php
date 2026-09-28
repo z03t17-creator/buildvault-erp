@@ -35,7 +35,7 @@ class DashboardController extends Controller
         $rate = $this->fx->getUsdToIqd();
 
         $maturedHolds = collect();
-        if ($user && $user->can('manageRetention', Vault::class)) {
+        if ($user && ($user->can('viewRetention', Vault::class) || $user->can('manageRetention', Vault::class))) {
             $maturedHolds = $this->holds->maturedAwaitingRelease()->map(function ($hold) use ($rate) {
                 $hold->setAttribute('amount_iqd', round((float) $hold->amount_usd * $rate, 0));
 

@@ -145,11 +145,18 @@ class PayoutService
 
             if ($this->shouldCreateRetentionHold($payout, $holdback)) {
                 $holdStart = now()->toDateString();
+                $amount = round((float) $payout->amount_usd, 2);
+                $holdPct = $amount > 0
+                    ? round(($holdback / $amount) * 100, 2)
+                    : $this->insurance->holdbackPercent();
+
                 RetentionHold::query()->create([
                     'vault_id' => $vault->id,
                     'project_id' => $project->id,
                     'worker_id' => $payout->worker_id,
                     'payout_id' => $payout->id,
+                    'pay_period' => now()->format('Y-m'),
+                    'hold_pct' => $holdPct,
                     'amount_usd' => $holdback,
                     'hold_start' => $holdStart,
                     'maturity_date' => RetentionHold::maturityFrom($holdStart)->toDateString(),

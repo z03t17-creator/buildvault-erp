@@ -23,11 +23,17 @@ class RetentionHoldController extends Controller
 
     public function index(): Response
     {
-        $this->authorize('manageRetention', Vault::class);
+        $this->authorize('viewRetention', Vault::class);
 
         $rate = $this->exchangeRates->getUsdToIqd();
         $mapHold = static function (RetentionHold $h) use ($rate): RetentionHold {
             $h->setAttribute('amount_iqd', round((float) $h->amount_usd * $rate, 0));
+            if ($h->released_amount_usd !== null) {
+                $h->setAttribute(
+                    'released_amount_iqd',
+                    round((float) $h->released_amount_usd * $rate, 0),
+                );
+            }
 
             return $h;
         };

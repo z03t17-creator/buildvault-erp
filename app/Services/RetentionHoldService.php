@@ -102,6 +102,7 @@ class RetentionHoldService
 
             $hold->status = RetentionHold::STATUS_RELEASED;
             $hold->released_at = now();
+            $hold->released_amount_usd = $amount;
             $hold->save();
 
             return $hold->fresh(['worker', 'project', 'payout']);
