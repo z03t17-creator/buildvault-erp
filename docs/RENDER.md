@@ -12,16 +12,28 @@ Same style as a simple Render web service (e.g. `https://judi-group.onrender.com
 
 ## One-time dashboard click-path (no API key required)
 
-1. Push this branch to **GitHub** (Render cannot pull from Cursor Origin alone).  
-   Suggested remote: `https://github.com/z03t17-creator/buildvault-erp`  
-   Branch: `cursor/phase-1-1-laravel-scaffold-0471` or merge to `main`.
-2. Open [https://dashboard.render.com](https://dashboard.render.com) → sign in with GitHub.
-3. **New** → **Blueprint** → select `z03t17-creator/buildvault-erp` → apply `render.yaml`.  
-   **Or** manually:
-   - **New** → **PostgreSQL** (free/starter) → note **Internal Database URL**.
-   - **New** → **Web Service** → Connect repo → **Docker** → branch with `Dockerfile`.
-   - Name: `buildvault-erp` (URL becomes `https://buildvault-erp.onrender.com`).
-4. Web service **Environment**:
+> **Important:** In Render Blueprint, search for the **repo name** `buildvault-erp` — do **not** search for the filename `render.yaml`.  
+> If only `judi` appears, the Render GitHub App does not have access to `buildvault-erp` yet (see step 2).
+
+1. **GitHub repo must contain code**  
+   `https://github.com/z03t17-creator/buildvault-erp` currently exists but may be **empty**.  
+   Push branch with Render files (Cursor tip includes `render.yaml`):
+   ```bash
+   git remote add github https://github.com/z03t17-creator/buildvault-erp.git
+   git push -u github cursor/phase-1-1-laravel-scaffold-0471:main
+   ```
+   Confirm: `https://github.com/z03t17-creator/buildvault-erp/blob/main/render.yaml` is not 404.
+
+2. **Grant Render access to that repo**  
+   GitHub → Settings → Applications → **Render** → Configure → add **`buildvault-erp`** (or All repos).  
+   Do **not** deploy the `judi` / judi-group repo.
+
+3. Open [https://dashboard.render.com](https://dashboard.render.com) → **New** → **Blueprint** → select **`buildvault-erp`**.  
+   **Or** manually: New PostgreSQL + New Web Service → Docker → same repo.
+
+4. Name: `buildvault-erp` (URL becomes `https://buildvault-erp.onrender.com`).
+
+5. Web service **Environment**:
 
    | Key | Value |
    |-----|--------|
