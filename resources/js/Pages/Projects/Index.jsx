@@ -3,11 +3,13 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Index({ projects }) {
     const t = useTranslations();
+    const canCreate = useCan('projects.create');
     const list = projects || [];
 
     return (
@@ -17,9 +19,11 @@ export default function Index({ projects }) {
                     title={t('projects')}
                     subtitle={t('site_hierarchy')}
                     actions={
-                        <Link href={route('projects.create')}>
-                            <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
-                        </Link>
+                        canCreate ? (
+                            <Link href={route('projects.create')}>
+                                <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
+                            </Link>
+                        ) : null
                     }
                 />
             }
@@ -33,9 +37,11 @@ export default function Index({ projects }) {
                             title={t('no_projects')}
                             description={t('no_projects_hint')}
                             action={
-                                <Link href={route('projects.create')}>
-                                    <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
-                                </Link>
+                                canCreate ? (
+                                    <Link href={route('projects.create')}>
+                                        <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
+                                    </Link>
+                                ) : null
                             }
                         />
                     ) : (

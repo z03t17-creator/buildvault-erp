@@ -118,14 +118,17 @@ function buildNavItems(t, maturedCount) {
 export default function AuthenticatedLayout({ header, children }) {
     const page = usePage();
     const user = page.props.auth.user;
+    const allowedNav = new Set(page.props.auth?.nav || []);
     const maturedCount = page.props.alerts?.maturedRetentionCount || 0;
     const t = useTranslations();
     const [showingNavigationDropdown, setShowingNavigationDropdown] = useState(false);
 
-    const navItems = buildNavItems(t, maturedCount);
+    const navItems = buildNavItems(t, maturedCount).filter((item) => allowedNav.has(item.key));
     const primaryItems = navItems.filter((item) => item.primary);
     const secondaryItems = navItems.filter((item) => !item.primary);
     const secondaryActive = secondaryItems.some((item) => item.active);
+    const insuranceBadge =
+        (page.props.auth?.can?.['vault.retention'] && maturedCount > 0) ? maturedCount : 0;
 
     return (
         <div className="min-h-screen">
@@ -222,54 +225,56 @@ export default function AuthenticatedLayout({ header, children }) {
                                 </NavLink>
                             ))}
 
-                            <div className="relative ms-1 shrink-0">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <button
-                                            type="button"
-                                            className={
-                                                'inline-flex items-center border-b-2 px-2 pt-1 pb-0.5 text-sm font-medium leading-5 transition ' +
-                                                (secondaryActive
-                                                    ? 'border-emerald-500 text-slate-900 dark:text-white'
-                                                    : 'border-transparent text-slate-500 hover:border-emerald-300/70 hover:text-emerald-800 dark:text-slate-400 dark:hover:text-emerald-300')
-                                            }
-                                        >
-                                            {t('more')}
-                                            {maturedCount > 0 && (
-                                                <span className="ms-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                                    {maturedCount}
-                                                </span>
-                                            )}
-                                            <svg
-                                                className="ms-1 h-3.5 w-3.5"
-                                                viewBox="0 0 20 20"
-                                                fill="currentColor"
-                                                aria-hidden
+                            {secondaryItems.length > 0 && (
+                                <div className="relative ms-1 shrink-0">
+                                    <Dropdown>
+                                        <Dropdown.Trigger>
+                                            <button
+                                                type="button"
+                                                className={
+                                                    'inline-flex items-center border-b-2 px-2 pt-1 pb-0.5 text-sm font-medium leading-5 transition ' +
+                                                    (secondaryActive
+                                                        ? 'border-emerald-500 text-slate-900 dark:text-white'
+                                                        : 'border-transparent text-slate-500 hover:border-emerald-300/70 hover:text-emerald-800 dark:text-slate-400 dark:hover:text-emerald-300')
+                                                }
                                             >
-                                                <path
-                                                    fillRule="evenodd"
-                                                    d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                    clipRule="evenodd"
-                                                />
-                                            </svg>
-                                        </button>
-                                    </Dropdown.Trigger>
-                                    <Dropdown.Content align="left" width="48">
-                                        {secondaryItems.map((item) => (
-                                            <Dropdown.Link key={item.key} href={item.href}>
-                                                <span className="inline-flex items-center gap-2">
-                                                    {item.label}
-                                                    {item.badge != null && (
-                                                        <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
-                                                            {item.badge}
-                                                        </span>
-                                                    )}
-                                                </span>
-                                            </Dropdown.Link>
-                                        ))}
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
+                                                {t('more')}
+                                                {insuranceBadge > 0 && (
+                                                    <span className="ms-1.5 inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
+                                                        {insuranceBadge}
+                                                    </span>
+                                                )}
+                                                <svg
+                                                    className="ms-1 h-3.5 w-3.5"
+                                                    viewBox="0 0 20 20"
+                                                    fill="currentColor"
+                                                    aria-hidden
+                                                >
+                                                    <path
+                                                        fillRule="evenodd"
+                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                                                        clipRule="evenodd"
+                                                    />
+                                                </svg>
+                                            </button>
+                                        </Dropdown.Trigger>
+                                        <Dropdown.Content align="left" width="48">
+                                            {secondaryItems.map((item) => (
+                                                <Dropdown.Link key={item.key} href={item.href}>
+                                                    <span className="inline-flex items-center gap-2">
+                                                        {item.label}
+                                                        {item.badge != null && (
+                                                            <span className="inline-flex min-w-[1.25rem] items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
+                                                                {item.badge}
+                                                            </span>
+                                                        )}
+                                                    </span>
+                                                </Dropdown.Link>
+                                            ))}
+                                        </Dropdown.Content>
+                                    </Dropdown>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -2,6 +2,7 @@ import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, usePage } from '@inertiajs/react';
 
@@ -151,6 +152,8 @@ export default function Vault({
     const ins = insurance || {};
     const pool = pools || {};
     const { flash, insuranceSettings } = usePage().props;
+    const canAudit = useCan('vault.audit');
+    const canRetention = useCan('vault.retention');
     const holdbackPct = insuranceSettings?.holdback_pct ?? 10;
     const maturityMonths = insuranceSettings?.maturity_months ?? 6;
 
@@ -165,9 +168,11 @@ export default function Vault({
                             <Link href={route('dashboard')}>
                                 <SecondaryButton type="button">{t('home')}</SecondaryButton>
                             </Link>
-                            <Link href={route('audit.index')}>
-                                <SecondaryButton type="button">{t('audit_log')}</SecondaryButton>
-                            </Link>
+                            {canAudit && (
+                                <Link href={route('audit.index')}>
+                                    <SecondaryButton type="button">{t('audit_log')}</SecondaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />
@@ -229,12 +234,14 @@ export default function Vault({
                                     })}
                                 </p>
                             </div>
-                            <Link
-                                href={route('retention-holds.index')}
-                                className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
-                            >
-                                {t('manage_holds')}
-                            </Link>
+                            {canRetention && (
+                                <Link
+                                    href={route('retention-holds.index')}
+                                    className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
+                                >
+                                    {t('manage_holds')}
+                                </Link>
+                            )}
                         </div>
                         <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                             <Stat label={t('retention_pool')} value={formatIqd(ins.retention_pool_iqd, iqd)} />

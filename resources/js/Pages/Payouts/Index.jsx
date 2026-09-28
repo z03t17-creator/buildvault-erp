@@ -2,10 +2,12 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Index({ payouts }) {
     const list = payouts || [];
+    const canCreate = useCan('payouts.create');
 
     return (
         <AuthenticatedLayout
@@ -14,9 +16,11 @@ export default function Index({ payouts }) {
                     title="Payouts"
                     subtitle="Vault ledger approvals"
                     actions={
-                        <Link href={route('payouts.create')}>
-                            <PrimaryButton type="button">New payout</PrimaryButton>
-                        </Link>
+                        canCreate ? (
+                            <Link href={route('payouts.create')}>
+                                <PrimaryButton type="button">New payout</PrimaryButton>
+                            </Link>
+                        ) : null
                     }
                 />
             }

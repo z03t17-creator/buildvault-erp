@@ -2,6 +2,7 @@ import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 import { useState } from 'react';
@@ -31,6 +32,7 @@ export default function Payroll({
 }) {
     const t = useTranslations();
     const iqd = t('IQD');
+    const canVault = useCan('vault.view');
     const [selectedMonth, setSelectedMonth] = useState(month || '');
     const [selectedProject, setSelectedProject] = useState(projectId ? String(projectId) : '');
 
@@ -55,9 +57,11 @@ export default function Payroll({
                     title={t('payroll')}
                     subtitle={t('payroll_subtitle', { month: monthLabel || month })}
                     actions={
-                        <Link href={route('dashboards.vault')}>
-                            <SecondaryButton type="button">{t('vault')}</SecondaryButton>
-                        </Link>
+                        canVault ? (
+                            <Link href={route('dashboards.vault')}>
+                                <SecondaryButton type="button">{t('vault')}</SecondaryButton>
+                            </Link>
+                        ) : null
                     }
                 />
             }

@@ -3,9 +3,14 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import { Head, Link, router } from '@inertiajs/react';
 
 export default function Show({ payout }) {
+    const canApprove = useCan('payouts.approve');
+    const canReject = useCan('payouts.reject');
+    const canReconcile = useCan('payouts.reconcile');
+
     return (
         <AuthenticatedLayout
             header={
@@ -17,17 +22,17 @@ export default function Show({ payout }) {
                             <Link href={route('payouts.index')}>
                                 <SecondaryButton>Back</SecondaryButton>
                             </Link>
-                            {payout.status === 'pending' && (
-                                <>
-                                    <PrimaryButton type="button" onClick={() => router.post(route('payouts.approve', payout.id))}>
-                                        Approve
-                                    </PrimaryButton>
-                                    <SecondaryButton type="button" onClick={() => router.post(route('payouts.reject', payout.id))}>
-                                        Reject
-                                    </SecondaryButton>
-                                </>
+                            {payout.status === 'pending' && canApprove && (
+                                <PrimaryButton type="button" onClick={() => router.post(route('payouts.approve', payout.id))}>
+                                    Approve
+                                </PrimaryButton>
                             )}
-                            {payout.status === 'approved' && (
+                            {payout.status === 'pending' && canReject && (
+                                <SecondaryButton type="button" onClick={() => router.post(route('payouts.reject', payout.id))}>
+                                    Reject
+                                </SecondaryButton>
+                            )}
+                            {payout.status === 'approved' && canReconcile && (
                                 <PrimaryButton type="button" onClick={() => router.post(route('payouts.reconcile', payout.id))}>
                                     Reconcile
                                 </PrimaryButton>

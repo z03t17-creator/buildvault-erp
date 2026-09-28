@@ -2,10 +2,12 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Index({ penalties }) {
     const list = penalties || [];
+    const canCreate = useCan('penalties.create');
 
     return (
         <AuthenticatedLayout
@@ -14,9 +16,11 @@ export default function Index({ penalties }) {
                     title="Penalties"
                     subtitle="Worker deductions"
                     actions={
-                        <Link href={route('penalties.create')}>
-                            <PrimaryButton type="button">Record penalty</PrimaryButton>
-                        </Link>
+                        canCreate ? (
+                            <Link href={route('penalties.create')}>
+                                <PrimaryButton type="button">Record penalty</PrimaryButton>
+                            </Link>
+                        ) : null
                     }
                 />
             }

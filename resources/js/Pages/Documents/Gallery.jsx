@@ -5,6 +5,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -28,6 +29,8 @@ export default function Gallery({
 }) {
     const { flash } = usePage().props;
     const [showUpload, setShowUpload] = useState(false);
+    const canCreate = useCan('documents.create');
+    const canDelete = useCan('documents.delete');
 
     const form = useForm({
         project_id: filters?.project_id ? String(filters.project_id) : '',
@@ -70,9 +73,11 @@ export default function Gallery({
                     title="Documents"
                     subtitle="Gallery by type · project · worker"
                     actions={
-                        <PrimaryButton type="button" onClick={() => setShowUpload((v) => !v)}>
-                            {showUpload ? 'Close upload' : 'Upload document'}
-                        </PrimaryButton>
+                        canCreate ? (
+                            <PrimaryButton type="button" onClick={() => setShowUpload((v) => !v)}>
+                                {showUpload ? 'Close upload' : 'Upload document'}
+                            </PrimaryButton>
+                        ) : null
                     }
                 />
             }
@@ -87,7 +92,7 @@ export default function Gallery({
                         </p>
                     )}
 
-                    {showUpload && (
+                    {canCreate && showUpload && (
                         <form onSubmit={submit} className="bv-surface space-y-4 p-5">
                             <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
                                 Upload
@@ -293,17 +298,19 @@ export default function Gallery({
                                                         Project
                                                     </Link>
                                                 )}
-                                                <button
-                                                    type="button"
-                                                    className="ms-auto text-xs text-rose-600 underline dark:text-rose-400"
-                                                    onClick={() => {
-                                                        if (confirm('Delete this document?')) {
-                                                            router.delete(route('documents.destroy', doc.id));
-                                                        }
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
+                                                {canDelete && (
+                                                    <button
+                                                        type="button"
+                                                        className="ms-auto text-xs text-rose-600 underline dark:text-rose-400"
+                                                        onClick={() => {
+                                                            if (confirm('Delete this document?')) {
+                                                                router.delete(route('documents.destroy', doc.id));
+                                                            }
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
                                     </article>

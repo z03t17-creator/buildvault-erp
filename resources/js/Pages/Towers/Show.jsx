@@ -3,11 +3,14 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Show({ tower, project }) {
     const t = useTranslations();
+    const canUpdate = useCan('towers.update');
+    const canCreateFloor = useCan('floors.create');
     const floors = tower.floors || [];
 
     return (
@@ -21,12 +24,16 @@ export default function Show({ tower, project }) {
                             <Link href={route('projects.towers.index', project.id)}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
-                            <Link href={route('towers.edit', tower.id)}>
-                                <SecondaryButton>{t('edit')}</SecondaryButton>
-                            </Link>
-                            <Link href={route('towers.floors.create', tower.id)}>
-                                <PrimaryButton type="button">{t('create_floor')}</PrimaryButton>
-                            </Link>
+                            {canUpdate && (
+                                <Link href={route('towers.edit', tower.id)}>
+                                    <SecondaryButton>{t('edit')}</SecondaryButton>
+                                </Link>
+                            )}
+                            {canCreateFloor && (
+                                <Link href={route('towers.floors.create', tower.id)}>
+                                    <PrimaryButton type="button">{t('create_floor')}</PrimaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />

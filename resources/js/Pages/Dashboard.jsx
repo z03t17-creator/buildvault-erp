@@ -1,6 +1,7 @@
 import BrandMark from '@/Components/BrandMark';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 
@@ -16,7 +17,10 @@ function formatIqd(n, iqdLabel) {
 
 export default function Dashboard({ maturedHolds }) {
     const t = useTranslations();
-    const alerts = maturedHolds || [];
+    const canVault = useCan('vault.view');
+    const canPayroll = useCan('vault.payroll');
+    const canRetention = useCan('vault.retention');
+    const alerts = canRetention ? maturedHolds || [] : [];
     const iqd = t('IQD');
 
     return (
@@ -94,14 +98,18 @@ export default function Dashboard({ maturedHolds }) {
                             {t('logged_in')}
                         </p>
                         <div className="flex flex-wrap items-center justify-center gap-3">
-                            <Link href={route('dashboards.vault')}>
-                                <PrimaryButton type="button">{t('open_zhako_vault')}</PrimaryButton>
-                            </Link>
-                            <Link href={route('dashboards.payroll')}>
-                                <PrimaryButton type="button">{t('payroll_summary')}</PrimaryButton>
-                            </Link>
+                            {canVault && (
+                                <Link href={route('dashboards.vault')}>
+                                    <PrimaryButton type="button">{t('open_zhako_vault')}</PrimaryButton>
+                                </Link>
+                            )}
+                            {canPayroll && (
+                                <Link href={route('dashboards.payroll')}>
+                                    <PrimaryButton type="button">{t('payroll_summary')}</PrimaryButton>
+                                </Link>
+                            )}
                         </div>
-                        {alerts.length === 0 && (
+                        {canRetention && alerts.length === 0 && (
                             <p className="text-sm text-slate-500 dark:text-slate-400">
                                 {t('no_matured_holds')}
                             </p>

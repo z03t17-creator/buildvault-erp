@@ -2,6 +2,7 @@ import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
@@ -16,6 +17,9 @@ function Field({ label, children }) {
 
 export default function Show({ worker }) {
     const t = useTranslations();
+    const canUpdate = useCan('workers.update');
+    const canViewAny = useCan('workers.viewAny');
+    const canDocs = useCan('documents.viewAny');
 
     return (
         <AuthenticatedLayout
@@ -25,15 +29,21 @@ export default function Show({ worker }) {
                     subtitle={worker.project?.name || t('unassigned')}
                     actions={
                         <>
-                            <Link href={route('workers.index')}>
-                                <SecondaryButton>{t('back')}</SecondaryButton>
-                            </Link>
-                            <Link href={route('documents.index', { worker_id: worker.id, project_id: worker.project_id || undefined })}>
-                                <SecondaryButton>Documents</SecondaryButton>
-                            </Link>
-                            <Link href={route('workers.edit', worker.id)}>
-                                <SecondaryButton>{t('edit')}</SecondaryButton>
-                            </Link>
+                            {canViewAny && (
+                                <Link href={route('workers.index')}>
+                                    <SecondaryButton>{t('back')}</SecondaryButton>
+                                </Link>
+                            )}
+                            {canDocs && (
+                                <Link href={route('documents.index', { worker_id: worker.id, project_id: worker.project_id || undefined })}>
+                                    <SecondaryButton>Documents</SecondaryButton>
+                                </Link>
+                            )}
+                            {canUpdate && (
+                                <Link href={route('workers.edit', worker.id)}>
+                                    <SecondaryButton>{t('edit')}</SecondaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />

@@ -4,8 +4,9 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 
 function Meta({ label, value }) {
     return (
@@ -28,6 +29,9 @@ function formatIqd(n, iqdLabel = 'IQD') {
 
 export default function Show({ project, exchangeRate }) {
     const t = useTranslations();
+    const canUpdate = useCan('projects.update');
+    const canCreateTower = useCan('towers.create');
+    const canDocs = useCan('documents.viewAny');
     const iqd = t('IQD');
     const rate = exchangeRate || 1310;
     const budgetIqd = Math.round(Number(project.total_budget_usd || 0) * Number(rate));
@@ -45,15 +49,21 @@ export default function Show({ project, exchangeRate }) {
                             <Link href={route('projects.index')}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
-                            <Link href={route('documents.index', { project_id: project.id })}>
-                                <SecondaryButton>Documents</SecondaryButton>
-                            </Link>
-                            <Link href={route('projects.edit', project.id)}>
-                                <SecondaryButton>{t('edit')}</SecondaryButton>
-                            </Link>
-                            <Link href={route('projects.towers.create', project.id)}>
-                                <PrimaryButton type="button">{t('create_tower')}</PrimaryButton>
-                            </Link>
+                            {canDocs && (
+                                <Link href={route('documents.index', { project_id: project.id })}>
+                                    <SecondaryButton>Documents</SecondaryButton>
+                                </Link>
+                            )}
+                            {canUpdate && (
+                                <Link href={route('projects.edit', project.id)}>
+                                    <SecondaryButton>{t('edit')}</SecondaryButton>
+                                </Link>
+                            )}
+                            {canCreateTower && (
+                                <Link href={route('projects.towers.create', project.id)}>
+                                    <PrimaryButton type="button">{t('create_tower')}</PrimaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />

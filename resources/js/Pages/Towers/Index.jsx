@@ -3,11 +3,13 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Index({ project, towers }) {
     const t = useTranslations();
+    const canCreate = useCan('towers.create');
     const list = towers || [];
 
     return (
@@ -21,9 +23,11 @@ export default function Index({ project, towers }) {
                             <Link href={route('projects.show', project.id)}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
-                            <Link href={route('projects.towers.create', project.id)}>
-                                <PrimaryButton type="button">{t('create_tower')}</PrimaryButton>
-                            </Link>
+                            {canCreate && (
+                                <Link href={route('projects.towers.create', project.id)}>
+                                    <PrimaryButton type="button">{t('create_tower')}</PrimaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />

@@ -1,11 +1,13 @@
 import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
 
 export default function Show({ floor, tower, project }) {
     const t = useTranslations();
+    const canUpdate = useCan('floors.update');
 
     return (
         <AuthenticatedLayout
@@ -18,9 +20,11 @@ export default function Show({ floor, tower, project }) {
                             <Link href={route('towers.floors.index', tower.id)}>
                                 <SecondaryButton>{t('back')}</SecondaryButton>
                             </Link>
-                            <Link href={route('floors.edit', floor.id)}>
-                                <SecondaryButton>{t('edit')}</SecondaryButton>
-                            </Link>
+                            {canUpdate && (
+                                <Link href={route('floors.edit', floor.id)}>
+                                    <SecondaryButton>{t('edit')}</SecondaryButton>
+                                </Link>
+                            )}
                         </>
                     }
                 />

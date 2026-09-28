@@ -32,13 +32,17 @@ Route::get('/', function () {
 Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update');
 
 Route::get('/dashboard', function (RetentionHoldService $holds, ExchangeRateService $fx) {
-    $rate = $fx->getUsdToIqd();
+    $user = Auth::user();
+    $maturedHolds = collect();
 
-    $maturedHolds = $holds->maturedAwaitingRelease()->map(function ($hold) use ($rate) {
-        $hold->setAttribute('amount_iqd', round((float) $hold->amount_usd * $rate, 0));
+    if ($user && $user->can('manageRetention', \App\Models\Vault::class)) {
+        $rate = $fx->getUsdToIqd();
+        $maturedHolds = $holds->maturedAwaitingRelease()->map(function ($hold) use ($rate) {
+            $hold->setAttribute('amount_iqd', round((float) $hold->amount_usd * $rate, 0));
 
-        return $hold;
-    });
+            return $hold;
+        });
+    }
 
     return Inertia::render('Dashboard', [
         'maturedHolds' => $maturedHolds,

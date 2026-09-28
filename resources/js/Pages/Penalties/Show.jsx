@@ -3,10 +3,14 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 
 export default function Show({ penalty, linkablePayouts }) {
     const linkForm = useForm({ payout_id: linkablePayouts?.[0]?.id || '' });
+    const canWaive = useCan('penalties.waive');
+    const canLink = useCan('penalties.link');
+    const canViewAny = useCan('penalties.viewAny');
 
     return (
         <AuthenticatedLayout
@@ -16,10 +20,12 @@ export default function Show({ penalty, linkablePayouts }) {
                     subtitle={penalty.worker?.name}
                     actions={
                         <>
-                            <Link href={route('penalties.index')}>
-                                <SecondaryButton>Back</SecondaryButton>
-                            </Link>
-                            {penalty.status === 'pending' && (
+                            {canViewAny && (
+                                <Link href={route('penalties.index')}>
+                                    <SecondaryButton>Back</SecondaryButton>
+                                </Link>
+                            )}
+                            {penalty.status === 'pending' && canWaive && (
                                 <SecondaryButton type="button" onClick={() => router.post(route('penalties.waive', penalty.id))}>
                                     Waive
                                 </SecondaryButton>
@@ -50,7 +56,7 @@ export default function Show({ penalty, linkablePayouts }) {
                         <div><dt className="text-xs uppercase text-slate-400">Deducted</dt><dd>{penalty.deducted_from_payout ? 'Yes' : 'No'}</dd></div>
                     </dl>
 
-                    {penalty.status === 'pending' && (linkablePayouts || []).length > 0 && !penalty.payout_id && (
+                    {canLink && penalty.status === 'pending' && (linkablePayouts || []).length > 0 && !penalty.payout_id && (
                         <form
                             className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700"
                             onSubmit={(e) => {

@@ -3,6 +3,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
@@ -14,6 +15,7 @@ function formatTime(value) {
 
 export default function Matrix({ date, projectId, projects, floors, grid }) {
     const t = useTranslations();
+    const canManage = useCan('attendance.manage');
     const rows = grid || [];
     const [selected, setSelected] = useState([]);
 
@@ -96,6 +98,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 ))}
                             </select>
                         </div>
+                        {canManage && (
                         <div>
                             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">{t('floor')}</label>
                             <select
@@ -111,6 +114,8 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 ))}
                             </select>
                         </div>
+                        )}
+                        {canManage && (
                         <div>
                             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">{t('check_in')}</label>
                             <input
@@ -120,6 +125,8 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 onChange={(e) => checkIn.setData('check_in', e.target.value)}
                             />
                         </div>
+                        )}
+                        {canManage && (
                         <div>
                             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">{t('check_out')}</label>
                             <input
@@ -129,6 +136,8 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 onChange={(e) => checkOut.setData('check_out', e.target.value)}
                             />
                         </div>
+                        )}
+                        {canManage && (
                         <div className="flex flex-wrap gap-2">
                             <PrimaryButton type="button" disabled={selected.length === 0 || checkIn.processing} onClick={submitCheckIn}>
                                 {t('bulk_check_in')} ({selected.length})
@@ -137,6 +146,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                 {t('bulk_check_out')} ({selected.length})
                             </SecondaryButton>
                         </div>
+                        )}
                     </div>
 
                     <div className="bv-surface shadow-sm">
@@ -144,6 +154,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                         <table className="bv-table min-w-[44rem] border-collapse">
                             <thead className="sticky top-0 z-10 bg-slate-100/95 text-start text-xs uppercase tracking-wider text-slate-500 backdrop-blur dark:bg-slate-950/95 dark:text-slate-400">
                                 <tr>
+                                    {canManage && (
                                     <th className="border-b border-slate-200 px-3 py-3 dark:border-slate-800">
                                         <input
                                             type="checkbox"
@@ -153,6 +164,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                             className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                                         />
                                     </th>
+                                    )}
                                     <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-800">{t('worker')}</th>
                                     <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-800">{t('project')}</th>
                                     <th className="border-b border-slate-200 px-3 py-3 font-semibold dark:border-slate-800">{t('check_in')}</th>
@@ -165,7 +177,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                             <tbody>
                                 {rows.length === 0 && (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-10 text-center text-slate-500">
+                                        <td colSpan={canManage ? 8 : 7} className="px-4 py-10 text-center text-slate-500">
                                             {t('no_workers')}
                                         </td>
                                     </tr>
@@ -181,6 +193,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                                     : 'bg-slate-50/50 dark:bg-slate-950/30'
                                             } ${checked ? '!bg-emerald-50/80 dark:!bg-emerald-950/35' : ''}`}
                                         >
+                                            {canManage && (
                                             <td className="px-3 py-2.5">
                                                 <input
                                                     type="checkbox"
@@ -189,6 +202,7 @@ export default function Matrix({ date, projectId, projects, floors, grid }) {
                                                     className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
                                                 />
                                             </td>
+                                            )}
                                             <td className="px-3 py-2.5 font-medium text-slate-900 dark:text-slate-100">
                                                 {worker.name}
                                             </td>

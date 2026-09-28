@@ -5,6 +5,7 @@ import TextInput from '@/Components/TextInput';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
@@ -21,6 +22,7 @@ function formatIqd(n, iqdLabel = 'IQD') {
 export default function Index({ holds, matured, settings, exchangeRate }) {
     const t = useTranslations();
     const page = usePage();
+    const canRetention = useCan('vault.retention');
     const shared = page.props.insuranceSettings || {};
     const cfg = settings || shared || {};
     const list = holds || [];
@@ -56,6 +58,7 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
             <Head title={t('insurance_holds')} />
             <div className="py-8">
                 <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
+                    {canRetention && (
                     <section className="bv-surface p-4 sm:p-5">
                         <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
                             {t('insurance_settings')}
@@ -103,8 +106,9 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                             </PrimaryButton>
                         </form>
                     </section>
+                    )}
 
-                    {ready.length > 0 && (
+                    {canRetention && ready.length > 0 && (
                         <section className="border border-amber-300/80 bg-amber-50/90 p-4 dark:border-amber-700/60 dark:bg-amber-950/40">
                             <h3 className="font-semibold text-amber-950 dark:text-amber-100">
                                 {t('matured_release_heading')}
@@ -152,7 +156,7 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                         <td className="px-3 py-2">{h.maturity_date}</td>
                                         <td className="px-3 py-2"><StatusBadge status={h.status} /></td>
                                         <td className="px-3 py-2">
-                                            {h.status === 'matured' ? (
+                                            {canRetention && h.status === 'matured' ? (
                                                 <PrimaryButton
                                                     type="button"
                                                     onClick={() => router.post(route('retention-holds.release', h.id))}
