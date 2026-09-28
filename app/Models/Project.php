@@ -134,5 +134,10 @@ class Project extends Model
     {
         return $this->hasMany(ProjectReceipt::class);
     }
+
+    public function expenses(): HasMany
+    {
+        return $this->hasMany(Expense::class);
+    }
 }
 

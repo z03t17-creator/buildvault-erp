@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Expense;
 use App\Models\Payout;
 use App\Models\Project;
 use App\Models\ProjectAllocation;
@@ -26,16 +27,27 @@ class LiquidityService
     ];
 
     /**
-     * Available = Vault − (Pending Payouts + Reserved Insurance).
+     * Available = Vault − (Pending Payouts + Pending Expenses + Reserved Insurance).
      */
-    public function availableUsd(?Vault $vault = null): float
+    public function availableUsd(?Vault $vault = null, ?int $excludeExpenseId = null): float
     {
         $vault ??= $this->zhakoVault();
 
-        $pending = $this->pendingPayoutsUsd($vault);
+        $pending = $this->pendingCommitmentsUsd($vault, $excludeExpenseId);
         $reserved = $this->reservedInsuranceUsd($vault);
 
         return round(max(0, (float) $vault->balance_usd - $pending - $reserved), 2);
+    }
+
+    /**
+     * Pending payouts + pending expenses (committed, not yet paid out).
+     */
+    public function pendingCommitmentsUsd(?Vault $vault = null, ?int $excludeExpenseId = null): float
+    {
+        return round(
+            $this->pendingPayoutsUsd($vault) + $this->pendingExpensesUsd($vault, $excludeExpenseId),
+            2,
+        );
     }
 
     /**
@@ -51,6 +63,24 @@ class LiquidityService
             ->sum('amount_usd');
 
         return round((float) $sum, 2);
+    }
+
+    /**
+     * Sum of pending project expenses against the vault.
+     */
+    public function pendingExpensesUsd(?Vault $vault = null, ?int $excludeExpenseId = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $query = Expense::query()
+            ->where('vault_id', $vault->id)
+            ->where('approval_status', Expense::STATUS_PENDING);
+
+        if ($excludeExpenseId !== null) {
+            $query->where('id', '!=', $excludeExpenseId);
+        }
+
+        return round((float) $query->sum('amount_usd'), 2);
     }
 
     /**
@@ -106,6 +136,7 @@ class LiquidityService
         string $category,
         float $amountUsd,
         ?Vault $vault = null,
+        ?int $excludeExpenseId = null,
     ): array {
         if ($amountUsd <= 0) {
             throw new InvalidArgumentException('Request amount must be greater than zero.');
@@ -115,9 +146,9 @@ class LiquidityService
         $vault ??= $this->zhakoVault();
         $this->poolColumn($category); // validate category
 
-        $pending = $this->pendingPayoutsUsd($vault);
+        $pending = $this->pendingCommitmentsUsd($vault, $excludeExpenseId);
         $reserved = $this->reservedInsuranceUsd($vault);
-        $available = $this->availableUsd($vault);
+        $available = $this->availableUsd($vault, $excludeExpenseId);
         $pool = $this->poolAvailableUsd($project, $category);
 
         $reasons = [];
@@ -165,8 +196,9 @@ class LiquidityService
         string $category,
         float $amountUsd,
         ?Vault $vault = null,
+        ?int $excludeExpenseId = null,
     ): array {
-        $result = $this->canPay($project, $category, $amountUsd, $vault);
+        $result = $this->canPay($project, $category, $amountUsd, $vault, $excludeExpenseId);
 
         if (! $result['allowed']) {
             throw new InvalidArgumentException(implode(' ', $result['reasons']));

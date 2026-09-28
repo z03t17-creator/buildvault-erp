@@ -63,6 +63,13 @@ function buildNavItems(t, maturedCount) {
             primary: false,
         },
         {
+            key: 'expenses',
+            href: route('expenses.index'),
+            active: route().current('expenses.*'),
+            label: t('expenses'),
+            primary: false,
+        },
+        {
             key: 'penalties',
             href: route('penalties.index'),
             active: route().current('penalties.*'),

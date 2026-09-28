@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Expense;
 use App\Models\Payout;
 use App\Models\Project;
 use App\Models\ProjectReceipt;
@@ -15,7 +16,6 @@ use InvalidArgumentException;
  * Project-level IQD financial summary and money-received recording.
  *
  * Stubs until later phases:
- * - project_expenses → Phase 6 expenses module (0 for now)
  * - material_cost → Phase 10 stock (0 for now)
  */
 class ProjectFinancialService
@@ -37,14 +37,14 @@ class ProjectFinancialService
      *     remaining_vs_contract_iqd: float,
      *     net_position_iqd: float,
      *     currency: string,
-     *     stubs: array{project_expenses: string, material_cost: string},
+     *     stubs: array{material_cost: string},
      * }
      */
     public function summary(Project $project): array
     {
         $contractValue = round((float) $project->contract_value_iqd, 2);
         $moneyReceived = $this->moneyReceivedIqd($project);
-        $projectExpenses = 0.0; // Phase 6
+        $projectExpenses = $this->projectExpensesIqd($project);
         $materialCost = 0.0; // Phase 10
         $payrollCost = $this->payrollCostIqd($project);
         $otherExpenses = $this->otherExpensesIqd($project);
@@ -66,10 +66,23 @@ class ProjectFinancialService
             'net_position_iqd' => $netPosition,
             'currency' => 'IQD',
             'stubs' => [
-                'project_expenses' => 'Stubbed at 0 until Phase 6 expenses module.',
                 'material_cost' => 'Stubbed at 0 until Phase 10 stock module.',
             ],
         ];
+    }
+
+    /**
+     * Approved project expenses (Expense module — not vault-pool payout labels).
+     * Legacy Payout category=expenses are excluded here to avoid double-counting.
+     */
+    public function projectExpensesIqd(Project $project): float
+    {
+        $total = (float) Expense::query()
+            ->where('project_id', $project->id)
+            ->where('approval_status', Expense::STATUS_APPROVED)
+            ->sum('amount_iqd');
+
+        return round($total, 2);
     }
 
     /**
@@ -102,7 +115,8 @@ class ProjectFinancialService
 
     /**
      * Other expenses: approved/reconciled non-payroll, non-expenses payouts
-     * (penalty / retention / profit). Expenses category stays stubbed for Phase 6.
+     * (penalty / retention / profit). Expenses category payouts are ignored —
+     * project site spend lives on the Expense module.
      */
     public function otherExpensesIqd(Project $project): float
     {

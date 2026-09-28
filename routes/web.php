@@ -5,6 +5,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ImportController;
@@ -21,6 +22,7 @@ use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
 use App\Models\Attendance;
 use App\Models\Document;
+use App\Models\Expense;
 use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\Project;
@@ -138,6 +140,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])->name('payouts.approve');
     Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])->name('payouts.reject');
     Route::post('/payouts/{payout}/reconcile', [PayoutController::class, 'reconcile'])->name('payouts.reconcile');
+
+    Route::get('/expenses', [ExpenseController::class, 'index'])
+        ->middleware('can:viewAny,'.Expense::class)
+        ->name('expenses.index');
+    Route::middleware('can:create,'.Expense::class)->group(function () {
+        Route::get('/expenses/create', [ExpenseController::class, 'create'])->name('expenses.create');
+        Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
+    });
+    Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])
+        ->middleware('can:viewAny,'.Expense::class)
+        ->name('expenses.show');
+    Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
+    Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
+    Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve'])->name('expenses.approve');
+    Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
 
     Route::get('/penalties', [PenaltyController::class, 'index'])
         ->middleware('can:viewAny,'.Penalty::class)

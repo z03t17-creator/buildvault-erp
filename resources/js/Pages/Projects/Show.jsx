@@ -142,8 +142,6 @@ export default function Show({ project, financialSummary, canViewFinancials, can
                                     label={t('project_expenses')}
                                     value={summary.project_expenses_iqd}
                                     iqd={iqd}
-                                    hint={t('stub_phase_6_expenses')}
-                                    muted
                                 />
                                 <FinancialRow
                                     label={t('material_cost')}

@@ -91,6 +91,17 @@ final class Permissions
 
     public const DOCUMENTS_DELETE = 'documents.delete';
 
+    /** Phase 6 — project expenses module. */
+    public const EXPENSES_VIEW_ANY = 'expenses.viewAny';
+
+    public const EXPENSES_CREATE = 'expenses.create';
+
+    public const EXPENSES_UPDATE = 'expenses.update';
+
+    public const EXPENSES_APPROVE = 'expenses.approve';
+
+    public const EXPENSES_REJECT = 'expenses.reject';
+
     /** Super Admin only — User Management (Phase 4). */
     public const USERS_VIEW_ANY = 'users.viewAny';
 
@@ -147,6 +158,11 @@ final class Permissions
         self::DOCUMENTS_VIEW_ANY,
         self::DOCUMENTS_CREATE,
         self::DOCUMENTS_DELETE,
+        self::EXPENSES_VIEW_ANY,
+        self::EXPENSES_CREATE,
+        self::EXPENSES_UPDATE,
+        self::EXPENSES_APPROVE,
+        self::EXPENSES_REJECT,
         self::USERS_VIEW_ANY,
         self::USERS_CREATE,
         self::USERS_UPDATE,
@@ -196,6 +212,7 @@ final class Permissions
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
+                self::EXPENSES_VIEW_ANY,
             ],
             Roles::ACCOUNTANT => [
                 self::VAULT_VIEW,
@@ -226,6 +243,11 @@ final class Permissions
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
+                self::EXPENSES_VIEW_ANY,
+                self::EXPENSES_CREATE,
+                self::EXPENSES_UPDATE,
+                self::EXPENSES_APPROVE,
+                self::EXPENSES_REJECT,
             ],
             // Intentionally empty — stock module is Phase later; not a Worker clone.
             Roles::STOCK_MANAGER => [],

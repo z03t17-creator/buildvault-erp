@@ -33,6 +33,10 @@ final class AuditActions
 
     public const PROJECT_RECEIPT = 'project.receipt';
 
+    public const EXPENSE_APPROVED = 'expense.approved';
+
+    public const EXPENSE_REJECTED = 'expense.rejected';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
@@ -47,6 +51,8 @@ final class AuditActions
         self::USER_ENABLED,
         self::USER_PASSWORD_RESET,
         self::PROJECT_RECEIPT,
+        self::EXPENSE_APPROVED,
+        self::EXPENSE_REJECTED,
     ];
 
     /** @var array<string, string> */
@@ -63,5 +69,7 @@ final class AuditActions
         self::USER_ENABLED => 'User enabled',
         self::USER_PASSWORD_RESET => 'User password reset',
         self::PROJECT_RECEIPT => 'Project money received',
+        self::EXPENSE_APPROVED => 'Expense approved',
+        self::EXPENSE_REJECTED => 'Expense rejected',
     ];
 }

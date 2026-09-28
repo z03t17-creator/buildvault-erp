@@ -53,6 +53,7 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('penalties.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('projects.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('payouts.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('expenses.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
     }
 
@@ -90,6 +91,7 @@ class AuthorizationNavTest extends TestCase
                         'workers',
                         'attendance',
                         'payouts',
+                        'expenses',
                         'penalties',
                         'docs',
                         'imports',
@@ -136,6 +138,7 @@ class AuthorizationNavTest extends TestCase
                         'workers',
                         'attendance',
                         'payouts',
+                        'expenses',
                         'penalties',
                         'docs',
                         'imports',
@@ -178,6 +181,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('workers', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('payouts', $keys, true)
+                        && in_array('expenses', $keys, true)
                         && in_array('exports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
@@ -188,6 +192,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['vault.payroll'] ?? null) === true
                         && ($can['workers.create'] ?? null) === true
                         && ($can['payouts.create'] ?? null) === false
+                        && ($can['expenses.create'] ?? null) === false
+                        && ($can['expenses.viewAny'] ?? null) === true
                         && ($can['vault.backups'] ?? null) === false
                         && ($can['vault.audit'] ?? null) === false
                         && ($can['users.viewAny'] ?? null) === false;
@@ -211,6 +217,7 @@ class AuthorizationNavTest extends TestCase
                     return in_array('vault', $keys, true)
                         && in_array('payroll', $keys, true)
                         && in_array('payouts', $keys, true)
+                        && in_array('expenses', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('backups', $keys, true)
                         && in_array('audit', $keys, true)
@@ -218,6 +225,8 @@ class AuthorizationNavTest extends TestCase
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['payouts.create'] ?? null) === true
+                        && ($can['expenses.create'] ?? null) === true
+                        && ($can['expenses.approve'] ?? null) === true
                         && ($can['projects.create'] ?? null) === false
                         && ($can['workers.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === true;

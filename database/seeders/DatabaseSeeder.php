@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
             AttendanceSeeder::class,
             DemoInsuranceSeeder::class,
             DemoUsersSeeder::class,
+            DemoExpensesSeeder::class,
         ]);
     }
 }

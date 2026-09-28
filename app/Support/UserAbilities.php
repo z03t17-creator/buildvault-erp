@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Attendance;
 use App\Models\Document;
+use App\Models\Expense;
 use App\Models\Floor;
 use App\Models\Payout;
 use App\Models\Penalty;
@@ -72,6 +73,11 @@ final class UserAbilities
             'documents.viewAny' => $gate->allows('viewAny', Document::class),
             'documents.create' => $gate->allows('create', Document::class),
             'documents.delete' => $gate->allows('delete', new Document),
+            'expenses.viewAny' => $gate->allows('viewAny', Expense::class),
+            'expenses.create' => $gate->allows('create', Expense::class),
+            'expenses.update' => $gate->allows('update', new Expense),
+            'expenses.approve' => $gate->allows('approve', new Expense),
+            'expenses.reject' => $gate->allows('reject', new Expense),
             'users.viewAny' => $gate->allows('viewAny', User::class),
             'users.create' => $gate->allows('create', User::class),
             'users.update' => $gate->allows('update', new User),
@@ -97,6 +103,7 @@ final class UserAbilities
             'workers' => $can['workers.viewAny'] ?? false,
             'attendance' => $can['attendance.viewAny'] ?? false,
             'payouts' => $can['payouts.viewAny'] ?? false,
+            'expenses' => $can['expenses.viewAny'] ?? false,
             'penalties' => $can['penalties.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,
