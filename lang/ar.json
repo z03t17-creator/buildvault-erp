@@ -173,5 +173,8 @@
     "switch_dark_mode": "التبديل إلى الوضع الداكن",
     "light_mode": "الوضع الفاتح",
     "dark_mode": "الوضع الداكن",
-    "product_tagline": "بيلدفولت ERP · زاكو"
+    "product_tagline": "بيلدفولت ERP · زاكو",
+    "status_healthy": "سليم",
+    "status_warning": "تحذير",
+    "status_critical": "حرج"
 }

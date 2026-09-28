@@ -21,15 +21,16 @@ export default function useTranslations() {
     return (key, replacementsOrFallback, maybeFallback) => {
         const hasReplacements =
             replacementsOrFallback !== undefined &&
+            replacementsOrFallback !== null &&
             typeof replacementsOrFallback === 'object' &&
-            replacementsOrFallback !== null;
+            !Array.isArray(replacementsOrFallback);
 
         const replacements = hasReplacements ? replacementsOrFallback : undefined;
         const fallback = hasReplacements
             ? (maybeFallback ?? key)
-            : (replacementsOrFallback ?? key);
+            : (replacementsOrFallback === undefined ? key : replacementsOrFallback);
 
-        const raw = translations?.[key] ?? fallback;
+        const raw = translations?.[key] ?? (fallback === null ? undefined : fallback) ?? key;
 
         return applyReplacements(raw, replacements);
     };

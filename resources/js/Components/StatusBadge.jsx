@@ -1,3 +1,5 @@
+import useTranslations from '@/hooks/useTranslations';
+
 /**
  * ZHAKO status tones:
  * - emerald: inflows / healthy / present
@@ -82,15 +84,22 @@ function labelize(value) {
     return String(value).replace(/_/g, ' ');
 }
 
-export default function StatusBadge({ status, className = '' }) {
+export default function StatusBadge({ status, className = '', label }) {
+    const t = useTranslations();
     const key = status || '';
     const style = STYLES[key] || SLATE;
+    const translatedKey = key ? `status_${key}` : null;
+    const fromDict = translatedKey && t(translatedKey, null);
+    const display =
+        label ||
+        (fromDict && fromDict !== translatedKey ? fromDict : null) ||
+        labelize(status);
 
     return (
         <span
             className={`bv-badge inline-flex items-center whitespace-nowrap rounded-sm px-2 py-0.5 text-xs font-semibold capitalize tracking-wide ring-1 ${style} ${className}`}
         >
-            {labelize(status)}
+            {display}
         </span>
     );
 }

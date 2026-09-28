@@ -173,5 +173,8 @@
     "switch_dark_mode": "Switch to dark mode",
     "light_mode": "Light mode",
     "dark_mode": "Dark mode",
-    "product_tagline": "BuildVault ERP · ZHAKO"
+    "product_tagline": "BuildVault ERP · ZHAKO",
+    "status_healthy": "Healthy",
+    "status_warning": "Warning",
+    "status_critical": "Critical"
 }

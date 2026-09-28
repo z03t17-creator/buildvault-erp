@@ -173,5 +173,8 @@
     "switch_dark_mode": "گۆڕین بۆ دۆخی تاریک",
     "light_mode": "دۆخی ڕووناک",
     "dark_mode": "دۆخی تاریک",
-    "product_tagline": "بیلدفۆڵت ERP · ژاکۆ"
+    "product_tagline": "بیلدفۆڵت ERP · ژاکۆ",
+    "status_healthy": "تەندروست",
+    "status_warning": "ئاگاداری",
+    "status_critical": "گرنگ"
 }
