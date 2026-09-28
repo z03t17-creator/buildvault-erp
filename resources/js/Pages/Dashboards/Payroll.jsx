@@ -65,7 +65,7 @@ export default function Payroll({
                     <section className="bv-surface flex flex-col gap-4 p-4 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
                         <div className="flex flex-wrap gap-4">
                             <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                <label className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
                                     {t('month')}
                                 </label>
                                 <input
@@ -79,7 +79,7 @@ export default function Payroll({
                                 />
                             </div>
                             <div>
-                                <label className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                <label className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
                                     {t('project')}
                                 </label>
                                 <select
@@ -254,7 +254,7 @@ export default function Payroll({
 function SummaryCard({ label, value, accent }) {
     return (
         <div className="bv-card bg-gradient-to-br from-white to-slate-50/80 px-4 py-3 dark:from-slate-900 dark:to-slate-950">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">{label}</p>
             <p
                 dir="ltr"
                 className={`mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums sm:text-3xl ${

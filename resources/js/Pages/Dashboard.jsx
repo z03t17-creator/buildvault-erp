@@ -8,7 +8,7 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 function Stat({ label, value }) {
     return (
         <div className="border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+            <div className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
                 {label}
             </div>
             <div dir="ltr" className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white sm:text-3xl">

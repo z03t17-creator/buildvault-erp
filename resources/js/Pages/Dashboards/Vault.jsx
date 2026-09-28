@@ -104,7 +104,7 @@ function CashFlowChart({ series, t }) {
                     );
                 })}
             </svg>
-            <div className="mt-2 flex flex-wrap gap-4 text-xs text-slate-500 dark:text-slate-400">
+            <div className="mt-2 flex flex-wrap gap-4 text-sm font-medium text-slate-700 dark:text-slate-300">
                 <span className="inline-flex items-center gap-1.5">
                     <span className="inline-block h-2.5 w-2.5 bg-emerald-500" /> {t('inflow')}
                 </span>
@@ -120,12 +120,12 @@ function HealthBadge({ item }) {
     return (
         <div className="bv-card rounded-sm px-4 py-3">
             <div className="flex items-center justify-between gap-2">
-                <p className="font-display text-sm font-semibold tracking-wide text-slate-900 dark:text-white">
+                <p className="font-display text-base font-semibold tracking-wide text-slate-900 dark:text-white">
                     {item.label}
                 </p>
                 <StatusBadge status={item.status} />
             </div>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{item.detail}</p>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">{item.detail}</p>
         </div>
     );
 }
@@ -187,7 +187,7 @@ export default function Vault({
 
                     <section>
                         <div className="bv-card relative overflow-hidden bg-gradient-to-br from-white via-emerald-50/40 to-slate-50 p-5 sm:p-6 dark:from-slate-900 dark:via-emerald-950/30 dark:to-slate-950">
-                            <p className="font-display text-xs font-semibold uppercase tracking-[0.28em] text-slate-500 dark:text-slate-400">
+                            <p className="font-display text-sm font-medium uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">
                                 {t('balance_iqd')}
                             </p>
                             <p className="mt-3">
@@ -269,7 +269,7 @@ export default function Vault({
                                     key={label}
                                     className="bv-card bg-slate-50/80 px-3 py-3 dark:bg-slate-900/50"
                                 >
-                                    <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">
+                                    <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
                                         {label}
                                     </p>
                                     <p className="mt-1">
@@ -303,7 +303,7 @@ function Stat({ label, value, accent }) {
 
     return (
         <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+            <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">{label}</p>
             <p dir="ltr" className={`mt-1 font-sans text-xl font-semibold tracking-normal tabular-nums sm:text-2xl ${accentClass}`}>{value}</p>
         </div>
     );
