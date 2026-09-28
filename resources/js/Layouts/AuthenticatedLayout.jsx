@@ -49,10 +49,10 @@ function buildNavItems(t, maturedCount) {
             primary: true,
         },
         {
-            key: 'attendance',
-            href: route('attendance.index'),
-            active: route().current('attendance.*'),
-            label: t('attendance'),
+            key: 'stock',
+            href: route('stock.dashboard'),
+            active: route().current('stock.*'),
+            label: t('stock'),
             primary: true,
         },
         {

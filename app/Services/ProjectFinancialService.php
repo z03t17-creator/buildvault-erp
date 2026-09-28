@@ -15,8 +15,8 @@ use InvalidArgumentException;
 /**
  * Project-level IQD financial summary and money-received recording.
  *
- * Stubs until later phases:
- * - material_cost → Phase 10 stock (0 for now)
+ * material_cost_iqd = sum of stock-out line values (qty × unit purchase price) for the project.
+ * Full Phase 11 project cost linking can deepen this later.
  */
 class ProjectFinancialService
 {
@@ -24,6 +24,7 @@ class ProjectFinancialService
         private readonly VaultService $vault,
         private readonly ExchangeRateService $exchangeRates,
         private readonly AuditLogger $audit,
+        private readonly StockService $stock,
     ) {}
 
     /**
@@ -37,7 +38,7 @@ class ProjectFinancialService
      *     remaining_vs_contract_iqd: float,
      *     net_position_iqd: float,
      *     currency: string,
-     *     stubs: array{material_cost: string},
+     *     stubs: array<string, string>,
      * }
      */
     public function summary(Project $project): array
@@ -45,7 +46,7 @@ class ProjectFinancialService
         $contractValue = round((float) $project->contract_value_iqd, 2);
         $moneyReceived = $this->moneyReceivedIqd($project);
         $projectExpenses = $this->projectExpensesIqd($project);
-        $materialCost = 0.0; // Phase 10
+        $materialCost = $this->materialCostIqd($project);
         $payrollCost = $this->payrollCostIqd($project);
         $otherExpenses = $this->otherExpensesIqd($project);
 
@@ -65,10 +66,16 @@ class ProjectFinancialService
             'remaining_vs_contract_iqd' => $remainingVsContract,
             'net_position_iqd' => $netPosition,
             'currency' => 'IQD',
-            'stubs' => [
-                'material_cost' => 'Stubbed at 0 until Phase 10 stock module.',
-            ],
+            'stubs' => [],
         ];
+    }
+
+    /**
+     * Light Phase 10 hook — stock-out purchase value attributed to the project.
+     */
+    public function materialCostIqd(Project $project): float
+    {
+        return $this->stock->materialCostForProject((int) $project->id);
     }
 
     /**

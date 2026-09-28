@@ -1,6 +1,5 @@
 <?php
 
-use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
@@ -18,11 +17,14 @@ use App\Http\Controllers\ProductionRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
+use App\Http\Controllers\StockDashboardController;
+use App\Http\Controllers\StockItemController;
+use App\Http\Controllers\StockMovementController;
+use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TowerController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\WorkerController;
-use App\Models\Attendance;
 use App\Models\Document;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
@@ -30,6 +32,9 @@ use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\ProductionRecord;
 use App\Models\Project;
+use App\Models\StockItem;
+use App\Models\StockMovement;
+use App\Models\Supplier;
 use App\Models\User;
 use App\Models\Vault;
 use App\Models\Worker;
@@ -122,13 +127,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('workers', WorkerController::class);
     });
 
-    Route::middleware('can:viewAny,'.Attendance::class)->group(function () {
-        Route::get('/attendance', [AttendanceController::class, 'index'])->name('attendance.index');
+    // Phase 10 — Stock / inventory (Attendance UI removed; payroll still uses attendance data)
+    Route::middleware('can:viewAny,'.StockItem::class)->group(function () {
+        Route::get('/stock', StockDashboardController::class)->name('stock.dashboard');
+        Route::get('/stock/items', [StockItemController::class, 'index'])->name('stock.items.index');
+        Route::get('/stock/movements', [StockMovementController::class, 'index'])->name('stock.movements.index');
+        Route::get('/stock/suppliers', [SupplierController::class, 'index'])->name('stock.suppliers.index');
     });
-    Route::middleware('can:manage,'.Attendance::class)->group(function () {
-        Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])->name('attendance.check-in');
-        Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])->name('attendance.check-out');
-        Route::post('/attendance/mark-absences', [AttendanceController::class, 'markAbsences'])->name('attendance.mark-absences');
+    Route::middleware('can:create,'.StockItem::class)->group(function () {
+        Route::get('/stock/items/create', [StockItemController::class, 'create'])->name('stock.items.create');
+        Route::post('/stock/items', [StockItemController::class, 'store'])->name('stock.items.store');
+    });
+    Route::middleware('can:viewAny,'.StockItem::class)->group(function () {
+        Route::get('/stock/items/{item}', [StockItemController::class, 'show'])->name('stock.items.show');
+    });
+    Route::middleware('can:create,'.StockItem::class)->group(function () {
+        Route::get('/stock/items/{item}/edit', [StockItemController::class, 'edit'])->name('stock.items.edit');
+        Route::put('/stock/items/{item}', [StockItemController::class, 'update'])->name('stock.items.update');
+        Route::delete('/stock/items/{item}', [StockItemController::class, 'destroy'])->name('stock.items.destroy');
+    });
+    Route::middleware('can:stockIn,'.StockMovement::class)->group(function () {
+        Route::get('/stock/in/create', [StockMovementController::class, 'createIn'])->name('stock.in.create');
+        Route::post('/stock/in', [StockMovementController::class, 'storeIn'])->name('stock.in.store');
+    });
+    Route::middleware('can:stockOut,'.StockMovement::class)->group(function () {
+        Route::get('/stock/out/create', [StockMovementController::class, 'createOut'])->name('stock.out.create');
+        Route::post('/stock/out', [StockMovementController::class, 'storeOut'])->name('stock.out.store');
+    });
+    Route::middleware('can:create,'.Supplier::class)->group(function () {
+        Route::get('/stock/suppliers/create', [SupplierController::class, 'create'])->name('stock.suppliers.create');
+        Route::post('/stock/suppliers', [SupplierController::class, 'store'])->name('stock.suppliers.store');
+        Route::get('/stock/suppliers/{supplier}/edit', [SupplierController::class, 'edit'])->name('stock.suppliers.edit');
+        Route::put('/stock/suppliers/{supplier}', [SupplierController::class, 'update'])->name('stock.suppliers.update');
+        Route::delete('/stock/suppliers/{supplier}', [SupplierController::class, 'destroy'])->name('stock.suppliers.destroy');
     });
 
     Route::get('/payouts', [PayoutController::class, 'index'])

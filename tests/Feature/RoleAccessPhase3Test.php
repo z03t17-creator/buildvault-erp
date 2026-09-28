@@ -67,7 +67,6 @@ class RoleAccessPhase3Test extends TestCase
             'dashboards.payroll',
             'projects.index',
             'workers.index',
-            'attendance.index',
             'payouts.index',
             'payouts.create',
             'penalties.index',
@@ -102,7 +101,6 @@ class RoleAccessPhase3Test extends TestCase
             'dashboards.payroll',
             'projects.index',
             'workers.index',
-            'attendance.index',
             'payouts.index',
             'penalties.index',
             'retention-holds.index',
@@ -138,7 +136,6 @@ class RoleAccessPhase3Test extends TestCase
             'dashboards.payroll',
             'projects.index',
             'workers.index',
-            'attendance.index',
             'payouts.index',
             'payouts.create',
             'penalties.index',
@@ -178,16 +175,23 @@ class RoleAccessPhase3Test extends TestCase
         $this->actingAs($stock)->get(route('dashboard'))->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('roleHome', Roles::STOCK_MANAGER)
-                ->where('summary.stock_module', 'coming_soon')
-                ->where('auth.nav', ['dashboard'])
+                ->has('summary.total_items')
+                ->where('auth.nav', function ($nav) {
+                    $keys = collect($nav)->values()->all();
+
+                    return in_array('dashboard', $keys, true)
+                        && in_array('stock', $keys, true)
+                        && ! in_array('vault', $keys, true);
+                })
             );
+
+        $this->actingAs($stock)->get(route('stock.dashboard'))->assertOk();
 
         foreach ([
             'dashboards.vault',
             'dashboards.payroll',
             'projects.index',
             'workers.index',
-            'attendance.index',
             'payouts.index',
             'payouts.create',
             'penalties.index',
@@ -202,7 +206,7 @@ class RoleAccessPhase3Test extends TestCase
             $this->actingAs($stock)->get(route($name))->assertForbidden();
         }
 
-        $this->assertSame(0, $stock->fresh()->getAllPermissions()->count());
+        $this->assertSame(5, $stock->fresh()->getAllPermissions()->count());
     }
 
     public function test_demo_users_seeder_clears_stock_worker_link(): void

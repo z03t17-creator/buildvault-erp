@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Attendance;
 use App\Models\Floor;
 use App\Models\Project;
 use App\Models\Tower;
@@ -20,7 +19,6 @@ class ResourceControllersTest extends TestCase
     {
         $this->get(route('projects.index'))->assertRedirect(route('login'));
         $this->get(route('workers.index'))->assertRedirect(route('login'));
-        $this->get(route('attendance.index'))->assertRedirect(route('login'));
     }
 
     public function test_project_store_and_show(): void
@@ -129,60 +127,4 @@ class ResourceControllersTest extends TestCase
             );
     }
 
-    public function test_attendance_index_and_bulk_check_in_out(): void
-    {
-        $user = $this->userWithRole();
-        $project = Project::query()->create(['name' => 'Site']);
-        $tower = $project->towers()->create(['name' => 'T1']);
-        $floor = $tower->floors()->create(['name' => 'F1']);
-        $worker = Worker::query()->create([
-            'project_id' => $project->id,
-            'name' => 'Late Worker',
-            'role' => Worker::ROLE_LABORER,
-        ]);
-
-        $date = now()->toDateString();
-
-        $this->actingAs($user)
-            ->get(route('attendance.index', ['date' => $date, 'project_id' => $project->id]))
-            ->assertOk()
-            ->assertInertia(fn (Assert $page) => $page
-                ->component('Attendance/Matrix')
-                ->where('date', $date)
-                ->has('grid', 1)
-            );
-
-        $this->actingAs($user)
-            ->from(route('attendance.index', ['date' => $date]))
-            ->post(route('attendance.check-in'), [
-                'date' => $date,
-                'check_in' => '08:30',
-                'floor_id' => $floor->id,
-                'worker_ids' => [$worker->id],
-            ])
-            ->assertRedirect();
-
-        $attendance = Attendance::query()
-            ->where('worker_id', $worker->id)
-            ->whereDate('date', $date)
-            ->first();
-
-        $this->assertNotNull($attendance);
-        $this->assertSame($floor->id, $attendance->floor_id);
-        $this->assertNotNull($attendance->check_in);
-        $this->assertGreaterThan(0, (int) $attendance->late_minutes);
-
-        $this->actingAs($user)
-            ->from(route('attendance.index', ['date' => $date]))
-            ->post(route('attendance.check-out'), [
-                'date' => $date,
-                'check_out' => '18:00',
-                'worker_ids' => [$worker->id],
-            ])
-            ->assertRedirect();
-
-        $attendance->refresh();
-        $this->assertNotNull($attendance->check_out);
-        $this->assertGreaterThan(0, (float) $attendance->overtime_hours);
-    }
 }

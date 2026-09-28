@@ -35,7 +35,9 @@ class AuthorizationNavTest extends TestCase
         $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_BACKUPS));
         $this->assertFalse($stock->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::PAYOUTS_VIEW_ANY));
-        $this->assertSame(0, $stock->permissions()->count());
+        $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_VIEW_ANY));
+        $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_STOCK_OUT));
+        $this->assertSame(5, $stock->permissions()->count());
     }
 
     public function test_stock_manager_cannot_hit_vault_or_payroll_admin_routes(): void
@@ -56,7 +58,7 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('expenses.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('advances.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('productions.index'))->assertForbidden();
-        $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('stock.dashboard'))->assertOk();
     }
 
     public function test_super_admin_can_hit_sensitive_routes(): void
@@ -111,7 +113,9 @@ class AuthorizationNavTest extends TestCase
                         }
                     }
 
-                    return $keys === ['dashboard'];
+                    return in_array('dashboard', $keys, true)
+                        && in_array('stock', $keys, true)
+                        && count($keys) === 2;
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === false
@@ -121,7 +125,9 @@ class AuthorizationNavTest extends TestCase
                         && ($can['projects.viewAny'] ?? null) === false
                         && ($can['users.viewAny'] ?? null) === false
                         && ($can['advances.viewAny'] ?? null) === false
-                        && ($can['productions.viewAny'] ?? null) === false;
+                        && ($can['productions.viewAny'] ?? null) === false
+                        && ($can['stock.viewAny'] ?? null) === true
+                        && ($can['stock.stockOut'] ?? null) === true;
                 })
             );
     }
@@ -142,7 +148,7 @@ class AuthorizationNavTest extends TestCase
                         'payroll',
                         'projects',
                         'workers',
-                        'attendance',
+                        'stock',
                         'payouts',
                         'expenses',
                         'penalties',
@@ -189,6 +195,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('insurance', $keys, true)
                         && in_array('workers', $keys, true)
                         && in_array('projects', $keys, true)
+                        && in_array('stock', $keys, true)
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
@@ -211,6 +218,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['advances.create'] ?? null) === false
                         && ($can['productions.viewAny'] ?? null) === true
                         && ($can['productions.create'] ?? null) === false
+                        && ($can['stock.viewAny'] ?? null) === true
+                        && ($can['stock.stockOut'] ?? null) === false
                         && ($can['penalties.viewAny'] ?? null) === true
                         && ($can['penalties.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
@@ -239,6 +248,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
                         && in_array('productions', $keys, true)
+                        && in_array('stock', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('backups', $keys, true)
                         && in_array('audit', $keys, true)
@@ -252,6 +262,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['advances.repay'] ?? null) === true
                         && ($can['productions.create'] ?? null) === true
                         && ($can['productions.update'] ?? null) === true
+                        && ($can['stock.viewAny'] ?? null) === true
+                        && ($can['stock.stockOut'] ?? null) === false
                         && ($can['projects.create'] ?? null) === false
                         && ($can['workers.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === true;

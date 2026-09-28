@@ -11,6 +11,9 @@ use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\ProductionRecord;
 use App\Models\Project;
+use App\Models\StockItem;
+use App\Models\StockMovement;
+use App\Models\Supplier;
 use App\Models\Tower;
 use App\Models\User;
 use App\Models\Vault;
@@ -96,6 +99,11 @@ final class UserAbilities
             'users.disable' => $gate->allows('disable', new User),
             'users.resetPassword' => $gate->allows('resetPassword', new User),
             'users.changeRole' => $gate->allows('changeRole', new User),
+            'stock.viewAny' => $gate->allows('viewAny', StockItem::class),
+            'stock.manageItems' => $gate->allows('create', StockItem::class),
+            'stock.stockIn' => $gate->allows('stockIn', StockMovement::class),
+            'stock.stockOut' => $gate->allows('stockOut', StockMovement::class),
+            'stock.manageSuppliers' => $gate->allows('create', Supplier::class),
         ];
     }
 
@@ -113,7 +121,7 @@ final class UserAbilities
             'payroll' => $can['vault.payroll'] ?? false,
             'projects' => $can['projects.viewAny'] ?? false,
             'workers' => $can['workers.viewAny'] ?? false,
-            'attendance' => $can['attendance.viewAny'] ?? false,
+            'stock' => $can['stock.viewAny'] ?? false,
             'payouts' => $can['payouts.viewAny'] ?? false,
             'expenses' => $can['expenses.viewAny'] ?? false,
             'penalties' => $can['penalties.viewAny'] ?? false,

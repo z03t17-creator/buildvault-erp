@@ -135,6 +135,17 @@ final class Permissions
 
     public const USERS_CHANGE_ROLE = 'users.changeRole';
 
+    /** Phase 10 — stock / inventory. */
+    public const STOCK_VIEW_ANY = 'stock.viewAny';
+
+    public const STOCK_MANAGE_ITEMS = 'stock.manageItems';
+
+    public const STOCK_STOCK_IN = 'stock.stockIn';
+
+    public const STOCK_STOCK_OUT = 'stock.stockOut';
+
+    public const STOCK_MANAGE_SUPPLIERS = 'stock.manageSuppliers';
+
     /** @var list<string> */
     public const ALL = [
         self::VAULT_VIEW,
@@ -198,12 +209,16 @@ final class Permissions
         self::USERS_DISABLE,
         self::USERS_RESET_PASSWORD,
         self::USERS_CHANGE_ROLE,
+        self::STOCK_VIEW_ANY,
+        self::STOCK_MANAGE_ITEMS,
+        self::STOCK_STOCK_IN,
+        self::STOCK_STOCK_OUT,
+        self::STOCK_MANAGE_SUPPLIERS,
     ];
 
     /**
-     * Role → permission matrix (Phase 2 business roles).
+     * Role → permission matrix (Phase 2 business roles + Phase 10 stock).
      * Super Admin receives every permission via seeder + Gate::before.
-     * Stock Manager: empty set until stock module ships (dashboard + profile only).
      *
      * @return array<string, list<string>>
      */
@@ -243,6 +258,7 @@ final class Permissions
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
                 self::EXPENSES_VIEW_ANY,
+                self::STOCK_VIEW_ANY,
             ],
             Roles::ACCOUNTANT => [
                 self::VAULT_VIEW,
@@ -287,9 +303,15 @@ final class Permissions
                 self::EXPENSES_UPDATE,
                 self::EXPENSES_APPROVE,
                 self::EXPENSES_REJECT,
+                self::STOCK_VIEW_ANY,
             ],
-            // Intentionally empty — stock module is Phase later; not a Worker clone.
-            Roles::STOCK_MANAGER => [],
+            Roles::STOCK_MANAGER => [
+                self::STOCK_VIEW_ANY,
+                self::STOCK_MANAGE_ITEMS,
+                self::STOCK_STOCK_IN,
+                self::STOCK_STOCK_OUT,
+                self::STOCK_MANAGE_SUPPLIERS,
+            ],
         ];
     }
 }

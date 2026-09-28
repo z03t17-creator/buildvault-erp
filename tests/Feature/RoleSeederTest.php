@@ -54,10 +54,13 @@ class RoleSeederTest extends TestCase
         $this->assertFalse($boss->hasPermissionTo(Permissions::VAULT_BACKUPS));
 
         $stock = Role::findByName('Stock Manager', 'web');
-        $this->assertSame(0, $stock->permissions()->count());
+        $this->assertSame(5, $stock->permissions()->count());
+        $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_VIEW_ANY));
+        $this->assertTrue($stock->hasPermissionTo(Permissions::STOCK_MANAGE_ITEMS));
         $this->assertFalse($stock->hasPermissionTo(Permissions::WORKERS_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::PAYOUTS_VIEW_ANY));
         $this->assertFalse($stock->hasPermissionTo(Permissions::ATTENDANCE_VIEW_ANY));
+        $this->assertFalse($stock->hasPermissionTo(Permissions::VAULT_VIEW));
     }
 
     public function test_role_seeder_renames_legacy_roles_keeping_ids(): void

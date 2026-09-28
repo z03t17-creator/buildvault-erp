@@ -45,7 +45,7 @@ class AuthorizationPolicyTest extends TestCase
         $this->actingAs($stock)->get(route('projects.create'))->assertForbidden();
         $this->actingAs($stock)->get(route('dashboards.vault'))->assertForbidden();
         $this->actingAs($stock)->get(route('dashboards.payroll'))->assertForbidden();
-        $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('stock.dashboard'))->assertOk();
         $this->actingAs($stock)->get(route('payouts.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('dashboard'))->assertOk();
     }
@@ -94,7 +94,7 @@ class AuthorizationPolicyTest extends TestCase
         $this->actingAs($boss)->get(route('workers.show', $worker))->assertOk();
         $this->actingAs($boss)->get(route('workers.create'))->assertOk();
         $this->actingAs($boss)->get(route('projects.create'))->assertOk();
-        $this->actingAs($boss)->get(route('attendance.index'))->assertOk();
+        $this->actingAs($boss)->get(route('stock.dashboard'))->assertOk();
         $this->actingAs($boss)->get(route('dashboards.vault'))->assertOk();
         $this->actingAs($boss)->get(route('dashboards.payroll'))->assertOk();
         $this->actingAs($boss)->get(route('payouts.index'))->assertOk();

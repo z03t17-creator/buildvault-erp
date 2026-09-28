@@ -11,6 +11,7 @@ use App\Models\Worker;
 use App\Services\ExchangeRateService;
 use App\Services\LiquidityService;
 use App\Services\RetentionHoldService;
+use App\Services\StockService;
 use App\Support\AuditActions;
 use App\Support\Roles;
 use Database\Seeders\VaultSeeder;
@@ -26,6 +27,7 @@ class DashboardController extends Controller
         private readonly RetentionHoldService $holds,
         private readonly ExchangeRateService $fx,
         private readonly LiquidityService $liquidity,
+        private readonly StockService $stock,
     ) {}
 
     public function __invoke(Request $request): Response
@@ -66,7 +68,7 @@ class DashboardController extends Controller
     }
 
     /**
-     * Lightweight, real counts/snapshots — no fake stock numbers.
+     * Lightweight, real counts/snapshots — stock home uses live inventory stats.
      *
      * @return array<string, mixed>
      */
@@ -76,12 +78,26 @@ class DashboardController extends Controller
             Roles::SUPER_ADMIN => $this->superAdminSummary(),
             Roles::BOSS_CONTRACTOR => $this->bossFinancialSnapshot($rate),
             Roles::ACCOUNTANT => $this->accountantOpsSummary($rate),
-            Roles::STOCK_MANAGER => [
-                'stock_module' => 'coming_soon',
-                'placeholder' => true,
-            ],
+            Roles::STOCK_MANAGER => $this->stockManagerSummary(),
             default => [],
         };
+    }
+
+    /**
+     * @return array<string, float|int>
+     */
+    private function stockManagerSummary(): array
+    {
+        $summary = $this->stock->dashboardSummary();
+
+        return [
+            'total_items' => $summary['total_items'],
+            'stock_value_iqd' => $summary['stock_value_iqd'],
+            'low_stock' => $summary['low_stock'],
+            'out_of_stock' => $summary['out_of_stock'],
+            'today_in_qty' => $summary['today_in_qty'],
+            'today_out_qty' => $summary['today_out_qty'],
+        ];
     }
 
     /**

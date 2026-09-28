@@ -1,0 +1,132 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Http\Requests\Stock\StoreStockInRequest;
+use App\Http\Requests\Stock\StoreStockOutRequest;
+use App\Models\Floor;
+use App\Models\Project;
+use App\Models\StockItem;
+use App\Models\StockMovement;
+use App\Models\Supplier;
+use App\Models\Tower;
+use App\Services\StockService;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use InvalidArgumentException;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class StockMovementController extends Controller
+{
+    public function __construct(
+        private readonly StockService $stock,
+    ) {}
+
+    public function index(Request $request): Response
+    {
+        $this->authorize('viewAny', StockMovement::class);
+
+        $type = $request->get('type');
+        $itemId = $request->integer('stock_item_id') ?: null;
+        $projectId = $request->integer('project_id') ?: null;
+
+        $query = StockMovement::query()
+            ->with([
+                'item:id,name,sku,unit',
+                'supplier:id,name',
+                'project:id,name',
+                'tower:id,name',
+                'floor:id,name',
+                'user:id,name',
+            ])
+            ->orderByDesc('moved_on')
+            ->orderByDesc('id');
+
+        if (in_array($type, StockMovement::TYPES, true)) {
+            $query->where('type', $type);
+        }
+        if ($itemId) {
+            $query->where('stock_item_id', $itemId);
+        }
+        if ($projectId) {
+            $query->where('project_id', $projectId);
+        }
+
+        return Inertia::render('Stock/Movements/Index', [
+            'movements' => $query->limit(200)->get(),
+            'filters' => [
+                'type' => in_array($type, StockMovement::TYPES, true) ? $type : '',
+                'stock_item_id' => $itemId,
+                'project_id' => $projectId,
+            ],
+            'items' => StockItem::query()->orderBy('name')->get(['id', 'name', 'sku']),
+            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+        ]);
+    }
+
+    public function createIn(): Response
+    {
+        $this->authorize('stockIn', StockMovement::class);
+
+        return Inertia::render('Stock/In/Create', [
+            'items' => StockItem::query()->orderBy('name')->get([
+                'id', 'name', 'sku', 'unit', 'quantity', 'purchase_price_iqd', 'supplier_id',
+            ]),
+            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
+            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'defaults' => [
+                'moved_on' => now()->toDateString(),
+            ],
+        ]);
+    }
+
+    public function storeIn(StoreStockInRequest $request): RedirectResponse
+    {
+        $this->authorize('stockIn', StockMovement::class);
+
+        try {
+            $movement = $this->stock->stockIn($request->validated(), Auth::user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['quantity' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('stock.movements.index', ['type' => 'in'])
+            ->with('success', __('Stock in recorded.').' #'.$movement->id);
+    }
+
+    public function createOut(): Response
+    {
+        $this->authorize('stockOut', StockMovement::class);
+
+        return Inertia::render('Stock/Out/Create', [
+            'items' => StockItem::query()->orderBy('name')->get([
+                'id', 'name', 'sku', 'unit', 'quantity', 'purchase_price_iqd',
+            ]),
+            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'towers' => Tower::query()->orderBy('name')->get(['id', 'name', 'project_id']),
+            'floors' => Floor::query()->orderBy('name')->get(['id', 'name', 'tower_id']),
+            'defaults' => [
+                'moved_on' => now()->toDateString(),
+                'issuer' => Auth::user()?->name,
+            ],
+        ]);
+    }
+
+    public function storeOut(StoreStockOutRequest $request): RedirectResponse
+    {
+        $this->authorize('stockOut', StockMovement::class);
+
+        try {
+            $movement = $this->stock->stockOut($request->validated(), Auth::user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['quantity' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('stock.movements.index', ['type' => 'out'])
+            ->with('success', __('Stock out recorded.').' #'.$movement->id);
+    }
+}

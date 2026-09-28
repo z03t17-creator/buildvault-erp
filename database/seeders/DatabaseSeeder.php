@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             DemoAdvancesSeeder::class,
             DemoPenaltiesSeeder::class,
             DemoProductionSeeder::class,
+            DemoStockSeeder::class,
         ]);
     }
 

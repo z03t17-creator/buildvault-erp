@@ -1,4 +1,3 @@
-import BrandMark from '@/Components/BrandMark';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PrimaryButton from '@/Components/PrimaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -139,19 +138,36 @@ function AccountantHome({ summary, t }) {
     );
 }
 
-function StockManagerHome({ t }) {
+function StockManagerHome({ summary, t, iqd }) {
     return (
-        <section className="flex flex-col items-center justify-center gap-4 border border-dashed border-slate-300 bg-white/60 px-6 py-14 text-center dark:border-slate-600 dark:bg-slate-900/50 sm:py-16">
-            <BrandMark size="hero" href={null} />
-            <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-                {t('role_home_stock_title')}
-            </h3>
-            <p className="max-w-md text-sm text-slate-600 dark:text-slate-300">
-                {t('role_home_stock_hint')}
-            </p>
-            <p className="text-xs uppercase tracking-wide text-slate-400 dark:text-slate-500">
-                {t('role_home_stock_placeholder')}
-            </p>
+        <section className="space-y-4">
+            <div>
+                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    {t('role_home_stock_title')}
+                </h3>
+                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {t('role_home_stock_hint')}
+                </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
+                <Stat
+                    label={t('stock_value_iqd')}
+                    value={<MoneyAmount value={summary?.stock_value_iqd ?? 0} label={iqd} size="xl" />}
+                />
+                <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
+                <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
+                <Stat label={t('stock_today_in')} value={summary?.today_in_qty ?? 0} />
+                <Stat label={t('stock_today_out')} value={summary?.today_out_qty ?? 0} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+                <Shortcut href={route('stock.dashboard')} label={t('stock_dashboard')} />
+                <Shortcut href={route('stock.items.index')} label={t('stock_products')} />
+                <Shortcut href={route('stock.in.create')} label={t('stock_in')} />
+                <Shortcut href={route('stock.out.create')} label={t('stock_out_action')} />
+                <Shortcut href={route('stock.suppliers.index')} label={t('suppliers')} />
+                <Shortcut href={route('stock.movements.index')} label={t('stock_movements')} />
+            </div>
         </section>
     );
 }
@@ -244,7 +260,9 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
                     {role === 'Accountant' && (
                         <AccountantHome summary={summary} t={t} />
                     )}
-                    {role === 'Stock Manager' && <StockManagerHome t={t} />}
+                    {role === 'Stock Manager' && (
+                        <StockManagerHome summary={summary} t={t} iqd={iqd} />
+                    )}
 
                     {role !== 'Stock Manager' && (
                         <section className="flex flex-col items-center justify-center gap-6 border border-slate-200/80 bg-white/80 px-6 py-10 text-center shadow-sm dark:border-slate-700 dark:bg-slate-900/70 sm:py-12">
