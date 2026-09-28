@@ -36,6 +36,7 @@ php artisan serve
 - Login: `admin@zhako.test` / `password` (dev Super Admin — see [docs/INSTALL.md](docs/INSTALL.md))
 - Full local setup: [docs/INSTALL.md](docs/INSTALL.md)
 - SiteBunker deploy: [docs/DEPLOY.md](docs/DEPLOY.md)
+- **Public demo (Render):** [docs/RENDER.md](docs/RENDER.md) — `render.yaml` + Docker → `*.onrender.com`
 - Daily operations: [docs/OPERATIONS.md](docs/OPERATIONS.md)
 - Go-live runbook: [docs/GO-LIVE.md](docs/GO-LIVE.md)
 - Compliance / retention: [docs/COMPLIANCE.md](docs/COMPLIANCE.md)
