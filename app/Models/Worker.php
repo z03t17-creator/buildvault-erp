@@ -123,6 +123,11 @@ class Worker extends Model
         return $this->hasMany(EmployeeAdvance::class);
     }
 
+    public function productionRecords(): HasMany
+    {
+        return $this->hasMany(ProductionRecord::class);
+    }
+
     public function documents(): HasMany
     {
         return $this->hasMany(Document::class);

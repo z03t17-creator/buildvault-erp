@@ -98,6 +98,13 @@ final class Permissions
 
     public const ADVANCES_CANCEL = 'advances.cancel';
 
+    /** Phase 9 — work / production tracking (quantities). */
+    public const PRODUCTIONS_VIEW_ANY = 'productions.viewAny';
+
+    public const PRODUCTIONS_CREATE = 'productions.create';
+
+    public const PRODUCTIONS_UPDATE = 'productions.update';
+
     public const DOCUMENTS_VIEW_ANY = 'documents.viewAny';
 
     public const DOCUMENTS_CREATE = 'documents.create';
@@ -174,6 +181,9 @@ final class Permissions
         self::ADVANCES_UPDATE,
         self::ADVANCES_REPAY,
         self::ADVANCES_CANCEL,
+        self::PRODUCTIONS_VIEW_ANY,
+        self::PRODUCTIONS_CREATE,
+        self::PRODUCTIONS_UPDATE,
         self::DOCUMENTS_VIEW_ANY,
         self::DOCUMENTS_CREATE,
         self::DOCUMENTS_DELETE,
@@ -228,6 +238,7 @@ final class Permissions
                 self::PAYOUTS_VIEW_ANY,
                 self::PENALTIES_VIEW_ANY,
                 self::ADVANCES_VIEW_ANY,
+                self::PRODUCTIONS_VIEW_ANY,
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,
@@ -265,6 +276,9 @@ final class Permissions
                 self::ADVANCES_UPDATE,
                 self::ADVANCES_REPAY,
                 self::ADVANCES_CANCEL,
+                self::PRODUCTIONS_VIEW_ANY,
+                self::PRODUCTIONS_CREATE,
+                self::PRODUCTIONS_UPDATE,
                 self::DOCUMENTS_VIEW_ANY,
                 self::DOCUMENTS_CREATE,
                 self::DOCUMENTS_DELETE,

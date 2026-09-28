@@ -9,6 +9,7 @@ use App\Models\Expense;
 use App\Models\Floor;
 use App\Models\Payout;
 use App\Models\Penalty;
+use App\Models\ProductionRecord;
 use App\Models\Project;
 use App\Models\Tower;
 use App\Models\User;
@@ -78,6 +79,9 @@ final class UserAbilities
             'advances.update' => $gate->allows('update', new EmployeeAdvance),
             'advances.repay' => $gate->allows('repay', new EmployeeAdvance),
             'advances.cancel' => $gate->allows('cancel', new EmployeeAdvance),
+            'productions.viewAny' => $gate->allows('viewAny', ProductionRecord::class),
+            'productions.create' => $gate->allows('create', ProductionRecord::class),
+            'productions.update' => $gate->allows('update', new ProductionRecord),
             'documents.viewAny' => $gate->allows('viewAny', Document::class),
             'documents.create' => $gate->allows('create', Document::class),
             'documents.delete' => $gate->allows('delete', new Document),
@@ -114,6 +118,7 @@ final class UserAbilities
             'expenses' => $can['expenses.viewAny'] ?? false,
             'penalties' => $can['penalties.viewAny'] ?? false,
             'advances' => $can['advances.viewAny'] ?? false,
+            'productions' => $can['productions.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,
             'exports' => $can['vault.exports'] ?? false,

@@ -55,6 +55,7 @@ class AuthorizationNavTest extends TestCase
         $this->actingAs($stock)->get(route('payouts.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('expenses.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('advances.index'))->assertForbidden();
+        $this->actingAs($stock)->get(route('productions.index'))->assertForbidden();
         $this->actingAs($stock)->get(route('attendance.index'))->assertForbidden();
     }
 
@@ -95,6 +96,7 @@ class AuthorizationNavTest extends TestCase
                         'expenses',
                         'penalties',
                         'advances',
+                        'productions',
                         'docs',
                         'imports',
                         'exports',
@@ -118,7 +120,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['workers.viewAny'] ?? null) === false
                         && ($can['projects.viewAny'] ?? null) === false
                         && ($can['users.viewAny'] ?? null) === false
-                        && ($can['advances.viewAny'] ?? null) === false;
+                        && ($can['advances.viewAny'] ?? null) === false
+                        && ($can['productions.viewAny'] ?? null) === false;
                 })
             );
     }
@@ -144,6 +147,7 @@ class AuthorizationNavTest extends TestCase
                         'expenses',
                         'penalties',
                         'advances',
+                        'productions',
                         'docs',
                         'imports',
                         'exports',
@@ -163,7 +167,8 @@ class AuthorizationNavTest extends TestCase
                     return ($can['vault.view'] ?? null) === true
                         && ($can['vault.backups'] ?? null) === true
                         && ($can['projects.delete'] ?? null) === true
-                        && ($can['users.viewAny'] ?? null) === true;
+                        && ($can['users.viewAny'] ?? null) === true
+                        && ($can['productions.viewAny'] ?? null) === true;
                 })
             );
     }
@@ -187,6 +192,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
+                        && in_array('productions', $keys, true)
                         && in_array('exports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
@@ -203,6 +209,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['expenses.viewAny'] ?? null) === true
                         && ($can['advances.viewAny'] ?? null) === true
                         && ($can['advances.create'] ?? null) === false
+                        && ($can['productions.viewAny'] ?? null) === true
+                        && ($can['productions.create'] ?? null) === false
                         && ($can['penalties.viewAny'] ?? null) === true
                         && ($can['penalties.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === false
@@ -230,6 +238,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('payouts', $keys, true)
                         && in_array('expenses', $keys, true)
                         && in_array('advances', $keys, true)
+                        && in_array('productions', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('backups', $keys, true)
                         && in_array('audit', $keys, true)
@@ -241,6 +250,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['expenses.approve'] ?? null) === true
                         && ($can['advances.create'] ?? null) === true
                         && ($can['advances.repay'] ?? null) === true
+                        && ($can['productions.create'] ?? null) === true
+                        && ($can['productions.update'] ?? null) === true
                         && ($can['projects.create'] ?? null) === false
                         && ($can['workers.create'] ?? null) === false
                         && ($can['vault.backups'] ?? null) === true;

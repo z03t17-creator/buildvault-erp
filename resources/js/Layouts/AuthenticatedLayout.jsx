@@ -84,6 +84,13 @@ function buildNavItems(t, maturedCount) {
             primary: false,
         },
         {
+            key: 'productions',
+            href: route('productions.index'),
+            active: route().current('productions.*'),
+            label: t('productions'),
+            primary: false,
+        },
+        {
             key: 'docs',
             href: route('documents.index'),
             active: route().current('documents.*'),

@@ -139,5 +139,10 @@ class Project extends Model
     {
         return $this->hasMany(Expense::class);
     }
+
+    public function productionRecords(): HasMany
+    {
+        return $this->hasMany(ProductionRecord::class);
+    }
 }
 

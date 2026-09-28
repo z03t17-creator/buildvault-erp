@@ -14,6 +14,7 @@ use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\PenaltyController;
+use App\Http\Controllers\ProductionRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\RetentionHoldController;
@@ -27,6 +28,7 @@ use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Payout;
 use App\Models\Penalty;
+use App\Models\ProductionRecord;
 use App\Models\Project;
 use App\Models\User;
 use App\Models\Vault;
@@ -186,6 +188,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->name('advances.repay');
     Route::post('/advances/{advance}/cancel', [EmployeeAdvanceController::class, 'cancel'])
         ->name('advances.cancel');
+
+    Route::get('/productions', [ProductionRecordController::class, 'index'])
+        ->middleware('can:viewAny,'.ProductionRecord::class)
+        ->name('productions.index');
+    Route::middleware('can:create,'.ProductionRecord::class)->group(function () {
+        Route::get('/productions/create', [ProductionRecordController::class, 'create'])->name('productions.create');
+        Route::post('/productions', [ProductionRecordController::class, 'store'])->name('productions.store');
+    });
+    Route::get('/productions/{production}', [ProductionRecordController::class, 'show'])
+        ->middleware('can:viewAny,'.ProductionRecord::class)
+        ->name('productions.show');
+    Route::get('/productions/{production}/edit', [ProductionRecordController::class, 'edit'])->name('productions.edit');
+    Route::put('/productions/{production}', [ProductionRecordController::class, 'update'])->name('productions.update');
 
     Route::middleware('can:viewAny,'.User::class)->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
