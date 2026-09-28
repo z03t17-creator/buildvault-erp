@@ -9,8 +9,9 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed the application's database.
      *
-     * Core: roles, admin, vault.
-     * Demo (idempotent): hierarchy + sample attendance — safe to re-run.
+     * Core (always): roles, admin, vault, insurance settings — fast enough for Render boot.
+     * Demo*: only when SEED_DEMO is truthy, or when unset outside production.
+     * Render sets SEED_DEMO=false so health checks are not blocked by demo data.
      */
     public function run(): void
     {
@@ -19,14 +20,38 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             VaultSeeder::class,
             InsuranceSettingsSeeder::class,
+        ]);
+
+        if (! $this->shouldSeedDemo()) {
+            $this->command?->info('Skipping demo seeders (set SEED_DEMO=true to load sample data).');
+
+            return;
+        }
+
+        // Ordered once — demo seeders must not re-$this->call each other.
+        $this->call([
             DemoHierarchySeeder::class,
             AttendanceSeeder::class,
-            DemoInsuranceSeeder::class,
             DemoUsersSeeder::class,
+            DemoInsuranceSeeder::class,
             DemoExpensesSeeder::class,
             DemoAdvancesSeeder::class,
             DemoPenaltiesSeeder::class,
             DemoProductionSeeder::class,
         ]);
+    }
+
+    /**
+     * Demo seed is for local/dev/testing. Production (Render) skips unless SEED_DEMO=true.
+     */
+    protected function shouldSeedDemo(): bool
+    {
+        $flag = env('SEED_DEMO');
+
+        if ($flag !== null && $flag !== '') {
+            return filter_var($flag, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return ! app()->environment('production');
     }
 }

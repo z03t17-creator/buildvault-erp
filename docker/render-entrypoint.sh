@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Render web service entrypoint — migrate, seed (idempotent), serve.
+# Render web service entrypoint — migrate, slim seed, bind PORT quickly.
 set -euo pipefail
 cd /app
 
@@ -22,10 +22,14 @@ export SESSION_DRIVER="${SESSION_DRIVER:-database}"
 export QUEUE_CONNECTION="${QUEUE_CONNECTION:-database}"
 export LOG_CHANNEL="${LOG_CHANNEL:-stderr}"
 
+# Demo seeders are heavy — default off on Render so we reach /up within the health window.
+export SEED_DEMO="${SEED_DEMO:-false}"
+
 # Laravel APP_KEY must be base64:… — regenerate if missing/invalid.
+# Prefer a stable APP_KEY from Render env (Blueprint generateValue or manual).
 if [[ -z "${APP_KEY:-}" || "${APP_KEY}" != base64:* ]]; then
   export APP_KEY="base64:$(php -r 'echo base64_encode(random_bytes(32));')"
-  echo "Generated APP_KEY for this boot (set a stable APP_KEY in Render env for persistence)."
+  echo "WARNING: Generated ephemeral APP_KEY for this boot — set a stable APP_KEY in Render env for session persistence."
 fi
 
 # Writable dirs on ephemeral FS
@@ -38,7 +42,7 @@ php artisan storage:link --force || true
 echo "Running migrations…"
 php artisan migrate --force --no-interaction
 
-echo "Seeding demo roles/users (idempotent)…"
+echo "Seeding core roles/admin/vault (SEED_DEMO=${SEED_DEMO})…"
 php artisan db:seed --force --no-interaction
 
 php artisan config:cache || true

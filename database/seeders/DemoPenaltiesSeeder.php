@@ -19,13 +19,7 @@ class DemoPenaltiesSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call([
-            DemoHierarchySeeder::class,
-            DemoUsersSeeder::class,
-            DemoAdvancesSeeder::class,
-            DemoInsuranceSeeder::class,
-        ]);
-
+        // Expect hierarchy/users/advances/insurance seeders already run (no nested re-seed).
         $project = Project::query()->where('name', DemoHierarchySeeder::PROJECT_NAME)->first();
         if (! $project) {
             return;

@@ -22,11 +22,7 @@ class DemoAdvancesSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call([
-            DemoHierarchySeeder::class,
-            DemoUsersSeeder::class,
-        ]);
-
+        // Expect DemoHierarchySeeder + DemoUsersSeeder already run.
         $project = Project::query()->where('name', DemoHierarchySeeder::PROJECT_NAME)->first();
         if (! $project) {
             return;

@@ -17,8 +17,7 @@ class AttendanceSeeder extends Seeder
 {
     public function run(): void
     {
-        $this->call(DemoHierarchySeeder::class);
-
+        // Expect DemoHierarchySeeder to have run (DatabaseSeeder order). No nested calls.
         $project = Project::query()->where('name', DemoHierarchySeeder::PROJECT_NAME)->first();
         if (! $project) {
             return;

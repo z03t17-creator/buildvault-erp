@@ -63,3 +63,7 @@ services:
         value: local
       - key: ACTIVITY_LOGGER_ENABLED
         value: "true"
+      # Heavy Demo* seeders off by default so the web process binds before health timeout.
+      # Set to "true" once (or via shell) if you need sample projects/users on Render.
+      - key: SEED_DEMO
+        value: "false"

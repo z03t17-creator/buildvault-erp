@@ -24,12 +24,7 @@ class DemoExpensesSeeder extends Seeder
 
     public function run(): void
     {
-        $this->call([
-            VaultSeeder::class,
-            DemoHierarchySeeder::class,
-            DemoUsersSeeder::class,
-        ]);
-
+        // Expect VaultSeeder / DemoHierarchySeeder / DemoUsersSeeder already run.
         $project = Project::query()->where('name', DemoHierarchySeeder::PROJECT_NAME)->first();
         $vault = Vault::query()->where('name', VaultSeeder::NAME)->first()
             ?? Vault::query()->orderBy('id')->first();
