@@ -32,6 +32,20 @@ class VaultPolicy
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
     }
 
+    /**
+     * Phase 13 — Monthly Financial Settlement (Boss view; Accountant / Super Admin operate).
+     * Stock Manager is intentionally excluded.
+     */
+    public function viewSettlement(User $user): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT, Roles::BOSS_CONTRACTOR]);
+    }
+
+    public function manageSettlement(User $user): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+    }
+
     public function refreshFx(User $user): bool
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);

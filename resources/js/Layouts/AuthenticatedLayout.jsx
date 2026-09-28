@@ -56,6 +56,13 @@ function buildNavItems(t, maturedCount) {
             primary: true,
         },
         {
+            key: 'settlements',
+            href: route('settlements.index'),
+            active: route().current('settlements.*'),
+            label: t('settlements'),
+            primary: false,
+        },
+        {
             key: 'payouts',
             href: route('payouts.index'),
             active: route().current('payouts.*'),

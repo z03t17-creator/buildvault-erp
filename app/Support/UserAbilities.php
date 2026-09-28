@@ -39,6 +39,8 @@ final class UserAbilities
         return [
             'vault.view' => $gate->allows('viewDashboard', Vault::class),
             'vault.ledger' => $gate->allows('viewLedger', Vault::class),
+            'vault.settlement' => $gate->allows('viewSettlement', Vault::class),
+            'vault.settlementManage' => $gate->allows('manageSettlement', Vault::class),
             'vault.refreshFx' => $gate->allows('refreshFx', Vault::class),
             'vault.overrideFx' => $gate->allows('overrideFx', Vault::class),
             'vault.audit' => $gate->allows('viewAuditLog', Vault::class),
@@ -123,6 +125,7 @@ final class UserAbilities
             'projects' => $can['projects.viewAny'] ?? false,
             'workers' => $can['workers.viewAny'] ?? false,
             'stock' => $can['stock.viewAny'] ?? false,
+            'settlements' => $can['vault.settlement'] ?? false,
             'payouts' => $can['payouts.viewAny'] ?? false,
             'expenses' => $can['expenses.viewAny'] ?? false,
             'penalties' => $can['penalties.viewAny'] ?? false,

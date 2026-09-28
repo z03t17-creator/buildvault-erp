@@ -10,6 +10,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MonthlySettlementController;
 use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\PayrollDashboardController;
 use App\Http\Controllers\PenaltyController;
@@ -69,6 +70,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/vault/transactions', [VaultTransactionController::class, 'index'])
             ->name('vault.transactions');
     });
+    Route::middleware('can:viewSettlement,'.Vault::class)->group(function () {
+        Route::get('/settlements', [MonthlySettlementController::class, 'index'])
+            ->name('settlements.index');
+        Route::get('/monthly-settlement', fn () => redirect()->route('settlements.index', request()->query()))
+            ->name('settlements.alias');
+    });
+    Route::post('/settlements', [MonthlySettlementController::class, 'store'])
+        ->middleware('can:manageSettlement,'.Vault::class)
+        ->name('settlements.store');
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])
         ->middleware('can:refreshFx,'.Vault::class)
         ->name('dashboards.vault.refresh-fx');
