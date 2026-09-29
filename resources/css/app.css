@@ -241,7 +241,7 @@
     }
 
     .bv-app-header-bar {
-        @apply flex h-14 flex-nowrap items-center justify-between gap-2 overflow-hidden px-3 sm:h-16 sm:gap-3 sm:px-6 lg:px-8;
+        @apply flex h-14 flex-nowrap items-center justify-between gap-2 overflow-visible px-3 sm:h-16 sm:gap-3 sm:px-6 lg:px-8;
     }
 
     .bv-mobile-dock {

@@ -164,30 +164,38 @@ class RoleHomeDashboardService
     }
 
     /**
+     * Stock Manager home — quiet stock snapshot + ops boxes + charts.
+     * No vault/cash KPIs (role has no vault access). No lecture panels or movement dumps.
+     *
      * @return array<string, mixed>
      */
     private function stockManager(): array
     {
         $summary = $this->stock->dashboardSummary();
 
-        $byCategory = StockItem::query()
-            ->get(['id', 'category', 'quantity', 'purchase_price_iqd'])
+        $items = StockItem::query()->get(['id', 'category', 'quantity', 'min_quantity', 'purchase_price_iqd']);
+
+        $byCategory = $items
             ->groupBy(function (StockItem $item) {
                 $cat = trim((string) ($item->category ?? ''));
 
                 return $cat !== '' ? $cat : 'uncategorized';
             })
-            ->map(function ($items, $category) {
+            ->map(function ($group, $category) {
                 return [
                     'category' => $category,
-                    'items_count' => $items->count(),
-                    'quantity_total' => round((float) $items->sum(fn (StockItem $i) => (float) $i->quantity), 3),
-                    'value_iqd' => round((float) $items->sum(fn (StockItem $i) => $i->stockValueIqd()), 2),
+                    'items_count' => $group->count(),
+                    'quantity_total' => round((float) $group->sum(fn (StockItem $i) => (float) $i->quantity), 3),
+                    'value_iqd' => round((float) $group->sum(fn (StockItem $i) => $i->stockValueIqd()), 2),
                 ];
             })
-            ->sortBy('category')
+            ->sortByDesc('value_iqd')
             ->values()
             ->all();
+
+        $okStock = $items->filter(
+            fn (StockItem $i) => ! $i->isLowStock() && ! $i->isOutOfStock()
+        )->count();
 
         $recent = $summary['recent_movements']->map(fn ($m) => [
             'id' => $m->id,
@@ -206,6 +214,16 @@ class RoleHomeDashboardService
             'project' => $m->project ? ['id' => $m->project->id, 'name' => $m->project->name] : null,
         ])->values()->all();
 
+        $categoryBars = collect($byCategory)
+            ->take(6)
+            ->map(fn (array $c) => [
+                'key' => $c['category'],
+                'label' => $c['category'],
+                'value' => $c['value_iqd'],
+            ])
+            ->values()
+            ->all();
+
         return [
             'total_items' => $summary['total_items'],
             'stock_value_iqd' => $summary['stock_value_iqd'],
@@ -217,6 +235,18 @@ class RoleHomeDashboardService
             'today_out_count' => $summary['today_out_count'],
             'by_category' => $byCategory,
             'recent_movements' => $recent,
+            'charts' => [
+                'today_flow' => [
+                    'in' => (float) $summary['today_in_qty'],
+                    'out' => (float) $summary['today_out_qty'],
+                ],
+                'health' => [
+                    'ok' => $okStock,
+                    'low' => (int) $summary['low_stock'],
+                    'out' => (int) $summary['out_of_stock'],
+                ],
+                'value_by_category' => $categoryBars,
+            ],
         ];
     }
 

@@ -29,6 +29,10 @@ const NAV_ICON_MAP = {
     more: 'fi-rr-menu-dots',
     menu: 'fi-rr-menu-burger',
     home: 'fi-rr-home',
+    logout: 'fi-rr-sign-out-alt',
+    stockIn: 'fi-rr-box-open',
+    stockOut: 'fi-rr-box',
+    stockMovements: 'fi-rr-exchange',
 };
 
 const TONE_CHIP = {

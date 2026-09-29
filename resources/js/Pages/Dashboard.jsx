@@ -1,10 +1,8 @@
 import DataPanel from '@/Components/DataPanel';
-import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -46,14 +44,6 @@ function MoneyStat({ label, value, iqd, accent = false }) {
     );
 }
 
-function Shortcut({ href, label }) {
-    return (
-        <Link href={href}>
-            <SecondaryButton type="button">{label}</SecondaryButton>
-        </Link>
-    );
-}
-
 const HOME_BOX_STYLES = {
     vault: {
         shell: 'bg-teal-600 text-white shadow-teal-900/20 hover:bg-teal-500 dark:bg-teal-500 dark:text-slate-950 dark:hover:bg-teal-400',
@@ -82,6 +72,18 @@ const HOME_BOX_STYLES = {
     settlements: {
         shell: 'bg-sky-600 text-white shadow-sky-900/20 hover:bg-sky-500 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400',
         icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    stock: {
+        shell: 'bg-orange-600 text-white shadow-orange-900/20 hover:bg-orange-500 dark:bg-orange-500 dark:text-slate-950 dark:hover:bg-orange-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    attendance: {
+        shell: 'bg-violet-600 text-white shadow-violet-900/20 hover:bg-violet-500 dark:bg-violet-500 dark:text-slate-950 dark:hover:bg-violet-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    reports: {
+        shell: 'bg-cyan-700 text-white shadow-cyan-900/25 hover:bg-cyan-600 dark:bg-cyan-600 dark:hover:bg-cyan-500',
+        icon: 'bg-white/15 text-white',
     },
 };
 
@@ -141,7 +143,7 @@ function HomeModuleBox({
     );
 }
 
-function DualBarChart({ title, subtitle, bars, ariaLabel }) {
+function DualBarChart({ title, subtitle, bars, ariaLabel, format = 'money' }) {
     const max = Math.max(1, ...bars.map((b) => Number(b.value) || 0));
 
     return (
@@ -157,13 +159,24 @@ function DualBarChart({ title, subtitle, bars, ariaLabel }) {
                                     {bar.label}
                                 </span>
                                 <span dir="ltr" className="font-sans tabular-nums text-slate-600 dark:text-slate-300">
-                                    <MoneyAmount
-                                        value={bar.value}
-                                        label={bar.currency}
-                                        size="sm"
-                                        showLabel={false}
-                                    />{' '}
-                                    <span className="text-xs text-slate-400">{bar.currency}</span>
+                                    {format === 'money' ? (
+                                        <>
+                                            <MoneyAmount
+                                                value={bar.value}
+                                                label={bar.currency}
+                                                size="sm"
+                                                showLabel={false}
+                                            />{' '}
+                                            <span className="text-xs text-slate-400">{bar.currency}</span>
+                                        </>
+                                    ) : (
+                                        <span>
+                                            {Number(bar.value || 0).toLocaleString()}
+                                            {bar.unit ? (
+                                                <span className="ms-1 text-xs text-slate-400">{bar.unit}</span>
+                                            ) : null}
+                                        </span>
+                                    )}
                                 </span>
                             </div>
                             <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
@@ -508,114 +521,183 @@ function AccountantHome({ summary, t }) {
     );
 }
 
+function stockManagerModules(t) {
+    return [
+        {
+            key: 'products',
+            href: route('stock.items.index'),
+            secondaryHref: route('stock.dashboard'),
+            primaryLabel: t('home_dest_products'),
+            secondaryLabel: t('home_dest_stock_dashboard'),
+            icon: 'stock',
+            tone: 'stock',
+            title: t('home_box_stock_products'),
+            hint: t('home_box_stock_products_hint'),
+        },
+        {
+            key: 'stock-in',
+            href: route('stock.in.create'),
+            icon: 'stockIn',
+            tone: 'clients',
+            title: t('home_box_stock_in'),
+            hint: t('home_box_stock_in_hint'),
+        },
+        {
+            key: 'stock-out',
+            href: route('stock.out.create'),
+            icon: 'stockOut',
+            tone: 'expenses',
+            title: t('home_box_stock_out'),
+            hint: t('home_box_stock_out_hint'),
+        },
+        {
+            key: 'movements',
+            href: route('stock.movements.index'),
+            icon: 'stockMovements',
+            tone: 'projects',
+            title: t('home_box_stock_movements'),
+            hint: t('home_box_stock_movements_hint'),
+        },
+        {
+            key: 'attendance',
+            href: route('attendance.index'),
+            icon: 'attendance',
+            tone: 'attendance',
+            title: t('home_box_attendance'),
+            hint: t('home_box_attendance_hint'),
+        },
+        {
+            key: 'reports',
+            href: route('reports.index'),
+            icon: 'reports',
+            tone: 'reports',
+            title: t('home_box_stock_reports'),
+            hint: t('home_box_stock_reports_hint'),
+        },
+    ];
+}
+
 function StockManagerHome({ summary, t, iqd }) {
-    const movements = summary?.recent_movements || [];
-    const categories = summary?.by_category || [];
-    const canIn = useCan('stock.stockIn');
-    const canOut = useCan('stock.stockOut');
+    const charts = summary?.charts || {};
+    const todayFlow = charts.today_flow || {};
+    const health = charts.health || {};
+    const categoryBars = charts.value_by_category || [];
 
     return (
         <div className="space-y-6">
-            <DataPanel
-                title={t('role_home_stock_title')}
-                subtitle={t('role_home_stock_hint')}
-                actions={
-                    <div className="flex flex-wrap gap-2">
-                        {canIn && (
-                            <Link href={route('stock.in.create')}>
-                                <PrimaryButton type="button">{t('stock_in')}</PrimaryButton>
-                            </Link>
-                        )}
-                        {canOut && (
-                            <Link href={route('stock.out.create')}>
-                                <PrimaryButton type="button">{t('stock_out_action')}</PrimaryButton>
-                            </Link>
-                        )}
-                        <Shortcut href={route('stock.items.index')} label={t('stock_products')} />
-                        <Shortcut href={route('stock.movements.index')} label={t('stock_movements')} />
-                    </div>
-                }
-            >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
-                    <MoneyStat label={t('stock_value_iqd')} value={summary?.stock_value_iqd ?? 0} iqd={iqd} />
-                    <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
-                    <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
-                    <Stat label={t('stock_today_in')} value={summary?.today_in_qty ?? 0} />
-                    <Stat label={t('stock_today_out')} value={summary?.today_out_qty ?? 0} />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Stat label={t('stock_total_items')} value={summary?.total_items ?? 0} />
+                <MoneyStat
+                    label={t('stock_value_iqd')}
+                    value={summary?.stock_value_iqd ?? 0}
+                    iqd={iqd}
+                    accent
+                />
+                <Stat label={t('stock_low')} value={summary?.low_stock ?? 0} />
+                <Stat label={t('stock_out')} value={summary?.out_of_stock ?? 0} />
+            </div>
+
+            <section>
+                <div className="mb-3">
+                    <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                        {t('home_modules')}
+                    </h2>
+                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                        {t('home_modules_stock_hint')}
+                    </p>
                 </div>
-            </DataPanel>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {stockManagerModules(t).map((mod) => (
+                        <HomeModuleBox key={mod.key} {...mod} />
+                    ))}
+                </div>
+            </section>
 
             <div className="grid gap-6 lg:grid-cols-2">
-                <DataPanel title={t('role_panel_stock_by_category')} padded={false}>
-                    <DataTable minWidth="24rem" caption={t('role_panel_stock_by_category')}>
-                        <thead>
-                            <tr>
-                                <Th>{t('category')}</Th>
-                                <Th align="end">{t('role_stat_items')}</Th>
-                                <Th align="end">{t('stock_value_iqd')}</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {categories.map((c) => (
-                                <tr key={c.category}>
-                                    <Td>
-                                        {c.category === 'uncategorized'
-                                            ? t('uncategorized')
-                                            : c.category}
-                                    </Td>
-                                    <Td align="end">{c.items_count}</Td>
-                                    <Td align="end">
-                                        <MoneyAmount
-                                            value={c.value_iqd}
-                                            label={iqd}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                    </Td>
-                                </tr>
-                            ))}
-                            {!categories.length && (
-                                <tr>
-                                    <Td colSpan={3} muted className="py-8 text-center">
-                                        {t('no_stock_movements')}
-                                    </Td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </DataTable>
-                </DataPanel>
-
-                <DataPanel title={t('stock_recent_movements')} padded={false}>
-                    <DataTable minWidth="28rem" caption={t('stock_recent_movements')}>
-                        <thead>
-                            <tr>
-                                <Th>{t('type')}</Th>
-                                <Th>{t('product')}</Th>
-                                <Th align="end">{t('quantity')}</Th>
-                                <Th>{t('date')}</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {movements.map((m) => (
-                                <tr key={m.id}>
-                                    <Td className="uppercase">{m.type}</Td>
-                                    <Td>{m.item?.name || '—'}</Td>
-                                    <Td align="end">{m.quantity}</Td>
-                                    <Td muted>{m.moved_on || '—'}</Td>
-                                </tr>
-                            ))}
-                            {!movements.length && (
-                                <tr>
-                                    <Td colSpan={4} muted className="py-8 text-center">
-                                        {t('no_stock_movements')}
-                                    </Td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </DataTable>
-                </DataPanel>
+                <DualBarChart
+                    title={t('home_chart_today_flow')}
+                    subtitle={t('home_chart_today_flow_hint')}
+                    ariaLabel={t('home_chart_today_flow')}
+                    format="number"
+                    bars={[
+                        {
+                            key: 'in',
+                            label: t('home_stock_flow_in'),
+                            value: todayFlow.in ?? 0,
+                            color: 'bg-emerald-500',
+                        },
+                        {
+                            key: 'out',
+                            label: t('home_stock_flow_out'),
+                            value: todayFlow.out ?? 0,
+                            color: 'bg-rose-500',
+                        },
+                    ]}
+                />
+                <DualBarChart
+                    title={t('home_chart_stock_health')}
+                    subtitle={t('home_chart_stock_health_hint')}
+                    ariaLabel={t('home_chart_stock_health')}
+                    format="number"
+                    bars={[
+                        {
+                            key: 'ok',
+                            label: t('home_stock_ok'),
+                            value: health.ok ?? 0,
+                            color: 'bg-teal-500',
+                        },
+                        {
+                            key: 'low',
+                            label: t('stock_low'),
+                            value: health.low ?? 0,
+                            color: 'bg-amber-500',
+                        },
+                        {
+                            key: 'out',
+                            label: t('stock_out'),
+                            value: health.out ?? 0,
+                            color: 'bg-rose-500',
+                        },
+                    ]}
+                />
             </div>
+
+            <DualBarChart
+                title={t('home_chart_stock_value')}
+                subtitle={t('home_chart_stock_value_hint')}
+                ariaLabel={t('home_chart_stock_value')}
+                format="money"
+                bars={
+                    categoryBars.length
+                        ? categoryBars.map((c, idx) => ({
+                              key: c.key || `cat-${idx}`,
+                              label:
+                                  c.label === 'uncategorized'
+                                      ? t('uncategorized')
+                                      : c.label,
+                              value: c.value ?? 0,
+                              currency: iqd,
+                              color:
+                                  [
+                                      'bg-orange-500',
+                                      'bg-teal-500',
+                                      'bg-amber-500',
+                                      'bg-slate-500',
+                                      'bg-rose-500',
+                                      'bg-indigo-500',
+                                  ][idx % 6],
+                          }))
+                        : [
+                              {
+                                  key: 'empty',
+                                  label: t('no_stock_movements'),
+                                  value: 0,
+                                  currency: iqd,
+                                  color: 'bg-slate-300',
+                              },
+                          ]
+                }
+            />
         </div>
     );
 }

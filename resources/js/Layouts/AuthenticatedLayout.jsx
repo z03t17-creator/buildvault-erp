@@ -200,6 +200,7 @@ function SidebarNav({ groups, onNavigate }) {
 export default function AuthenticatedLayout({ header, children, showFlash = true }) {
     const page = usePage();
     const user = page.props.auth.user;
+    const roleLabel = page.props.auth?.role || null;
     const allowedNav = new Set(page.props.auth?.nav || []);
     const maturedCount = page.props.alerts?.maturedRetentionCount || 0;
     const flash = page.props.flash || {};
@@ -239,12 +240,25 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                 <LocaleSwitcher cycle className="shrink-0" />
             </div>
             <SidebarNav groups={navGroups} onNavigate={closeSidebar} />
-            <div className="mt-auto space-y-2 border-t border-slate-200/70 p-3 dark:border-slate-800">
+            <div className="mt-auto shrink-0 space-y-2 border-t border-slate-200/70 p-3 dark:border-slate-800">
                 <div className="flex items-center justify-between gap-2 px-1">
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                        {t('theme')}
-                    </span>
-                    <ThemeToggle className="h-11 w-11 shrink-0 rounded-xl p-0" />
+                    <div className="flex min-w-0 items-center gap-2">
+                        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                            {t('theme')}
+                        </span>
+                        <ThemeToggle className="h-11 w-11 shrink-0 rounded-xl p-0" />
+                    </div>
+                    <Link
+                        href={route('logout')}
+                        method="post"
+                        as="button"
+                        onClick={closeSidebar}
+                        className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"
+                        aria-label={t('log_out')}
+                    >
+                        <NavIcon name="logout" className="text-base" />
+                        <span>{t('log_out')}</span>
+                    </Link>
                 </div>
                 <Link
                     href={route('profile.edit')}
@@ -267,7 +281,7 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                             {user.name}
                         </span>
                         <span className="block truncate text-xs text-slate-500">
-                            {t('profile')}
+                            {roleLabel || t('profile')}
                         </span>
                     </span>
                 </Link>
@@ -332,45 +346,40 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                             )}
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                            <div className="relative">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-xl">
-                                            <button
-                                                type="button"
-                                                className="inline-flex h-11 max-w-[11rem] shrink-0 items-center gap-2 truncate rounded-xl border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 focus:outline-none sm:px-3 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:text-teal-300"
-                                            >
-                                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white dark:bg-teal-500 dark:text-slate-950">
-                                                    {(user.name || '?').charAt(0).toUpperCase()}
-                                                </span>
-                                                <span className="hidden truncate lg:inline" dir="auto">
-                                                    {user.name}
-                                                </span>
-                                                <span className="hidden lg:inline-flex">
-                                                    <NavIcon name="more" className="text-xs opacity-60" />
-                                                </span>
-                                            </button>
+                        <div className="relative z-[45] flex shrink-0 items-center gap-1.5 sm:gap-2">
+                            <Dropdown>
+                                <Dropdown.Trigger>
+                                    <button
+                                        type="button"
+                                        className="inline-flex h-11 max-w-[11rem] shrink-0 items-center gap-2 truncate rounded-xl border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 sm:px-3 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:text-teal-300"
+                                        aria-haspopup="menu"
+                                        aria-label={t('profile')}
+                                    >
+                                        <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white dark:bg-teal-500 dark:text-slate-950">
+                                            {(user.name || '?').charAt(0).toUpperCase()}
                                         </span>
-                                    </Dropdown.Trigger>
-                                    <Dropdown.Content contentClasses="py-1 bg-white dark:bg-slate-900">
-                                        <Dropdown.Link
-                                            href={route('profile.edit')}
-                                            className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                                        >
-                                            {t('profile')}
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                            className="text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-slate-800"
-                                        >
-                                            {t('log_out')}
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
+                                        <span className="hidden truncate lg:inline" dir="auto">
+                                            {user.name}
+                                        </span>
+                                        <span className="hidden lg:inline-flex">
+                                            <NavIcon name="more" className="text-xs opacity-60" />
+                                        </span>
+                                    </button>
+                                </Dropdown.Trigger>
+                                <Dropdown.Content contentClasses="py-1">
+                                    <Dropdown.Link href={route('profile.edit')}>
+                                        {t('profile')}
+                                    </Dropdown.Link>
+                                    <Dropdown.Link
+                                        href={route('logout')}
+                                        method="post"
+                                        as="button"
+                                        className="text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                                    >
+                                        {t('log_out')}
+                                    </Dropdown.Link>
+                                </Dropdown.Content>
+                            </Dropdown>
                         </div>
                     </div>
 

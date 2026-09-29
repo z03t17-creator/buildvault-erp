@@ -170,12 +170,17 @@ class RoleDashboardPhase14Test extends TestCase
                 ->has('summary.out_of_stock')
                 ->has('summary.by_category')
                 ->has('summary.recent_movements')
+                ->has('summary.charts')
+                ->has('summary.charts.today_flow')
+                ->has('summary.charts.health')
+                ->has('summary.charts.value_by_category')
                 ->where('summary.total_items', 1)
                 ->where('summary.by_category.0.category', 'Materials')
                 ->missing('summary.money_received_iqd')
                 ->missing('summary.users_active')
                 ->missing('summary.available_payment_iqd')
                 ->missing('summary.last_logins')
+                ->missing('summary.available_usd')
             );
 
         $this->actingAs($stock)->get(route('stock.dashboard'))->assertOk();
@@ -207,8 +212,8 @@ class RoleDashboardPhase14Test extends TestCase
                 ],
             ],
             DemoUsersSeeder::STOCK_EMAIL => [
-                'present' => ['by_category', 'recent_movements'],
-                'absent' => ['users_active', 'money_received_iqd', 'available_payment_iqd'],
+                'present' => ['by_category', 'recent_movements', 'charts', 'total_items', 'stock_value_iqd'],
+                'absent' => ['users_active', 'money_received_iqd', 'available_payment_iqd', 'available_usd', 'workbook_bundled'],
             ],
         ];
 
