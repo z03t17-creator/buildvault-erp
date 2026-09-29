@@ -1,12 +1,23 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
-import PageShell from '@/Components/PageShell';
+
+function Field({ label, children }) {
+    return (
+        <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{children}</dd>
+        </div>
+    );
+}
 
 export default function Show({ item }) {
     const t = useTranslations();
@@ -48,78 +59,72 @@ export default function Show({ item }) {
             }
         >
             <Head title={item.name} />
-            <PageShell>
-                    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 border border-slate-200/80 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('quantity')}</dt>
-                            <dd className="tabular-nums text-lg font-semibold">
+            <PageShell narrow>
+                <DataPanel>
+                    <dl className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                        <Field label={t('quantity')}>
+                            <span className="tabular-nums text-lg font-semibold" dir="ltr">
                                 {item.quantity} {item.unit}
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('min_quantity')}</dt>
-                            <dd className="tabular-nums">{item.min_quantity}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('purchase_price_iqd')}</dt>
-                            <dd className="tabular-nums">{<MoneyAmount value={item.purchase_price_iqd} label={iqd} size="sm" />}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('stock_value_iqd')}</dt>
-                            <dd className="tabular-nums">{<MoneyAmount value={item.stock_value_iqd} label={iqd} size="sm" />}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('supplier')}</dt>
-                            <dd>{item.supplier?.name || '—'}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-500">{t('location')}</dt>
-                            <dd>{item.location || '—'}</dd>
-                        </div>
+                            </span>
+                        </Field>
+                        <Field label={t('min_quantity')}>
+                            <span className="tabular-nums" dir="ltr">{item.min_quantity}</span>
+                        </Field>
+                        <Field label={`${t('purchase_price_iqd')} (${iqd})`}>
+                            <MoneyAmount value={item.purchase_price_iqd} label={iqd} size="sm" showLabel={false} />
+                        </Field>
+                        <Field label={`${t('stock_value_iqd')} (${iqd})`}>
+                            <MoneyAmount value={item.stock_value_iqd} label={iqd} size="sm" showLabel={false} />
+                        </Field>
+                        <Field label={t('supplier')}>{item.supplier?.name || '—'}</Field>
+                        <Field label={t('location')}>{item.location || '—'}</Field>
                         <div className="sm:col-span-2">
-                            <dt className="text-xs uppercase text-slate-500">{t('notes')}</dt>
-                            <dd>{item.notes || '—'}</dd>
+                            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('notes')}</dt>
+                            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{item.notes || '—'}</dd>
                         </div>
                     </dl>
+                </DataPanel>
 
-                    <section>
-                        <h3 className="mb-3 font-display text-lg font-semibold">{t('stock_movements')}</h3>
-                        <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                            <table className="min-w-full text-sm">
-                                <thead className="border-b text-xs uppercase text-slate-500">
-                                    <tr>
-                                        <th className="px-3 py-2 text-start">{t('type')}</th>
-                                        <th className="px-3 py-2 text-start">{t('quantity')}</th>
-                                        <th className="px-3 py-2 text-start">{t('date')}</th>
-                                        <th className="px-3 py-2 text-start">{t('qty_change')}</th>
-                                        <th className="px-3 py-2 text-start">{t('user')}</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {movements.map((m) => (
-                                        <tr key={m.id}>
-                                            <td className="px-3 py-2 uppercase">{m.type}</td>
-                                            <td className="px-3 py-2 tabular-nums">{m.quantity}</td>
-                                            <td className="px-3 py-2">{m.moved_on}</td>
-                                            <td className="px-3 py-2 tabular-nums">
-                                                {m.previous_qty} → {m.new_qty}
-                                            </td>
-                                            <td className="px-3 py-2">{m.user?.name || '—'}</td>
-                                        </tr>
-                                    ))}
-                                    {!movements.length && (
-                                        <tr>
-                                            <td colSpan={5} className="px-3 py-6 text-center text-slate-500">
-                                                {t('no_stock_movements')}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </section>
-                </PageShell>
-
-                </AuthenticatedLayout>
+                <DataPanel title={t('stock_movements')} padded={false}>
+                    <DataTable caption={t('stock_movements')} minWidth="36rem">
+                        <thead>
+                            <tr>
+                                <Th>{t('type')}</Th>
+                                <Th align="end">{t('quantity')}</Th>
+                                <Th>{t('date')}</Th>
+                                <Th>{t('qty_change')}</Th>
+                                <Th>{t('user')}</Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {movements.map((m) => (
+                                <tr key={m.id}>
+                                    <Td>
+                                        <span className="uppercase">{m.type}</span>
+                                    </Td>
+                                    <Td align="end">
+                                        <span className="tabular-nums" dir="ltr">{m.quantity}</span>
+                                    </Td>
+                                    <Td muted>{m.moved_on}</Td>
+                                    <Td>
+                                        <span className="tabular-nums" dir="ltr">
+                                            {m.previous_qty} → {m.new_qty}
+                                        </span>
+                                    </Td>
+                                    <Td muted>{m.user?.name || '—'}</Td>
+                                </tr>
+                            ))}
+                            {!movements.length && (
+                                <tr>
+                                    <Td colSpan={5} align="center" muted>
+                                        {t('no_stock_movements')}
+                                    </Td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </DataTable>
+                </DataPanel>
+            </PageShell>
+        </AuthenticatedLayout>
     );
 }

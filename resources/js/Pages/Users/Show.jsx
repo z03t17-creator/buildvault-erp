@@ -1,9 +1,9 @@
+import DataPanel from '@/Components/DataPanel';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
-import PageShell from '@/Components/PageShell';
-import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -12,8 +12,8 @@ import { Head, Link, router, usePage } from '@inertiajs/react';
 function Field({ label, children }) {
     return (
         <div>
-            <dt className="text-xs uppercase tracking-wider text-slate-400">{label}</dt>
-            <dd className="mt-1 text-sm font-medium text-slate-800 dark:text-slate-100">{children}</dd>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{children}</dd>
         </div>
     );
 }
@@ -87,7 +87,7 @@ export default function Show({ userRecord }) {
                         <StatusBadge status={userRecord.role || '—'} />
                         <StatusBadge status={userRecord.status} />
                     </div>
-                    <dl className="grid gap-5 sm:grid-cols-2">
+                    <dl className="grid gap-6 sm:grid-cols-2">
                         <Field label={t('full_name')}>{userRecord.name}</Field>
                         <Field label={t('email')}>
                             <span dir="ltr">{userRecord.email}</span>
