@@ -1,5 +1,7 @@
+import DataPanel from '@/Components/DataPanel';
 import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -34,12 +36,12 @@ export default function Index({ tower, project, floors }) {
             }
         >
             <Head title={`${t('floors')} · ${tower.name}`} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {list.length === 0 ? (
-                        <EmptyState title={t('no_floors')} />
-                    ) : (
-                        <ul className="divide-y divide-slate-200 border border-slate-200/80 bg-white/80 dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell>
+                {list.length === 0 ? (
+                    <EmptyState title={t('no_floors')} />
+                ) : (
+                    <DataPanel padded={false}>
+                        <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                             {list.map((floor) => (
                                 <li key={floor.id}>
                                     <Link
@@ -51,9 +53,9 @@ export default function Index({ tower, project, floors }) {
                                 </li>
                             ))}
                         </ul>
-                    )}
-                </div>
-            </div>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

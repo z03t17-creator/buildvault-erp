@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
+import PageShell from '@/Components/PageShell';
 
 export default function Show({ item }) {
     const t = useTranslations();
@@ -47,8 +48,7 @@ export default function Show({ item }) {
             }
         >
             <Head title={item.name} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <PageShell>
                     <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 border border-slate-200/80 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
                         <div>
                             <dt className="text-xs uppercase text-slate-500">{t('quantity')}</dt>
@@ -118,8 +118,8 @@ export default function Show({ item }) {
                             </table>
                         </div>
                     </section>
-                </div>
-            </div>
-        </AuthenticatedLayout>
+                </PageShell>
+
+                </AuthenticatedLayout>
     );
 }

@@ -1,5 +1,7 @@
 import PageHeader from '@/Components/PageHeader';
 import SecondaryButton from '@/Components/SecondaryButton';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -31,8 +33,8 @@ export default function Show({ floor, tower, project }) {
             }
         >
             <Head title={floor.name} />
-            <div className="py-8">
-                <div className="mx-auto max-w-3xl border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell narrow>
+                <DataPanel>
                     <dl className="grid gap-4 sm:grid-cols-2">
                         <div>
                             <dt className="text-xs uppercase tracking-wider text-slate-400">{t('tower')}</dt>
@@ -51,8 +53,10 @@ export default function Show({ floor, tower, project }) {
                             </dd>
                         </div>
                     </dl>
-                </div>
-            </div>
-        </AuthenticatedLayout>
+                </DataPanel>
+
+                </PageShell>
+
+                </AuthenticatedLayout>
     );
 }

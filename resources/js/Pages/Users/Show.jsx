@@ -2,6 +2,8 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -30,7 +32,6 @@ function formatWhen(value) {
 export default function Show({ userRecord }) {
     const t = useTranslations();
     const page = usePage();
-    const flashSuccess = page.props.flash?.success;
     const canUpdate = useCan('users.update');
     const canDisable = useCan('users.disable');
     const canAudit = useCan('vault.audit');
@@ -80,33 +81,26 @@ export default function Show({ userRecord }) {
             }
         >
             <Head title={userRecord.name} />
-            <div className="py-8">
-                <div className="mx-auto max-w-3xl space-y-4 px-4 sm:px-0">
-                    {flashSuccess && (
-                        <div className="border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200">
-                            {flashSuccess}
-                        </div>
-                    )}
-                    <div className="border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
-                        <div className="mb-6 flex flex-wrap items-center gap-3">
-                            <StatusBadge status={userRecord.role || '—'} />
-                            <StatusBadge status={userRecord.status} />
-                        </div>
-                        <dl className="grid gap-5 sm:grid-cols-2">
-                            <Field label={t('full_name')}>{userRecord.name}</Field>
-                            <Field label={t('email')}>
-                                <span dir="ltr">{userRecord.email}</span>
-                            </Field>
-                            <Field label={t('phone')}>{userRecord.phone || '—'}</Field>
-                            <Field label={t('role')}>{userRecord.role || '—'}</Field>
-                            <Field label={t('status')}>{t(`status_${userRecord.status}`) || userRecord.status}</Field>
-                            <Field label={t('last_login')}>{formatWhen(userRecord.last_login_at)}</Field>
-                            <Field label={t('created_date')}>{formatWhen(userRecord.created_at)}</Field>
-                            <Field label={t('updated_at')}>{formatWhen(userRecord.updated_at)}</Field>
-                        </dl>
+            <PageShell narrow>
+                <DataPanel>
+                    <div className="mb-6 flex flex-wrap items-center gap-3">
+                        <StatusBadge status={userRecord.role || '—'} />
+                        <StatusBadge status={userRecord.status} />
                     </div>
-                </div>
-            </div>
+                    <dl className="grid gap-5 sm:grid-cols-2">
+                        <Field label={t('full_name')}>{userRecord.name}</Field>
+                        <Field label={t('email')}>
+                            <span dir="ltr">{userRecord.email}</span>
+                        </Field>
+                        <Field label={t('phone')}>{userRecord.phone || '—'}</Field>
+                        <Field label={t('role')}>{userRecord.role || '—'}</Field>
+                        <Field label={t('status')}>{t(`status_${userRecord.status}`) || userRecord.status}</Field>
+                        <Field label={t('last_login')}>{formatWhen(userRecord.last_login_at)}</Field>
+                        <Field label={t('created_date')}>{formatWhen(userRecord.created_at)}</Field>
+                        <Field label={t('updated_at')}>{formatWhen(userRecord.updated_at)}</Field>
+                    </dl>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

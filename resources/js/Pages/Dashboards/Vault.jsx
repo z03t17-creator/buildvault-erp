@@ -1,5 +1,8 @@
+import DataPanel from '@/Components/DataPanel';
+import FlashBanner from '@/Components/FlashBanner';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -118,7 +121,7 @@ function CashFlowChart({ series, t }) {
 
 function HealthBadge({ item }) {
     return (
-        <div className="bv-card flex flex-col gap-1 rounded-sm px-4 py-3">
+        <div className="flex flex-col gap-1 rounded-sm border border-slate-200/70 bg-slate-50/60 px-4 py-3 dark:border-slate-700/70 dark:bg-slate-900/40">
             <div className="flex items-start justify-between gap-2">
                 <p className="font-display text-base font-semibold tracking-wide text-slate-900 dark:text-white">
                     {item.label}
@@ -143,7 +146,7 @@ export default function Vault({
     const liq = liquidity || {};
     const ins = insurance || {};
     const pool = pools || {};
-    const { flash, insuranceSettings } = usePage().props;
+    const { insuranceSettings } = usePage().props;
     const canAudit = useCan('vault.audit');
     const canRetention = useCan('vault.retention');
     const canLedger = useCan('vault.ledger');
@@ -178,160 +181,134 @@ export default function Vault({
         >
             <Head title={t('vault_dashboard')} />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    {flash?.success && (
-                        <p className="border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
-                            {flash.success}
-                        </p>
-                    )}
-                    {!vault && (
-                        <p className="border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-100">
-                            {t('no_vault_found')}
-                        </p>
-                    )}
+            <PageShell className="!space-y-8">
+                {!vault && (
+                    <FlashBanner tone="warning">{t('no_vault_found')}</FlashBanner>
+                )}
 
-                    <section>
-                        <div className="bv-card relative overflow-hidden bg-gradient-to-br from-white via-emerald-50/40 to-slate-50 p-5 sm:p-6 dark:from-slate-900 dark:via-emerald-950/30 dark:to-slate-950">
-                            <p className="font-display text-sm font-medium uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">
-                                {t('balance_iqd')}
-                            </p>
+                <DataPanel>
+                    <div className="relative overflow-hidden">
+                        <p className="font-display text-sm font-medium uppercase tracking-[0.18em] text-slate-700 dark:text-slate-300">
+                            {t('balance_iqd')}
+                        </p>
+                        <p className="mt-3">
+                            <MoneyAmount value={vault?.balance_iqd} label={iqd} size="hero" />
+                        </p>
+                        <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+                            {t('available_pending', {
+                                available: formatIqd(liq.available_iqd, iqd),
+                                pending: formatIqd(liq.pending_payouts_iqd, iqd),
+                            })}
+                        </p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                            <div className="flex flex-col gap-1">
+                                <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                    {t('current_balance')}
+                                </p>
+                                <MoneyAmount value={vault?.balance_iqd} label={iqd} size="md" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                    {t('available_balance')}
+                                </p>
+                                <MoneyAmount value={liq.available_iqd} label={iqd} size="md" />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                                    {t('reserved_balance')}
+                                </p>
+                                <MoneyAmount value={liq.reserved_insurance_iqd} label={iqd} size="md" />
+                            </div>
+                        </div>
+                        {canLedger && (
                             <p className="mt-3">
-                                <MoneyAmount value={vault?.balance_iqd} label={iqd} size="hero" />
-                            </p>
-                            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                                {t('available_pending', {
-                                    available: formatIqd(liq.available_iqd, iqd),
-                                    pending: formatIqd(liq.pending_payouts_iqd, iqd),
-                                })}
-                            </p>
-                            <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                                        {t('current_balance')}
-                                    </p>
-                                    <MoneyAmount value={vault?.balance_iqd} label={iqd} size="md" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                                        {t('available_balance')}
-                                    </p>
-                                    <MoneyAmount value={liq.available_iqd} label={iqd} size="md" />
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-400">
-                                        {t('reserved_balance')}
-                                    </p>
-                                    <MoneyAmount value={liq.reserved_insurance_iqd} label={iqd} size="md" />
-                                </div>
-                            </div>
-                            {canLedger && (
-                                <p className="mt-3">
-                                    <Link
-                                        href={route('vault.transactions')}
-                                        className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
-                                    >
-                                        {t('view_full_ledger')}
-                                    </Link>
-                                </p>
-                            )}
-                        </div>
-                    </section>
-
-                    <section>
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            {t('health')}
-                        </h3>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-                            {(health || []).map((h) => (
-                                <HealthBadge key={h.key} item={h} />
-                            ))}
-                        </div>
-                    </section>
-
-                    <section className="bv-surface p-5">
-                        <div className="flex flex-wrap items-end justify-between gap-3">
-                            <div>
-                                <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                                    {t('insurance_reserve')}
-                                </h3>
-                                <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                                    {t('insurance_reserve_hint', {
-                                        percent: holdbackPct,
-                                        months: maturityMonths,
-                                    })}
-                                </p>
-                            </div>
-                            {canRetention && (
                                 <Link
-                                    href={route('retention-holds.index')}
+                                    href={route('vault.transactions')}
                                     className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
                                 >
-                                    {t('manage_holds')}
+                                    {t('view_full_ledger')}
                                 </Link>
-                            )}
-                        </div>
-                        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                            <Stat
-                                label={t('retention_pool')}
-                                amount={ins.retention_pool_iqd}
-                                iqd={iqd}
-                            />
-                            <Stat
-                                label={t('holding')}
-                                amount={ins.holding_iqd}
-                                count={ins.holding_count || 0}
-                                iqd={iqd}
-                            />
-                            <Stat
-                                label={t('matured')}
-                                amount={ins.matured_iqd}
-                                count={ins.matured_count || 0}
-                                iqd={iqd}
-                                accent={ins.matured_count > 0 ? 'amber' : null}
-                            />
-                            <Stat
-                                label={t('reserved_liq')}
-                                amount={liq.reserved_insurance_iqd}
-                                iqd={iqd}
-                            />
-                        </div>
-                    </section>
+                            </p>
+                        )}
+                    </div>
+                </DataPanel>
 
-                    <section>
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            {t('allocation_pools')}
-                        </h3>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-5">
-                            {[
-                                [t('pool_expenses'), pool.expenses_iqd],
-                                [t('pool_payroll'), pool.payroll_iqd],
-                                [t('pool_retention'), pool.retention_iqd],
-                                [t('pool_penalty'), pool.penalty_iqd],
-                                [t('pool_profit'), pool.profit_iqd],
-                            ].map(([label, value]) => (
-                                <Stat
-                                    key={label}
-                                    label={label}
-                                    amount={value}
-                                    iqd={iqd}
-                                    className="bv-card bg-slate-50/80 px-3 py-3 dark:bg-slate-900/50"
-                                />
-                            ))}
-                        </div>
-                    </section>
+                <DataPanel title={t('health')}>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                        {(health || []).map((h) => (
+                            <HealthBadge key={h.key} item={h} />
+                        ))}
+                    </div>
+                </DataPanel>
 
-                    <section className="bv-surface p-5">
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            {t('cash_flow_30')}
-                        </h3>
-                        <p className="mt-1 mb-4 text-sm text-slate-500 dark:text-slate-400">
-                            {t('cash_flow_hint')}
-                        </p>
-                        <CashFlowChart series={cashFlow} t={t} />
-                    </section>
-                </div>
-            </div>
+                <DataPanel
+                    title={t('insurance_reserve')}
+                    subtitle={t('insurance_reserve_hint', {
+                        percent: holdbackPct,
+                        months: maturityMonths,
+                    })}
+                    actions={
+                        canRetention ? (
+                            <Link
+                                href={route('retention-holds.index')}
+                                className="text-sm font-medium text-emerald-700 underline dark:text-emerald-400"
+                            >
+                                {t('manage_holds')}
+                            </Link>
+                        ) : null
+                    }
+                >
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        <Stat
+                            label={t('retention_pool')}
+                            amount={ins.retention_pool_iqd}
+                            iqd={iqd}
+                        />
+                        <Stat
+                            label={t('holding')}
+                            amount={ins.holding_iqd}
+                            count={ins.holding_count || 0}
+                            iqd={iqd}
+                        />
+                        <Stat
+                            label={t('matured')}
+                            amount={ins.matured_iqd}
+                            count={ins.matured_count || 0}
+                            iqd={iqd}
+                            accent={ins.matured_count > 0 ? 'amber' : null}
+                        />
+                        <Stat
+                            label={t('reserved_liq')}
+                            amount={liq.reserved_insurance_iqd}
+                            iqd={iqd}
+                        />
+                    </div>
+                </DataPanel>
+
+                <DataPanel title={t('allocation_pools')}>
+                    <div className="grid gap-3 sm:grid-cols-5">
+                        {[
+                            [t('pool_expenses'), pool.expenses_iqd],
+                            [t('pool_payroll'), pool.payroll_iqd],
+                            [t('pool_retention'), pool.retention_iqd],
+                            [t('pool_penalty'), pool.penalty_iqd],
+                            [t('pool_profit'), pool.profit_iqd],
+                        ].map(([label, value]) => (
+                            <Stat
+                                key={label}
+                                label={label}
+                                amount={value}
+                                iqd={iqd}
+                                className="rounded-sm border border-slate-200/60 bg-slate-50/80 px-3 py-3 dark:border-slate-700/60 dark:bg-slate-900/50"
+                            />
+                        ))}
+                    </div>
+                </DataPanel>
+
+                <DataPanel title={t('cash_flow_30')} subtitle={t('cash_flow_hint')}>
+                    <CashFlowChart series={cashFlow} t={t} />
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

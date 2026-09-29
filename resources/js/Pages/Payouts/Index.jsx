@@ -1,73 +1,113 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
+import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
+
+function tr(t, key, fallback) {
+    const value = t(key);
+    return value === key ? fallback : value;
+}
 
 export default function Index({ payouts }) {
     const list = payouts || [];
     const canCreate = useCan('payouts.create');
+    const t = useTranslations();
+    const iqd = tr(t, 'IQD', 'IQD');
+    const usd = tr(t, 'USD', 'USD');
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title="Payouts"
-                    subtitle="Vault ledger approvals"
+                    title={tr(t, 'payouts', 'Payouts')}
+                    subtitle={tr(t, 'payouts_subtitle', 'Vault ledger approvals')}
                     actions={
                         canCreate ? (
                             <Link href={route('payouts.create')}>
-                                <PrimaryButton type="button">New payout</PrimaryButton>
+                                <PrimaryButton type="button">
+                                    {tr(t, 'new_payout', 'New payout')}
+                                </PrimaryButton>
                             </Link>
                         ) : null
                     }
                 />
             }
         >
-            <Head title="Payouts" />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl overflow-x-auto px-4 sm:px-6 lg:px-8">
-                    <table className="min-w-full border border-slate-200/80 bg-white/80 text-sm dark:border-slate-700 dark:bg-slate-900/70">
-                        <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                            <tr>
-                                <th className="px-3 py-2 text-start">ID</th>
-                                <th className="px-3 py-2 text-start">Project</th>
-                                <th className="px-3 py-2 text-start">Category</th>
-                                <th className="px-3 py-2 text-start">Amount</th>
-                                <th className="px-3 py-2 text-start">Status</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                            {list.map((p) => (
-                                <tr key={p.id}>
-                                    <td className="px-3 py-2">
-                                        <Link href={route('payouts.show', p.id)} className="text-emerald-700 underline dark:text-emerald-400">
-                                            #{p.id}
-                                        </Link>
-                                    </td>
-                                    <td className="px-3 py-2">{p.project?.name || '—'}</td>
-                                    <td className="px-3 py-2 capitalize">{p.category}</td>
-                                    <td className="px-3 py-2">
-                                        {p.amount_iqd != null ? (
-                                            <MoneyAmount value={p.amount_iqd} label="IQD" size="md" />
-                                        ) : (
-                                            <MoneyAmount value={p.amount_usd} label="USD" size="md" showLabel />
-                                        )}
-                                    </td>
-                                    <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
-                                </tr>
-                            ))}
-                            {!list.length && (
+            <Head title={tr(t, 'payouts', 'Payouts')} />
+            <PageShell>
+                {list.length === 0 ? (
+                    <EmptyState
+                        title={tr(t, 'no_payouts_yet', 'No payouts yet.')}
+                        action={
+                            canCreate ? (
+                                <Link href={route('payouts.create')}>
+                                    <PrimaryButton type="button">
+                                        {tr(t, 'new_payout', 'New payout')}
+                                    </PrimaryButton>
+                                </Link>
+                            ) : null
+                        }
+                    />
+                ) : (
+                    <DataPanel padded={false}>
+                        <DataTable minWidth="40rem" caption={tr(t, 'payouts', 'Payouts')}>
+                            <thead>
                                 <tr>
-                                    <td colSpan={5} className="px-3 py-8 text-center text-slate-500">No payouts yet.</td>
+                                    <Th>{tr(t, 'id', 'ID')}</Th>
+                                    <Th>{tr(t, 'project', 'Project')}</Th>
+                                    <Th>{tr(t, 'category', 'Category')}</Th>
+                                    <Th align="end">{tr(t, 'amount_iqd', `Amount (${iqd})`)}</Th>
+                                    <Th>{tr(t, 'status', 'Status')}</Th>
                                 </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                            </thead>
+                            <tbody>
+                                {list.map((p) => (
+                                    <tr key={p.id}>
+                                        <Td>
+                                            <Link
+                                                href={route('payouts.show', p.id)}
+                                                className="font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300"
+                                            >
+                                                #{p.id}
+                                            </Link>
+                                        </Td>
+                                        <Td muted>{p.project?.name || '—'}</Td>
+                                        <Td className="capitalize">{p.category}</Td>
+                                        <Td align="end">
+                                            {p.amount_iqd != null ? (
+                                                <MoneyAmount
+                                                    value={p.amount_iqd}
+                                                    label={iqd}
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                            ) : (
+                                                <MoneyAmount
+                                                    value={p.amount_usd}
+                                                    label={usd}
+                                                    size="sm"
+                                                    showLabel
+                                                />
+                                            )}
+                                        </Td>
+                                        <Td>
+                                            <StatusBadge status={p.status} />
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

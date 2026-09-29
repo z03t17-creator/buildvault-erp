@@ -1,3 +1,4 @@
+import FlashBanner from '@/Components/FlashBanner';
 import PrimaryButton from '@/Components/PrimaryButton';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -15,31 +16,31 @@ export default function VerifyEmail({ status }) {
         <GuestLayout>
             <Head title="Email Verification" />
 
-            <div className="mb-4 text-sm text-gray-600">
-                Thanks for signing up! Before getting started, could you verify
-                your email address by clicking on the link we just emailed to
-                you? If you didn't receive the email, we will gladly send you
-                another.
+            <div className="mb-6">
+                <h1 className="font-display text-xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                    Verify email
+                </h1>
+                <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    Thanks for signing up. Please verify your email address using the link we sent
+                    you, or request another below.
+                </p>
             </div>
 
             {status === 'verification-link-sent' && (
-                <div className="mb-4 text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
-                </div>
+                <FlashBanner tone="success" className="mb-5">
+                    A new verification link has been sent to your email address.
+                </FlashBanner>
             )}
 
             <form onSubmit={submit}>
-                <div className="mt-4 flex items-center justify-between">
-                    <PrimaryButton disabled={processing}>
-                        Resend Verification Email
-                    </PrimaryButton>
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                    <PrimaryButton disabled={processing}>Resend Verification Email</PrimaryButton>
 
                     <Link
                         href={route('logout')}
                         method="post"
                         as="button"
-                        className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                        className="rounded-md text-sm text-slate-600 underline underline-offset-2 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:text-slate-400 dark:hover:text-emerald-400"
                     >
                         Log Out
                     </Link>

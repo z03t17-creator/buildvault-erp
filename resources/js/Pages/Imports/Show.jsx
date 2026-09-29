@@ -1,9 +1,13 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 function formatErrors(errors) {
     if (!errors || typeof errors !== 'object') return '—';
@@ -16,13 +20,16 @@ function formatErrors(errors) {
 }
 
 export default function Show({ import: job }) {
-    const { flash } = usePage().props;
     const details = job?.details || [];
-    const failed = details.filter((d) => d.status === 'invalid' || (d.errors && Object.keys(d.errors || {}).length));
+    const failed = details.filter(
+        (d) => d.status === 'invalid' || (d.errors && Object.keys(d.errors || {}).length),
+    );
     const progress =
         job?.total_rows > 0
             ? Math.round(((job.success_rows + job.failed_rows) / job.total_rows) * 100)
-            : job?.status === 'completed' || job?.status === 'failed' || job?.status === 'rolled_back'
+            : job?.status === 'completed' ||
+                job?.status === 'failed' ||
+                job?.status === 'rolled_back'
               ? 100
               : 0;
 
@@ -54,26 +61,19 @@ export default function Show({ import: job }) {
         >
             <Head title={`Import #${job.id}`} />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
-                    {flash?.success && (
-                        <p className="border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
-                            {flash.success}
-                        </p>
-                    )}
-                    {flash?.error && (
-                        <p className="border border-rose-300 bg-rose-50 px-4 py-2 text-sm text-rose-900 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-100">
-                            {flash.error}
-                        </p>
-                    )}
-
-                    <section className="bv-surface grid gap-4 p-5 sm:grid-cols-4">
+            <PageShell>
+                <DataPanel>
+                    <div className="grid gap-4 sm:grid-cols-4">
                         <div>
                             <p className="text-xs uppercase tracking-wider text-slate-500">Status</p>
-                            <div className="mt-1"><StatusBadge status={job.status} /></div>
+                            <div className="mt-1">
+                                <StatusBadge status={job.status} />
+                            </div>
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wider text-slate-500">Imported</p>
+                            <p className="text-xs uppercase tracking-wider text-slate-500">
+                                Imported
+                            </p>
                             <p className="mt-1 font-display text-2xl tabular-nums text-slate-900 dark:text-white">
                                 {job.success_rows}
                             </p>
@@ -85,7 +85,9 @@ export default function Show({ import: job }) {
                             </p>
                         </div>
                         <div>
-                            <p className="text-xs uppercase tracking-wider text-slate-500">Total rows</p>
+                            <p className="text-xs uppercase tracking-wider text-slate-500">
+                                Total rows
+                            </p>
                             <p className="mt-1 font-display text-2xl tabular-nums text-slate-900 dark:text-white">
                                 {job.total_rows}
                             </p>
@@ -101,73 +103,69 @@ export default function Show({ import: job }) {
                                 {job.notes || 'Row-level results below.'}
                             </p>
                         </div>
-                    </section>
+                    </div>
+                </DataPanel>
 
-                    {failed.length > 0 && (
-                        <section className="bv-surface p-5">
-                            <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                                Error report
-                            </h3>
-                            <div className="bv-table-wrap mt-4">
-                                <table className="bv-table min-w-[36rem]">
-                                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                        <tr>
-                                            <th className="px-3 py-2 text-start">Row</th>
-                                            <th className="px-3 py-2 text-start">Errors</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {failed.map((d) => (
-                                            <tr key={d.id}>
-                                                <td className="px-3 py-2 tabular-nums">{d.row_number}</td>
-                                                <td className="px-3 py-2 text-sm text-rose-700 dark:text-rose-300">
-                                                    {formatErrors(d.errors)}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        </section>
+                {failed.length > 0 && (
+                    <DataPanel title="Error report" padded={false}>
+                        <DataTable minWidth="36rem" caption="Error report">
+                            <thead>
+                                <tr>
+                                    <Th>Row</Th>
+                                    <Th>Errors</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {failed.map((d) => (
+                                    <tr key={d.id}>
+                                        <Td className="tabular-nums">{d.row_number}</Td>
+                                        <Td className="text-rose-700 dark:text-rose-300">
+                                            {formatErrors(d.errors)}
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+                )}
+
+                <DataPanel title="All rows" padded={false}>
+                    {details.length === 0 ? (
+                        <div className="p-5">
+                            <EmptyState title="No row details." />
+                        </div>
+                    ) : (
+                        <DataTable minWidth="44rem" caption="All rows">
+                            <thead>
+                                <tr>
+                                    <Th>Row</Th>
+                                    <Th>Status</Th>
+                                    <Th>Record</Th>
+                                    <Th>Payload</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {details.map((d) => (
+                                    <tr key={d.id}>
+                                        <Td className="tabular-nums">{d.row_number}</Td>
+                                        <Td>
+                                            <StatusBadge status={d.status} />
+                                        </Td>
+                                        <Td muted>
+                                            {d.record_type
+                                                ? `${d.record_type} #${d.record_id}`
+                                                : '—'}
+                                        </Td>
+                                        <Td muted className="max-w-md truncate text-xs">
+                                            {JSON.stringify(d.payload || {})}
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
                     )}
-
-                    <section className="bv-surface p-5">
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            All rows
-                        </h3>
-                        {details.length === 0 ? (
-                            <p className="mt-4 text-sm text-slate-500">No row details.</p>
-                        ) : (
-                            <div className="bv-table-wrap mt-4">
-                                <table className="bv-table min-w-[44rem]">
-                                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                        <tr>
-                                            <th className="px-3 py-2 text-start">Row</th>
-                                            <th className="px-3 py-2 text-start">Status</th>
-                                            <th className="px-3 py-2 text-start">Record</th>
-                                            <th className="px-3 py-2 text-start">Payload</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {details.map((d) => (
-                                            <tr key={d.id}>
-                                                <td className="px-3 py-2 tabular-nums">{d.row_number}</td>
-                                                <td className="px-3 py-2"><StatusBadge status={d.status} /></td>
-                                                <td className="px-3 py-2 text-sm">
-                                                    {d.record_type ? `${d.record_type} #${d.record_id}` : '—'}
-                                                </td>
-                                                <td className="max-w-md truncate px-3 py-2 text-xs text-slate-500">
-                                                    {JSON.stringify(d.payload || {})}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </section>
-                </div>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

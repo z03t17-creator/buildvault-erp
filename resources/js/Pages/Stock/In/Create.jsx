@@ -8,6 +8,8 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, useForm } from '@inertiajs/react';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
@@ -42,13 +44,14 @@ export default function Create({ items, suppliers, projects, defaults }) {
             }
         >
             <Head title={t('stock_in')} />
-            <div className="py-8">
+            <PageShell narrow>
+                <DataPanel>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         post(route('stock.in.store'));
                     }}
-                    className="mx-auto max-w-xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                    className="space-y-5 dark:"
                 >
                     <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-400">
                         {t('stock_in_no_expense_hint')}
@@ -165,7 +168,8 @@ export default function Create({ items, suppliers, projects, defaults }) {
                     </div>
                     <PrimaryButton disabled={processing}>{t('record_stock_in')}</PrimaryButton>
                 </form>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

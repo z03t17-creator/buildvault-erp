@@ -1,6 +1,8 @@
+import DataPanel from '@/Components/DataPanel';
 import EmptyState from '@/Components/EmptyState';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -34,22 +36,22 @@ export default function Index({ projects, canViewFinancials }) {
         >
             <Head title={t('projects')} />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    {list.length === 0 ? (
-                        <EmptyState
-                            title={t('no_projects')}
-                            description={t('no_projects_hint')}
-                            action={
-                                canCreate ? (
-                                    <Link href={route('projects.create')}>
-                                        <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
-                                    </Link>
-                                ) : null
-                            }
-                        />
-                    ) : (
-                        <ul className="bv-surface divide-y divide-slate-200 dark:divide-slate-800">
+            <PageShell>
+                {list.length === 0 ? (
+                    <EmptyState
+                        title={t('no_projects')}
+                        description={t('no_projects_hint')}
+                        action={
+                            canCreate ? (
+                                <Link href={route('projects.create')}>
+                                    <PrimaryButton type="button">{t('create_project')}</PrimaryButton>
+                                </Link>
+                            ) : null
+                        }
+                    />
+                ) : (
+                    <DataPanel padded={false}>
+                        <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                             {list.map((project) => {
                                 const fin = project.financial_summary;
                                 return (
@@ -75,15 +77,25 @@ export default function Index({ projects, canViewFinancials }) {
                                                     <>
                                                         <div>
                                                             <span className="block text-xs uppercase tracking-wider text-slate-400">
-                                                                {t('contract_value')}
+                                                                {t('contract_value')} ({iqd})
                                                             </span>
-                                                            <MoneyAmount value={fin.contract_value_iqd} label={iqd} size="md" />
+                                                            <MoneyAmount
+                                                                value={fin.contract_value_iqd}
+                                                                label={iqd}
+                                                                size="md"
+                                                                showLabel={false}
+                                                            />
                                                         </div>
                                                         <div>
                                                             <span className="block text-xs uppercase tracking-wider text-slate-400">
-                                                                {t('money_received')}
+                                                                {t('money_received')} ({iqd})
                                                             </span>
-                                                            <MoneyAmount value={fin.money_received_iqd} label={iqd} size="md" />
+                                                            <MoneyAmount
+                                                                value={fin.money_received_iqd}
+                                                                label={iqd}
+                                                                size="md"
+                                                                showLabel={false}
+                                                            />
                                                         </div>
                                                     </>
                                                 ) : null}
@@ -105,9 +117,9 @@ export default function Index({ projects, canViewFinancials }) {
                                 );
                             })}
                         </ul>
-                    )}
-                </div>
-            </div>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

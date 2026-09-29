@@ -4,6 +4,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
+import PageShell from '@/Components/PageShell';
 
 function formatQty(n) {
     return new Intl.NumberFormat('en-US', {
@@ -47,8 +48,7 @@ export default function Show({ production }) {
             }
         >
             <Head title={`${t('production')} #${production.id}`} />
-            <div className="py-8">
-                <div className="mx-auto max-w-2xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell narrow>
                     <p className="text-xs text-slate-500">{t('production_qty_hint')}</p>
                     <dl className="mt-2 grid gap-3 text-sm sm:grid-cols-2">
                         <div>
@@ -101,8 +101,8 @@ export default function Show({ production }) {
                             </div>
                         )}
                     </dl>
-                </div>
-            </div>
-        </AuthenticatedLayout>
+                </PageShell>
+
+                </AuthenticatedLayout>
     );
 }

@@ -4,6 +4,8 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -49,14 +51,14 @@ export default function Edit({ userRecord, roles, statuses }) {
             }
         >
             <Head title={t('edit_user')} />
-            <div className="py-8">
-                <div className="mx-auto flex max-w-2xl flex-col gap-6 px-4 sm:px-0">
+            <PageShell narrow className="!space-y-6">
+                    <DataPanel>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
                             profile.put(route('users.update', userRecord.id));
                         }}
-                        className="space-y-5 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                        className="space-y-5"
                     >
                         <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
                             {t('user_profile')}
@@ -130,9 +132,11 @@ export default function Edit({ userRecord, roles, statuses }) {
                         </div>
                         <PrimaryButton disabled={profile.processing}>{t('save')}</PrimaryButton>
                     </form>
+                </DataPanel>
 
                     {canReset && (
-                        <form
+                        <DataPanel>
+                    <form
                             id="reset-password"
                             onSubmit={(e) => {
                                 e.preventDefault();
@@ -140,7 +144,7 @@ export default function Edit({ userRecord, roles, statuses }) {
                                     onSuccess: () => passwordForm.reset('password', 'password_confirmation'),
                                 });
                             }}
-                            className="space-y-5 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                            className="space-y-5"
                         >
                             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
                                 {t('reset_password')}
@@ -175,16 +179,18 @@ export default function Edit({ userRecord, roles, statuses }) {
                             </div>
                             <PrimaryButton disabled={passwordForm.processing}>{t('reset_password')}</PrimaryButton>
                         </form>
+                </DataPanel>
                     )}
 
                     {canChangeRole && (
-                        <form
+                        <DataPanel>
+                    <form
                             id="change-role"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 roleForm.post(route('users.change-role', userRecord.id));
                             }}
-                            className="space-y-5 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                            className="space-y-5"
                         >
                             <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-500">
                                 {t('change_role')}
@@ -207,9 +213,10 @@ export default function Edit({ userRecord, roles, statuses }) {
                             </div>
                             <PrimaryButton disabled={roleForm.processing}>{t('change_role')}</PrimaryButton>
                         </form>
+                </DataPanel>
                     )}
-                </div>
-            </div>
-        </AuthenticatedLayout>
+            </PageShell>
+
+            </AuthenticatedLayout>
     );
 }

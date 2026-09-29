@@ -1,4 +1,8 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -70,9 +74,9 @@ export default function Index({ productions, filters, projects, workers }) {
             }
         >
             <Head title={t('productions')} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
-                    <div className="flex flex-wrap items-end gap-3 border border-slate-200/80 bg-white/80 p-4 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell>
+                <DataPanel>
+                    <div className="flex flex-wrap items-end gap-3">
                         <div>
                             <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
                                 {t('project')}
@@ -117,68 +121,68 @@ export default function Index({ productions, filters, projects, workers }) {
                             {t('clear_filters')}
                         </SecondaryButton>
                     </div>
+                </DataPanel>
 
-                    <div className="bv-surface">
-                        <div className="bv-table-wrap">
-                            <table className="bv-table min-w-[52rem]">
-                                <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                    <tr>
-                                        <th className="px-3 py-2 text-start">{t('worker')}</th>
-                                        <th className="px-3 py-2 text-start">{t('project')}</th>
-                                        <th className="px-3 py-2 text-start">{t('unit_type')}</th>
-                                        <th className="px-3 py-2 text-end">{t('assigned')}</th>
-                                        <th className="px-3 py-2 text-end">{t('completed')}</th>
-                                        <th className="px-3 py-2 text-end">{t('received')}</th>
-                                        <th className="px-3 py-2 text-end">{t('remaining')}</th>
-                                        <th className="px-3 py-2 text-end">{t('progress_pct')}</th>
-                                        <th className="px-3 py-2 text-start">{t('date')}</th>
+                {list.length === 0 ? (
+                    <EmptyState title={t('productions_empty')} />
+                ) : (
+                    <DataPanel padded={false}>
+                        <DataTable minWidth="52rem">
+                            <thead>
+                                <tr>
+                                    <Th>{t('worker')}</Th>
+                                    <Th>{t('project')}</Th>
+                                    <Th>{t('unit_type')}</Th>
+                                    <Th align="end">{t('assigned')}</Th>
+                                    <Th align="end">{t('completed')}</Th>
+                                    <Th align="end">{t('received')}</Th>
+                                    <Th align="end">{t('remaining')}</Th>
+                                    <Th align="end">{t('progress_pct')}</Th>
+                                    <Th>{t('date')}</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {list.map((row) => (
+                                    <tr key={row.id}>
+                                        <Td>
+                                            <Link
+                                                href={route('productions.show', row.id)}
+                                                className="text-emerald-700 underline dark:text-emerald-400"
+                                            >
+                                                {row.worker?.name || '—'}
+                                            </Link>
+                                        </Td>
+                                        <Td>{row.project?.name || '—'}</Td>
+                                        <Td>{unitLabel(t, row)}</Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {formatQty(row.assigned)}
+                                        </Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {formatQty(row.completed)}
+                                        </Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {formatQty(row.received)}
+                                        </Td>
+                                        <Td
+                                            align="end"
+                                            className="tabular-nums text-amber-700 dark:text-amber-300"
+                                        >
+                                            {formatQty(row.remaining)}
+                                        </Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {formatQty(row.progress_pct)}%
+                                        </Td>
+                                        <Td muted className="tabular-nums">
+                                            {row.recorded_on}
+                                        </Td>
                                     </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                    {list.map((row) => (
-                                        <tr key={row.id}>
-                                            <td className="px-3 py-2">
-                                                <Link
-                                                    href={route('productions.show', row.id)}
-                                                    className="text-emerald-700 underline dark:text-emerald-400"
-                                                >
-                                                    {row.worker?.name || '—'}
-                                                </Link>
-                                            </td>
-                                            <td className="px-3 py-2">{row.project?.name || '—'}</td>
-                                            <td className="px-3 py-2">{unitLabel(t, row)}</td>
-                                            <td className="px-3 py-2 text-end tabular-nums">
-                                                {formatQty(row.assigned)}
-                                            </td>
-                                            <td className="px-3 py-2 text-end tabular-nums">
-                                                {formatQty(row.completed)}
-                                            </td>
-                                            <td className="px-3 py-2 text-end tabular-nums">
-                                                {formatQty(row.received)}
-                                            </td>
-                                            <td className="px-3 py-2 text-end tabular-nums text-amber-700 dark:text-amber-300">
-                                                {formatQty(row.remaining)}
-                                            </td>
-                                            <td className="px-3 py-2 text-end tabular-nums">
-                                                {formatQty(row.progress_pct)}%
-                                            </td>
-                                            <td className="px-3 py-2 tabular-nums">{row.recorded_on}</td>
-                                        </tr>
-                                    ))}
-                                    {!list.length && (
-                                        <tr>
-                                            <td colSpan={9} className="px-3 py-8 text-center text-slate-500">
-                                                {t('productions_empty')}
-                                            </td>
-                                        </tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <p className="text-xs text-slate-500">{t('production_qty_hint')}</p>
-                </div>
-            </div>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+                )}
+                <p className="text-xs text-slate-500">{t('production_qty_hint')}</p>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

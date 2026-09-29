@@ -6,6 +6,7 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
+import PageShell from '@/Components/PageShell';
 
 export default function Show({ tower, project }) {
     const t = useTranslations();
@@ -40,8 +41,7 @@ export default function Show({ tower, project }) {
             }
         >
             <Head title={tower.name} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
+            <PageShell>
                     <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
                         {t('floors')}
                     </h3>
@@ -61,8 +61,8 @@ export default function Show({ tower, project }) {
                             ))}
                         </ul>
                     )}
-                </div>
-            </div>
-        </AuthenticatedLayout>
+                </PageShell>
+
+                </AuthenticatedLayout>
     );
 }

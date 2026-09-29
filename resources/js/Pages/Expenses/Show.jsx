@@ -1,5 +1,7 @@
+import DataPanel from '@/Components/DataPanel';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -7,6 +9,19 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
+
+function Field({ label, children }) {
+    return (
+        <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {label}
+            </dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+                {children}
+            </dd>
+        </div>
+    );
+}
 
 export default function Show({ expense }) {
     const canApprove = useCan('expenses.approve');
@@ -64,66 +79,52 @@ export default function Show({ expense }) {
             }
         >
             <Head title={`${t('expense')} #${expense.id}`} />
-            <div className="py-8">
-                <div className="mx-auto max-w-2xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell narrow>
+                <DataPanel>
                     <StatusBadge status={expense.approval_status} />
-                    <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('category')}</dt>
-                            <dd className="capitalize">{categoryLabel}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
-                            <dd>
-                                <MoneyAmount value={expense.amount_iqd} label={iqd} size="lg" />
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('expense_date')}</dt>
-                            <dd className="tabular-nums">{expense.expense_date}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('supplier_person')}</dt>
-                            <dd>{expense.supplier || '—'}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('payment_method')}</dt>
-                            <dd className="capitalize">{paymentLabel}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('created_by')}</dt>
-                            <dd>{expense.creator?.name || '—'}</dd>
-                        </div>
+                    <dl className="mt-5 grid gap-6 sm:grid-cols-2">
+                        <Field label={t('category')}>
+                            <span className="capitalize">{categoryLabel}</span>
+                        </Field>
+                        <Field label={`${t('amount_iqd')} (${iqd})`}>
+                            <MoneyAmount value={expense.amount_iqd} label={iqd} size="lg" showLabel={false} />
+                        </Field>
+                        <Field label={t('expense_date')}>
+                            <span className="tabular-nums" dir="ltr">{expense.expense_date}</span>
+                        </Field>
+                        <Field label={t('supplier_person')}>{expense.supplier || '—'}</Field>
+                        <Field label={t('payment_method')}>
+                            <span className="capitalize">{paymentLabel}</span>
+                        </Field>
+                        <Field label={t('created_by')}>{expense.creator?.name || '—'}</Field>
                         {expense.approver && (
-                            <div>
-                                <dt className="text-xs uppercase text-slate-400">{t('approved_by')}</dt>
-                                <dd>{expense.approver.name}</dd>
-                            </div>
+                            <Field label={t('approved_by')}>{expense.approver.name}</Field>
                         )}
                         {expense.document && (
-                            <div className="sm:col-span-2">
-                                <dt className="text-xs uppercase text-slate-400">{t('receipt_file')}</dt>
-                                <dd>
-                                    <a
-                                        href={route('documents.file', expense.document.id)}
-                                        className="text-emerald-700 underline dark:text-emerald-400"
-                                        target="_blank"
-                                        rel="noreferrer"
-                                    >
-                                        {expense.document.original_name}
-                                    </a>
-                                </dd>
-                            </div>
+                            <Field label={t('receipt_file')} className="sm:col-span-2">
+                                <a
+                                    href={route('documents.file', expense.document.id)}
+                                    className="text-emerald-700 underline dark:text-emerald-400"
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {expense.document.original_name}
+                                </a>
+                            </Field>
                         )}
                         {expense.description && (
                             <div className="sm:col-span-2">
-                                <dt className="text-xs uppercase text-slate-400">{t('description')}</dt>
-                                <dd className="whitespace-pre-wrap">{expense.description}</dd>
+                                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                                    {t('description')}
+                                </dt>
+                                <dd className="mt-1.5 whitespace-pre-wrap text-sm font-medium text-slate-800 dark:text-slate-100">
+                                    {expense.description}
+                                </dd>
                             </div>
                         )}
                     </dl>
-                </div>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

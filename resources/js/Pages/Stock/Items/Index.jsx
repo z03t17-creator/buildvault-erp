@@ -1,5 +1,9 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -34,8 +38,8 @@ export default function Index({ items, filters, categories }) {
             }
         >
             <Head title={t('stock_products')} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
+            <PageShell>
+                <DataPanel>
                     <div className="flex flex-wrap gap-3">
                         <TextInput
                             className="max-w-xs"
@@ -59,22 +63,27 @@ export default function Index({ items, filters, categories }) {
                             ))}
                         </select>
                     </div>
-                    <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                        <table className="min-w-full text-sm">
-                            <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
+                </DataPanel>
+
+                {list.length === 0 ? (
+                    <EmptyState title={t('no_products')} description={t('stock_products_hint')} />
+                ) : (
+                    <DataPanel padded={false}>
+                        <DataTable minWidth="56rem" caption={t('stock_products')}>
+                            <thead>
                                 <tr>
-                                    <th className="px-3 py-2 text-start">{t('name')}</th>
-                                    <th className="px-3 py-2 text-start">{t('sku')}</th>
-                                    <th className="px-3 py-2 text-start">{t('category')}</th>
-                                    <th className="px-3 py-2 text-start">{t('quantity')}</th>
-                                    <th className="px-3 py-2 text-start">{t('min_quantity')}</th>
-                                    <th className="px-3 py-2 text-start">{t('purchase_price_iqd')}</th>
-                                    <th className="px-3 py-2 text-start">{t('stock_value_iqd')}</th>
-                                    <th className="px-3 py-2 text-start">{t('supplier')}</th>
-                                    <th className="px-3 py-2 text-start">{t('location')}</th>
+                                    <Th>{t('name')}</Th>
+                                    <Th>{t('sku')}</Th>
+                                    <Th>{t('category')}</Th>
+                                    <Th align="end">{t('quantity')}</Th>
+                                    <Th align="end">{t('min_quantity')}</Th>
+                                    <Th align="end">{t('purchase_price_iqd')}</Th>
+                                    <Th align="end">{t('stock_value_iqd')}</Th>
+                                    <Th>{t('supplier')}</Th>
+                                    <Th>{t('location')}</Th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tbody>
                                 {list.map((item) => (
                                     <tr
                                         key={item.id}
@@ -86,42 +95,49 @@ export default function Index({ items, filters, categories }) {
                                                   : ''
                                         }
                                     >
-                                        <td className="px-3 py-2">
+                                        <Td>
                                             <Link
                                                 href={route('stock.items.show', item.id)}
-                                                className="text-emerald-700 underline dark:text-emerald-400"
+                                                className="font-medium text-emerald-800 underline-offset-2 hover:underline dark:text-emerald-300"
                                             >
                                                 {item.name}
                                             </Link>
-                                        </td>
-                                        <td className="px-3 py-2 tabular-nums">{item.sku || '—'}</td>
-                                        <td className="px-3 py-2">{item.category || '—'}</td>
-                                        <td className="px-3 py-2 tabular-nums">
+                                        </Td>
+                                        <Td muted className="tabular-nums">
+                                            {item.sku || '—'}
+                                        </Td>
+                                        <Td muted>{item.category || '—'}</Td>
+                                        <Td align="end" className="tabular-nums">
                                             {item.quantity} {item.unit}
-                                        </td>
-                                        <td className="px-3 py-2 tabular-nums">{item.min_quantity}</td>
-                                        <td className="px-3 py-2 tabular-nums">
-                                            {<MoneyAmount value={item.purchase_price_iqd} label={iqd} size="sm" />}
-                                        </td>
-                                        <td className="px-3 py-2 tabular-nums">
-                                            {<MoneyAmount value={item.stock_value_iqd} label={iqd} size="sm" />}
-                                        </td>
-                                        <td className="px-3 py-2">{item.supplier?.name || '—'}</td>
-                                        <td className="px-3 py-2">{item.location || '—'}</td>
+                                        </Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {item.min_quantity}
+                                        </Td>
+                                        <Td align="end">
+                                            <MoneyAmount
+                                                value={item.purchase_price_iqd}
+                                                label={iqd}
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
+                                        <Td align="end">
+                                            <MoneyAmount
+                                                value={item.stock_value_iqd}
+                                                label={iqd}
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
+                                        <Td muted>{item.supplier?.name || '—'}</Td>
+                                        <Td muted>{item.location || '—'}</Td>
                                     </tr>
                                 ))}
-                                {!list.length && (
-                                    <tr>
-                                        <td colSpan={9} className="px-3 py-8 text-center text-slate-500">
-                                            {t('no_products')}
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                        </DataTable>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

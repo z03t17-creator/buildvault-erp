@@ -1,13 +1,32 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
+import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 
+function Field({ label, children }) {
+    return (
+        <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {label}
+            </dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+                {children}
+            </dd>
+        </div>
+    );
+}
+
 export default function Show({ payout }) {
+    const t = useTranslations();
+    const iqd = t('IQD');
     const canApprove = useCan('payouts.approve');
     const canReject = useCan('payouts.reject');
     const canReconcile = useCan('payouts.reconcile');
@@ -44,44 +63,84 @@ export default function Show({ payout }) {
             }
         >
             <Head title={`Payout #${payout.id}`} />
-            <div className="py-8">
-                <div className="mx-auto max-w-2xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell narrow>
+                <DataPanel>
                     <StatusBadge status={payout.status} />
-                    <dl className="mt-4 grid gap-3 sm:grid-cols-2 text-sm">
-                        <div><dt className="text-xs uppercase text-slate-400">Category</dt><dd className="capitalize">{payout.category}</dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Amount IQD</dt><dd><MoneyAmount value={payout.amount_iqd ?? payout.amount_usd} label={payout.amount_iqd != null ? 'IQD' : 'USD'} size="lg" /></dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Amount USD</dt><dd dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.amount_usd}</dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Holdback</dt><dd dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.retention_holdback}</dd></div>
-                        <div><dt className="text-xs uppercase text-slate-400">Worker</dt><dd>{payout.worker?.name || '—'}</dd></div>
+                    <dl className="mt-5 grid gap-6 sm:grid-cols-2">
+                        <Field label="Category">
+                            <span className="capitalize">{payout.category}</span>
+                        </Field>
+                        <Field label={`Amount (${iqd})`}>
+                            <MoneyAmount value={payout.amount_iqd ?? payout.amount_usd} label={payout.amount_iqd != null ? iqd : 'USD'} size="lg" />
+                        </Field>
+                        <Field label="Amount USD">
+                            <span dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.amount_usd}</span>
+                        </Field>
+                        <Field label="Holdback">
+                            <span dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.retention_holdback}</span>
+                        </Field>
+                        <Field label="Worker">{payout.worker?.name || '—'}</Field>
                     </dl>
-                    {(payout.retention_holds || []).length > 0 && (
-                        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <h3 className="font-semibold text-sm">Retention holds</h3>
-                            <ul className="mt-2 space-y-1 text-sm">
+                </DataPanel>
+
+                {(payout.retention_holds || []).length > 0 && (
+                    <DataPanel title="Retention holds" padded={false}>
+                        <DataTable caption="Retention holds" minWidth="28rem">
+                            <thead>
+                                <tr>
+                                    <Th>#</Th>
+                                    <Th align="end">Amount USD</Th>
+                                    <Th>Status</Th>
+                                    <Th>Matures</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {payout.retention_holds.map((h) => (
-                                    <li key={h.id}>#{h.id}: {h.amount_usd} USD · {h.status} · matures {h.maturity_date}</li>
+                                    <tr key={h.id}>
+                                        <Td>{h.id}</Td>
+                                        <Td align="end">
+                                            <span dir="ltr" className="tabular-nums">{h.amount_usd}</span>
+                                        </Td>
+                                        <Td>{h.status}</Td>
+                                        <Td muted>{h.maturity_date}</Td>
+                                    </tr>
                                 ))}
-                            </ul>
-                        </div>
-                    )}
-                    {(payout.penalties || []).length > 0 && (
-                        <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                            <h3 className="font-semibold text-sm">Linked penalties</h3>
-                            <ul className="mt-2 space-y-1 text-sm">
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+                )}
+
+                {(payout.penalties || []).length > 0 && (
+                    <DataPanel title="Linked penalties" padded={false}>
+                        <DataTable caption="Linked penalties" minWidth="28rem">
+                            <thead>
+                                <tr>
+                                    <Th>#</Th>
+                                    <Th align="end">Amount</Th>
+                                    <Th>Status</Th>
+                                    <Th>Note</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 {payout.penalties.map((pen) => (
-                                    <li key={pen.id}>
-                                        <Link href={route('penalties.show', pen.id)} className="text-emerald-700 underline dark:text-emerald-400">
-                                            #{pen.id}
-                                        </Link>
-                                        : {pen.amount_usd} · {pen.status}
-                                        {pen.deducted_from_payout ? ' · deducted' : ''}
-                                    </li>
+                                    <tr key={pen.id}>
+                                        <Td>
+                                            <Link href={route('penalties.show', pen.id)} className="text-emerald-700 underline dark:text-emerald-400">
+                                                #{pen.id}
+                                            </Link>
+                                        </Td>
+                                        <Td align="end">
+                                            <span dir="ltr" className="tabular-nums">{pen.amount_usd}</span>
+                                        </Td>
+                                        <Td>{pen.status}</Td>
+                                        <Td muted>{pen.deducted_from_payout ? 'deducted' : '—'}</Td>
+                                    </tr>
                                 ))}
-                            </ul>
-                        </div>
-                    )}
-                </div>
-            </div>
+                            </tbody>
+                        </DataTable>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

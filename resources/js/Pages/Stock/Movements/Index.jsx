@@ -1,7 +1,14 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, router } from '@inertiajs/react';
+
+const selectClass =
+    'rounded-md border-slate-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Index({ movements, filters, items, projects }) {
     const list = movements || [];
@@ -16,11 +23,11 @@ export default function Index({ movements, filters, items, projects }) {
             header={<PageHeader title={t('stock_movements')} subtitle={t('stock_movements_hint')} />}
         >
             <Head title={t('stock_movements')} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-4 px-4 sm:px-6 lg:px-8">
+            <PageShell>
+                <DataPanel>
                     <div className="flex flex-wrap gap-3">
                         <select
-                            className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
+                            className={selectClass}
                             value={filters?.type || ''}
                             onChange={(e) => apply({ type: e.target.value })}
                         >
@@ -29,7 +36,7 @@ export default function Index({ movements, filters, items, projects }) {
                             <option value="out">OUT</option>
                         </select>
                         <select
-                            className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
+                            className={selectClass}
                             value={filters?.stock_item_id || ''}
                             onChange={(e) => apply({ stock_item_id: e.target.value })}
                         >
@@ -41,7 +48,7 @@ export default function Index({ movements, filters, items, projects }) {
                             ))}
                         </select>
                         <select
-                            className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
+                            className={selectClass}
                             value={filters?.project_id || ''}
                             onChange={(e) => apply({ project_id: e.target.value })}
                         >
@@ -53,47 +60,49 @@ export default function Index({ movements, filters, items, projects }) {
                             ))}
                         </select>
                     </div>
-                    <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                        <table className="min-w-full text-sm">
-                            <thead className="border-b text-xs uppercase text-slate-500">
+                </DataPanel>
+
+                {list.length === 0 ? (
+                    <EmptyState title={t('no_stock_movements')} description={t('stock_movements_hint')} />
+                ) : (
+                    <DataPanel padded={false}>
+                        <DataTable minWidth="48rem" caption={t('stock_movements')}>
+                            <thead>
                                 <tr>
-                                    <th className="px-3 py-2 text-start">{t('type')}</th>
-                                    <th className="px-3 py-2 text-start">{t('product')}</th>
-                                    <th className="px-3 py-2 text-start">{t('quantity')}</th>
-                                    <th className="px-3 py-2 text-start">{t('date')}</th>
-                                    <th className="px-3 py-2 text-start">{t('user')}</th>
-                                    <th className="px-3 py-2 text-start">{t('project')}</th>
-                                    <th className="px-3 py-2 text-start">{t('reference')}</th>
-                                    <th className="px-3 py-2 text-start">{t('qty_change')}</th>
+                                    <Th>{t('type')}</Th>
+                                    <Th>{t('product')}</Th>
+                                    <Th align="end">{t('quantity')}</Th>
+                                    <Th>{t('date')}</Th>
+                                    <Th>{t('user')}</Th>
+                                    <Th>{t('project')}</Th>
+                                    <Th>{t('reference')}</Th>
+                                    <Th align="end">{t('qty_change')}</Th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tbody>
                                 {list.map((m) => (
                                     <tr key={m.id}>
-                                        <td className="px-3 py-2 uppercase">{m.type}</td>
-                                        <td className="px-3 py-2">{m.item?.name || '—'}</td>
-                                        <td className="px-3 py-2 tabular-nums">{m.quantity}</td>
-                                        <td className="px-3 py-2">{m.moved_on}</td>
-                                        <td className="px-3 py-2">{m.user?.name || '—'}</td>
-                                        <td className="px-3 py-2">{m.project?.name || '—'}</td>
-                                        <td className="px-3 py-2">{m.reference || m.invoice_ref || '—'}</td>
-                                        <td className="px-3 py-2 tabular-nums">
+                                        <Td className="uppercase">{m.type}</Td>
+                                        <Td>{m.item?.name || '—'}</Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {m.quantity}
+                                        </Td>
+                                        <Td muted className="tabular-nums">
+                                            {m.moved_on}
+                                        </Td>
+                                        <Td muted>{m.user?.name || '—'}</Td>
+                                        <Td muted>{m.project?.name || '—'}</Td>
+                                        <Td muted>{m.reference || m.invoice_ref || '—'}</Td>
+                                        <Td align="end" className="tabular-nums">
                                             {m.previous_qty} → {m.new_qty}
-                                        </td>
+                                        </Td>
                                     </tr>
                                 ))}
-                                {!list.length && (
-                                    <tr>
-                                        <td colSpan={8} className="px-3 py-8 text-center text-slate-500">
-                                            {t('no_stock_movements')}
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                        </DataTable>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

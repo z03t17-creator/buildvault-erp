@@ -7,6 +7,8 @@ import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, useForm } from '@inertiajs/react';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 
 export default function Edit({ supplier }) {
     const t = useTranslations();
@@ -32,13 +34,14 @@ export default function Edit({ supplier }) {
             }
         >
             <Head title={t('edit_supplier')} />
-            <div className="py-8">
+            <PageShell narrow>
+                <DataPanel>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         put(route('stock.suppliers.update', supplier.id));
                     }}
-                    className="mx-auto max-w-xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                    className="space-y-5 dark:"
                 >
                     {['name', 'contact_name', 'phone', 'email'].map((field) => (
                         <div key={field}>
@@ -64,7 +67,8 @@ export default function Edit({ supplier }) {
                     </div>
                     <PrimaryButton disabled={processing}>{t('update')}</PrimaryButton>
                 </form>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

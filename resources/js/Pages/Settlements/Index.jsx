@@ -1,3 +1,5 @@
+import DataPanel from '@/Components/DataPanel';
+import FlashBanner from '@/Components/FlashBanner';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -24,7 +26,6 @@ export default function Index({ settlement, canSave, filters }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const page = usePage();
-    const flash = page.props.flash || {};
     const errors = page.props.errors || {};
 
     const s = settlement || {};
@@ -84,48 +85,43 @@ export default function Index({ settlement, canSave, filters }) {
             <Head title={t('monthly_settlement')} />
 
             <PageShell className="!space-y-8" narrow>
-                    {flash.success && (
-                        <p className="rounded-lg border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
-                            {flash.success}
-                        </p>
-                    )}
-
-                    {/* Filters — one clean row */}
-                    <section className="flex flex-wrap items-end gap-3">
-                        <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
-                            <span>{t('month')}</span>
-                            <input
-                                type="month"
-                                className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
-                                value={form.data.month}
-                                onChange={(e) => {
-                                    form.setData('month', e.target.value);
-                                    applyFilters({ month: e.target.value });
-                                }}
-                            />
-                        </label>
-                        <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
-                            <span>{t('project')}</span>
-                            <select
-                                className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
-                                value={form.data.project_id || ''}
-                                onChange={(e) => {
-                                    form.setData('project_id', e.target.value);
-                                    applyFilters({ project_id: e.target.value });
-                                }}
-                            >
-                                <option value="">{t('all_projects')}</option>
-                                {(s.projects || []).map((p) => (
-                                    <option key={p.id} value={p.id}>
-                                        {p.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </label>
-                        <p className="ms-auto text-xs text-slate-500 tabular-nums">
-                            {s.from} → {s.to}
-                        </p>
-                    </section>
+                    <DataPanel>
+                        <div className="flex flex-wrap items-end gap-3">
+                            <label className="flex flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
+                                <span>{t('month')}</span>
+                                <input
+                                    type="month"
+                                    className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
+                                    value={form.data.month}
+                                    onChange={(e) => {
+                                        form.setData('month', e.target.value);
+                                        applyFilters({ month: e.target.value });
+                                    }}
+                                />
+                            </label>
+                            <label className="flex min-w-[12rem] flex-1 flex-col gap-1 text-sm text-slate-600 dark:text-slate-300">
+                                <span>{t('project')}</span>
+                                <select
+                                    className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
+                                    value={form.data.project_id || ''}
+                                    onChange={(e) => {
+                                        form.setData('project_id', e.target.value);
+                                        applyFilters({ project_id: e.target.value });
+                                    }}
+                                >
+                                    <option value="">{t('all_projects')}</option>
+                                    {(s.projects || []).map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </label>
+                            <p className="ms-auto text-xs tabular-nums text-slate-500">
+                                {s.from} → {s.to}
+                            </p>
+                        </div>
+                    </DataPanel>
 
                     {/* Hero result */}
                     <section
@@ -252,18 +248,15 @@ export default function Index({ settlement, canSave, filters }) {
                         </div>
 
                         {blocked && (
-                            <div
-                                role="alert"
-                                className="border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-100"
-                            >
-                                <p className="font-semibold">{t('payout_blocked')}</p>
+                            <FlashBanner tone="error">
+                                <span className="font-semibold">{t('payout_blocked')}</span>
                                 {(ability.reasons || []).map((reason) => (
-                                    <p key={reason} className="mt-1">
+                                    <span key={reason} className="mt-1 block">
                                         {reason}
-                                    </p>
+                                    </span>
                                 ))}
                                 {ability.shortfall_iqd > 0 && (
-                                    <p className="mt-2">
+                                    <span className="mt-2 block">
                                         {t('shortfall')}:{' '}
                                         <MoneyAmount
                                             value={ability.shortfall_iqd}
@@ -271,15 +264,13 @@ export default function Index({ settlement, canSave, filters }) {
                                             size="sm"
                                             className="text-rose-800 dark:text-rose-200"
                                         />
-                                    </p>
+                                    </span>
                                 )}
-                            </div>
+                            </FlashBanner>
                         )}
 
                         {!blocked && ability.requested_payout_iqd > 0 && (
-                            <p className="border border-emerald-300 bg-emerald-50 px-4 py-2 text-sm text-emerald-900 dark:border-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-100">
-                                {t('payout_allowed')}
-                            </p>
+                            <FlashBanner tone="success">{t('payout_allowed')}</FlashBanner>
                         )}
 
                         {(errors.requested_payout_iqd || errors.month) && (

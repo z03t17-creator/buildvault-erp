@@ -1,8 +1,11 @@
+import DataPanel from '@/Components/DataPanel';
+import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import MoneyAmount from '@/Components/MoneyAmount';
 import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -10,6 +13,19 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router, useForm } from '@inertiajs/react';
+
+function Field({ label, children }) {
+    return (
+        <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                {label}
+            </dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">
+                {children}
+            </dd>
+        </div>
+    );
+}
 
 export default function Show({ advance }) {
     const t = useTranslations();
@@ -52,78 +68,69 @@ export default function Show({ advance }) {
             }
         >
             <Head title={`${t('advance')} #${advance.id}`} />
-            <div className="py-8">
-                <div className="mx-auto max-w-2xl space-y-4 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70">
+            <PageShell narrow>
+                <DataPanel>
                     <StatusBadge status={advance.status} />
-                    <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('amount_iqd')}</dt>
-                            <dd>
-                                <MoneyAmount value={advance.amount_iqd} label={iqd} size="lg" />
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('remaining_iqd')}</dt>
-                            <dd>
-                                <MoneyAmount
-                                    value={advance.remaining_iqd}
-                                    label={iqd}
-                                    size="lg"
-                                    className="text-amber-700 dark:text-amber-300"
-                                />
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('date')}</dt>
-                            <dd>{advance.advanced_on}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('project')}</dt>
-                            <dd>{advance.project?.name || '—'}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('repayment_method')}</dt>
-                            <dd>{t(`repay_${advance.repayment_method}`) || advance.repayment_method}</dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase text-slate-400">{t('entered_by')}</dt>
-                            <dd>{advance.enteredBy?.name || advance.entered_by?.name || '—'}</dd>
-                        </div>
+                    <dl className="mt-5 grid gap-6 sm:grid-cols-2">
+                        <Field label={`${t('amount_iqd')} (${iqd})`}>
+                            <MoneyAmount value={advance.amount_iqd} label={iqd} size="lg" showLabel={false} />
+                        </Field>
+                        <Field label={`${t('remaining_iqd')} (${iqd})`}>
+                            <MoneyAmount
+                                value={advance.remaining_iqd}
+                                label={iqd}
+                                size="lg"
+                                showLabel={false}
+                                className="text-amber-700 dark:text-amber-300"
+                            />
+                        </Field>
+                        <Field label={t('date')}>{advance.advanced_on}</Field>
+                        <Field label={t('project')}>{advance.project?.name || '—'}</Field>
+                        <Field label={t('repayment_method')}>
+                            {t(`repay_${advance.repayment_method}`) || advance.repayment_method}
+                        </Field>
+                        <Field label={t('entered_by')}>
+                            {advance.enteredBy?.name || advance.entered_by?.name || '—'}
+                        </Field>
                         <div className="sm:col-span-2">
-                            <dt className="text-xs uppercase text-slate-400">{t('reason')}</dt>
-                            <dd>{advance.reason}</dd>
+                            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('reason')}</dt>
+                            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{advance.reason}</dd>
                         </div>
                         {advance.notes && (
                             <div className="sm:col-span-2">
-                                <dt className="text-xs uppercase text-slate-400">{t('notes')}</dt>
-                                <dd>{advance.notes}</dd>
+                                <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{t('notes')}</dt>
+                                <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{advance.notes}</dd>
                             </div>
                         )}
                     </dl>
 
                     {canRepay && advance.status === 'open' && Number(advance.remaining_iqd) > 0 && (
                         <form
-                            className="mt-4 flex flex-wrap items-end gap-3 border-t border-slate-200 pt-4 dark:border-slate-700"
+                            className="mt-6 space-y-5 border-t border-slate-200/80 pt-5 dark:border-slate-700/80"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 repayForm.post(route('advances.repay', advance.id));
                             }}
                         >
-                            <div>
-                                <InputLabel value={t('repay_amount_iqd')} />
-                                <MoneyInput
-                                    className="mt-1 block w-48"
-                                    value={repayForm.data.amount_iqd}
-                                    onValueChange={(raw) => repayForm.setData('amount_iqd', raw)}
-                                    required
-                                />
-                                <InputError message={repayForm.errors.amount_iqd} className="mt-1" />
-                            </div>
-                            <PrimaryButton disabled={repayForm.processing}>{t('record_repayment')}</PrimaryButton>
+                            <FormSection>
+                                <FormField>
+                                    <InputLabel value={`${t('repay_amount_iqd')} (${iqd})`} />
+                                    <MoneyInput
+                                        className="mt-1 block w-full max-w-xs"
+                                        value={repayForm.data.amount_iqd}
+                                        onValueChange={(raw) => repayForm.setData('amount_iqd', raw)}
+                                        required
+                                    />
+                                    <InputError message={repayForm.errors.amount_iqd} className="mt-1" />
+                                </FormField>
+                            </FormSection>
+                            <FormActions>
+                                <PrimaryButton disabled={repayForm.processing}>{t('record_repayment')}</PrimaryButton>
+                            </FormActions>
                         </form>
                     )}
-                </div>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

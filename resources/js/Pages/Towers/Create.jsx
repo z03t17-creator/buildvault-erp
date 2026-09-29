@@ -4,6 +4,8 @@ import PageHeader from '@/Components/PageHeader';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import PageShell from '@/Components/PageShell';
+import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -27,13 +29,14 @@ export default function Create({ project }) {
             }
         >
             <Head title={t('create_tower')} />
-            <div className="py-8">
+            <PageShell narrow>
+                <DataPanel>
                 <form
                     onSubmit={(e) => {
                         e.preventDefault();
                         post(route('projects.towers.store', project.id));
                     }}
-                    className="mx-auto max-w-lg space-y-5 border border-slate-200/80 bg-white/80 p-6 dark:border-slate-700 dark:bg-slate-900/70"
+                    className="space-y-5"
                 >
                     <div>
                         <InputLabel htmlFor="name" value={t('name')} />
@@ -42,7 +45,8 @@ export default function Create({ project }) {
                     </div>
                     <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
                 </form>
-            </div>
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

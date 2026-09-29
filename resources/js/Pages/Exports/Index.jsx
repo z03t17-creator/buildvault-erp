@@ -1,6 +1,10 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import InputLabel from '@/Components/InputLabel';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
@@ -36,150 +40,154 @@ export default function Index({ projects, workers, payouts, default_month }) {
         >
             <Head title="Exports" />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    <section className="bv-surface grid gap-4 p-5 sm:grid-cols-2">
+            <PageShell>
+                <div className="grid gap-6 lg:grid-cols-2">
+                    <DataPanel
+                        title="Per-project Excel"
+                        subtitle="Sheets: payouts, insurance holds, documents."
+                    >
                         <div>
-                            <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                                Per-project Excel
-                            </h3>
-                            <p className="mt-1 text-sm text-slate-500">
-                                Sheets: payouts, insurance holds, documents.
-                            </p>
-                            <div className="mt-4">
-                                <InputLabel value="Project" />
+                            <InputLabel value="Project" />
+                            <select
+                                className={selectClass}
+                                value={projectId}
+                                onChange={(e) => setProjectId(e.target.value)}
+                            >
+                                {projectList.length === 0 && <option value="">No projects</option>}
+                                {projectList.map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                        <div className="mt-4">
+                            <a
+                                href={projectId ? route('exports.project', projectId) : '#'}
+                                className={!projectId ? 'pointer-events-none opacity-50' : ''}
+                            >
+                                <PrimaryButton type="button" disabled={!projectId}>
+                                    Download Excel
+                                </PrimaryButton>
+                            </a>
+                        </div>
+                    </DataPanel>
+
+                    <DataPanel
+                        title="Per-worker PDF"
+                        subtitle="Profile, photo/ID refs, payroll summary for the month."
+                    >
+                        <div className="grid gap-3 sm:grid-cols-2">
+                            <div>
+                                <InputLabel value="Worker" />
                                 <select
                                     className={selectClass}
-                                    value={projectId}
-                                    onChange={(e) => setProjectId(e.target.value)}
+                                    value={workerId}
+                                    onChange={(e) => setWorkerId(e.target.value)}
                                 >
-                                    {projectList.length === 0 && <option value="">No projects</option>}
-                                    {projectList.map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name}
+                                    {workerList.length === 0 && <option value="">No workers</option>}
+                                    {workerList.map((w) => (
+                                        <option key={w.id} value={w.id}>
+                                            {w.name}
+                                            {w.project ? ` · ${w.project.name}` : ''}
                                         </option>
                                     ))}
                                 </select>
                             </div>
-                            <div className="mt-4">
-                                <a
-                                    href={projectId ? route('exports.project', projectId) : '#'}
-                                    className={!projectId ? 'pointer-events-none opacity-50' : ''}
-                                >
-                                    <PrimaryButton type="button" disabled={!projectId}>
-                                        Download Excel
-                                    </PrimaryButton>
-                                </a>
+                            <div>
+                                <InputLabel value="Month" />
+                                <input
+                                    type="month"
+                                    className={selectClass}
+                                    value={month}
+                                    onChange={(e) => setMonth(e.target.value)}
+                                />
                             </div>
                         </div>
-
-                        <div>
-                            <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                                Per-worker PDF
-                            </h3>
-                            <p className="mt-1 text-sm text-slate-500">
-                                Profile, photo/ID refs, payroll summary for the month.
+                        {selectedWorker && (
+                            <p className="mt-2 text-xs text-slate-500">
+                                Role: {selectedWorker.role}
                             </p>
-                            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                                <div>
-                                    <InputLabel value="Worker" />
-                                    <select
-                                        className={selectClass}
-                                        value={workerId}
-                                        onChange={(e) => setWorkerId(e.target.value)}
-                                    >
-                                        {workerList.length === 0 && <option value="">No workers</option>}
-                                        {workerList.map((w) => (
-                                            <option key={w.id} value={w.id}>
-                                                {w.name}
-                                                {w.project ? ` · ${w.project.name}` : ''}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
-                                <div>
-                                    <InputLabel value="Month" />
-                                    <input
-                                        type="month"
-                                        className={selectClass}
-                                        value={month}
-                                        onChange={(e) => setMonth(e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                            {selectedWorker && (
-                                <p className="mt-2 text-xs text-slate-500">
-                                    Role: {selectedWorker.role}
-                                </p>
-                            )}
-                            <div className="mt-4">
-                                <a
-                                    href={
-                                        workerId
-                                            ? `${route('exports.worker', workerId)}${month ? `?month=${month}` : ''}`
-                                            : '#'
-                                    }
-                                    className={!workerId ? 'pointer-events-none opacity-50' : ''}
-                                >
-                                    <PrimaryButton type="button" disabled={!workerId}>
-                                        Download PDF
-                                    </PrimaryButton>
-                                </a>
-                            </div>
-                        </div>
-                    </section>
-
-                    <section className="bv-surface p-5">
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            Payout vouchers
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500">
-                            Dual-currency PDF vouchers (USD + IQD) with localized labels.
-                        </p>
-                        {payoutList.length === 0 ? (
-                            <p className="mt-4 text-sm text-slate-500">No payouts yet.</p>
-                        ) : (
-                            <div className="bv-table-wrap mt-4">
-                                <table className="bv-table min-w-[40rem]">
-                                    <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
-                                        <tr>
-                                            <th className="px-3 py-2 text-start">ID</th>
-                                            <th className="px-3 py-2 text-start">Project</th>
-                                            <th className="px-3 py-2 text-start">Worker</th>
-                                            <th className="px-3 py-2 text-start">Category</th>
-                                            <th className="px-3 py-2 text-start">USD / IQD</th>
-                                            <th className="px-3 py-2 text-start">Status</th>
-                                            <th className="px-3 py-2 text-start"></th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                        {payoutList.map((p) => (
-                                            <tr key={p.id}>
-                                                <td className="px-3 py-2 tabular-nums">#{p.id}</td>
-                                                <td className="px-3 py-2">{p.project?.name || '—'}</td>
-                                                <td className="px-3 py-2">{p.worker?.name || '—'}</td>
-                                                <td className="px-3 py-2">{p.category}</td>
-                                                <td className="px-3 py-2">
-                                                    <MoneyAmount value={p.amount_iqd} label="IQD" size="md" />
-                                                    <div dir="ltr" className="text-xs text-slate-500 tabular-nums">
-                                                        ${Number(p.amount_usd).toFixed(2)} USD
-                                                    </div>
-                                                </td>
-                                                <td className="px-3 py-2"><StatusBadge status={p.status} /></td>
-                                                <td className="px-3 py-2 text-end">
-                                                    <a href={route('exports.voucher', p.id)}>
-                                                        <SecondaryButton type="button">Voucher PDF</SecondaryButton>
-                                                    </a>
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
                         )}
-                    </section>
+                        <div className="mt-4">
+                            <a
+                                href={
+                                    workerId
+                                        ? `${route('exports.worker', workerId)}${month ? `?month=${month}` : ''}`
+                                        : '#'
+                                }
+                                className={!workerId ? 'pointer-events-none opacity-50' : ''}
+                            >
+                                <PrimaryButton type="button" disabled={!workerId}>
+                                    Download PDF
+                                </PrimaryButton>
+                            </a>
+                        </div>
+                    </DataPanel>
                 </div>
-            </div>
+
+                <DataPanel
+                    title="Payout vouchers"
+                    subtitle="Dual-currency PDF vouchers (USD + IQD) with localized labels."
+                    padded={false}
+                >
+                    {payoutList.length === 0 ? (
+                        <div className="p-5">
+                            <EmptyState title="No payouts yet." />
+                        </div>
+                    ) : (
+                        <DataTable minWidth="40rem" caption="Payout vouchers">
+                            <thead>
+                                <tr>
+                                    <Th>ID</Th>
+                                    <Th>Project</Th>
+                                    <Th>Worker</Th>
+                                    <Th>Category</Th>
+                                    <Th align="end">IQD</Th>
+                                    <Th>Status</Th>
+                                    <Th align="end" />
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {payoutList.map((p) => (
+                                    <tr key={p.id}>
+                                        <Td muted className="tabular-nums">
+                                            #{p.id}
+                                        </Td>
+                                        <Td>{p.project?.name || '—'}</Td>
+                                        <Td>{p.worker?.name || '—'}</Td>
+                                        <Td muted>{p.category}</Td>
+                                        <Td align="end">
+                                            <MoneyAmount
+                                                value={p.amount_iqd}
+                                                label="IQD"
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                            <div
+                                                dir="ltr"
+                                                className="text-xs tabular-nums text-slate-500"
+                                            >
+                                                ${Number(p.amount_usd).toFixed(2)} USD
+                                            </div>
+                                        </Td>
+                                        <Td>
+                                            <StatusBadge status={p.status} />
+                                        </Td>
+                                        <Td align="end">
+                                            <a href={route('exports.voucher', p.id)}>
+                                                <SecondaryButton type="button">
+                                                    Voucher PDF
+                                                </SecondaryButton>
+                                            </a>
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    )}
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

@@ -1,5 +1,9 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import TextInput from '@/Components/TextInput';
@@ -51,18 +55,11 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
             }
         >
             <Head title={t('insurance_holds')} />
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-8 px-4 sm:px-6 lg:px-8">
-                    {canRetention && (
-                    <section className="bv-surface p-4 sm:p-5">
-                        <h3 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
-                            {t('insurance_settings')}
-                        </h3>
-                        <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                            {t('insurance_settings_hint')}
-                        </p>
+            <PageShell className="!space-y-8">
+                {canRetention && (
+                    <DataPanel title={t('insurance_settings')} subtitle={t('insurance_settings_hint')}>
                         <form
-                            className="mt-4 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end"
+                            className="flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:items-end"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 form.put(route('retention-holds.settings'), { preserveScroll: true });
@@ -100,103 +97,126 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                                 {t('save_settings')}
                             </PrimaryButton>
                         </form>
-                    </section>
-                    )}
+                    </DataPanel>
+                )}
 
-                    {canRetention && ready.length > 0 && (
-                        <section className="border border-amber-300/80 bg-amber-50/90 p-4 dark:border-amber-700/60 dark:bg-amber-950/40">
-                            <h3 className="font-semibold text-amber-950 dark:text-amber-100">
-                                {t('matured_release_heading')}
-                            </h3>
-                            <ul className="mt-3 space-y-2 text-sm">
-                                {ready.map((h) => (
-                                    <li key={h.id} className="flex flex-wrap items-center justify-between gap-2">
-                                        <span>
-                                            #{h.id} {h.worker?.name} · {amountIqd(h)}
-                                        </span>
-                                        <PrimaryButton
-                                            type="button"
-                                            onClick={() => router.post(route('retention-holds.release', h.id))}
-                                        >
-                                            {t('release')}
-                                        </PrimaryButton>
-                                    </li>
-                                ))}
-                            </ul>
-                        </section>
-                    )}
+                {canRetention && ready.length > 0 && (
+                    <DataPanel title={t('matured_release_heading')}>
+                        <ul className="space-y-2 text-sm">
+                            {ready.map((h) => (
+                                <li
+                                    key={h.id}
+                                    className="flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <span>
+                                        #{h.id} {h.worker?.name} · {amountIqd(h)}
+                                    </span>
+                                    <PrimaryButton
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(route('retention-holds.release', h.id))
+                                        }
+                                    >
+                                        {t('release')}
+                                    </PrimaryButton>
+                                </li>
+                            ))}
+                        </ul>
+                    </DataPanel>
+                )}
 
-                    <div className="overflow-x-auto border border-slate-200/80 bg-white/80 dark:border-slate-700 dark:bg-slate-900/70">
-                        <table className="min-w-full text-sm">
-                            <thead className="border-b border-slate-200 text-xs uppercase tracking-wider text-slate-500 dark:border-slate-800">
+                {list.length === 0 ? (
+                    <EmptyState title={t('no_insurance_holds')} />
+                ) : (
+                    <DataPanel padded={false}>
+                        <DataTable minWidth="64rem">
+                            <thead>
                                 <tr>
-                                    <th className="px-3 py-2 text-start">{t('col_id')}</th>
-                                    <th className="px-3 py-2 text-start">{t('Worker')}</th>
-                                    <th className="px-3 py-2 text-start">{t('Project')}</th>
-                                    <th className="px-3 py-2 text-start">{t('pay_period')}</th>
-                                    <th className="px-3 py-2 text-start">{t('holdback_percent')}</th>
-                                    <th className="px-3 py-2 text-start">{t('Amount')}</th>
-                                    <th className="px-3 py-2 text-start">{t('hold_start')}</th>
-                                    <th className="px-3 py-2 text-start">{t('matures')}</th>
-                                    <th className="px-3 py-2 text-start">{t('Status')}</th>
-                                    <th className="px-3 py-2 text-start">{t('released_amount')}</th>
-                                    <th className="px-3 py-2 text-start">{t('action')}</th>
+                                    <Th>{t('col_id')}</Th>
+                                    <Th>{t('worker')}</Th>
+                                    <Th>{t('project')}</Th>
+                                    <Th>{t('pay_period')}</Th>
+                                    <Th align="end">{t('holdback_percent')}</Th>
+                                    <Th align="end">{t('amount_iqd')}</Th>
+                                    <Th>{t('hold_start')}</Th>
+                                    <Th>{t('matures')}</Th>
+                                    <Th>{t('status')}</Th>
+                                    <Th align="end">
+                                        {t('released_amount')} ({iqd})
+                                    </Th>
+                                    <Th>{t('action')}</Th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                            <tbody>
                                 {list.map((h) => (
                                     <tr key={h.id}>
-                                        <td className="px-3 py-2">#{h.id}</td>
-                                        <td className="px-3 py-2">{h.worker?.name || '—'}</td>
-                                        <td className="px-3 py-2">{h.project?.name || '—'}</td>
-                                        <td className="px-3 py-2 tabular-nums">{h.pay_period || '—'}</td>
-                                        <td className="px-3 py-2 tabular-nums">
-                                            {h.hold_pct != null ? `${Number(h.hold_pct).toFixed(0)}%` : '—'}
-                                        </td>
-                                        <td className="px-3 py-2"><MoneyAmount value={amountValue(h)} label={iqd} size="md" /></td>
-                                        <td className="px-3 py-2">{h.hold_start}</td>
-                                        <td className="px-3 py-2">{h.maturity_date}</td>
-                                        <td className="px-3 py-2"><StatusBadge status={h.status} /></td>
-                                        <td className="px-3 py-2 tabular-nums">
+                                        <Td muted className="tabular-nums">
+                                            #{h.id}
+                                        </Td>
+                                        <Td>{h.worker?.name || '—'}</Td>
+                                        <Td muted>{h.project?.name || '—'}</Td>
+                                        <Td muted className="tabular-nums">
+                                            {h.pay_period || '—'}
+                                        </Td>
+                                        <Td align="end" className="tabular-nums">
+                                            {h.hold_pct != null
+                                                ? `${Number(h.hold_pct).toFixed(0)}%`
+                                                : '—'}
+                                        </Td>
+                                        <Td align="end">
+                                            <MoneyAmount
+                                                value={amountValue(h)}
+                                                label={iqd}
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
+                                        <Td muted>{h.hold_start}</Td>
+                                        <Td muted>{h.maturity_date}</Td>
+                                        <Td>
+                                            <StatusBadge status={h.status} />
+                                        </Td>
+                                        <Td align="end">
                                             {h.released_amount_usd != null ? (
                                                 <MoneyAmount
                                                     value={
-                                                        h.released_amount_iqd
-                                                            ?? Math.round(Number(h.released_amount_usd) * Number(rate || 1310))
+                                                        h.released_amount_iqd ??
+                                                        Math.round(
+                                                            Number(h.released_amount_usd) *
+                                                                Number(rate || 1310),
+                                                        )
                                                     }
                                                     label={iqd}
-                                                    size="md"
+                                                    size="sm"
+                                                    showLabel={false}
                                                 />
                                             ) : (
                                                 '—'
                                             )}
-                                        </td>
-                                        <td className="px-3 py-2">
+                                        </Td>
+                                        <Td>
                                             {canRetention && h.status === 'matured' ? (
                                                 <PrimaryButton
                                                     type="button"
-                                                    onClick={() => router.post(route('retention-holds.release', h.id))}
+                                                    onClick={() =>
+                                                        router.post(
+                                                            route('retention-holds.release', h.id),
+                                                        )
+                                                    }
                                                 >
                                                     {t('release')}
                                                 </PrimaryButton>
                                             ) : (
                                                 <span className="text-slate-400">—</span>
                                             )}
-                                        </td>
+                                        </Td>
                                     </tr>
                                 ))}
-                                {!list.length && (
-                                    <tr>
-                                        <td colSpan={11} className="px-3 py-8 text-center text-slate-500">
-                                            {t('no_insurance_holds')}
-                                        </td>
-                                    </tr>
-                                )}
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                        </DataTable>
+                    </DataPanel>
+                )}
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

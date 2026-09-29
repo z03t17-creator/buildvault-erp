@@ -1,5 +1,10 @@
+import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
+import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
@@ -36,6 +41,8 @@ export default function Log({ entries, filters, actions, users }) {
         router.get(route('audit.index'), {}, { preserveState: true, replace: true });
     };
 
+    const rows = entries || [];
+
     return (
         <AuthenticatedLayout
             header={
@@ -47,11 +54,11 @@ export default function Log({ entries, filters, actions, users }) {
         >
             <Head title="Audit log" />
 
-            <div className="py-8">
-                <div className="mx-auto max-w-7xl space-y-6 px-4 sm:px-6 lg:px-8">
+            <PageShell>
+                <DataPanel title="Filters">
                     <form
                         onSubmit={apply}
-                        className="bv-surface grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5"
+                        className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5"
                     >
                         <div>
                             <InputLabel value="Action" />
@@ -102,62 +109,47 @@ export default function Log({ entries, filters, actions, users }) {
                             />
                         </div>
                         <div className="flex items-end gap-2">
-                            <button
-                                type="submit"
-                                className="inline-flex items-center rounded-md bg-emerald-700 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-600"
-                            >
-                                Filter
-                            </button>
+                            <PrimaryButton type="submit">Filter</PrimaryButton>
                             <SecondaryButton type="button" onClick={clear}>
                                 Clear
                             </SecondaryButton>
                         </div>
                     </form>
+                </DataPanel>
 
-                    <div className="bv-surface overflow-x-auto">
-                        <table className="min-w-full divide-y divide-slate-200 text-sm dark:divide-slate-700">
-                            <thead className="bg-slate-50 dark:bg-slate-900/60">
-                                <tr className="text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                    <th className="px-4 py-3">When</th>
-                                    <th className="px-4 py-3">Action</th>
-                                    <th className="px-4 py-3">User</th>
-                                    <th className="px-4 py-3">Description</th>
+                <DataPanel padded={false}>
+                    {rows.length === 0 ? (
+                        <div className="p-5">
+                            <EmptyState title="No audit entries match these filters." />
+                        </div>
+                    ) : (
+                        <DataTable minWidth="40rem" caption="Audit log">
+                            <thead>
+                                <tr>
+                                    <Th>When</Th>
+                                    <Th>Action</Th>
+                                    <Th>User</Th>
+                                    <Th>Description</Th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                                {(entries || []).length === 0 && (
-                                    <tr>
-                                        <td
-                                            colSpan={4}
-                                            className="px-4 py-8 text-center text-slate-500"
-                                        >
-                                            No audit entries match these filters.
-                                        </td>
-                                    </tr>
-                                )}
-                                {(entries || []).map((row) => (
+                            <tbody>
+                                {rows.map((row) => (
                                     <tr key={row.id}>
-                                        <td className="whitespace-nowrap px-4 py-3 tabular-nums text-slate-600 dark:text-slate-300">
+                                        <Td muted className="whitespace-nowrap tabular-nums">
                                             {row.created_at
                                                 ? new Date(row.created_at).toLocaleString()
                                                 : '—'}
-                                        </td>
-                                        <td className="px-4 py-3 font-medium text-slate-900 dark:text-white">
-                                            {row.action_label}
-                                        </td>
-                                        <td className="px-4 py-3 text-slate-600 dark:text-slate-300">
-                                            {row.user?.name || 'System'}
-                                        </td>
-                                        <td className="px-4 py-3 text-slate-700 dark:text-slate-200">
-                                            {row.description}
-                                        </td>
+                                        </Td>
+                                        <Td className="font-medium">{row.action_label}</Td>
+                                        <Td muted>{row.user?.name || 'System'}</Td>
+                                        <Td>{row.description}</Td>
                                     </tr>
                                 ))}
                             </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
+                        </DataTable>
+                    )}
+                </DataPanel>
+            </PageShell>
         </AuthenticatedLayout>
     );
 }

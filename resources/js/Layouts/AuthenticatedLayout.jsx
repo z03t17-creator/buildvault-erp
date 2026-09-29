@@ -1,5 +1,6 @@
 import BrandMark from '@/Components/BrandMark';
 import Dropdown from '@/Components/Dropdown';
+import FlashBanner from '@/Components/FlashBanner';
 import LocaleSwitcher from '@/Components/LocaleSwitcher';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
@@ -178,11 +179,12 @@ function SidebarNav({ groups, onNavigate }) {
     );
 }
 
-export default function AuthenticatedLayout({ header, children }) {
+export default function AuthenticatedLayout({ header, children, showFlash = true }) {
     const page = usePage();
     const user = page.props.auth.user;
     const allowedNav = new Set(page.props.auth?.nav || []);
     const maturedCount = page.props.alerts?.maturedRetentionCount || 0;
+    const flash = page.props.flash || {};
     const t = useTranslations();
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -354,7 +356,16 @@ export default function AuthenticatedLayout({ header, children }) {
                     )}
                 </header>
 
-                <main className="bv-row-enter flex-1">{children}</main>
+                <main className="bv-row-enter flex-1">
+                    {showFlash && (flash.success || flash.error || flash.warning) && (
+                        <div className="mx-auto max-w-7xl space-y-2 px-4 pt-6 sm:px-6 lg:px-8">
+                            {flash.success && <FlashBanner tone="success">{flash.success}</FlashBanner>}
+                            {flash.error && <FlashBanner tone="error">{flash.error}</FlashBanner>}
+                            {flash.warning && <FlashBanner tone="warning">{flash.warning}</FlashBanner>}
+                        </div>
+                    )}
+                    {children}
+                </main>
             </div>
         </div>
     );
