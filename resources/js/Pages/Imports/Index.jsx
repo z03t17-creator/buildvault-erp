@@ -1,5 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DangerButton from '@/Components/DangerButton';
 import EmptyState from '@/Components/EmptyState';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -9,12 +10,15 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Index({ types, recent, modes }) {
+export default function Index({ types, recent, modes, canImportMayorca, workbookBundled }) {
+    const t = useTranslations();
     const list = types || [];
     const jobs = recent || [];
     const modeOptions = modes || ['partial', 'atomic'];
@@ -25,9 +29,22 @@ export default function Index({ types, recent, modes }) {
         file: null,
     });
 
+    const mayorcaForm = useForm({ confirm_wipe: false });
+
     const submit = (e) => {
         e.preventDefault();
         form.post(route('imports.store'), { forceFormData: true });
+    };
+
+    const runMayorcaImport = () => {
+        if (!window.confirm(t('mayorca_import_confirm'))) {
+            return;
+        }
+        mayorcaForm.transform((data) => ({ ...data, confirm_wipe: true }));
+        mayorcaForm.post(route('admin.mayorca-import'), {
+            preserveScroll: true,
+            onFinish: () => mayorcaForm.setData('confirm_wipe', false),
+        });
     };
 
     return (
@@ -42,6 +59,36 @@ export default function Index({ types, recent, modes }) {
             <Head title="Imports" />
 
             <PageShell>
+                {canImportMayorca && (
+                    <DataPanel
+                        title={t('mayorca_import_panel_title')}
+                        subtitle={t('mayorca_import_panel_hint')}
+                    >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                            <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                                <span className="bv-icon-chip bv-icon-chip-amber mt-0.5">
+                                    <NavIcon name="imports" className="text-base" />
+                                </span>
+                                <p>{t('mayorca_import_panel_body')}</p>
+                            </div>
+                            <DangerButton
+                                type="button"
+                                disabled={mayorcaForm.processing || !workbookBundled}
+                                onClick={runMayorcaImport}
+                            >
+                                {mayorcaForm.processing
+                                    ? t('mayorca_import_running')
+                                    : t('mayorca_import_button')}
+                            </DangerButton>
+                        </div>
+                        {!workbookBundled && (
+                            <p className="mt-3 text-sm text-rose-700 dark:text-rose-300">
+                                {t('mayorca_workbook_missing')}
+                            </p>
+                        )}
+                    </DataPanel>
+                )}
+
                 <DataPanel title="Upload import file">
                     <form onSubmit={submit} className="space-y-4">
                         <div className="grid gap-4 sm:grid-cols-3">

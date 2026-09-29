@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Backup;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Payout;
@@ -11,13 +10,9 @@ use App\Models\Project;
 use App\Models\RetentionHold;
 use App\Models\StockItem;
 use App\Models\Transaction;
-use App\Models\User;
 use App\Models\Vault;
-use App\Support\AuditActions;
 use App\Support\Roles;
 use Database\Seeders\VaultSeeder;
-use Illuminate\Support\Facades\Schema;
-use Spatie\Activitylog\Models\Activity;
 
 /**
  * Phase 14 — role-specific home dashboard payloads (real DB numbers, IQD).
@@ -54,106 +49,94 @@ class RoleHomeDashboardService
      */
     private function superAdmin(): array
     {
-        $active = User::query()->where('status', User::STATUS_ACTIVE)->count();
-        $disabled = User::query()->where('status', User::STATUS_DISABLED)->count();
-        // Legacy rows without status count as active.
-        $legacyActive = User::query()->whereNull('status')->count();
-
-        $lastLogins = User::query()
-            ->whereNotNull('last_login_at')
-            ->orderByDesc('last_login_at')
-            ->limit(8)
-            ->get(['id', 'name', 'email', 'last_login_at', 'status'])
-            ->map(fn (User $u) => [
-                'id' => $u->id,
-                'name' => $u->name,
-                'email' => $u->email,
-                'status' => $u->status ?? User::STATUS_ACTIVE,
-                'last_login_at' => optional($u->last_login_at)?->toIso8601String(),
-            ])
-            ->values()
-            ->all();
-
-        $recentActivity = [];
-        if (Schema::hasTable('activity_log')) {
-            $recentActivity = Activity::query()
-                ->where('log_name', AuditActions::LOG_NAME)
-                ->with('causer:id,name')
-                ->orderByDesc('id')
-                ->limit(8)
-                ->get()
-                ->map(fn (Activity $a) => [
-                    'id' => $a->id,
-                    'event' => $a->event ?? $a->description,
-                    'description' => $a->description,
-                    'created_at' => optional($a->created_at)?->toIso8601String(),
-                    'causer_name' => $a->causer?->name,
-                ])
-                ->values()
-                ->all();
-        }
-
-        $backup = null;
-        if (Schema::hasTable('backups')) {
-            $row = Backup::query()->orderByDesc('id')->first();
-            if ($row) {
-                $backup = [
-                    'id' => $row->id,
-                    'type' => $row->type,
-                    'status' => $row->status,
-                    'filename' => $row->filename,
-                    'finished_at' => optional($row->finished_at)?->toIso8601String(),
-                    'started_at' => optional($row->started_at)?->toIso8601String(),
-                    'message' => $row->message,
-                ];
-            }
-        }
-
         $vault = $this->zhakoVault();
-        $ledgerOk = true;
-        $balances = null;
-        if ($vault) {
-            $balances = $this->ledger->balances($vault);
-            $ledgerOk = (bool) $balances['balance_matches_ledger'];
-        }
-
+        $balances = $vault ? $this->ledger->balances($vault) : null;
         $month = now()->format('Y-m');
-        $settlement = $vault
-            ? $this->settlements->preview($month, null, $vault)
-            : null;
+
+        $spend = $this->spendMixByCurrency($vault?->id);
+
+        $unclassifiedPeople = \App\Models\Worker::query()
+            ->where(function ($q) {
+                $q->where('labor_kind', \App\Models\Worker::LABOR_KIND_UNCLASSIFIED)
+                    ->orWhereNull('labor_kind');
+            })
+            ->count();
 
         $bundledWorkbook = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
 
         return [
-            'users' => User::query()->count(),
-            'users_active' => $active + $legacyActive,
-            'users_disabled' => $disabled,
-            'last_logins' => $lastLogins,
-            'recent_activity' => $recentActivity,
-            'backup' => $backup,
-            'audit_events' => $this->auditEventCount(),
-            'pending_payouts' => Payout::query()->where('status', Payout::STATUS_PENDING)->count(),
-            'matured_holds' => RetentionHold::query()->where('status', RetentionHold::STATUS_MATURED)->count(),
-            'projects' => Project::query()->count(),
-            'people' => \App\Models\Worker::query()->count(),
             'year_month' => $month,
-            'vault_balance_iqd' => $balances['current_iqd'] ?? null,
-            'vault_balance_usd' => $balances['current_usd'] ?? null,
-            'available_iqd' => $balances['available_iqd'] ?? null,
-            'available_usd' => $balances['available_usd'] ?? null,
-            'reserved_insurance_iqd' => $settlement['reserved_insurance_iqd']
-                ?? ($balances['reserved_iqd'] ?? null),
-            'money_received_iqd' => $settlement['money_received_iqd'] ?? null,
+            'available_iqd' => $balances['available_iqd'] ?? 0.0,
+            'available_usd' => $balances['available_usd'] ?? 0.0,
+            'reserved_iqd' => $balances['reserved_iqd'] ?? 0.0,
+            'reserved_usd' => $balances['reserved_usd'] ?? 0.0,
+            'pending_iqd' => $balances['pending_iqd'] ?? 0.0,
+            'pending_usd' => $balances['pending_usd'] ?? 0.0,
+            'charts' => [
+                'available' => [
+                    'usd' => (float) ($balances['available_usd'] ?? 0),
+                    'iqd' => (float) ($balances['available_iqd'] ?? 0),
+                ],
+                'spend_usd' => $spend['usd'],
+                'spend_iqd' => $spend['iqd'],
+                'locked_free' => [
+                    'usd' => [
+                        'locked' => round(
+                            (float) ($balances['reserved_usd'] ?? 0) + (float) ($balances['pending_usd'] ?? 0),
+                            2
+                        ),
+                        'free' => (float) ($balances['available_usd'] ?? 0),
+                    ],
+                    'iqd' => [
+                        'locked' => round(
+                            (float) ($balances['reserved_iqd'] ?? 0) + (float) ($balances['pending_iqd'] ?? 0),
+                            2
+                        ),
+                        'free' => (float) ($balances['available_iqd'] ?? 0),
+                    ],
+                ],
+            ],
+            'unclassified_people' => $unclassifiedPeople,
+            'people' => \App\Models\Worker::query()->count(),
+            'projects' => Project::query()->count(),
             'workbook_bundled' => is_file($bundledWorkbook),
             'workbook_bytes' => is_file($bundledWorkbook) ? filesize($bundledWorkbook) : null,
-            'health' => [
-                'ledger_ok' => $ledgerOk,
-                'pending_payouts' => Payout::query()->where('status', Payout::STATUS_PENDING)->count(),
-                'matured_holds' => RetentionHold::query()->where('status', RetentionHold::STATUS_MATURED)->count(),
-                'has_backup' => $backup !== null,
-                'last_backup_ok' => ($backup['status'] ?? null) === Backup::STATUS_COMPLETED,
-            ],
         ];
+    }
+
+    /**
+     * Native-currency spend buckets — never FX-blended across USD/IQD.
+     *
+     * @return array{usd: array{expenses: float, staff: float, salary: float}, iqd: array{expenses: float, staff: float, salary: float}}
+     */
+    private function spendMixByCurrency(?int $vaultId): array
+    {
+        $empty = ['expenses' => 0.0, 'staff' => 0.0, 'salary' => 0.0];
+        if (! $vaultId) {
+            return ['usd' => $empty, 'iqd' => $empty];
+        }
+
+        $buckets = [
+            'expenses' => [Transaction::TYPE_EXPENSE, Transaction::TYPE_STOCK_PURCHASE],
+            'staff' => [Transaction::TYPE_ADVANCE],
+            'salary' => [Transaction::TYPE_PAYROLL],
+        ];
+
+        $usd = $empty;
+        $iqd = $empty;
+
+        foreach ($buckets as $key => $types) {
+            $row = Transaction::query()
+                ->forVault($vaultId)
+                ->whereIn('type', $types)
+                ->selectRaw('COALESCE(SUM(amount_usd), 0) as usd_total, COALESCE(SUM(amount_iqd), 0) as iqd_total')
+                ->first();
+
+            $usd[$key] = round((float) ($row->usd_total ?? 0), 2);
+            $iqd[$key] = round((float) ($row->iqd_total ?? 0), 2);
+        }
+
+        return ['usd' => $usd, 'iqd' => $iqd];
     }
 
     /**
@@ -379,16 +362,5 @@ class RoleHomeDashboardService
     {
         return Vault::query()->where('name', VaultSeeder::NAME)->first()
             ?? Vault::query()->orderBy('id')->first();
-    }
-
-    private function auditEventCount(): int
-    {
-        if (! Schema::hasTable('activity_log')) {
-            return 0;
-        }
-
-        return Activity::query()
-            ->where('log_name', AuditActions::LOG_NAME)
-            ->count();
     }
 }

@@ -86,7 +86,9 @@ class RoleAccessPhase3Test extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('roleHome', Roles::SUPER_ADMIN)
-                ->has('summary.users')
+                ->has('summary.available_iqd')
+                ->has('summary.available_usd')
+                ->has('summary.charts')
                 ->has('summary.projects')
             );
     }

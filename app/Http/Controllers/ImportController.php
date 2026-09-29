@@ -6,6 +6,8 @@ use App\Http\Requests\StoreImportRequest;
 use App\Models\Import;
 use App\Models\Vault;
 use App\Services\ImportService;
+use App\Services\MayorcaWorkbookImportService;
+use App\Support\Roles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -22,9 +24,11 @@ class ImportController extends Controller
         private readonly ImportService $imports,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('manageImports', Vault::class);
+
+        $bundledWorkbook = MayorcaWorkbookImportService::bundledSampleAbsolutePath();
 
         return Inertia::render('Imports/Index', [
             'types' => collect($this->imports->definitions())->map(fn ($def, $type) => [
@@ -45,6 +49,8 @@ class ImportController extends Controller
                     'total_rows', 'success_rows', 'failed_rows',
                     'created_by', 'created_at', 'finished_at', 'notes',
                 ]),
+            'canImportMayorca' => $request->user()?->hasRole(Roles::SUPER_ADMIN) ?? false,
+            'workbookBundled' => is_file($bundledWorkbook),
         ]);
     }
 

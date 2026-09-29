@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Backup;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Payout;
@@ -35,7 +34,7 @@ class RoleDashboardPhase14Test extends TestCase
         $this->seed(DemoUsersSeeder::class);
     }
 
-    public function test_super_admin_dashboard_props_include_users_audit_and_health(): void
+    public function test_super_admin_dashboard_props_include_available_cash_charts_and_modules(): void
     {
         $admin = User::query()->where('email', UserSeeder::ADMIN_EMAIL)->firstOrFail();
         $admin->forceFill([
@@ -43,18 +42,9 @@ class RoleDashboardPhase14Test extends TestCase
             'last_login_at' => now()->subHour(),
         ])->save();
 
-        User::factory()->create([
-            'status' => User::STATUS_DISABLED,
-            'email' => 'disabled@zhako.test',
-        ]);
-
-        Backup::query()->create([
-            'type' => Backup::TYPE_FULL,
-            'status' => Backup::STATUS_COMPLETED,
-            'filename' => 'demo.zip',
-            'finished_at' => now()->subDay(),
-            'started_at' => now()->subDay()->subMinutes(2),
-            'message' => 'ok',
+        Worker::query()->create([
+            'name' => 'Unclassified Person',
+            'labor_kind' => Worker::LABOR_KIND_UNCLASSIFIED,
         ]);
 
         $this->actingAs($admin)
@@ -63,17 +53,18 @@ class RoleDashboardPhase14Test extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Dashboard')
                 ->where('roleHome', Roles::SUPER_ADMIN)
-                ->has('summary.users')
-                ->has('summary.users_active')
-                ->has('summary.users_disabled')
-                ->has('summary.last_logins')
-                ->has('summary.recent_activity')
-                ->has('summary.health.ledger_ok')
-                ->has('summary.backup')
-                ->where('summary.users_disabled', 1)
-                ->has('summary.vault_balance_iqd')
-                ->has('summary.vault_balance_usd')
-                ->has('summary.money_received_iqd')
+                ->has('summary.available_iqd')
+                ->has('summary.available_usd')
+                ->has('summary.charts.available')
+                ->has('summary.charts.spend_usd')
+                ->has('summary.charts.spend_iqd')
+                ->has('summary.charts.locked_free.usd')
+                ->has('summary.charts.locked_free.iqd')
+                ->has('summary.unclassified_people')
+                ->where('summary.unclassified_people', 1)
+                ->missing('summary.last_logins')
+                ->missing('summary.health')
+                ->missing('summary.vault_balance_iqd')
                 ->missing('summary.by_category')
             );
     }
@@ -235,8 +226,8 @@ class RoleDashboardPhase14Test extends TestCase
     {
         $cases = [
             UserSeeder::ADMIN_EMAIL => [
-                'present' => ['users_active', 'health'],
-                'absent' => ['by_category', 'available_payment_iqd'],
+                'present' => ['available_usd', 'available_iqd', 'charts', 'unclassified_people'],
+                'absent' => ['by_category', 'available_payment_iqd', 'users_active', 'health', 'last_logins'],
             ],
             DemoUsersSeeder::BOSS_EMAIL => [
                 'present' => ['project_cards', 'money_received_iqd'],

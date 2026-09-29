@@ -1,18 +1,15 @@
-import DashboardQuickLink from '@/Components/DashboardQuickLink';
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
-import DangerButton from '@/Components/DangerButton';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, usePage } from '@inertiajs/react';
 
 function Stat({ label, value, hint }) {
     return (
@@ -57,276 +54,332 @@ function Shortcut({ href, label }) {
     );
 }
 
-function formatWhen(iso) {
-    if (!iso) return '—';
-    try {
-        return new Intl.DateTimeFormat(undefined, {
-            dateStyle: 'medium',
-            timeStyle: 'short',
-        }).format(new Date(iso));
-    } catch {
-        return iso;
-    }
+const HOME_BOX_STYLES = {
+    vault: {
+        shell: 'bg-teal-600 text-white shadow-teal-900/20 hover:bg-teal-500 dark:bg-teal-500 dark:text-slate-950 dark:hover:bg-teal-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    clients: {
+        shell: 'bg-emerald-600 text-white shadow-emerald-900/20 hover:bg-emerald-500 dark:bg-emerald-500 dark:text-slate-950 dark:hover:bg-emerald-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    projects: {
+        shell: 'bg-slate-700 text-white shadow-slate-900/25 hover:bg-slate-600 dark:bg-slate-600 dark:hover:bg-slate-500',
+        icon: 'bg-white/15 text-white',
+    },
+    staff: {
+        shell: 'bg-amber-500 text-amber-950 shadow-amber-900/20 hover:bg-amber-400 dark:bg-amber-400 dark:hover:bg-amber-300',
+        icon: 'bg-amber-950/15 text-amber-950',
+    },
+    salary: {
+        shell: 'bg-indigo-600 text-white shadow-indigo-900/20 hover:bg-indigo-500 dark:bg-indigo-500 dark:text-slate-950 dark:hover:bg-indigo-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+    expenses: {
+        shell: 'bg-rose-600 text-white shadow-rose-900/20 hover:bg-rose-500 dark:bg-rose-500 dark:text-slate-950 dark:hover:bg-rose-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
+};
+
+function HomeModuleBox({ href, icon, tone, title, hint }) {
+    const style = HOME_BOX_STYLES[tone] || HOME_BOX_STYLES.projects;
+
+    return (
+        <Link
+            href={href}
+            className={
+                'group flex min-h-[7.5rem] flex-col justify-between rounded-2xl p-4 shadow-lg transition hover:-translate-y-0.5 ' +
+                style.shell
+            }
+        >
+            <span
+                className={
+                    'inline-flex h-11 w-11 items-center justify-center rounded-xl text-lg ' + style.icon
+                }
+            >
+                <NavIcon name={icon} className="text-lg" />
+            </span>
+            <span>
+                <span className="block text-base font-semibold tracking-tight">{title}</span>
+                <span className="mt-0.5 block text-xs font-medium opacity-85">{hint}</span>
+            </span>
+        </Link>
+    );
 }
 
-function SuperAdminHome({ summary, t, canImportMayorca }) {
-    const logins = summary?.last_logins || [];
-    const activity = summary?.recent_activity || [];
-    const health = summary?.health || {};
-    const backup = summary?.backup;
-    const iqd = t('IQD');
-    const usd = t('USD');
-    const importForm = useForm({ confirm_wipe: false });
+function DualBarChart({ title, subtitle, bars, ariaLabel }) {
+    const max = Math.max(1, ...bars.map((b) => Number(b.value) || 0));
 
-    const runMayorcaImport = () => {
-        if (
-            !window.confirm(
-                t('mayorca_import_confirm'),
-            )
-        ) {
-            return;
-        }
-        importForm.transform((data) => ({ ...data, confirm_wipe: true }));
-        importForm.post(route('admin.mayorca-import'), {
-            preserveScroll: true,
-            onFinish: () => importForm.setData('confirm_wipe', false),
-        });
-    };
+    return (
+        <DataPanel title={title} subtitle={subtitle}>
+            <div className="space-y-3" role="img" aria-label={ariaLabel || title}>
+                {bars.map((bar) => {
+                    const pct = Math.max(2, ((Number(bar.value) || 0) / max) * 100);
+
+                    return (
+                        <div key={bar.key}>
+                            <div className="mb-1 flex items-center justify-between gap-3 text-sm">
+                                <span className="font-medium text-slate-700 dark:text-slate-200">
+                                    {bar.label}
+                                </span>
+                                <span dir="ltr" className="font-sans tabular-nums text-slate-600 dark:text-slate-300">
+                                    <MoneyAmount
+                                        value={bar.value}
+                                        label={bar.currency}
+                                        size="sm"
+                                        showLabel={false}
+                                    />{' '}
+                                    <span className="text-xs text-slate-400">{bar.currency}</span>
+                                </span>
+                            </div>
+                            <div className="h-2.5 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+                                <div
+                                    className={`h-full rounded-full ${bar.color}`}
+                                    style={{ width: `${pct}%` }}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+        </DataPanel>
+    );
+}
+
+function SuperAdminHome({ summary, t }) {
+    const usd = t('USD');
+    const iqd = t('IQD');
+    const charts = summary?.charts || {};
+    const available = charts.available || {};
+    const spendUsd = charts.spend_usd || {};
+    const spendIqd = charts.spend_iqd || {};
+    const lockedFree = charts.locked_free || {};
+    const unclassified = summary?.unclassified_people ?? 0;
+
+    const modules = [
+        {
+            key: 'vault',
+            href: route('vault.index'),
+            icon: 'vault',
+            tone: 'vault',
+            title: t('home_box_vault'),
+            hint: t('home_box_vault_hint'),
+        },
+        {
+            key: 'clients',
+            href: route('client-advances.index'),
+            icon: 'clientAdvances',
+            tone: 'clients',
+            title: t('home_box_clients'),
+            hint: t('home_box_clients_hint'),
+        },
+        {
+            key: 'projects',
+            href: route('projects.index'),
+            icon: 'projects',
+            tone: 'projects',
+            title: t('home_box_projects'),
+            hint: t('home_box_projects_hint'),
+        },
+        {
+            key: 'staff',
+            href: route('workers.index', { labor_kind: 'staff' }),
+            icon: 'workers',
+            tone: 'staff',
+            title: t('home_box_staff'),
+            hint: t('home_box_staff_hint'),
+        },
+        {
+            key: 'salary',
+            href: route('dashboards.payroll'),
+            icon: 'payroll',
+            tone: 'salary',
+            title: t('home_box_salary'),
+            hint: t('home_box_salary_hint'),
+        },
+        {
+            key: 'expenses',
+            href: route('expenses.index'),
+            icon: 'expenses',
+            tone: 'expenses',
+            title: t('home_box_expenses'),
+            hint: t('home_box_expenses_hint'),
+        },
+    ];
 
     return (
         <div className="space-y-6">
-            <DataPanel
-                title={t('role_home_admin_title')}
-                subtitle={t('role_home_admin_hint')}
-                actions={
-                    <div className="flex flex-wrap gap-2">
-                        <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
-                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
-                    </div>
-                }
-            >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <MoneyStat
-                        label={t('balance_iqd')}
-                        value={summary?.vault_balance_iqd}
-                        iqd={iqd}
-                        accent
-                    />
-                    <MoneyStat
-                        label={t('balance_usd')}
-                        value={summary?.vault_balance_usd}
-                        iqd={usd}
-                    />
-                    <MoneyStat
-                        label={t('role_stat_available')}
-                        value={summary?.available_iqd}
-                        iqd={iqd}
-                        accent
-                    />
-                    <MoneyStat
-                        label={t('role_stat_available_usd')}
-                        value={summary?.available_usd}
-                        iqd={usd}
-                    />
-                    <MoneyStat
-                        label={t('money_received')}
-                        value={summary?.money_received_iqd}
-                        iqd={iqd}
-                    />
-                    <MoneyStat
-                        label={t('insurance_reserve')}
-                        value={summary?.reserved_insurance_iqd}
-                        iqd={iqd}
-                    />
-                    <Stat
-                        label={t('role_stat_pending_payouts')}
-                        value={summary?.pending_payouts ?? health.pending_payouts ?? 0}
-                    />
-                    <Stat
-                        label={t('role_stat_matured_holds')}
-                        value={summary?.matured_holds ?? health.matured_holds ?? 0}
-                    />
-                </div>
-            </DataPanel>
-
-            <DataPanel title={t('role_admin_quick_work')} subtitle={t('role_admin_quick_work_hint')}>
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    <DashboardQuickLink
-                        href={route('workers.index')}
-                        label={t('people')}
-                        icon="workers"
-                        tone="teal"
-                    />
-                    <DashboardQuickLink
-                        href={route('vault.index')}
-                        label={t('vault')}
-                        icon="vault"
-                        tone="emerald"
-                    />
-                    <DashboardQuickLink
-                        href={route('spatial.index')}
-                        label={t('spatial_grid')}
-                        icon="spatial"
-                        tone="slate"
-                    />
-                    <DashboardQuickLink
-                        href={route('attendance.index')}
-                        label={t('attendance')}
-                        icon="attendance"
-                        tone="slate"
-                    />
-                    <DashboardQuickLink
-                        href={route('client-advances.index')}
-                        label={t('client_advances')}
-                        icon="clientAdvances"
-                        tone="emerald"
-                    />
-                    <DashboardQuickLink
-                        href={route('users.index')}
-                        label={t('users')}
-                        icon="users"
-                        tone="slate"
-                    />
-                    <DashboardQuickLink
-                        href={route('audit.index')}
-                        label={t('audit')}
-                        icon="audit"
-                        tone="slate"
-                    />
-                    <DashboardQuickLink
-                        href={route('backups.index')}
-                        label={t('backups')}
-                        icon="backups"
-                        tone="slate"
-                    />
-                </div>
-            </DataPanel>
-
-            {canImportMayorca && (
-                <DataPanel
-                    title={t('mayorca_import_panel_title')}
-                    subtitle={t('mayorca_import_panel_hint')}
+            {unclassified > 0 && (
+                <Link
+                    href={route('workers.index', { labor_kind: 'unclassified' })}
+                    className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-amber-300/80 bg-amber-50 px-4 py-3.5 text-amber-950 transition hover:border-amber-400 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100"
                 >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                            <span className="bv-icon-chip bv-icon-chip-amber mt-0.5">
-                                <NavIcon name="insurance" className="text-base" />
-                            </span>
-                            <p>{t('mayorca_import_panel_body')}</p>
-                        </div>
-                        <DangerButton
-                            type="button"
-                            disabled={importForm.processing || !summary?.workbook_bundled}
-                            onClick={runMayorcaImport}
+                    <span className="flex items-center gap-3 text-sm font-semibold">
+                        <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/20">
+                            <NavIcon name="workers" className="text-base" />
+                        </span>
+                        {t('home_unclassified_stripe')}
+                        <span
+                            dir="ltr"
+                            className="rounded-lg bg-amber-500 px-2 py-0.5 font-sans text-xs font-bold text-white tabular-nums"
                         >
-                            {importForm.processing
-                                ? t('mayorca_import_running')
-                                : t('mayorca_import_button')}
-                        </DangerButton>
-                    </div>
-                    {!summary?.workbook_bundled && (
-                        <p className="mt-3 text-sm text-rose-700 dark:text-rose-300">
-                            {t('mayorca_workbook_missing')}
-                        </p>
-                    )}
-                </DataPanel>
+                            {unclassified}
+                        </span>
+                    </span>
+                    <span className="text-sm font-medium underline underline-offset-2">
+                        {t('home_unclassified_cta')}
+                    </span>
+                </Link>
             )}
 
-            <div className="grid gap-6 lg:grid-cols-2">
-                <DataPanel title={t('role_panel_last_logins')} padded={false}>
-                    <DataTable minWidth="28rem" caption={t('role_panel_last_logins')}>
-                        <thead>
-                            <tr>
-                                <Th>{t('full_name')}</Th>
-                                <Th>{t('last_login')}</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {logins.map((u) => (
-                                <tr key={u.id}>
-                                    <Td>
-                                        <div className="flex items-center gap-2">
-                                            <NavIcon name="users" className="text-sm text-slate-400" />
-                                            <div>
-                                                <div className="font-medium">{u.name}</div>
-                                                <div className="text-xs text-slate-500">{u.email}</div>
-                                            </div>
-                                        </div>
-                                    </Td>
-                                    <Td muted>{formatWhen(u.last_login_at)}</Td>
-                                </tr>
-                            ))}
-                            {!logins.length && (
-                                <tr>
-                                    <Td colSpan={2} muted className="py-8 text-center">
-                                        {t('role_empty_logins')}
-                                    </Td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </DataTable>
-                </DataPanel>
-
-                <DataPanel title={t('role_panel_recent_activity')} padded={false}>
-                    <DataTable minWidth="28rem" caption={t('role_panel_recent_activity')}>
-                        <thead>
-                            <tr>
-                                <Th>{t('audit')}</Th>
-                                <Th>{t('date')}</Th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {activity.map((a) => (
-                                <tr key={a.id}>
-                                    <Td>
-                                        <div className="font-medium">{a.event || a.description}</div>
-                                        <div className="text-xs text-slate-500">
-                                            {a.causer_name || '—'}
-                                        </div>
-                                    </Td>
-                                    <Td muted>{formatWhen(a.created_at)}</Td>
-                                </tr>
-                            ))}
-                            {!activity.length && (
-                                <tr>
-                                    <Td colSpan={2} muted className="py-8 text-center">
-                                        {t('role_empty_activity')}
-                                    </Td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </DataTable>
-                </DataPanel>
+            <div className="grid gap-3 sm:grid-cols-2">
+                <MoneyStat
+                    label={`${t('available_cash')} ${usd}`}
+                    value={summary?.available_usd}
+                    iqd={usd}
+                    accent
+                />
+                <MoneyStat
+                    label={`${t('available_cash')} ${iqd}`}
+                    value={summary?.available_iqd}
+                    iqd={iqd}
+                    accent
+                />
             </div>
 
-            <DataPanel
-                title={t('role_panel_system_health')}
-                subtitle={t('role_panel_system_health_hint')}
-            >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <div className="rounded-lg border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
-                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
-                            {t('role_health_ledger')}
-                        </div>
-                        <div className="mt-2">
-                            <StatusBadge
-                                status={health.ledger_ok ? 'approved' : 'pending'}
-                            />
-                        </div>
-                    </div>
-                    <Stat label={t('role_stat_users_active')} value={summary?.users_active ?? 0} />
-                    <Stat label={t('role_stat_audit_events')} value={summary?.audit_events ?? 0} />
-                    <Stat
-                        label={t('role_stat_backup')}
-                        value={
-                            backup
-                                ? t(`status_${backup.status}`, backup.status)
-                                : t('role_backup_none')
-                        }
-                        hint={backup?.finished_at ? formatWhen(backup.finished_at) : undefined}
-                    />
+            <section>
+                <div className="mb-3">
+                    <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                        {t('home_modules')}
+                    </h2>
+                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                        {t('home_modules_hint')}
+                    </p>
                 </div>
-            </DataPanel>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {modules.map((mod) => (
+                        <HomeModuleBox key={mod.key} {...mod} />
+                    ))}
+                </div>
+            </section>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <DualBarChart
+                    title={t('home_chart_available')}
+                    subtitle={t('home_chart_available_hint')}
+                    ariaLabel={t('home_chart_available')}
+                    bars={[
+                        {
+                            key: 'usd',
+                            label: usd,
+                            value: available.usd ?? 0,
+                            currency: usd,
+                            color: 'bg-teal-500',
+                        },
+                        {
+                            key: 'iqd',
+                            label: iqd,
+                            value: available.iqd ?? 0,
+                            currency: iqd,
+                            color: 'bg-emerald-500',
+                        },
+                    ]}
+                />
+                <DualBarChart
+                    title={t('home_chart_locked')}
+                    subtitle={t('home_chart_locked_hint')}
+                    ariaLabel={t('home_chart_locked')}
+                    bars={[
+                        {
+                            key: 'locked-usd',
+                            label: `${t('home_locked')} ${usd}`,
+                            value: lockedFree.usd?.locked ?? 0,
+                            currency: usd,
+                            color: 'bg-amber-500',
+                        },
+                        {
+                            key: 'free-usd',
+                            label: `${t('home_free')} ${usd}`,
+                            value: lockedFree.usd?.free ?? 0,
+                            currency: usd,
+                            color: 'bg-teal-500',
+                        },
+                        {
+                            key: 'locked-iqd',
+                            label: `${t('home_locked')} ${iqd}`,
+                            value: lockedFree.iqd?.locked ?? 0,
+                            currency: iqd,
+                            color: 'bg-amber-400',
+                        },
+                        {
+                            key: 'free-iqd',
+                            label: `${t('home_free')} ${iqd}`,
+                            value: lockedFree.iqd?.free ?? 0,
+                            currency: iqd,
+                            color: 'bg-emerald-500',
+                        },
+                    ]}
+                />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+                <DualBarChart
+                    title={t('home_chart_spend_usd')}
+                    subtitle={t('home_chart_spend_hint')}
+                    ariaLabel={t('home_chart_spend_usd')}
+                    bars={[
+                        {
+                            key: 'exp-usd',
+                            label: t('home_spend_expenses'),
+                            value: spendUsd.expenses ?? 0,
+                            currency: usd,
+                            color: 'bg-rose-500',
+                        },
+                        {
+                            key: 'staff-usd',
+                            label: t('home_spend_staff'),
+                            value: spendUsd.staff ?? 0,
+                            currency: usd,
+                            color: 'bg-amber-500',
+                        },
+                        {
+                            key: 'sal-usd',
+                            label: t('home_spend_salary'),
+                            value: spendUsd.salary ?? 0,
+                            currency: usd,
+                            color: 'bg-indigo-500',
+                        },
+                    ]}
+                />
+                <DualBarChart
+                    title={t('home_chart_spend_iqd')}
+                    subtitle={t('home_chart_spend_hint')}
+                    ariaLabel={t('home_chart_spend_iqd')}
+                    bars={[
+                        {
+                            key: 'exp-iqd',
+                            label: t('home_spend_expenses'),
+                            value: spendIqd.expenses ?? 0,
+                            currency: iqd,
+                            color: 'bg-rose-500',
+                        },
+                        {
+                            key: 'staff-iqd',
+                            label: t('home_spend_staff'),
+                            value: spendIqd.staff ?? 0,
+                            currency: iqd,
+                            color: 'bg-amber-500',
+                        },
+                        {
+                            key: 'sal-iqd',
+                            label: t('home_spend_salary'),
+                            value: spendIqd.salary ?? 0,
+                            currency: iqd,
+                            color: 'bg-indigo-500',
+                        },
+                    ]}
+                />
+            </div>
         </div>
     );
 }
@@ -650,7 +703,7 @@ function StockManagerHome({ summary, t, iqd }) {
     );
 }
 
-export default function Dashboard({ maturedHolds, roleHome, summary, canImportMayorca }) {
+export default function Dashboard({ maturedHolds, roleHome, summary }) {
     const t = useTranslations();
     const page = usePage();
     const role = roleHome || page.props.auth?.role;
@@ -732,13 +785,7 @@ export default function Dashboard({ maturedHolds, roleHome, summary, canImportMa
                     </section>
                 )}
 
-                {role === 'Super Admin' && (
-                    <SuperAdminHome
-                        summary={summary}
-                        t={t}
-                        canImportMayorca={canImportMayorca}
-                    />
-                )}
+                {role === 'Super Admin' && <SuperAdminHome summary={summary} t={t} />}
                 {role === 'Boss / Contractor' && (
                     <BossHome summary={summary} t={t} iqd={iqd} />
                 )}

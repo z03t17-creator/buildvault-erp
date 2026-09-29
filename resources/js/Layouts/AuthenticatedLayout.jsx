@@ -229,13 +229,22 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
 
     const sidebarBody = (
         <>
-            <div className="flex h-16 shrink-0 items-center border-b border-slate-200/70 px-4 dark:border-slate-800 sm:h-[4.25rem]">
-                <BrandMark size="header" href={route('dashboard')} />
+            <div className="flex h-16 shrink-0 items-center justify-between gap-2 border-b border-slate-200/70 px-4 dark:border-slate-800 sm:h-[4.25rem]">
+                <BrandMark
+                    size="header"
+                    href={route('dashboard')}
+                    className="min-w-0"
+                    titleClassName="truncate"
+                />
+                <LocaleSwitcher cycle className="shrink-0" />
             </div>
             <SidebarNav groups={navGroups} onNavigate={closeSidebar} />
             <div className="mt-auto space-y-2 border-t border-slate-200/70 p-3 dark:border-slate-800">
-                <div className="lg:hidden">
-                    <LocaleSwitcher compact />
+                <div className="flex items-center justify-between gap-2 px-1">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                        {t('theme')}
+                    </span>
+                    <ThemeToggle className="h-11 w-11 shrink-0 rounded-xl p-0" />
                 </div>
                 <Link
                     href={route('profile.edit')}
@@ -262,19 +271,6 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                         </span>
                     </span>
                 </Link>
-                <p className="bv-attribution px-1">
-                    Icons by{' '}
-                    <a
-                        href="https://www.flaticon.com/uicons"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline decoration-slate-300 underline-offset-2 hover:text-teal-700 dark:hover:text-teal-300"
-                    >
-                        Flaticon Uicons
-                    </a>
-                    {' · '}
-                    UX inspired by Judi Group
-                </p>
             </div>
         </>
     );
@@ -337,10 +333,6 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                         </div>
 
                         <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
-                            <div className="hidden lg:block">
-                                <LocaleSwitcher compact />
-                            </div>
-                            <ThemeToggle className="h-11 w-11 shrink-0 rounded-xl p-0" />
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>

@@ -5,9 +5,9 @@ import ThemeToggle from '@/Components/ThemeToggle';
 export default function GuestLayout({ children }) {
     return (
         <div className="relative flex min-h-screen flex-col items-center px-4 pb-14 pt-6 sm:justify-center sm:pt-0">
-            <div className="absolute end-4 top-4 z-10 flex items-center gap-3">
-                <LocaleSwitcher />
-                <ThemeToggle />
+            <div className="absolute end-4 top-4 z-10 flex items-center gap-2">
+                <LocaleSwitcher cycle />
+                <ThemeToggle className="h-11 w-11 rounded-xl p-0" />
             </div>
 
             <div className="mt-12 w-full max-w-md sm:mt-0">
@@ -23,19 +23,6 @@ export default function GuestLayout({ children }) {
 
                 <p className="mt-6 text-center text-xs tracking-wide text-slate-400 dark:text-slate-500">
                     BuildVault ERP · ZHAKO
-                </p>
-                <p className="bv-attribution mt-2 text-center">
-                    Icons by{' '}
-                    <a
-                        href="https://www.flaticon.com/uicons"
-                        target="_blank"
-                        rel="noreferrer"
-                        className="underline underline-offset-2"
-                    >
-                        Flaticon Uicons
-                    </a>
-                    {' · '}
-                    UX inspired by Judi Group
                 </p>
             </div>
         </div>
