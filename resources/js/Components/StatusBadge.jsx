@@ -45,6 +45,7 @@ const STYLES = {
     inspected:
         'bg-teal-100 text-teal-800 ring-teal-200/80 dark:bg-teal-900/40 dark:text-teal-300 dark:ring-teal-800/60',
     company: SLATE,
+    forfeit_day: CRIMSON,
 
     // Payouts (pending already amber above)
     approved: EMERALD,

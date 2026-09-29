@@ -98,7 +98,6 @@ class AuthorizationNavTest extends TestCase
                         'settlements',
                         'projects',
                         'workers',
-                        'attendance',
                         'payouts',
                         'expenses',
                         'penalties',
@@ -122,7 +121,8 @@ class AuthorizationNavTest extends TestCase
                     return in_array('dashboard', $keys, true)
                         && in_array('stock', $keys, true)
                         && in_array('reports', $keys, true)
-                        && count($keys) === 3;
+                        && in_array('attendance', $keys, true)
+                        && count($keys) === 4;
                 })
                 ->where('auth.can', function ($can) {
                     return ($can['vault.view'] ?? null) === false
@@ -134,6 +134,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['advances.viewAny'] ?? null) === false
                         && ($can['productions.viewAny'] ?? null) === false
                         && ($can['spatial.viewAny'] ?? null) === false
+                        && ($can['attendance.viewAny'] ?? null) === true
+                        && ($can['attendance.manage'] ?? null) === true
                         && ($can['stock.viewAny'] ?? null) === true
                         && ($can['stock.stockOut'] ?? null) === true
                         && ($can['reports.view'] ?? null) === true
@@ -166,6 +168,7 @@ class AuthorizationNavTest extends TestCase
                         'advances',
                         'productions',
                         'spatial',
+                        'attendance',
                         'docs',
                         'imports',
                         'reports',
@@ -187,7 +190,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['projects.delete'] ?? null) === true
                         && ($can['users.viewAny'] ?? null) === true
                         && ($can['productions.viewAny'] ?? null) === true
-                        && ($can['spatial.viewAny'] ?? null) === true;
+                        && ($can['spatial.viewAny'] ?? null) === true
+                        && ($can['attendance.viewAny'] ?? null) === true;
                 })
             );
     }
@@ -215,6 +219,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('advances', $keys, true)
                         && in_array('productions', $keys, true)
                         && in_array('spatial', $keys, true)
+                        && in_array('attendance', $keys, true)
                         && in_array('reports', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
@@ -235,6 +240,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['productions.create'] ?? null) === false
                         && ($can['spatial.viewAny'] ?? null) === true
                         && ($can['spatial.update'] ?? null) === false
+                        && ($can['attendance.viewAny'] ?? null) === true
+                        && ($can['attendance.manage'] ?? null) === false
                         && ($can['stock.viewAny'] ?? null) === true
                         && ($can['stock.stockOut'] ?? null) === false
                         && ($can['penalties.viewAny'] ?? null) === true
@@ -267,6 +274,7 @@ class AuthorizationNavTest extends TestCase
                         && in_array('advances', $keys, true)
                         && in_array('productions', $keys, true)
                         && in_array('spatial', $keys, true)
+                        && in_array('attendance', $keys, true)
                         && in_array('stock', $keys, true)
                         && in_array('projects', $keys, true)
                         && in_array('reports', $keys, true)
@@ -284,6 +292,8 @@ class AuthorizationNavTest extends TestCase
                         && ($can['productions.update'] ?? null) === true
                         && ($can['spatial.update'] ?? null) === true
                         && ($can['spatial.bulkAssign'] ?? null) === true
+                        && ($can['attendance.viewAny'] ?? null) === true
+                        && ($can['attendance.manage'] ?? null) === false
                         && ($can['stock.viewAny'] ?? null) === true
                         && ($can['stock.stockOut'] ?? null) === false
                         && ($can['projects.create'] ?? null) === false

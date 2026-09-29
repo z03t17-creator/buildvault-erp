@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
@@ -35,6 +36,7 @@ use App\Models\ClientAdvance;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\ApartmentUnit;
+use App\Models\Attendance;
 use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\ProductionRecord;
@@ -330,6 +332,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:bulkAssign,'.ApartmentUnit::class)
         ->name('spatial.bulk-assign');
 
+    // Phase 4 — Worker attendance (Stock Manager writes; Accountant/Boss view)
+    Route::get('/attendance', [AttendanceController::class, 'index'])
+        ->middleware('can:viewAny,'.Attendance::class)
+        ->name('attendance.index');
+    Route::middleware('can:manage,'.Attendance::class)->group(function () {
+        Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn'])
+            ->name('attendance.check-in');
+        Route::post('/attendance/check-out', [AttendanceController::class, 'checkOut'])
+            ->name('attendance.check-out');
+        Route::post('/attendance/status', [AttendanceController::class, 'updateStatus'])
+            ->name('attendance.status');
+        Route::post('/attendance/mark-absences', [AttendanceController::class, 'markAbsences'])
+            ->name('attendance.mark-absences');
+    });
+
     Route::middleware('can:viewAny,'.User::class)->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
         Route::get('/users/create', [UserController::class, 'create'])
@@ -372,6 +389,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('retention-holds.settings');
         Route::post('/retention-holds/{retentionHold}/release', [RetentionHoldController::class, 'release'])
             ->name('retention-holds.release');
+        Route::post('/retention-holds/client/{clientRetentionHold}/release', [RetentionHoldController::class, 'releaseClient'])
+            ->name('retention-holds.client-release');
     });
 });
 

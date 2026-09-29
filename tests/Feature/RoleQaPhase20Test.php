@@ -20,7 +20,7 @@ use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 /**
- * Phase 20 — final four-role QA: login, nav, happy paths, 403s, IQD, no attendance.
+ * Phase 20 — final four-role QA: login, nav, happy paths, 403s, IQD (+ Phase 4 attendance).
  */
 class RoleQaPhase20Test extends TestCase
 {
@@ -54,7 +54,7 @@ class RoleQaPhase20Test extends TestCase
                 ->where('auth.nav', function ($nav) {
                     $keys = collect($nav)->values()->all();
 
-                    return ! in_array('attendance', $keys, true)
+                    return in_array('attendance', $keys, true)
                         && in_array('vault', $keys, true)
                         && in_array('settlements', $keys, true)
                         && in_array('users', $keys, true)
@@ -70,6 +70,7 @@ class RoleQaPhase20Test extends TestCase
             'payouts.index',
             'expenses.index',
             'advances.index',
+            'attendance.index',
             'stock.dashboard',
             'stock.in.create',
             'stock.out.create',
@@ -85,7 +86,7 @@ class RoleQaPhase20Test extends TestCase
         $this->actingAs($admin)->get(route('reports.export', ['type' => 'vault_ledger', 'format' => 'pdf']))
             ->assertOk();
 
-        $this->assertNoAttendanceSurface($admin);
+        $this->assertAttendanceSurface($admin, canManage: true);
         $this->assertVaultShowsIqdNotFx($admin);
     }
 
@@ -107,10 +108,10 @@ class RoleQaPhase20Test extends TestCase
                     return in_array('vault', $keys, true)
                         && in_array('settlements', $keys, true)
                         && in_array('payroll', $keys, true)
+                        && in_array('attendance', $keys, true)
                         && ! in_array('backups', $keys, true)
                         && ! in_array('audit', $keys, true)
-                        && ! in_array('users', $keys, true)
-                        && ! in_array('attendance', $keys, true);
+                        && ! in_array('users', $keys, true);
                 })
             );
 
@@ -121,6 +122,7 @@ class RoleQaPhase20Test extends TestCase
             'payouts.index',
             'expenses.index',
             'advances.index',
+            'attendance.index',
             'projects.index',
             'workers.index',
             'stock.dashboard',
@@ -143,7 +145,7 @@ class RoleQaPhase20Test extends TestCase
             $this->actingAs($boss)->get(route($name))->assertForbidden();
         }
 
-        $this->assertNoAttendanceSurface($boss);
+        $this->assertAttendanceSurface($boss, canManage: false);
         $this->assertVaultShowsIqdNotFx($boss);
     }
 
@@ -169,8 +171,8 @@ class RoleQaPhase20Test extends TestCase
                         && in_array('settlements', $keys, true)
                         && in_array('reports', $keys, true)
                         && in_array('backups', $keys, true)
-                        && ! in_array('users', $keys, true)
-                        && ! in_array('attendance', $keys, true);
+                        && in_array('attendance', $keys, true)
+                        && ! in_array('users', $keys, true);
                 })
             );
 
@@ -184,6 +186,7 @@ class RoleQaPhase20Test extends TestCase
             'expenses.create',
             'advances.index',
             'advances.create',
+            'attendance.index',
             'reports.index',
             'backups.index',
             'audit.index',
@@ -213,7 +216,7 @@ class RoleQaPhase20Test extends TestCase
         $this->actingAs($accountant)->get(route('reports.export', ['type' => 'expense', 'format' => 'pdf']))
             ->assertOk();
 
-        $this->assertNoAttendanceSurface($accountant);
+        $this->assertAttendanceSurface($accountant, canManage: false);
         $this->assertVaultShowsIqdNotFx($accountant);
     }
 
@@ -235,11 +238,11 @@ class RoleQaPhase20Test extends TestCase
                     return in_array('dashboard', $keys, true)
                         && in_array('stock', $keys, true)
                         && in_array('reports', $keys, true)
+                        && in_array('attendance', $keys, true)
                         && ! in_array('vault', $keys, true)
                         && ! in_array('payroll', $keys, true)
                         && ! in_array('payouts', $keys, true)
-                        && ! in_array('expenses', $keys, true)
-                        && ! in_array('attendance', $keys, true);
+                        && ! in_array('expenses', $keys, true);
                 })
             );
 
@@ -250,6 +253,7 @@ class RoleQaPhase20Test extends TestCase
             'stock.suppliers.index',
             'stock.in.create',
             'stock.out.create',
+            'attendance.index',
             'reports.index',
         ] as $name) {
             $this->actingAs($stock)->get(route($name))->assertOk();
@@ -304,7 +308,7 @@ class RoleQaPhase20Test extends TestCase
         $this->actingAs($stock)->get(route('reports.export', ['type' => 'inventory', 'format' => 'pdf']))
             ->assertOk();
 
-        $this->assertNoAttendanceSurface($stock);
+        $this->assertAttendanceSurface($stock, canManage: true);
     }
 
     public function test_money_surfaces_are_iqd_only_and_demo_counts_ready(): void
@@ -318,26 +322,40 @@ class RoleQaPhase20Test extends TestCase
         $this->assertGreaterThanOrEqual(1, Supplier::query()->count());
         $this->assertGreaterThanOrEqual(1, Worker::query()->count());
 
-        // No attendance UI routes registered
-        $this->assertFalse(
+        // Attendance UI routes registered (Phase 4)
+        $this->assertTrue(
             collect(\Illuminate\Support\Facades\Route::getRoutes())->contains(
                 fn ($r) => str_contains($r->uri(), 'attendance')
             )
         );
     }
 
-    private function assertNoAttendanceSurface(User $user): void
+    private function assertAttendanceSurface(User $user, bool $canManage): void
     {
         $this->actingAs($user)
             ->get('/attendance')
-            ->assertNotFound();
+            ->assertOk();
 
         $this->actingAs($user)
             ->get(route('dashboard'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->where('auth.nav', fn ($nav) => ! collect($nav)->contains('attendance'))
+                ->where('auth.nav', fn ($nav) => collect($nav)->contains('attendance'))
+                ->where('auth.can', function ($can) use ($canManage) {
+                    return ($can['attendance.viewAny'] ?? null) === true
+                        && ($can['attendance.manage'] ?? null) === $canManage;
+                })
             );
+
+        if (! $canManage) {
+            $this->actingAs($user)
+                ->post(route('attendance.check-in'), [
+                    'date' => now()->toDateString(),
+                    'check_in' => '08:00',
+                    'worker_ids' => [1],
+                ])
+                ->assertForbidden();
+        }
     }
 
     private function assertVaultShowsIqdNotFx(User $user): void

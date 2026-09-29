@@ -62,6 +62,12 @@ final class AuditActions
 
     public const SPATIAL_BULK_ASSIGNED = 'spatial.bulk_assigned';
 
+    public const ATTENDANCE_RECORDED = 'attendance.recorded';
+
+    public const ATTENDANCE_FORFEIT_DAY = 'attendance.forfeit_day';
+
+    public const CLIENT_RETENTION_RELEASED = 'client_retention.released';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
@@ -90,6 +96,9 @@ final class AuditActions
         self::STAFF_STATEMENT_SAVED,
         self::SPATIAL_CELL_UPDATED,
         self::SPATIAL_BULK_ASSIGNED,
+        self::ATTENDANCE_RECORDED,
+        self::ATTENDANCE_FORFEIT_DAY,
+        self::CLIENT_RETENTION_RELEASED,
     ];
 
     /** @var array<string, string> */
@@ -120,5 +129,8 @@ final class AuditActions
         self::STAFF_STATEMENT_SAVED => 'Staff statement saved',
         self::SPATIAL_CELL_UPDATED => 'Spatial cell updated',
         self::SPATIAL_BULK_ASSIGNED => 'Spatial bulk assignment',
+        self::ATTENDANCE_RECORDED => 'Attendance recorded',
+        self::ATTENDANCE_FORFEIT_DAY => 'Attendance day forfeit',
+        self::CLIENT_RETENTION_RELEASED => 'Client retention released',
     ];
 }

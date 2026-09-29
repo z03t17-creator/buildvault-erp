@@ -27,7 +27,7 @@ function Field({ label, children }) {
     );
 }
 
-export default function Show({ worker, advances, statements, laborKinds, canClassify }) {
+export default function Show({ worker, advances, statements, settlement, laborKinds, canClassify }) {
     const t = useTranslations();
     const canUpdate = useCan('workers.update');
     const canViewAny = useCan('workers.viewAny');
@@ -201,6 +201,46 @@ export default function Show({ worker, advances, statements, laborKinds, canClas
                                 <PrimaryButton disabled={classify.processing}>{t('classify_person')}</PrimaryButton>
                             </FormActions>
                         </form>
+                    </DataPanel>
+                )}
+
+                {settlement && (
+                    <DataPanel
+                        title={t('settlement_preview')}
+                        subtitle={settlement.note || t('settlement_preview_hint')}
+                    >
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                            <Field label="Gross USD">
+                                <MoneyAmount value={settlement.gross_usd} label="USD" size="sm" />
+                            </Field>
+                            <Field label="Gross IQD">
+                                <MoneyAmount value={settlement.gross_iqd} label="IQD" size="sm" />
+                            </Field>
+                            <Field label={`Retention ${settlement.hold_pct || 0}%`}>
+                                <span className="font-mono tabular-nums">
+                                    USD {Number(settlement.retention_usd || 0).toLocaleString()} / IQD{' '}
+                                    {Number(settlement.retention_iqd || 0).toLocaleString()}
+                                </span>
+                            </Field>
+                            <Field label={t('multi_advances')}>
+                                <span className="font-mono tabular-nums">
+                                    USD {Number(settlement.advances_usd || 0).toLocaleString()} / IQD{' '}
+                                    {Number(settlement.advances_iqd || 0).toLocaleString()}
+                                </span>
+                            </Field>
+                            <Field label={t('penalties')}>
+                                <span className="font-mono tabular-nums">
+                                    USD {Number(settlement.penalties_usd || 0).toLocaleString()} / IQD{' '}
+                                    {Number(settlement.penalties_iqd || 0).toLocaleString()}
+                                </span>
+                            </Field>
+                            <Field label={t('net_payable')}>
+                                <span className="font-mono tabular-nums text-emerald-700 dark:text-emerald-300">
+                                    USD {Number(settlement.net_usd || 0).toLocaleString()} / IQD{' '}
+                                    {Number(settlement.net_iqd || 0).toLocaleString()}
+                                </span>
+                            </Field>
+                        </div>
                     </DataPanel>
                 )}
 

@@ -35,6 +35,9 @@ class Penalty extends Model
 
     public const TYPE_OTHER = 'other';
 
+    /** Full day salary cut when attendance late > 30 minutes. */
+    public const TYPE_FORFEIT_DAY = 'forfeit_day';
+
     /** @var list<string> */
     public const TYPES = [
         self::TYPE_LATE,
@@ -43,6 +46,7 @@ class Penalty extends Model
         self::TYPE_SAFETY,
         self::TYPE_CONDUCT,
         self::TYPE_OTHER,
+        self::TYPE_FORFEIT_DAY,
     ];
 
     /**

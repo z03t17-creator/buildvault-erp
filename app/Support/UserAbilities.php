@@ -7,6 +7,7 @@ use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Floor;
 use App\Models\ApartmentUnit;
+use App\Models\Attendance;
 use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\ProductionRecord;
@@ -93,6 +94,8 @@ final class UserAbilities
             'spatial.viewAny' => $gate->allows('viewAny', ApartmentUnit::class),
             'spatial.update' => $gate->allows('update', new ApartmentUnit),
             'spatial.bulkAssign' => $gate->allows('bulkAssign', ApartmentUnit::class),
+            'attendance.viewAny' => $gate->allows('viewAny', Attendance::class),
+            'attendance.manage' => $gate->allows('manage', Attendance::class),
             'documents.viewAny' => $gate->allows('viewAny', Document::class),
             'documents.create' => $gate->allows('create', Document::class),
             'documents.delete' => $gate->allows('delete', new Document),
@@ -143,6 +146,7 @@ final class UserAbilities
             'advances' => $can['advances.viewAny'] ?? false,
             'productions' => $can['productions.viewAny'] ?? false,
             'spatial' => $can['spatial.viewAny'] ?? false,
+            'attendance' => $can['attendance.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,
             'reports' => ($can['reports.view'] ?? false) || ($can['vault.exports'] ?? false),

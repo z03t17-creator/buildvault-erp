@@ -8,9 +8,10 @@ use App\Models\EmployeeAdvance;
 use App\Models\Project;
 use App\Models\StaffStatement;
 use App\Models\Worker;
+use App\Services\AuditLogger;
+use App\Services\StaffSettlementService;
 use App\Support\AuditActions;
 use App\Support\DualCurrency;
-use App\Services\AuditLogger;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -96,10 +97,20 @@ class WorkerController extends Controller
             ->orderByDesc('id')
             ->get();
 
+        $settlement = null;
+        if ($worker->isStaff() || $worker->isEmployee()) {
+            try {
+                $settlement = app(StaffSettlementService::class)->preview($worker);
+            } catch (\InvalidArgumentException) {
+                $settlement = null;
+            }
+        }
+
         return Inertia::render('Workers/Show', [
             'worker' => $worker,
             'advances' => $advances,
             'statements' => $statements,
+            'settlement' => $settlement,
             'laborKinds' => [Worker::LABOR_KIND_STAFF, Worker::LABOR_KIND_WORKER],
             'canClassify' => request()->user()?->can('classify', $worker) ?? false,
         ]);
@@ -194,12 +205,6 @@ class WorkerController extends Controller
             'earned_iqd' => ['nullable', 'numeric', 'min:0'],
             'paid_usd' => ['nullable', 'numeric', 'min:0'],
             'paid_iqd' => ['nullable', 'numeric', 'min:0'],
-            'retention_held_usd' => ['nullable', 'numeric', 'min:0'],
-            'retention_held_iqd' => ['nullable', 'numeric', 'min:0'],
-            'advances_usd' => ['nullable', 'numeric', 'min:0'],
-            'advances_iqd' => ['nullable', 'numeric', 'min:0'],
-            'penalties_usd' => ['nullable', 'numeric', 'min:0'],
-            'penalties_iqd' => ['nullable', 'numeric', 'min:0'],
         ]);
 
         $statement = new StaffStatement([
@@ -207,8 +212,10 @@ class WorkerController extends Controller
             'worker_id' => $worker->id,
             'created_by' => $request->user()?->id,
         ]);
-        $statement->recalculateRemaining();
         $statement->save();
+
+        // Gross − 10% retention − all advances − penalties (per currency)
+        app(StaffSettlementService::class)->refreshStatement($statement);
 
         $this->audit->log(
             AuditActions::STAFF_STATEMENT_SAVED,

@@ -36,6 +36,7 @@ class PenaltyService
      *     payout_id?: int|null,
      *     created_by?: int|null,
      *     status?: string|null,
+     *     currency?: string|null,
      * }  $data
      */
     public function create(array $data): Penalty
@@ -72,6 +73,10 @@ class PenaltyService
             throw new InvalidArgumentException('Invalid penalty status.');
         }
 
+        $currency = isset($data['currency'])
+            ? strtoupper((string) $data['currency'])
+            : ($amountUsd > 0 ? DualCurrency::USD : DualCurrency::IQD);
+
         return Penalty::query()->create([
             'worker_id' => $worker->id,
             'project_id' => $project->id,
@@ -81,6 +86,7 @@ class PenaltyService
             'notes' => $data['notes'] ?? null,
             'amount_usd' => $amountUsd,
             'amount_iqd' => $amountIqd,
+            'currency' => $currency,
             'occurred_on' => $data['occurred_on'] ?? now()->toDateString(),
             'payout_id' => $payoutId,
             'deducted_from_payout' => false,

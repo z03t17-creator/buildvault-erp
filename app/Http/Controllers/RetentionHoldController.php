@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClientRetentionHold;
 use App\Models\RetentionHold;
 use App\Models\Vault;
+use App\Services\ClientRetentionHoldService;
 use App\Services\ExchangeRateService;
 use App\Services\InsuranceSettings;
 use App\Services\RetentionHoldService;
@@ -17,6 +19,7 @@ class RetentionHoldController extends Controller
 {
     public function __construct(
         private readonly RetentionHoldService $holds,
+        private readonly ClientRetentionHoldService $clientHolds,
         private readonly InsuranceSettings $insurance,
         private readonly ExchangeRateService $exchangeRates,
     ) {}
@@ -25,8 +28,11 @@ class RetentionHoldController extends Controller
     {
         $this->authorize('viewRetention', Vault::class);
 
+        // Flip due holds to matured for both layers before rendering.
+        $this->holds->markDueAsMatured();
+        $this->clientHolds->markDueAsMatured();
+
         $rate = $this->exchangeRates->getUsdToIqd();
-        // Use native dual columns — do not invent IQD via FX.
         $mapHold = static function (RetentionHold $h): RetentionHold {
             $h->setAttribute('amount_iqd', round((float) ($h->amount_iqd ?? 0), 2));
             if ($h->released_amount_usd !== null || $h->released_amount_iqd !== null) {
@@ -46,6 +52,11 @@ class RetentionHoldController extends Controller
                 ->get()
                 ->map($mapHold),
             'matured' => collect($this->holds->maturedAwaitingRelease())->map($mapHold)->values(),
+            'clientHolds' => ClientRetentionHold::query()
+                ->with(['project:id,name', 'clientAdvance:id,client_name'])
+                ->orderByDesc('id')
+                ->get(),
+            'clientMatured' => $this->clientHolds->maturedAwaitingRelease()->values(),
             'settings' => $this->insurance->all(),
             'exchangeRate' => $rate,
             'autoBlendDisabled' => true,
@@ -84,5 +95,18 @@ class RetentionHoldController extends Controller
         }
 
         return back()->with('success', 'Insurance released to staff payroll pool.');
+    }
+
+    public function releaseClient(ClientRetentionHold $clientRetentionHold): RedirectResponse
+    {
+        $this->authorize('manageRetention', Vault::class);
+
+        try {
+            $this->clientHolds->release($clientRetentionHold, request()->user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['status' => $e->getMessage()]);
+        }
+
+        return back()->with('success', __('Client retention released.'));
     }
 }

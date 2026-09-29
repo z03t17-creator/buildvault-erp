@@ -160,7 +160,7 @@ class StockPhase10Test extends TestCase
         $this->assertArrayNotHasKey('material_cost', $summary['stubs']);
     }
 
-    public function test_stock_manager_nav_includes_stock_not_attendance(): void
+    public function test_stock_manager_nav_includes_stock_and_attendance(): void
     {
         $stock = $this->userWithRole(Roles::STOCK_MANAGER);
 
@@ -173,7 +173,7 @@ class StockPhase10Test extends TestCase
 
                     return in_array('dashboard', $keys, true)
                         && in_array('stock', $keys, true)
-                        && ! in_array('attendance', $keys, true)
+                        && in_array('attendance', $keys, true)
                         && ! in_array('vault', $keys, true)
                         && ! in_array('payroll', $keys, true);
                 })
@@ -187,12 +187,16 @@ class StockPhase10Test extends TestCase
         $this->assertFalse($role->hasPermissionTo(Permissions::VAULT_VIEW));
     }
 
-    public function test_attendance_routes_removed(): void
+    public function test_attendance_routes_available_to_stock_manager(): void
     {
-        $admin = $this->userWithRole(Roles::SUPER_ADMIN);
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
 
-        $this->actingAs($admin)->get('/attendance')->assertNotFound();
-        $this->actingAs($admin)->post('/attendance/check-in')->assertNotFound();
+        $this->actingAs($stock)->get('/attendance')->assertOk();
+        $this->actingAs($stock)->post('/attendance/check-in', [
+            'date' => now()->toDateString(),
+            'check_in' => '08:00',
+            'worker_ids' => [],
+        ])->assertSessionHasErrors(); // validation, not 404
     }
 
     public function test_demo_stock_seeder_is_idempotent(): void

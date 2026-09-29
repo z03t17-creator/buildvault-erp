@@ -15,7 +15,7 @@ import useTranslations from '@/hooks/useTranslations';
 import { formatIqd } from '@/lib/numberFormat';
 import { Head, router, useForm, usePage } from '@inertiajs/react';
 
-export default function Index({ holds, matured, settings, exchangeRate }) {
+export default function Index({ holds, matured, clientHolds, clientMatured, settings, exchangeRate }) {
     const t = useTranslations();
     const page = usePage();
     const canRetention = useCan('vault.retentionManage');
@@ -24,6 +24,8 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
     const cfg = settings || shared || {};
     const list = holds || [];
     const ready = matured || [];
+    const clientList = clientHolds || [];
+    const clientReady = clientMatured || [];
     const iqd = t('IQD');
     const rate = page.props.exchangeRate || exchangeRate || 1310;
 
@@ -125,6 +127,36 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                     </DataPanel>
                 )}
 
+                {canRetention && clientReady.length > 0 && (
+                    <DataPanel title={t('client_matured_release_heading')}>
+                        <ul className="space-y-2 text-sm">
+                            {clientReady.map((h) => (
+                                <li
+                                    key={h.id}
+                                    className="flex flex-wrap items-center justify-between gap-2"
+                                >
+                                    <span>
+                                        #{h.id} {h.client_advance?.client_name || '—'} ·{' '}
+                                        {h.project?.name || '—'} · USD{' '}
+                                        {Number(h.amount_usd || 0).toLocaleString()} / IQD{' '}
+                                        {Number(h.amount_iqd || 0).toLocaleString()}
+                                    </span>
+                                    <PrimaryButton
+                                        type="button"
+                                        onClick={() =>
+                                            router.post(
+                                                route('retention-holds.client-release', h.id),
+                                            )
+                                        }
+                                    >
+                                        {t('release')}
+                                    </PrimaryButton>
+                                </li>
+                            ))}
+                        </ul>
+                    </DataPanel>
+                )}
+
                 {list.length === 0 ? (
                     <EmptyState title={t('no_insurance_holds')} />
                 ) : (
@@ -216,6 +248,81 @@ export default function Index({ holds, matured, settings, exchangeRate }) {
                         </DataTable>
                     </DataPanel>
                 )}
+
+                <DataPanel title={t('client_retention_holds')} subtitle={t('client_retention_hint')}>
+                    {clientList.length === 0 ? (
+                        <EmptyState title={t('no_client_retention_holds')} />
+                    ) : (
+                        <DataTable minWidth="56rem">
+                            <thead>
+                                <tr>
+                                    <Th>{t('col_id')}</Th>
+                                    <Th className="text-left">{t('client_name')}</Th>
+                                    <Th className="text-left">{t('project')}</Th>
+                                    <Th align="end">USD</Th>
+                                    <Th align="end">IQD</Th>
+                                    <Th>{t('hold_start')}</Th>
+                                    <Th>{t('matures')}</Th>
+                                    <Th>{t('status')}</Th>
+                                    <Th>{t('action')}</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {clientList.map((h) => (
+                                    <tr key={h.id}>
+                                        <Td muted className="tabular-nums">
+                                            #{h.id}
+                                        </Td>
+                                        <Td className="text-left">
+                                            {h.client_advance?.client_name || '—'}
+                                        </Td>
+                                        <Td className="text-left">{h.project?.name || '—'}</Td>
+                                        <Td align="end" className="font-mono tabular-nums">
+                                            <MoneyAmount
+                                                value={h.amount_usd}
+                                                label="USD"
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
+                                        <Td align="end" className="font-mono tabular-nums">
+                                            <MoneyAmount
+                                                value={h.amount_iqd}
+                                                label="IQD"
+                                                size="sm"
+                                                showLabel={false}
+                                            />
+                                        </Td>
+                                        <Td muted>{h.hold_start}</Td>
+                                        <Td muted>{h.maturity_date}</Td>
+                                        <Td>
+                                            <StatusBadge status={h.status} />
+                                        </Td>
+                                        <Td>
+                                            {canRetention && h.status === 'matured' ? (
+                                                <PrimaryButton
+                                                    type="button"
+                                                    onClick={() =>
+                                                        router.post(
+                                                            route(
+                                                                'retention-holds.client-release',
+                                                                h.id,
+                                                            ),
+                                                        )
+                                                    }
+                                                >
+                                                    {t('release')}
+                                                </PrimaryButton>
+                                            ) : (
+                                                <span className="text-slate-400">—</span>
+                                            )}
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
+                    )}
+                </DataPanel>
             </PageShell>
         </AuthenticatedLayout>
     );
