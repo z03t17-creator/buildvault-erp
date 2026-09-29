@@ -355,7 +355,9 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                                                 <span className="hidden truncate lg:inline" dir="auto">
                                                     {user.name}
                                                 </span>
-                                                <NavIcon name="more" className="hidden text-xs opacity-60 lg:inline-flex" />
+                                                <span className="hidden lg:inline-flex">
+                                                    <NavIcon name="more" className="text-xs opacity-60" />
+                                                </span>
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
