@@ -35,6 +35,13 @@ const NAV_ICON_MAP = {
     stockMovements: 'fi-rr-exchange',
     moneyIn: 'fi-rr-arrow-small-down',
     moneyOut: 'fi-rr-arrow-small-up',
+    search: 'fi-rr-search',
+    filter: 'fi-rr-filter',
+    edit: 'fi-rr-pencil',
+    trash: 'fi-rr-trash',
+    calendar: 'fi-rr-calendar',
+    angleLeft: 'fi-rr-angle-left',
+    angleRight: 'fi-rr-angle-right',
 };
 
 const TONE_CHIP = {
