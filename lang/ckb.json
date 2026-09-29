@@ -761,5 +761,6 @@
     "mayorca_import_running": "هاوردە…",
     "mayorca_import_confirm": "سڕینەوەی داتای کار و هاوردەی Mayorca؟ ڕۆڵ و بەکارهێنەری سەرەکی دەمێنێت.",
     "mayorca_import_success": "هاوردە تەواو — :people کەس. ئاگاداری: :warnings.",
-    "mayorca_workbook_missing": "فایلی Excel لە repo نەدۆزرایەوە."
+    "mayorca_workbook_missing": "فایلی Excel لە repo نەدۆزرایەوە.",
+    "menu": "مێنیو"
 }

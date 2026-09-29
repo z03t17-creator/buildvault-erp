@@ -1,36 +1,49 @@
+@import '@flaticon/flaticon-uicons/css/regular/rounded.css';
+@import '@flaticon/flaticon-uicons/css/solid/rounded.css';
+@import '@flaticon/flaticon-uicons/css/bold/rounded.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
     :root {
-        --bv-bg: 248 250 252; /* slate-50 */
+        /* Judi-style construction ERP: warm slate + teal money accent */
+        --bv-bg: 244 246 248;
         --bv-surface: 255 255 255;
-        --bv-ink: 15 23 42; /* slate-900 */
-        --bv-muted: 100 116 139; /* slate-500 */
-        --bv-accent: 16 185 129; /* emerald-500 */
-        --bv-accent-strong: 5 150 105; /* emerald-600 */
-        --bv-crimson: 225 29 72; /* rose-600 */
-        --bv-amber: 217 119 6; /* amber-600 */
-        --bv-motion: 180ms;
-        --bv-motion-slow: 280ms;
+        --bv-ink: 15 23 42;
+        --bv-muted: 100 116 139;
+        --bv-accent: 13 148 136; /* teal-600 */
+        --bv-accent-strong: 15 118 110; /* teal-700 */
+        --bv-emerald: 16 185 129;
+        --bv-crimson: 225 29 72;
+        --bv-amber: 217 119 6;
+        --bv-sky: 14 165 233;
+        --bv-motion: 200ms;
+        --bv-motion-slow: 320ms;
+        --bv-radius: 0.875rem;
+        --bv-touch: 2.75rem; /* 44px field targets */
     }
 
     .dark {
-        --bv-bg: 15 23 42; /* slate-900 */
-        --bv-surface: 30 41 59; /* slate-800 */
-        --bv-ink: 248 250 252; /* slate-50 */
-        --bv-muted: 148 163 184; /* slate-400 */
-        --bv-accent: 52 211 153; /* emerald-400 */
-        --bv-accent-strong: 16 185 129; /* emerald-500 */
-        --bv-crimson: 251 113 133; /* rose-400 */
-        --bv-amber: 251 191 36; /* amber-400 */
+        --bv-bg: 11 18 32;
+        --bv-surface: 17 24 39;
+        --bv-ink: 248 250 252;
+        --bv-muted: 148 163 184;
+        --bv-accent: 45 212 191;
+        --bv-accent-strong: 20 184 166;
+        --bv-emerald: 52 211 153;
+        --bv-crimson: 251 113 133;
+        --bv-amber: 251 191 36;
+        --bv-sky: 56 189 248;
     }
 
     html {
         @apply antialiased;
         color-scheme: light;
-        transition: background-color var(--bv-motion-slow) ease, color var(--bv-motion-slow) ease;
+        transition:
+            background-color var(--bv-motion-slow) ease,
+            color var(--bv-motion-slow) ease;
     }
 
     html.dark {
@@ -45,54 +58,74 @@
     }
 
     body {
-        @apply bg-slate-50 font-sans text-slate-900 dark:bg-slate-950 dark:text-slate-50;
+        @apply font-sans text-slate-900 dark:text-slate-50;
+        background-color: rgb(var(--bv-bg));
+        /* Soft site atmosphere — warm wash + teal glow (not purple) */
         background-image:
-            radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.12), transparent),
-            radial-gradient(ellipse 60% 40% at 100% 0%, rgb(148 163 184 / 0.15), transparent);
+            radial-gradient(ellipse 90% 55% at 0% -10%, rgb(13 148 136 / 0.14), transparent 55%),
+            radial-gradient(ellipse 70% 45% at 100% 0%, rgb(245 158 11 / 0.08), transparent 50%),
+            linear-gradient(180deg, rgb(255 255 255 / 0.55) 0%, transparent 28rem);
+        background-attachment: fixed;
+        min-height: 100dvh;
     }
 
     html.dark body {
         background-image:
-            radial-gradient(ellipse 80% 50% at 50% -20%, rgb(16 185 129 / 0.18), transparent),
-            radial-gradient(ellipse 50% 30% at 0% 100%, rgb(51 65 85 / 0.5), transparent);
+            radial-gradient(ellipse 90% 50% at 0% -10%, rgb(45 212 191 / 0.12), transparent 55%),
+            radial-gradient(ellipse 60% 40% at 100% 100%, rgb(30 41 59 / 0.8), transparent 50%),
+            linear-gradient(180deg, rgb(15 23 42 / 0.4) 0%, transparent 24rem);
+    }
+
+    /* Flaticon Uicons baseline */
+    i[class^='fi-'],
+    i[class*=' fi-'] {
+        line-height: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
     }
 }
 
 @layer components {
     .bv-surface {
-        @apply rounded-lg border border-slate-200/80 bg-white/90 dark:border-slate-700/80 dark:bg-slate-900/80;
+        @apply border bg-white/95 dark:bg-slate-900/90;
+        border-color: rgb(226 232 240 / 0.9);
+        border-radius: var(--bv-radius);
+        box-shadow:
+            0 1px 2px rgb(15 23 42 / 0.04),
+            0 8px 24px -12px rgb(15 23 42 / 0.08);
         transition:
             background-color var(--bv-motion) ease,
             border-color var(--bv-motion) ease,
-            box-shadow var(--bv-motion) ease;
+            box-shadow var(--bv-motion) ease,
+            transform var(--bv-motion) ease;
+    }
+
+    html.dark .bv-surface {
+        border-color: rgb(51 65 85 / 0.85);
+        box-shadow: none;
     }
 
     .bv-panel {
-        @apply bv-surface overflow-hidden shadow-sm shadow-slate-900/[0.03] dark:shadow-none;
+        @apply bv-surface overflow-hidden;
     }
 
     .bv-sidebar {
-        background-image: linear-gradient(
-            180deg,
-            rgb(248 250 252 / 0.65) 0%,
-            transparent 12rem
-        );
+        background:
+            linear-gradient(180deg, rgb(255 255 255 / 0.92) 0%, rgb(248 250 252 / 0.96) 100%);
+        backdrop-filter: blur(12px);
     }
 
     html.dark .bv-sidebar {
-        background-image: linear-gradient(
-            180deg,
-            rgb(15 23 42 / 0.5) 0%,
-            transparent 12rem
-        );
+        background: linear-gradient(180deg, rgb(15 23 42 / 0.96) 0%, rgb(11 18 32 / 0.98) 100%);
     }
 
     .bv-badge {
+        @apply rounded-md;
         transition:
             background-color var(--bv-motion) ease,
             color var(--bv-motion) ease,
-            box-shadow var(--bv-motion) ease,
-            transform var(--bv-motion) ease;
+            box-shadow var(--bv-motion) ease;
     }
 
     .bv-table-wrap {
@@ -102,42 +135,36 @@
 
     .bv-table-wrap-sticky .bv-table thead th:first-child,
     .bv-table-wrap-sticky .bv-table tbody td:first-child {
-        @apply sticky start-0 z-10 bg-slate-50/95 dark:bg-slate-950/90;
-        box-shadow: 2px 0 8px -4px rgb(15 23 42 / 0.12);
-    }
-
-    html.dark .bv-table-wrap-sticky .bv-table thead th:first-child,
-    html.dark .bv-table-wrap-sticky .bv-table tbody td:first-child {
-        box-shadow: 2px 0 8px -4px rgb(0 0 0 / 0.35);
+        @apply sticky start-0 z-10 bg-white/95 dark:bg-slate-900/95;
+        box-shadow: 2px 0 10px -4px rgb(15 23 42 / 0.1);
     }
 
     .bv-table {
         @apply min-w-full border-collapse text-sm;
     }
 
-    /* Global money digit alignment */
     .bv-table td.text-end,
     .bv-table th.text-end,
     .tabular-nums {
         font-variant-numeric: tabular-nums;
-    }
-
-    .bv-mobile-cards {
-        @apply list-none;
+        font-family: theme('fontFamily.sans');
     }
 
     .bv-table thead {
-        @apply border-b border-slate-200 bg-slate-50/90 dark:border-slate-800 dark:bg-slate-950/40;
+        @apply border-b border-slate-200/90 bg-slate-50/95 dark:border-slate-800 dark:bg-slate-950/50;
+    }
+
+    .bv-table thead th {
+        @apply whitespace-nowrap;
     }
 
     .bv-table tbody tr {
-        @apply border-b border-slate-100 last:border-0 dark:border-slate-800/80;
-        transition-property: background-color;
-        transition-duration: var(--bv-motion);
+        @apply border-b border-slate-100 last:border-0 dark:border-slate-800/70;
+        transition: background-color var(--bv-motion) ease;
     }
 
     .bv-table tbody tr:hover {
-        @apply bg-slate-50/80 dark:bg-slate-800/40;
+        @apply bg-teal-50/40 dark:bg-slate-800/45;
     }
 
     .bv-table tfoot {
@@ -150,26 +177,99 @@
 
     .bv-card {
         @apply bv-surface;
-        transition:
-            border-color var(--bv-motion) ease,
-            background-color var(--bv-motion) ease;
     }
 
     .bv-card:hover {
-        @apply border-emerald-300/50 dark:border-emerald-700/40;
+        border-color: rgb(20 184 166 / 0.45);
     }
 
-    .bv-nav-panel {
-        transition:
-            max-height var(--bv-motion-slow) ease,
-            opacity var(--bv-motion) ease;
+    .bv-icon-chip {
+        @apply inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base;
+        background: rgb(13 148 136 / 0.1);
+        color: rgb(13 148 136);
+    }
+
+    html.dark .bv-icon-chip {
+        background: rgb(45 212 191 / 0.12);
+        color: rgb(94 234 212);
+    }
+
+    .bv-icon-chip-amber {
+        background: rgb(245 158 11 / 0.12);
+        color: rgb(180 83 9);
+    }
+
+    html.dark .bv-icon-chip-amber {
+        background: rgb(251 191 36 / 0.12);
+        color: rgb(252 211 77);
+    }
+
+    .bv-icon-chip-rose {
+        background: rgb(244 63 94 / 0.1);
+        color: rgb(190 18 60);
+    }
+
+    html.dark .bv-icon-chip-rose {
+        background: rgb(251 113 133 / 0.12);
+        color: rgb(253 164 175);
+    }
+
+    .bv-icon-chip-sky {
+        background: rgb(14 165 233 / 0.1);
+        color: rgb(3 105 161);
+    }
+
+    html.dark .bv-icon-chip-sky {
+        background: rgb(56 189 248 / 0.12);
+        color: rgb(125 211 252);
+    }
+
+    .bv-btn-primary {
+        @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm shadow-teal-900/10 transition hover:bg-teal-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-2 active:bg-teal-800 dark:bg-teal-500 dark:text-slate-950 dark:hover:bg-teal-400 dark:focus-visible:ring-offset-slate-900;
+    }
+
+    .bv-btn-secondary {
+        @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:bg-teal-50/60 hover:text-teal-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:bg-slate-800;
+    }
+
+    .bv-btn-danger {
+        @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900;
+    }
+
+    .bv-mobile-dock {
+        @apply fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/95 lg:hidden;
+        box-shadow: 0 -8px 30px -12px rgb(15 23 42 / 0.15);
+    }
+
+    .bv-dock-item {
+        @apply flex min-h-[3.25rem] flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1 text-[10px] font-semibold tracking-wide text-slate-500 transition dark:text-slate-400;
+    }
+
+    .bv-dock-item-active {
+        @apply bg-teal-50 text-teal-800 dark:bg-teal-500/15 dark:text-teal-300;
+    }
+
+    .bv-nav-item {
+        @apply flex min-h-[2.75rem] items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition;
+    }
+
+    .bv-nav-item-active {
+        @apply bg-teal-600/10 text-teal-900 ring-1 ring-teal-500/20 dark:bg-teal-500/15 dark:text-teal-200 dark:ring-teal-400/25;
+    }
+
+    .bv-nav-item-idle {
+        @apply text-slate-600 hover:bg-slate-100/90 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100;
+    }
+
+    .bv-attribution {
+        @apply text-[10px] leading-snug tracking-wide text-slate-400 dark:text-slate-500;
     }
 }
 
 @keyframes bv-fade-up {
     from {
         opacity: 0;
-        transform: translateY(6px);
+        transform: translateY(8px);
     }
     to {
         opacity: 1;

@@ -2,8 +2,7 @@ import ApplicationLogo from '@/Components/ApplicationLogo';
 import { Link } from '@inertiajs/react';
 
 /**
- * Brand-first ZHAKO mark + BuildVault ERP title.
- * size: 'hero' (login) | 'header' (authenticated shell)
+ * Brand-first ZHAKO mark + BuildVault ERP title (Judi-clean hierarchy).
  */
 export default function BrandMark({
     size = 'hero',
@@ -20,15 +19,15 @@ export default function BrandMark({
             <div
                 className={
                     isHero
-                        ? 'rounded-sm bg-white p-3 shadow-sm ring-1 ring-slate-200 dark:ring-slate-700'
-                        : 'shrink-0 rounded-sm bg-white p-1 ring-1 ring-slate-200 dark:ring-slate-700'
+                        ? 'rounded-2xl bg-white p-3 shadow-judi ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700'
+                        : 'shrink-0 rounded-xl bg-white p-1 ring-1 ring-slate-200/80 dark:bg-slate-900 dark:ring-slate-700'
                 }
             >
                 <ApplicationLogo
                     className={
                         isHero
                             ? 'h-36 w-36 sm:h-44 sm:w-44'
-                            : 'h-11 w-11 sm:h-12 sm:w-12'
+                            : 'h-10 w-10 sm:h-11 sm:w-11'
                     }
                     alt="ZHAKO Company"
                 />
@@ -42,8 +41,8 @@ export default function BrandMark({
                     <p
                         className={
                             isHero
-                                ? 'font-display text-2xl font-semibold tracking-[0.2em] text-slate-900 dark:text-white sm:text-3xl'
-                                : 'font-display text-base font-semibold tracking-[0.18em] text-slate-900 transition group-hover:text-emerald-700 dark:text-white dark:group-hover:text-emerald-400 sm:text-lg'
+                                ? 'font-display text-3xl font-semibold tracking-[0.18em] text-slate-900 dark:text-white sm:text-4xl'
+                                : 'font-display text-base font-semibold tracking-[0.16em] text-slate-900 transition group-hover:text-teal-700 dark:text-white dark:group-hover:text-teal-300 sm:text-lg'
                         }
                     >
                         ZHAKO
@@ -51,7 +50,7 @@ export default function BrandMark({
                     <h1
                         className={
                             isHero
-                                ? 'font-sans text-lg font-semibold tracking-tight text-slate-600 dark:text-slate-300 sm:text-xl'
+                                ? 'font-sans text-lg font-semibold tracking-tight text-teal-800 dark:text-teal-300 sm:text-xl'
                                 : 'truncate font-sans text-xs font-medium tracking-wide text-slate-500 dark:text-slate-400 sm:text-sm'
                         }
                     >
@@ -59,7 +58,6 @@ export default function BrandMark({
                     </h1>
                 </div>
             )}
-
         </div>
     );
 
@@ -68,7 +66,10 @@ export default function BrandMark({
     }
 
     return (
-        <Link href={href} className="group outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
+        <Link
+            href={href}
+            className="group outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+        >
             {content}
         </Link>
     );

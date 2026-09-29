@@ -11,18 +11,18 @@ import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
-import { ShieldCheck, Users } from 'lucide-react';
 
 function Stat({ label, value, hint }) {
     return (
-        <div className="rounded-lg border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
-            <div className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <div className="bv-card px-4 py-3.5">
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                 {label}
             </div>
             <div
                 dir="ltr"
-                className="mt-1 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white sm:text-3xl"
+                className="mt-1.5 font-sans text-2xl font-semibold tracking-normal tabular-nums text-slate-900 dark:text-white sm:text-3xl"
             >
                 {value}
             </div>
@@ -209,7 +209,9 @@ function SuperAdminHome({ summary, t, canImportMayorca }) {
                 >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                         <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
-                            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <span className="bv-icon-chip bv-icon-chip-amber mt-0.5">
+                                <NavIcon name="insurance" className="text-base" />
+                            </span>
                             <p>{t('mayorca_import_panel_body')}</p>
                         </div>
                         <DangerButton
@@ -244,7 +246,7 @@ function SuperAdminHome({ summary, t, canImportMayorca }) {
                                 <tr key={u.id}>
                                     <Td>
                                         <div className="flex items-center gap-2">
-                                            <Users className="h-4 w-4 text-slate-400" aria-hidden />
+                                            <NavIcon name="users" className="text-sm text-slate-400" />
                                             <div>
                                                 <div className="font-medium">{u.name}</div>
                                                 <div className="text-xs text-slate-500">{u.email}</div>

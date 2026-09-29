@@ -86,6 +86,11 @@ php artisan serve   # Terminal 1
 npm run dev         # Terminal 2 — Vite HMR
 ```
 
+## UI / icons
+
+- UX tone inspired by **Judi Group** construction demos: uncrowded hierarchy, teal accents, large touch targets, mobile dock.
+- Icons: **[Flaticon Uicons](https://www.flaticon.com/uicons)** (`@flaticon/flaticon-uicons`) — attribution required for the free set (shown in-app footer).
+
 ## License
 
 Proprietary — Zhako Construction Company.

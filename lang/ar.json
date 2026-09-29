@@ -761,5 +761,6 @@
     "mayorca_import_running": "جاري الاستيراد…",
     "mayorca_import_confirm": "مسح بيانات الأعمال واستيراد Mayorca؟ تبقى الأدوار والمستخدمون الأساسيون.",
     "mayorca_import_success": "اكتمل الاستيراد — :people أشخاص. تحذيرات: :warnings.",
-    "mayorca_workbook_missing": "ملف Excel المرفق غير موجود."
+    "mayorca_workbook_missing": "ملف Excel المرفق غير موجود.",
+    "menu": "القائمة"
 }

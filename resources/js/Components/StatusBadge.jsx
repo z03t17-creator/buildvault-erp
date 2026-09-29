@@ -111,7 +111,7 @@ export default function StatusBadge({ status, className = '', label }) {
 
     return (
         <span
-            className={`bv-badge inline-flex items-center whitespace-nowrap rounded-sm px-2 py-0.5 text-xs font-semibold capitalize tracking-wide ring-1 ${style} ${className}`}
+            className={`bv-badge inline-flex items-center whitespace-nowrap rounded-md px-2 py-0.5 text-xs font-semibold capitalize tracking-wide ring-1 ${style} ${className}`}
         >
             {display}
         </span>

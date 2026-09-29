@@ -11,14 +11,31 @@ export default function GuestLayout({ children }) {
             </div>
 
             <div className="mt-12 w-full max-w-md sm:mt-0">
-                <BrandMark size="hero" href="/" className="mb-8 justify-center sm:justify-start" />
+                <BrandMark
+                    size="hero"
+                    href="/"
+                    className="mb-8 justify-center sm:justify-start"
+                />
 
-                <div className="bv-panel border-slate-200/70 px-6 py-7 shadow-sm shadow-slate-900/[0.04] sm:px-8 sm:py-8 dark:border-slate-700/70 dark:shadow-none">
+                <div className="bv-panel border-slate-200/70 px-6 py-7 shadow-judi sm:px-8 sm:py-8 dark:border-slate-700/70">
                     {children}
                 </div>
 
                 <p className="mt-6 text-center text-xs tracking-wide text-slate-400 dark:text-slate-500">
                     BuildVault ERP · ZHAKO
+                </p>
+                <p className="bv-attribution mt-2 text-center">
+                    Icons by{' '}
+                    <a
+                        href="https://www.flaticon.com/uicons"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline underline-offset-2"
+                    >
+                        Flaticon Uicons
+                    </a>
+                    {' · '}
+                    UX inspired by Judi Group
                 </p>
             </div>
         </div>

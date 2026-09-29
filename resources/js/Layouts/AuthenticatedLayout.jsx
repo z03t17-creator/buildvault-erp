@@ -5,6 +5,7 @@ import LocaleSwitcher from '@/Components/LocaleSwitcher';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
 
@@ -26,6 +27,8 @@ const NAV_GROUPS = [
     },
 ];
 
+const DOCK_KEYS = ['dashboard', 'vault', 'workers', 'expenses'];
+
 function buildNavCatalog(t, maturedCount) {
     return {
         dashboard: {
@@ -37,9 +40,7 @@ function buildNavCatalog(t, maturedCount) {
         vault: {
             key: 'vault',
             href: route('vault.index'),
-            active:
-                route().current('dashboards.vault') ||
-                route().current('vault.*'),
+            active: route().current('dashboards.vault') || route().current('vault.*'),
             label: t('vault'),
         },
         payroll: {
@@ -145,8 +146,7 @@ function buildNavCatalog(t, maturedCount) {
         reports: {
             key: 'reports',
             href: route('reports.index'),
-            active:
-                route().current('reports.*') || route().current('exports.*'),
+            active: route().current('reports.*') || route().current('exports.*'),
             label: t('reports'),
         },
         backups: {
@@ -172,13 +172,13 @@ function buildNavCatalog(t, maturedCount) {
 
 function SidebarNav({ groups, onNavigate }) {
     return (
-        <nav className="flex flex-1 flex-col gap-6 overflow-y-auto px-3 py-4" aria-label="Primary">
+        <nav className="flex flex-1 flex-col gap-5 overflow-y-auto px-3 py-4" aria-label="Primary">
             {groups.map((group) => (
                 <div key={group.id}>
                     <p className="mb-2 px-3 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400 dark:text-slate-500">
                         {group.label}
                     </p>
-                    <div className="space-y-0.5">
+                    <div className="space-y-1">
                         {group.items.map((item) => (
                             <SidebarNavLink
                                 key={item.key}
@@ -194,6 +194,45 @@ function SidebarNav({ groups, onNavigate }) {
                     </div>
                 </div>
             ))}
+        </nav>
+    );
+}
+
+function MobileDock({ catalog, allowedNav, onMore }) {
+    const t = useTranslations();
+    const items = DOCK_KEYS.filter((key) => allowedNav.has(key) && catalog[key]).map(
+        (key) => catalog[key],
+    );
+
+    return (
+        <nav className="bv-mobile-dock" aria-label={t('toggle_navigation')}>
+            <div className="mx-auto flex max-w-lg items-stretch gap-0.5">
+                {items.map((item) => (
+                    <Link
+                        key={item.key}
+                        href={item.href}
+                        className={
+                            'bv-dock-item ' + (item.active ? 'bv-dock-item-active' : '')
+                        }
+                    >
+                        <NavIcon
+                            name={item.key}
+                            solid={item.active}
+                            className="text-lg"
+                        />
+                        <span className="truncate">{item.label}</span>
+                    </Link>
+                ))}
+                <button
+                    type="button"
+                    onClick={onMore}
+                    className="bv-dock-item"
+                    aria-label={t('toggle_navigation')}
+                >
+                    <NavIcon name="more" className="text-lg" />
+                    <span>{t('menu', 'Menu')}</span>
+                </button>
+            </div>
         </nav>
     );
 }
@@ -230,84 +269,97 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
 
     const sidebarBody = (
         <>
-            <div className="flex h-16 shrink-0 items-center border-b border-slate-200/80 px-4 dark:border-slate-800 sm:h-[4.25rem]">
+            <div className="flex h-16 shrink-0 items-center border-b border-slate-200/70 px-4 dark:border-slate-800 sm:h-[4.25rem]">
                 <BrandMark size="header" href={route('dashboard')} />
             </div>
             <SidebarNav groups={navGroups} onNavigate={closeSidebar} />
-            <div className="mt-auto border-t border-slate-200/80 p-3 dark:border-slate-800">
+            <div className="mt-auto space-y-2 border-t border-slate-200/70 p-3 dark:border-slate-800">
                 <Link
                     href={route('profile.edit')}
                     onClick={closeSidebar}
                     className={
-                        'flex items-center gap-3 rounded-md px-3 py-2.5 transition ' +
+                        'flex items-center gap-3 rounded-xl px-3 py-2.5 transition ' +
                         (route().current('profile.*')
-                            ? 'bg-emerald-600/10 ring-1 ring-emerald-500/25 dark:bg-emerald-500/15'
+                            ? 'bg-teal-600/10 ring-1 ring-teal-500/25 dark:bg-teal-500/15'
                             : 'hover:bg-slate-100 dark:hover:bg-slate-800/80')
                     }
                 >
-                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-200 text-sm font-semibold text-slate-700 dark:bg-slate-700 dark:text-slate-100">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-teal-700 text-sm font-semibold text-white dark:bg-teal-500 dark:text-slate-950">
                         {(user.name || '?').charAt(0).toUpperCase()}
                     </span>
                     <span className="min-w-0">
-                        <span className="block truncate text-sm font-medium text-slate-800 dark:text-slate-100" dir="auto">
+                        <span
+                            className="block truncate text-sm font-semibold text-slate-800 dark:text-slate-100"
+                            dir="auto"
+                        >
                             {user.name}
                         </span>
-                        <span className="block truncate text-xs text-slate-500">{t('profile')}</span>
+                        <span className="block truncate text-xs text-slate-500">
+                            {t('profile')}
+                        </span>
                     </span>
                 </Link>
+                <p className="bv-attribution px-1">
+                    Icons by{' '}
+                    <a
+                        href="https://www.flaticon.com/uicons"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="underline decoration-slate-300 underline-offset-2 hover:text-teal-700 dark:hover:text-teal-300"
+                    >
+                        Flaticon Uicons
+                    </a>
+                    {' · '}
+                    UX inspired by Judi Group
+                </p>
             </div>
         </>
     );
 
     return (
         <div className="min-h-screen lg:flex">
-            <aside className="bv-sidebar sticky top-0 z-30 hidden h-screen w-60 shrink-0 flex-col border-e border-slate-200/80 bg-white/95 backdrop-blur dark:border-slate-800 dark:bg-slate-900/95 lg:flex xl:w-64">
+            <aside className="bv-sidebar sticky top-0 z-30 hidden h-screen w-[17rem] shrink-0 flex-col border-e border-slate-200/80 xl:w-72 lg:flex dark:border-slate-800">
                 {sidebarBody}
             </aside>
 
             <div
                 className={
                     (sidebarOpen ? 'pointer-events-auto' : 'pointer-events-none') +
-                    ' fixed inset-0 z-40 lg:hidden'
+                    ' fixed inset-0 z-50 lg:hidden'
                 }
                 aria-hidden={!sidebarOpen}
             >
                 <div
                     className={
-                        'absolute inset-0 bg-slate-900/40 transition-opacity ' +
+                        'absolute inset-0 bg-slate-900/45 transition-opacity ' +
                         (sidebarOpen ? 'opacity-100' : 'opacity-0')
                     }
                     onClick={closeSidebar}
                 />
                 <aside
                     className={
-                        'bv-sidebar absolute inset-y-0 start-0 flex w-[min(18rem,88vw)] flex-col border-e border-slate-200 bg-white shadow-xl transition-transform dark:border-slate-800 dark:bg-slate-900 ' +
-                        (sidebarOpen ? 'translate-x-0' : 'ltr:-translate-x-full rtl:translate-x-full')
+                        'bv-sidebar absolute inset-y-0 start-0 flex w-[min(19rem,90vw)] flex-col border-e border-slate-200 shadow-judi transition-transform dark:border-slate-800 ' +
+                        (sidebarOpen
+                            ? 'translate-x-0'
+                            : 'ltr:-translate-x-full rtl:translate-x-full')
                     }
                 >
                     {sidebarBody}
                 </aside>
             </div>
 
-            <div className="flex min-w-0 flex-1 flex-col">
-                <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/90 backdrop-blur dark:border-slate-800 dark:bg-slate-900/90">
+            <div className="flex min-w-0 flex-1 flex-col pb-[4.75rem] lg:pb-0">
+                <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/90 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/85">
                     <div className="flex h-14 items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
                         <div className="flex min-w-0 items-center gap-3">
                             <button
                                 type="button"
                                 onClick={() => setSidebarOpen(true)}
-                                className="inline-flex items-center justify-center rounded-md border border-slate-200 p-2 text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200 lg:hidden"
+                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 lg:hidden"
                                 aria-expanded={sidebarOpen}
                                 aria-label={t('toggle_navigation')}
                             >
-                                <svg className="h-5 w-5" stroke="currentColor" fill="none" viewBox="0 0 24 24">
-                                    <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                </svg>
+                                <NavIcon name="menu" className="text-lg" />
                             </button>
                             <div className="min-w-0 lg:hidden">
                                 <BrandMark size="header" href={route('dashboard')} />
@@ -323,27 +375,18 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
+                                        <span className="inline-flex rounded-xl">
                                             <button
                                                 type="button"
-                                                className="inline-flex max-w-[11rem] items-center truncate rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:border-emerald-400/60 hover:text-emerald-800 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-emerald-600/50 dark:hover:text-emerald-300"
+                                                className="inline-flex max-w-[11rem] items-center gap-2 truncate rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:text-teal-300"
                                             >
-                                                <span className="truncate" dir="auto">
+                                                <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white dark:bg-teal-500 dark:text-slate-950">
+                                                    {(user.name || '?').charAt(0).toUpperCase()}
+                                                </span>
+                                                <span className="hidden truncate sm:inline" dir="auto">
                                                     {user.name}
                                                 </span>
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4 shrink-0"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                    aria-hidden
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
+                                                <NavIcon name="more" className="text-xs opacity-60" />
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
@@ -378,14 +421,26 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                 <main className="bv-row-enter flex-1">
                     {showFlash && (flash.success || flash.error || flash.warning) && (
                         <div className="mx-auto max-w-7xl space-y-2 px-4 pt-6 sm:px-6 lg:px-8">
-                            {flash.success && <FlashBanner tone="success">{flash.success}</FlashBanner>}
-                            {flash.error && <FlashBanner tone="error">{flash.error}</FlashBanner>}
-                            {flash.warning && <FlashBanner tone="warning">{flash.warning}</FlashBanner>}
+                            {flash.success && (
+                                <FlashBanner tone="success">{flash.success}</FlashBanner>
+                            )}
+                            {flash.error && (
+                                <FlashBanner tone="error">{flash.error}</FlashBanner>
+                            )}
+                            {flash.warning && (
+                                <FlashBanner tone="warning">{flash.warning}</FlashBanner>
+                            )}
                         </div>
                     )}
                     {children}
                 </main>
             </div>
+
+            <MobileDock
+                catalog={catalog}
+                allowedNav={allowedNav}
+                onMore={() => setSidebarOpen(true)}
+            />
         </div>
     );
 }

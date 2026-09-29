@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="theme-color" content="#059669">
+        <meta name="theme-color" content="#0f766e">
         <meta name="application-name" content="BuildVault ERP">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -15,9 +15,9 @@
         <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png">
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
 
-        <!-- Fonts: display serif for brand, humanist sans for UI -->
+        <!-- Fonts: Outfit display + Plus Jakarta Sans UI (Judi-clean construction) -->
         <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=cormorant-garamond:500,600,700|source-sans-3:400,500,600,700&display=swap" rel="stylesheet" />
+        <link href="https://fonts.bunny.net/css?family=outfit:500,600,700|plus-jakarta-sans:400,500,600,700&display=swap" rel="stylesheet" />
 
         <script>
             (function () {

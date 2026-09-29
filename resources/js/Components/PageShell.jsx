@@ -3,7 +3,7 @@
  */
 export default function PageShell({ children, className = '', narrow = false }) {
     return (
-        <div className={`py-8 ${className}`.trim()}>
+        <div className={`py-6 sm:py-8 ${className}`.trim()}>
             <div
                 className={
                     (narrow ? 'mx-auto max-w-4xl' : 'mx-auto max-w-7xl') +

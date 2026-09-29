@@ -1,6 +1,11 @@
-export default function EmptyState({ title, description, action }) {
+import { NavIcon } from '@/lib/navIcons';
+
+export default function EmptyState({ title, description, action, icon = 'apps' }) {
     return (
-        <div className="rounded-lg border border-dashed border-slate-300/90 bg-white/40 px-6 py-14 text-center dark:border-slate-700 dark:bg-slate-900/30">
+        <div className="bv-panel border-dashed px-6 py-14 text-center">
+            <span className="bv-icon-chip mx-auto mb-4">
+                <NavIcon name={icon} className="text-lg" />
+            </span>
             <p className="font-display text-lg font-semibold text-slate-800 dark:text-slate-100">
                 {title}
             </p>

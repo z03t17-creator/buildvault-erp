@@ -6,10 +6,11 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
 const inputClass =
-    'mt-1.5 block w-full border-slate-300 focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1.5 block w-full min-h-touch rounded-xl border-slate-300 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Login({ status, canResetPassword }) {
     const t = useTranslations();
@@ -21,7 +22,6 @@ export default function Login({ status, canResetPassword }) {
 
     const submit = (e) => {
         e.preventDefault();
-
         post(route('login'), {
             onFinish: () => reset('password'),
         });
@@ -32,14 +32,17 @@ export default function Login({ status, canResetPassword }) {
             <Head title={t('login')} />
 
             <div className="mb-7">
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700 dark:text-emerald-400">
+                <div className="bv-icon-chip mb-3">
+                    <NavIcon name="lock" className="text-lg" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 dark:text-teal-300">
                     BuildVault
                 </p>
                 <h1 className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
-                    ZHAKO
+                    {t('login')}
                 </h1>
                 <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                    {t('login')} · construction ERP
+                    ZHAKO construction ERP · USD & IQD vault
                 </p>
             </div>
 
@@ -52,7 +55,6 @@ export default function Login({ status, canResetPassword }) {
             <form onSubmit={submit} className="space-y-5">
                 <div>
                     <InputLabel htmlFor="email" value={t('email')} />
-
                     <TextInput
                         id="email"
                         type="email"
@@ -63,13 +65,11 @@ export default function Login({ status, canResetPassword }) {
                         isFocused={true}
                         onChange={(e) => setData('email', e.target.value)}
                     />
-
                     <InputError message={errors.email} className="mt-2" />
                 </div>
 
                 <div>
                     <InputLabel htmlFor="password" value={t('password')} />
-
                     <TextInput
                         id="password"
                         type="password"
@@ -79,33 +79,30 @@ export default function Login({ status, canResetPassword }) {
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
-
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                    <label className="flex items-center">
+                <div className="flex items-center justify-between gap-3">
+                    <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                         <Checkbox
                             name="remember"
                             checked={data.remember}
                             onChange={(e) => setData('remember', e.target.checked)}
                         />
-                        <span className="ms-2 text-sm text-slate-600 dark:text-slate-400">
-                            {t('remember_me')}
-                        </span>
+                        <span>{t('remember_me')}</span>
                     </label>
-
                     {canResetPassword && (
                         <Link
                             href={route('password.request')}
-                            className="rounded-md text-sm text-slate-600 underline underline-offset-2 hover:text-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 dark:text-slate-400 dark:hover:text-emerald-400"
+                            className="text-sm font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
                         >
                             {t('forgot_password')}
                         </Link>
                     )}
                 </div>
 
-                <PrimaryButton className="w-full justify-center sm:w-auto" disabled={processing}>
+                <PrimaryButton className="w-full" disabled={processing}>
+                    <NavIcon name="lock" solid className="text-sm" />
                     {t('login')}
                 </PrimaryButton>
             </form>

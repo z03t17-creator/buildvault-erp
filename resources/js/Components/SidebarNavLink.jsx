@@ -1,4 +1,4 @@
-import { NavIcon } from '@/lib/navIcons.jsx';
+import { NavIcon } from '@/lib/navIcons';
 import { Link } from '@inertiajs/react';
 
 export default function SidebarNavLink({
@@ -12,28 +12,25 @@ export default function SidebarNavLink({
         <Link
             {...props}
             className={
-                'group flex items-center justify-between gap-2 rounded-md px-3 py-2 text-sm font-medium transition ' +
-                (active
-                    ? 'bg-emerald-600/10 text-emerald-800 ring-1 ring-emerald-500/25 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100')
+                'bv-nav-item group ' +
+                (active ? 'bv-nav-item-active' : 'bv-nav-item-idle')
             }
         >
-            <span className="flex min-w-0 items-center gap-2.5">
-                {icon && (
-                    <NavIcon
-                        name={icon}
-                        className={
-                            'h-4 w-4 shrink-0 ' +
-                            (active
-                                ? 'text-emerald-600 dark:text-emerald-400'
-                                : 'text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300')
-                        }
-                    />
-                )}
-                <span className="min-w-0 truncate">{children}</span>
-            </span>
+            {icon && (
+                <span
+                    className={
+                        'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-[0.95rem] transition ' +
+                        (active
+                            ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950'
+                            : 'bg-slate-100 text-slate-500 group-hover:bg-teal-50 group-hover:text-teal-700 dark:bg-slate-800 dark:text-slate-400 dark:group-hover:bg-teal-500/10 dark:group-hover:text-teal-300')
+                    }
+                >
+                    <NavIcon name={icon} solid={active} />
+                </span>
+            )}
+            <span className="min-w-0 flex-1 truncate">{children}</span>
             {badge != null && (
-                <span className="inline-flex min-w-[1.25rem] shrink-0 items-center justify-center rounded bg-amber-500 px-1 text-[10px] font-bold text-white">
+                <span className="inline-flex min-w-[1.25rem] shrink-0 items-center justify-center rounded-md bg-amber-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                     {badge}
                 </span>
             )}

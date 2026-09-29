@@ -15,14 +15,26 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['"Source Sans 3"', ...defaultTheme.fontFamily.sans],
-                display: ['"Cormorant Garamond"', ...defaultTheme.fontFamily.serif],
+                /* Judi-style clean UI; money always sans */
+                sans: ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
+                display: ['Outfit', ...defaultTheme.fontFamily.sans],
             },
             colors: {
                 brand: {
-                    DEFAULT: '#10b981',
-                    strong: '#059669',
+                    DEFAULT: '#0d9488',
+                    strong: '#0f766e',
+                    soft: '#ccfbf1',
                 },
+            },
+            borderRadius: {
+                xl: '0.875rem',
+                '2xl': '1.125rem',
+            },
+            minHeight: {
+                touch: '2.75rem',
+            },
+            boxShadow: {
+                judi: '0 1px 2px rgb(15 23 42 / 0.04), 0 12px 32px -16px rgb(15 23 42 / 0.12)',
             },
         },
     },
