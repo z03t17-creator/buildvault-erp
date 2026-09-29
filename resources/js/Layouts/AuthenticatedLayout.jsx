@@ -2,6 +2,7 @@ import BrandMark from '@/Components/BrandMark';
 import Dropdown from '@/Components/Dropdown';
 import FlashBanner from '@/Components/FlashBanner';
 import LocaleSwitcher from '@/Components/LocaleSwitcher';
+import MobileDock from '@/Components/MobileDock';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import useTranslations from '@/hooks/useTranslations';
@@ -26,8 +27,6 @@ const NAV_GROUPS = [
         keys: ['docs', 'imports', 'reports', 'backups', 'users', 'audit'],
     },
 ];
-
-const DOCK_KEYS = ['dashboard', 'vault', 'workers', 'expenses'];
 
 function buildNavCatalog(t, maturedCount) {
     return {
@@ -198,45 +197,6 @@ function SidebarNav({ groups, onNavigate }) {
     );
 }
 
-function MobileDock({ catalog, allowedNav, onMore }) {
-    const t = useTranslations();
-    const items = DOCK_KEYS.filter((key) => allowedNav.has(key) && catalog[key]).map(
-        (key) => catalog[key],
-    );
-
-    return (
-        <nav className="bv-mobile-dock" aria-label={t('toggle_navigation')}>
-            <div className="mx-auto flex max-w-lg items-stretch gap-0.5">
-                {items.map((item) => (
-                    <Link
-                        key={item.key}
-                        href={item.href}
-                        className={
-                            'bv-dock-item ' + (item.active ? 'bv-dock-item-active' : '')
-                        }
-                    >
-                        <NavIcon
-                            name={item.key}
-                            solid={item.active}
-                            className="text-lg"
-                        />
-                        <span className="truncate">{item.label}</span>
-                    </Link>
-                ))}
-                <button
-                    type="button"
-                    onClick={onMore}
-                    className="bv-dock-item"
-                    aria-label={t('toggle_navigation')}
-                >
-                    <NavIcon name="more" className="text-lg" />
-                    <span>{t('menu', 'Menu')}</span>
-                </button>
-            </div>
-        </nav>
-    );
-}
-
 export default function AuthenticatedLayout({ header, children, showFlash = true }) {
     const page = usePage();
     const user = page.props.auth.user;
@@ -274,6 +234,9 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
             </div>
             <SidebarNav groups={navGroups} onNavigate={closeSidebar} />
             <div className="mt-auto space-y-2 border-t border-slate-200/70 p-3 dark:border-slate-800">
+                <div className="lg:hidden">
+                    <LocaleSwitcher compact />
+                </div>
                 <Link
                     href={route('profile.edit')}
                     onClick={closeSidebar}
@@ -349,44 +312,50 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
             </div>
 
             <div className="flex min-w-0 flex-1 flex-col pb-[4.75rem] lg:pb-0">
-                <header className="sticky top-0 z-20 border-b border-slate-200/70 bg-white/90 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/85">
-                    <div className="flex h-14 items-center justify-between gap-3 px-4 sm:h-16 sm:px-6 lg:px-8">
-                        <div className="flex min-w-0 items-center gap-3">
+                <header className="bv-app-header sticky top-0 z-40 border-b border-slate-200/70 bg-white/90 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/85">
+                    <div className="bv-app-header-bar">
+                        <div className="flex min-w-0 items-center gap-2 sm:gap-3">
                             <button
                                 type="button"
                                 onClick={() => setSidebarOpen(true)}
-                                className="inline-flex h-11 w-11 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 lg:hidden"
+                                className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:border-teal-300 hover:bg-teal-50 hover:text-teal-800 focus:outline-none dark:border-slate-700 dark:hover:bg-slate-800 lg:hidden"
                                 aria-expanded={sidebarOpen}
                                 aria-label={t('toggle_navigation')}
                             >
                                 <NavIcon name="menu" className="text-lg" />
                             </button>
                             <div className="min-w-0 lg:hidden">
-                                <BrandMark size="header" href={route('dashboard')} />
+                                <BrandMark
+                                    size="header"
+                                    href={route('dashboard')}
+                                    titleClassName="hidden sm:block"
+                                />
                             </div>
                             {header && (
                                 <div className="hidden min-w-0 lg:block">{header}</div>
                             )}
                         </div>
 
-                        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
-                            <LocaleSwitcher compact />
-                            <ThemeToggle />
+                        <div className="flex shrink-0 items-center gap-1.5 sm:gap-2">
+                            <div className="hidden lg:block">
+                                <LocaleSwitcher compact />
+                            </div>
+                            <ThemeToggle className="h-11 w-11 shrink-0 rounded-xl p-0" />
                             <div className="relative">
                                 <Dropdown>
                                     <Dropdown.Trigger>
                                         <span className="inline-flex rounded-xl">
                                             <button
                                                 type="button"
-                                                className="inline-flex max-w-[11rem] items-center gap-2 truncate rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 focus:outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:text-teal-300"
+                                                className="inline-flex h-11 max-w-[11rem] shrink-0 items-center gap-2 truncate rounded-xl border border-slate-200 bg-white px-2 text-sm font-semibold text-slate-700 transition hover:border-teal-300 hover:text-teal-800 focus:outline-none sm:px-3 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-teal-600/50 dark:hover:text-teal-300"
                                             >
                                                 <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-teal-700 text-xs font-bold text-white dark:bg-teal-500 dark:text-slate-950">
                                                     {(user.name || '?').charAt(0).toUpperCase()}
                                                 </span>
-                                                <span className="hidden truncate sm:inline" dir="auto">
+                                                <span className="hidden truncate lg:inline" dir="auto">
                                                     {user.name}
                                                 </span>
-                                                <NavIcon name="more" className="text-xs opacity-60" />
+                                                <NavIcon name="more" className="hidden text-xs opacity-60 lg:inline-flex" />
                                             </button>
                                         </span>
                                     </Dropdown.Trigger>
@@ -439,6 +408,7 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
             <MobileDock
                 catalog={catalog}
                 allowedNav={allowedNav}
+                menuOpen={sidebarOpen}
                 onMore={() => setSidebarOpen(true)}
             />
         </div>

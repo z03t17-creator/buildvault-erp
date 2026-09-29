@@ -236,8 +236,16 @@
         @apply inline-flex min-h-[2.75rem] items-center justify-center gap-2 rounded-xl bg-rose-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-rose-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900;
     }
 
+    .bv-app-header {
+        padding-top: env(safe-area-inset-top);
+    }
+
+    .bv-app-header-bar {
+        @apply flex h-14 flex-nowrap items-center justify-between gap-2 overflow-hidden px-3 sm:h-16 sm:gap-3 sm:px-6 lg:px-8;
+    }
+
     .bv-mobile-dock {
-        @apply fixed inset-x-0 bottom-0 z-40 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/95 lg:hidden;
+        @apply fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/90 bg-white/95 px-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-1.5 backdrop-blur-lg dark:border-slate-800 dark:bg-slate-950/95 lg:hidden;
         box-shadow: 0 -8px 30px -12px rgb(15 23 42 / 0.15);
     }
 

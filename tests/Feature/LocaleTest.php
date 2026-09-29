@@ -21,6 +21,8 @@ class LocaleTest extends TestCase
                 ->where('translations.login', 'Log in')
                 ->where('translations.dashboard', 'Dashboard')
                 ->where('translations.locale-label', 'Language')
+                ->where('translations.staff', 'Staff')
+                ->where('translations.salary', 'Salary')
             );
     }
 
