@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         ->middleware('can:create,'.Document::class)
         ->name('documents.store');
     Route::delete('/documents/{document}', [DocumentController::class, 'destroy'])
+        ->middleware('can:delete,document')
         ->name('documents.destroy');
 
     Route::middleware('can:manageImports,'.Vault::class)->group(function () {
@@ -192,11 +193,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/payouts', [PayoutController::class, 'store'])->name('payouts.store');
     });
     Route::get('/payouts/{payout}', [PayoutController::class, 'show'])
-        ->middleware('can:viewAny,'.Payout::class)
+        ->middleware('can:view,payout')
         ->name('payouts.show');
-    Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])->name('payouts.approve');
-    Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])->name('payouts.reject');
-    Route::post('/payouts/{payout}/reconcile', [PayoutController::class, 'reconcile'])->name('payouts.reconcile');
+    Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])
+        ->middleware('can:approve,payout')
+        ->name('payouts.approve');
+    Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])
+        ->middleware('can:reject,payout')
+        ->name('payouts.reject');
+    Route::post('/payouts/{payout}/reconcile', [PayoutController::class, 'reconcile'])
+        ->middleware('can:reconcile,payout')
+        ->name('payouts.reconcile');
 
     Route::get('/expenses', [ExpenseController::class, 'index'])
         ->middleware('can:viewAny,'.Expense::class)
@@ -206,12 +213,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/expenses', [ExpenseController::class, 'store'])->name('expenses.store');
     });
     Route::get('/expenses/{expense}', [ExpenseController::class, 'show'])
-        ->middleware('can:viewAny,'.Expense::class)
+        ->middleware('can:view,expense')
         ->name('expenses.show');
-    Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])->name('expenses.edit');
-    Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])->name('expenses.update');
-    Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve'])->name('expenses.approve');
-    Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject'])->name('expenses.reject');
+    Route::get('/expenses/{expense}/edit', [ExpenseController::class, 'edit'])
+        ->middleware('can:update,expense')
+        ->name('expenses.edit');
+    Route::put('/expenses/{expense}', [ExpenseController::class, 'update'])
+        ->middleware('can:update,expense')
+        ->name('expenses.update');
+    Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve'])
+        ->middleware('can:approve,expense')
+        ->name('expenses.approve');
+    Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject'])
+        ->middleware('can:reject,expense')
+        ->name('expenses.reject');
 
     Route::get('/penalties', [PenaltyController::class, 'index'])
         ->middleware('can:viewAny,'.Penalty::class)
@@ -221,11 +236,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/penalties', [PenaltyController::class, 'store'])->name('penalties.store');
     });
     Route::get('/penalties/{penalty}', [PenaltyController::class, 'show'])
-        ->middleware('can:viewAny,'.Penalty::class)
+        ->middleware('can:view,penalty')
         ->name('penalties.show');
-    Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])->name('penalties.waive');
-    Route::post('/penalties/{penalty}/apply', [PenaltyController::class, 'apply'])->name('penalties.apply');
-    Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])->name('penalties.link');
+    Route::post('/penalties/{penalty}/waive', [PenaltyController::class, 'waive'])
+        ->middleware('can:waive,penalty')
+        ->name('penalties.waive');
+    Route::post('/penalties/{penalty}/apply', [PenaltyController::class, 'apply'])
+        ->middleware('can:apply,penalty')
+        ->name('penalties.apply');
+    Route::post('/penalties/{penalty}/link', [PenaltyController::class, 'link'])
+        ->middleware('can:link,penalty')
+        ->name('penalties.link');
 
     Route::get('/advances', [EmployeeAdvanceController::class, 'index'])
         ->middleware('can:viewAny,'.EmployeeAdvance::class)
@@ -235,11 +256,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/advances', [EmployeeAdvanceController::class, 'store'])->name('advances.store');
     });
     Route::get('/advances/{advance}', [EmployeeAdvanceController::class, 'show'])
-        ->middleware('can:viewAny,'.EmployeeAdvance::class)
+        ->middleware('can:view,advance')
         ->name('advances.show');
     Route::post('/advances/{advance}/repay', [EmployeeAdvanceController::class, 'repay'])
+        ->middleware('can:repay,advance')
         ->name('advances.repay');
     Route::post('/advances/{advance}/cancel', [EmployeeAdvanceController::class, 'cancel'])
+        ->middleware('can:cancel,advance')
         ->name('advances.cancel');
 
     Route::get('/productions', [ProductionRecordController::class, 'index'])
@@ -250,10 +273,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/productions', [ProductionRecordController::class, 'store'])->name('productions.store');
     });
     Route::get('/productions/{production}', [ProductionRecordController::class, 'show'])
-        ->middleware('can:viewAny,'.ProductionRecord::class)
+        ->middleware('can:view,production')
         ->name('productions.show');
-    Route::get('/productions/{production}/edit', [ProductionRecordController::class, 'edit'])->name('productions.edit');
-    Route::put('/productions/{production}', [ProductionRecordController::class, 'update'])->name('productions.update');
+    Route::get('/productions/{production}/edit', [ProductionRecordController::class, 'edit'])
+        ->middleware('can:update,production')
+        ->name('productions.edit');
+    Route::put('/productions/{production}', [ProductionRecordController::class, 'update'])
+        ->middleware('can:update,production')
+        ->name('productions.update');
 
     Route::middleware('can:viewAny,'.User::class)->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');
@@ -263,15 +290,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/users', [UserController::class, 'store'])
             ->middleware('can:create,'.User::class)
             ->name('users.store');
-        Route::get('/users/{user}', [UserController::class, 'show'])->name('users.show');
-        Route::get('/users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
-        Route::put('/users/{user}', [UserController::class, 'update'])->name('users.update');
-        Route::delete('/users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
-        Route::post('/users/{user}/disable', [UserController::class, 'disable'])->name('users.disable');
-        Route::post('/users/{user}/enable', [UserController::class, 'enable'])->name('users.enable');
+        Route::get('/users/{user}', [UserController::class, 'show'])
+            ->middleware('can:view,user')
+            ->name('users.show');
+        Route::get('/users/{user}/edit', [UserController::class, 'edit'])
+            ->middleware('can:update,user')
+            ->name('users.edit');
+        Route::put('/users/{user}', [UserController::class, 'update'])
+            ->middleware('can:update,user')
+            ->name('users.update');
+        Route::delete('/users/{user}', [UserController::class, 'destroy'])
+            ->middleware('can:delete,user')
+            ->name('users.destroy');
+        Route::post('/users/{user}/disable', [UserController::class, 'disable'])
+            ->middleware('can:disable,user')
+            ->name('users.disable');
+        Route::post('/users/{user}/enable', [UserController::class, 'enable'])
+            ->middleware('can:enable,user')
+            ->name('users.enable');
         Route::post('/users/{user}/reset-password', [UserController::class, 'resetPassword'])
+            ->middleware('can:resetPassword,user')
             ->name('users.reset-password');
         Route::post('/users/{user}/change-role', [UserController::class, 'changeRole'])
+            ->middleware('can:changeRole,user')
             ->name('users.change-role');
     });
 

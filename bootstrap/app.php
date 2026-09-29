@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
             \App\Http\Middleware\SecurityHeaders::class,
+            \App\Http\Middleware\EnsureUserIsActive::class,
+        ]);
+
+        $middleware->alias([
+            'active' => \App\Http\Middleware\EnsureUserIsActive::class,
         ]);
 
         // Behind LiteSpeed/cPanel SSL termination — trust proxy headers for HTTPS.
