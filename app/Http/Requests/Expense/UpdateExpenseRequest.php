@@ -4,6 +4,7 @@ namespace App\Http\Requests\Expense;
 
 use App\Models\Document;
 use App\Models\Expense;
+use App\Support\DualCurrency;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -14,6 +15,22 @@ class UpdateExpenseRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $currency = strtoupper((string) ($this->input('currency') ?: DualCurrency::IQD));
+        $amount = $this->input('amount');
+        if ($amount === null || $amount === '') {
+            $amount = $currency === DualCurrency::USD
+                ? $this->input('amount_usd')
+                : $this->input('amount_iqd');
+        }
+
+        $this->merge([
+            'currency' => $currency,
+            'amount' => $amount,
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */
@@ -22,7 +39,8 @@ class UpdateExpenseRequest extends FormRequest
         return [
             'project_id' => ['required', 'exists:projects,id'],
             'category' => ['required', 'string', Rule::in(Expense::CATEGORIES)],
-            'amount_iqd' => ['required', 'numeric', 'gt:0'],
+            'currency' => ['required', Rule::in(DualCurrency::CURRENCIES)],
+            'amount' => ['required', 'numeric', 'gt:0'],
             'expense_date' => ['required', 'date'],
             'supplier' => ['nullable', 'string', 'max:255'],
             'payment_method' => ['nullable', 'string', Rule::in(Expense::PAYMENT_METHODS)],

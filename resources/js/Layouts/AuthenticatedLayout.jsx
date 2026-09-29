@@ -12,7 +12,7 @@ const NAV_GROUPS = [
     {
         id: 'main',
         labelKey: 'nav_group_main',
-        keys: ['dashboard', 'vault', 'payroll', 'settlements', 'projects', 'workers', 'stock'],
+        keys: ['dashboard', 'vault', 'payroll', 'settlements', 'projects', 'workers', 'clientAdvances', 'stock'],
     },
     {
         id: 'ops',
@@ -36,7 +36,7 @@ function buildNavCatalog(t, maturedCount) {
         },
         vault: {
             key: 'vault',
-            href: route('dashboards.vault'),
+            href: route('vault.index'),
             active:
                 route().current('dashboards.vault') ||
                 route().current('vault.*'),
@@ -67,7 +67,13 @@ function buildNavCatalog(t, maturedCount) {
             key: 'workers',
             href: route('workers.index'),
             active: route().current('workers.*'),
-            label: t('workers'),
+            label: t('people'),
+        },
+        clientAdvances: {
+            key: 'clientAdvances',
+            href: route('client-advances.index'),
+            active: route().current('client-advances.*'),
+            label: t('client_advances'),
         },
         stock: {
             key: 'stock',

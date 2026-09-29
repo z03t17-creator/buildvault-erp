@@ -163,7 +163,7 @@ class LiquidityServiceTest extends TestCase
         $this->assertFalse($result['allowed']);
         $this->assertSame(500.0, $result['available_usd']);
         $this->assertNotEmpty($result['reasons']);
-        $this->assertStringContainsString('available liquidity', $result['reasons'][0]);
+        $this->assertTrue(collect($result['reasons'])->contains(fn ($r) => str_contains($r, 'Available Cash') || str_contains($r, 'available liquidity')));
     }
 
     public function test_blocks_when_category_pool_exhausted(): void

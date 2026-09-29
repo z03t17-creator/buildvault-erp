@@ -41,7 +41,17 @@ class ExpensePolicy
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }
 
+    public function hold(User $user, Expense $expense): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+    }
+
     public function reject(User $user, Expense $expense): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+    }
+
+    public function delete(User $user, Expense $expense): bool
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }

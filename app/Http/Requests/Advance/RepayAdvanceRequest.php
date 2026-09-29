@@ -11,13 +11,22 @@ class RepayAdvanceRequest extends FormRequest
         return true;
     }
 
+    protected function prepareForValidation(): void
+    {
+        $amount = $this->input('amount');
+        if ($amount === null || $amount === '') {
+            $amount = $this->input('amount_iqd') ?? $this->input('amount_usd');
+        }
+        $this->merge(['amount' => $amount]);
+    }
+
     /**
      * @return array<string, mixed>
      */
     public function rules(): array
     {
         return [
-            'amount_iqd' => ['required', 'numeric', 'gt:0'],
+            'amount' => ['required', 'numeric', 'gt:0'],
         ];
     }
 }

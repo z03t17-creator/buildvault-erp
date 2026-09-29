@@ -2,7 +2,6 @@ import DataPanel from '@/Components/DataPanel';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
-import MoneyAmount from '@/Components/MoneyAmount';
 import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -16,53 +15,41 @@ import { Head, Link, useForm } from '@inertiajs/react';
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Create({ projects, categories, paymentMethods, currencies, availableCash }) {
+export default function Create({ projects, currencies }) {
     const t = useTranslations();
     const { data, setData, post, processing, errors } = useForm({
         project_id: '',
-        category: 'materials',
-        currency: 'IQD',
+        client_name: '',
+        currency: 'USD',
         amount: '',
-        expense_date: new Date().toISOString().slice(0, 10),
-        supplier: '',
-        payment_method: 'cash',
-        description: '',
-        receipt: null,
+        received_on: new Date().toISOString().slice(0, 10),
+        reference: '',
+        notes: '',
+        lock_retention: true,
     });
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('new_expense')}
+                    title={t('new_client_advance')}
                     actions={
-                        <Link href={route('expenses.index')}>
+                        <Link href={route('client-advances.index')}>
                             <SecondaryButton>{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={t('new_expense')} />
+            <Head title={t('new_client_advance')} />
             <PageShell narrow>
-                <div className="mb-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} USD</p>
-                        <MoneyAmount value={availableCash?.available_usd} label="USD" size="lg" />
-                    </div>
-                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} IQD</p>
-                        <MoneyAmount value={availableCash?.available_iqd} label="IQD" size="lg" />
-                    </div>
-                </div>
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            post(route('expenses.store'), { forceFormData: true });
+                            post(route('client-advances.store'));
                         }}
                         className="space-y-5"
-                        encType="multipart/form-data"
                     >
                         <FormSection>
                             <FormField>
@@ -81,16 +68,14 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                 <InputError message={errors.project_id} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('category')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
-                                >
-                                    {(categories || []).map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
+                                <InputLabel value={t('client_name')} />
+                                <TextInput
+                                    className="mt-1 block w-full"
+                                    value={data.client_name}
+                                    onChange={(e) => setData('client_name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.client_name} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('currency')} />
@@ -103,10 +88,9 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                         <option key={c} value={c}>{c}</option>
                                     ))}
                                 </select>
-                                <InputError message={errors.currency} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('amount')} />
+                                <InputLabel value={`${t('money_in')} / ${t('amount')}`} />
                                 <MoneyInput
                                     className="mt-1 block w-full"
                                     value={data.amount}
@@ -116,50 +100,32 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                 <InputError message={errors.amount} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('expense_date')} />
+                                <InputLabel value={t('date')} />
                                 <TextInput
                                     type="date"
                                     className="mt-1 block w-full"
-                                    value={data.expense_date}
-                                    onChange={(e) => setData('expense_date', e.target.value)}
+                                    value={data.received_on}
+                                    onChange={(e) => setData('received_on', e.target.value)}
                                     required
                                 />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('supplier_person')} />
+                                <InputLabel value={t('reference')} />
                                 <TextInput
                                     className="mt-1 block w-full"
-                                    value={data.supplier}
-                                    onChange={(e) => setData('supplier', e.target.value)}
+                                    value={data.reference}
+                                    onChange={(e) => setData('reference', e.target.value)}
                                 />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('payment_method')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.payment_method}
-                                    onChange={(e) => setData('payment_method', e.target.value)}
-                                >
-                                    {(paymentMethods || []).map((m) => (
-                                        <option key={m} value={m}>{m}</option>
-                                    ))}
-                                </select>
                             </FormField>
                             <FormField className="sm:col-span-2">
-                                <InputLabel value={t('description')} />
-                                <TextInput
-                                    className="mt-1 block w-full"
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('receipt_file')} />
-                                <input
-                                    type="file"
-                                    className="mt-1 block w-full text-sm"
-                                    onChange={(e) => setData('receipt', e.target.files?.[0] || null)}
-                                />
+                                <label className="inline-flex items-center gap-2 text-sm">
+                                    <input
+                                        type="checkbox"
+                                        checked={!!data.lock_retention}
+                                        onChange={(e) => setData('lock_retention', e.target.checked)}
+                                    />
+                                    {t('lock_retention')}
+                                </label>
                             </FormField>
                         </FormSection>
                         <FormActions>

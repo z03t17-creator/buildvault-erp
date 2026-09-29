@@ -47,6 +47,20 @@ class ExpensePhase6Test extends TestCase
         ]);
 
         app(VaultService::class)->deposit($this->project, 10000, $this->vault);
+        // Native IQD cash for IQD expenses (unused USD stays 0 on this leg).
+        app(VaultService::class)->deposit(
+            $this->project,
+            0,
+            $this->vault,
+            null,
+            'IQD seed',
+            \App\Models\Transaction::TYPE_DEPOSIT,
+            false,
+            now()->toDateString(),
+            null,
+            'IQD',
+            20_000_000,
+        );
         $this->vault->refresh();
     }
 
@@ -97,10 +111,12 @@ class ExpensePhase6Test extends TestCase
         ]);
 
         $this->vault->refresh();
-        $this->assertLessThan($beforeUsd, (float) $this->vault->balance_usd);
+        // IQD expense: USD cash/pool unchanged; IQD cash decreases.
+        $this->assertSame($beforeUsd, (float) $this->vault->balance_usd);
+        $this->assertLessThan(20_000_000, (float) $this->vault->balance_iqd);
 
         $allocation->refresh();
-        $this->assertLessThan($beforePool, (float) $allocation->expenses_pool_usd);
+        $this->assertSame($beforePool, (float) $allocation->expenses_pool_usd);
 
         $summary = app(ProjectFinancialService::class)->summary($this->project->fresh());
         $this->assertSame(1_310_000.0, $summary['project_expenses_iqd']);

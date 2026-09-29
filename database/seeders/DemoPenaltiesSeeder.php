@@ -42,7 +42,8 @@ class DemoPenaltiesSeeder extends Seeder
                 'worker_id' => $engineer->id,
                 'project_id' => $project->id,
                 'type' => Penalty::TYPE_SAFETY,
-                'amount_iqd' => 65_500, // 50 USD @ 1310
+                'currency' => 'IQD',
+                'amount_iqd' => 65_500, // Fine Amount IQD (unused USD = 0)
                 'occurred_on' => now()->startOfMonth()->addDays(5)->toDateString(),
                 'reason' => self::MARKER.' — helmet violation',
                 'notes' => 'Demo: Engineer has advance + insurance hold + this applied penalty.',
@@ -61,7 +62,8 @@ class DemoPenaltiesSeeder extends Seeder
                 'worker_id' => $laborer->id,
                 'project_id' => $project->id,
                 'type' => Penalty::TYPE_LATE,
-                'amount_iqd' => 26_200, // 20 USD @ 1310
+                'currency' => 'IQD',
+                'amount_iqd' => 26_200,
                 'occurred_on' => now()->subDays(2)->toDateString(),
                 'reason' => self::MARKER_PENDING.' — late arrival awaiting payroll deduct',
                 'notes' => 'Demo: pending penalty for Phase 20 role QA workflows.',

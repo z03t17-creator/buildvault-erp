@@ -9,6 +9,7 @@ use App\Models\ProjectReceipt;
 use App\Models\Transaction;
 use App\Models\Vault;
 use App\Support\AuditActions;
+use App\Support\DualCurrency;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -149,10 +150,13 @@ class ProjectFinancialService
     }
 
     /**
-     * Record client money received (IQD): vault deposit + project_receipt row.
+     * Record client money received (Qasa single-leg). Default IQD; unused side = 0.
      *
      * @param  array{
-     *     amount_iqd: float|int|string,
+     *     amount_iqd?: float|int|string,
+     *     amount_usd?: float|int|string,
+     *     amount?: float|int|string,
+     *     currency?: string,
      *     received_on: string,
      *     source?: ?string,
      *     reference?: ?string,
@@ -164,20 +168,10 @@ class ProjectFinancialService
      */
     public function recordReceipt(Project $project, array $data): array
     {
-        $amountIqd = round((float) $data['amount_iqd'], 2);
-        if ($amountIqd <= 0) {
-            throw new InvalidArgumentException('Receipt amount must be greater than zero.');
-        }
-
-        $rate = $this->exchangeRates->getUsdToIqd();
-        if ($rate <= 0) {
-            throw new InvalidArgumentException('Exchange rate must be greater than zero.');
-        }
-
-        $amountUsd = round($amountIqd / $rate, 2);
-        if ($amountUsd <= 0) {
-            throw new InvalidArgumentException('Converted USD amount must be greater than zero.');
-        }
+        $currency = strtoupper((string) ($data['currency'] ?? DualCurrency::IQD));
+        $amount = $data['amount']
+            ?? ($currency === DualCurrency::USD ? ($data['amount_usd'] ?? null) : ($data['amount_iqd'] ?? null));
+        $legs = DualCurrency::legs($currency, $amount);
 
         $enteredBy = $data['entered_by'] ?? null;
         $description = trim(sprintf(
@@ -189,39 +183,32 @@ class ProjectFinancialService
         return DB::transaction(function () use (
             $project,
             $data,
-            $amountIqd,
-            $amountUsd,
-            $rate,
+            $legs,
             $enteredBy,
             $description,
         ) {
             $deposit = $this->vault->deposit(
                 $project,
-                $amountUsd,
+                $legs['amount_usd'] > 0 ? $legs['amount_usd'] : $legs['amount_iqd'],
                 $data['vault'] ?? null,
                 $enteredBy,
                 $description !== 'Project receipt' ? $description : 'Project money received',
                 Transaction::TYPE_MONEY_RECEIVED,
-                true,
+                $legs['currency'] === DualCurrency::USD,
                 $data['received_on'] ?? now()->toDateString(),
                 $data['reference'] ?? null,
+                $legs['currency'],
+                DualCurrency::primaryAmount($legs),
             );
 
-            // Prefer the submitted IQD amount on the deposit ledger row (FX rounding).
             $depositTxn = $deposit['deposit_transaction'];
-            $depositTxn->amount_iqd = $amountIqd;
-            $depositTxn->exchange_rate = $rate;
-            $depositTxn->type = Transaction::TYPE_MONEY_RECEIVED;
-            $depositTxn->occurred_on = $data['received_on'] ?? $depositTxn->occurred_on;
-            $depositTxn->reference_code = $data['reference'] ?? $depositTxn->reference_code;
-            $depositTxn->save();
 
             $receipt = ProjectReceipt::query()->create([
                 'project_id' => $project->id,
                 'transaction_id' => $depositTxn->id,
-                'amount_iqd' => $amountIqd,
-                'amount_usd' => $amountUsd,
-                'exchange_rate' => $rate,
+                'amount_iqd' => $legs['amount_iqd'],
+                'amount_usd' => $legs['amount_usd'],
+                'exchange_rate' => 0,
                 'received_on' => $data['received_on'],
                 'source' => $data['source'] ?? null,
                 'reference' => $data['reference'] ?? null,
@@ -232,15 +219,20 @@ class ProjectFinancialService
             $causer = $enteredBy ? \App\Models\User::query()->find($enteredBy) : null;
             $this->audit->log(
                 AuditActions::PROJECT_RECEIPT,
-                sprintf('Project receipt %.2f IQD → project #%d', $amountIqd, $project->id),
+                sprintf(
+                    'Project receipt %.2f %s → project #%d',
+                    DualCurrency::primaryAmount($legs),
+                    $legs['currency'],
+                    $project->id,
+                ),
                 $receipt,
                 [
                     'project_id' => $project->id,
                     'receipt_id' => $receipt->id,
                     'transaction_id' => $depositTxn->id,
-                    'amount_iqd' => $amountIqd,
-                    'amount_usd' => $amountUsd,
-                    'exchange_rate' => $rate,
+                    'currency' => $legs['currency'],
+                    'amount_iqd' => $legs['amount_iqd'],
+                    'amount_usd' => $legs['amount_usd'],
                     'source' => $receipt->source,
                     'reference' => $receipt->reference,
                 ],

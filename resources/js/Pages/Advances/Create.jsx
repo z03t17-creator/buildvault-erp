@@ -16,14 +16,13 @@ import { useEffect } from 'react';
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Create({ projects, workers, repaymentMethods, defaults }) {
+export default function Create({ projects, workers, repaymentMethods, currencies, defaults }) {
     const t = useTranslations();
-    const iqd = t('IQD');
     const { data, setData, post, processing, errors } = useForm({
         worker_id: '',
         project_id: '',
-        amount_iqd: '',
-        remaining_iqd: '',
+        currency: defaults?.currency || 'IQD',
+        amount: '',
         advanced_on: defaults?.advanced_on || '',
         reason: '',
         repayment_method: defaults?.repayment_method || 'payroll_deduction',
@@ -39,12 +38,6 @@ export default function Create({ projects, workers, repaymentMethods, defaults }
             setData('project_id', String(worker.project_id));
         }
     }, [data.worker_id]);
-
-    useEffect(() => {
-        if (data.amount_iqd !== '' && data.remaining_iqd === '') {
-            setData('remaining_iqd', data.amount_iqd);
-        }
-    }, [data.amount_iqd]);
 
     return (
         <AuthenticatedLayout
@@ -106,24 +99,27 @@ export default function Create({ projects, workers, repaymentMethods, defaults }
                                 <InputError message={errors.project_id} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={`${t('amount_iqd')} (${iqd})`} />
-                                <MoneyInput
-                                    className="mt-1 block w-full"
-                                    value={data.amount_iqd}
-                                    onValueChange={(raw) => setData('amount_iqd', raw)}
-                                    required
-                                />
-                                <InputError message={errors.amount_iqd} className="mt-1" />
+                                <InputLabel value={t('currency')} />
+                                <select
+                                    className={selectClass}
+                                    value={data.currency}
+                                    onChange={(e) => setData('currency', e.target.value)}
+                                >
+                                    {(currencies || ['USD', 'IQD']).map((c) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.currency} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={`${t('remaining_iqd')} (${iqd})`} />
+                                <InputLabel value={t('amount')} />
                                 <MoneyInput
                                     className="mt-1 block w-full"
-                                    value={data.remaining_iqd}
-                                    onValueChange={(raw) => setData('remaining_iqd', raw)}
+                                    value={data.amount}
+                                    onValueChange={(raw) => setData('amount', raw)}
+                                    required
                                 />
-                                <p className="mt-1 text-xs text-slate-500">{t('remaining_iqd_hint')}</p>
-                                <InputError message={errors.remaining_iqd} className="mt-1" />
+                                <InputError message={errors.amount} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('date')} />

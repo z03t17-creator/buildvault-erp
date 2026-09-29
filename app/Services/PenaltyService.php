@@ -9,20 +9,19 @@ use App\Models\ProjectAllocation;
 use App\Models\Transaction;
 use App\Models\Vault;
 use App\Models\Worker;
+use App\Support\DualCurrency;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 class PenaltyService
 {
-    public function __construct(
-        private readonly ExchangeRateService $exchangeRates,
-    ) {}
+    public function __construct() {}
 
     /**
      * Record a penalty against a worker (optionally link to a payout for reconcile deduction).
      *
-     * Accepts amount_iqd (preferred IQD UI) and/or amount_usd. IQD is converted via FX.
+     * Accepts amount_iqd or amount_usd with a currency selector — unused side stays 0.
      *
      * @param  array{
      *     worker_id: int,
@@ -46,8 +45,8 @@ class PenaltyService
 
         [$amountUsd, $amountIqd] = $this->resolveAmounts($data);
 
-        if ($amountUsd <= 0) {
-            throw new InvalidArgumentException('Penalty amount must be greater than zero.');
+        if ($amountUsd <= 0 && $amountIqd <= 0) {
+            throw new InvalidArgumentException('Fine Amount must be greater than zero.');
         }
 
         $type = $data['type'] ?? Penalty::TYPE_OTHER;
@@ -175,15 +174,14 @@ class PenaltyService
 
             $vault = Vault::query()->find($payout->vault_id);
             if ($vault && $total > 0) {
-                $rate = (float) $payout->exchange_rate ?: 0;
                 Transaction::query()->create([
                     'vault_id' => $vault->id,
                     'project_id' => $payout->project_id,
                     'type' => Transaction::TYPE_PENALTY,
                     'occurred_on' => now()->toDateString(),
                     'amount_usd' => $total,
-                    'amount_iqd' => round($total * $rate, 2),
-                    'exchange_rate' => $rate,
+                    'amount_iqd' => 0,
+                    'exchange_rate' => 0,
                     'description' => sprintf(
                         'Penalty deductions on payout #%d reconcile (%d item(s))',
                         $payout->id,
@@ -214,24 +212,22 @@ class PenaltyService
      */
     protected function resolveAmounts(array $data): array
     {
-        $rate = $this->exchangeRates->getUsdToIqd();
+        $currency = isset($data['currency']) ? strtoupper((string) $data['currency']) : null;
         $hasIqd = array_key_exists('amount_iqd', $data) && $data['amount_iqd'] !== null && $data['amount_iqd'] !== '';
         $hasUsd = array_key_exists('amount_usd', $data) && $data['amount_usd'] !== null && $data['amount_usd'] !== '';
 
-        if ($hasIqd) {
-            $amountIqd = round((float) $data['amount_iqd'], 2);
-            $amountUsd = $rate > 0 ? round($amountIqd / $rate, 2) : 0.0;
+        if ($currency === DualCurrency::USD || ($hasUsd && ! $hasIqd)) {
+            $legs = DualCurrency::legs(DualCurrency::USD, $data['amount_usd'] ?? $data['amount'] ?? 0);
 
-            return [$amountUsd, $amountIqd];
+            return [$legs['amount_usd'], $legs['amount_iqd']];
         }
 
-        if ($hasUsd) {
-            $amountUsd = round((float) $data['amount_usd'], 2);
-            $amountIqd = round($amountUsd * $rate, 2);
+        if ($currency === DualCurrency::IQD || ($hasIqd && ! $hasUsd)) {
+            $legs = DualCurrency::legs(DualCurrency::IQD, $data['amount_iqd'] ?? $data['amount'] ?? 0);
 
-            return [$amountUsd, $amountIqd];
+            return [$legs['amount_usd'], $legs['amount_iqd']];
         }
 
-        throw new InvalidArgumentException('Penalty amount (IQD or USD) is required.');
+        throw new InvalidArgumentException('Fine Amount (IQD or USD) is required — pick one currency.');
     }
 }

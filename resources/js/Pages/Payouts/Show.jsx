@@ -24,12 +24,15 @@ function Field({ label, children }) {
     );
 }
 
-export default function Show({ payout }) {
+export default function Show({ payout, availableCash, payAbility }) {
     const t = useTranslations();
-    const iqd = t('IQD');
     const canApprove = useCan('payouts.approve');
+    const canHold = useCan('payouts.hold');
     const canReject = useCan('payouts.reject');
     const canReconcile = useCan('payouts.reconcile');
+    const awaiting = payout.status === 'pending' || payout.status === 'held';
+    const currency = payout.currency || 'USD';
+    const amount = currency === 'USD' ? payout.amount_usd : payout.amount_iqd;
 
     return (
         <AuthenticatedLayout
@@ -42,14 +45,19 @@ export default function Show({ payout }) {
                             <Link href={route('payouts.index')}>
                                 <SecondaryButton>Back</SecondaryButton>
                             </Link>
-                            {payout.status === 'pending' && canApprove && (
+                            {awaiting && canApprove && (
                                 <PrimaryButton type="button" onClick={() => router.post(route('payouts.approve', payout.id))}>
-                                    Approve
+                                    {t('approve')}
                                 </PrimaryButton>
                             )}
-                            {payout.status === 'pending' && canReject && (
+                            {awaiting && canHold && (
+                                <SecondaryButton type="button" onClick={() => router.post(route('payouts.hold', payout.id))}>
+                                    {t('hold')}
+                                </SecondaryButton>
+                            )}
+                            {awaiting && canReject && (
                                 <SecondaryButton type="button" onClick={() => router.post(route('payouts.reject', payout.id))}>
-                                    Reject
+                                    {t('reject')}
                                 </SecondaryButton>
                             )}
                             {payout.status === 'approved' && canReconcile && (
@@ -64,18 +72,37 @@ export default function Show({ payout }) {
         >
             <Head title={`Payout #${payout.id}`} />
             <PageShell narrow>
+                <div className="mb-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} USD</p>
+                        <MoneyAmount value={availableCash?.available_usd} label="USD" size="lg" />
+                    </div>
+                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
+                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} IQD</p>
+                        <MoneyAmount value={availableCash?.available_iqd} label="IQD" size="lg" />
+                    </div>
+                </div>
+                {payAbility && (
+                    <DataPanel title={t('ability_to_pay')}>
+                        <p className={`text-sm font-medium ${payAbility.allowed ? 'text-emerald-700' : 'text-rose-700'}`}>
+                            {payAbility.allowed
+                                ? 'OK to approve — Available Cash covers this amount.'
+                                : (payAbility.reasons || []).join(' ')}
+                        </p>
+                    </DataPanel>
+                )}
                 <DataPanel>
                     <StatusBadge status={payout.status} />
                     <dl className="mt-5 grid gap-6 sm:grid-cols-2">
                         <Field label="Category">
                             <span className="capitalize">{payout.category}</span>
                         </Field>
-                        <Field label={`Amount (${iqd})`}>
-                            <MoneyAmount value={payout.amount_iqd ?? payout.amount_usd} label={payout.amount_iqd != null ? iqd : 'USD'} size="lg" />
+                        <Field label={`${t('amount')} (${currency})`}>
+                            <span className="font-mono tabular-nums">
+                                <MoneyAmount value={amount} label={currency} size="lg" showLabel={false} />
+                            </span>
                         </Field>
-                        <Field label="Amount USD">
-                            <span dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.amount_usd}</span>
-                        </Field>
+                        <Field label={t('currency')}>{currency}</Field>
                         <Field label="Holdback">
                             <span dir="ltr" className="font-sans text-base font-semibold tracking-normal tabular-nums">{payout.retention_holdback}</span>
                         </Field>

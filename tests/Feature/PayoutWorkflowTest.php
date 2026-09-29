@@ -119,7 +119,7 @@ class PayoutWorkflowTest extends TestCase
                 'amount_usd' => 80,
             ])
             ->assertRedirect(route('payouts.create'))
-            ->assertSessionHasErrors('amount_usd');
+            ->assertSessionHasErrors('amount');
 
         $this->assertDatabaseCount('payouts', 0);
     }

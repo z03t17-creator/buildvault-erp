@@ -93,4 +93,13 @@ class VaultPolicy
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }
+
+    /**
+     * Phase 2 — Accountant / Super Admin may add/edit/soft-delete ledger rows.
+     * Boss may view; Stock Manager excluded.
+     */
+    public function manageLedger(User $user): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+    }
 }

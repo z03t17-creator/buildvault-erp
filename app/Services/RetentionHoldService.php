@@ -12,9 +12,7 @@ use InvalidArgumentException;
 
 class RetentionHoldService
 {
-    public function __construct(
-        private readonly ExchangeRateService $exchangeRates,
-    ) {}
+    public function __construct() {}
 
     /**
      * Flip holding → matured when maturity_date has been reached.
@@ -81,16 +79,14 @@ class RetentionHoldService
             $allocation->payroll_pool_usd = round((float) $allocation->payroll_pool_usd + $amount, 2);
             $allocation->save();
 
-            $rate = $this->exchangeRates->getUsdToIqd();
-
             Transaction::query()->create([
                 'vault_id' => $hold->vault_id,
                 'project_id' => $hold->project_id,
                 'type' => Transaction::TYPE_INSURANCE,
                 'occurred_on' => now()->toDateString(),
                 'amount_usd' => $amount,
-                'amount_iqd' => round($amount * $rate, 2),
-                'exchange_rate' => $rate,
+                'amount_iqd' => 0,
+                'exchange_rate' => 0,
                 'description' => sprintf(
                     'Insurance hold #%d released to payroll pool (worker #%d)',
                     $hold->id,
@@ -105,6 +101,7 @@ class RetentionHoldService
             $hold->status = RetentionHold::STATUS_RELEASED;
             $hold->released_at = now();
             $hold->released_amount_usd = $amount;
+            $hold->released_amount_iqd = 0;
             $hold->save();
 
             return $hold->fresh(['worker', 'project', 'payout']);

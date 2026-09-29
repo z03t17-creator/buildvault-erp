@@ -176,7 +176,8 @@ class ProjectFinancialServiceTest extends TestCase
             'amount_iqd' => 1_310_000,
         ]);
 
-        $this->assertGreaterThan($beforeUsd, (float) $this->vault->fresh()->balance_usd);
+        $this->assertSame('0.00', (string) $this->vault->fresh()->balance_usd); // IQD receipt does not invent USD
+        $this->assertSame('1310000.00', (string) $this->vault->fresh()->balance_iqd);
         $this->assertSame(1_310_000.0, $this->service->moneyReceivedIqd($this->project));
 
         $this->assertDatabaseHas('transactions', [
@@ -197,7 +198,19 @@ class ProjectFinancialServiceTest extends TestCase
 
     public function test_approve_expense_service_posts_vault_outflow_once(): void
     {
-        app(VaultService::class)->deposit($this->project, 5000, $this->vault);
+        app(VaultService::class)->deposit(
+            $this->project,
+            0,
+            $this->vault,
+            null,
+            'IQD seed',
+            Transaction::TYPE_DEPOSIT,
+            false,
+            now()->toDateString(),
+            null,
+            'IQD',
+            5_000_000,
+        );
         $this->vault->refresh();
 
         $expenseService = app(ExpenseService::class);
@@ -205,14 +218,15 @@ class ProjectFinancialServiceTest extends TestCase
             'project_id' => $this->project->id,
             'vault_id' => $this->vault->id,
             'category' => Expense::CATEGORY_TRANSPORTATION,
+            'currency' => 'IQD',
             'amount_iqd' => 655_000,
             'expense_date' => now()->toDateString(),
             'supplier' => 'Truck Co',
         ]);
 
-        $before = (float) $this->vault->fresh()->balance_usd;
+        $before = (float) $this->vault->fresh()->balance_iqd;
         $expenseService->approve($expense);
-        $after = (float) $this->vault->fresh()->balance_usd;
+        $after = (float) $this->vault->fresh()->balance_iqd;
 
         $this->assertLessThan($before, $after);
         $this->assertSame(1, Transaction::query()

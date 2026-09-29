@@ -63,6 +63,8 @@ class Expense extends Model
 
     public const STATUS_PENDING = 'pending';
 
+    public const STATUS_HELD = 'held';
+
     public const STATUS_APPROVED = 'approved';
 
     public const STATUS_REJECTED = 'rejected';
@@ -70,6 +72,7 @@ class Expense extends Model
     /** @var list<string> */
     public const STATUSES = [
         self::STATUS_PENDING,
+        self::STATUS_HELD,
         self::STATUS_APPROVED,
         self::STATUS_REJECTED,
     ];
@@ -79,7 +82,9 @@ class Expense extends Model
      */
     protected $attributes = [
         'amount_usd' => 0,
+        'amount_iqd' => 0,
         'exchange_rate' => 0,
+        'currency' => 'IQD',
         'approval_status' => self::STATUS_PENDING,
     ];
 
@@ -93,14 +98,18 @@ class Expense extends Model
         'amount_iqd',
         'amount_usd',
         'exchange_rate',
+        'currency',
         'expense_date',
         'supplier',
         'payment_method',
         'document_id',
         'description',
         'approval_status',
+        'pay_ability_notes',
         'approved_at',
         'approved_by',
+        'held_at',
+        'held_by',
         'created_by',
         'transaction_id',
     ];
@@ -116,6 +125,7 @@ class Expense extends Model
             'exchange_rate' => 'decimal:4',
             'expense_date' => 'date',
             'approved_at' => 'datetime',
+            'held_at' => 'datetime',
         ];
     }
 
@@ -157,5 +167,20 @@ class Expense extends Model
     public function isPending(): bool
     {
         return $this->approval_status === self::STATUS_PENDING;
+    }
+
+    public function isHeld(): bool
+    {
+        return $this->approval_status === self::STATUS_HELD;
+    }
+
+    public function isAwaitingPayAbility(): bool
+    {
+        return in_array($this->approval_status, [self::STATUS_PENDING, self::STATUS_HELD], true);
+    }
+
+    public function holder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'held_by');
     }
 }

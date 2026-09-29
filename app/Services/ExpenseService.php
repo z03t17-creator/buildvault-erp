@@ -11,6 +11,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Vault;
 use App\Support\AuditActions;
+use App\Support\DualCurrency;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -18,14 +19,14 @@ use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 /**
- * Project expenses (IQD): create pending → approve posts vault outflow from the
- * expenses pool. Does not create Payout rows (avoids double-counting vs ledger).
+ * Project expenses: create pending → Accountant ability-to-pay approve/hold/reject.
+ * Qasa single-leg amounts (unused currency = 0).
  */
 class ExpenseService
 {
     public function __construct(
         private readonly LiquidityService $liquidity,
-        private readonly ExchangeRateService $exchangeRates,
+        private readonly VaultBalanceService $balances,
         private readonly AuditLogger $audit,
     ) {}
 
@@ -33,7 +34,10 @@ class ExpenseService
      * @param  array{
      *     project_id: int,
      *     category: string,
-     *     amount_iqd: float|int|string,
+     *     amount?: float|int|string,
+     *     amount_iqd?: float|int|string,
+     *     amount_usd?: float|int|string,
+     *     currency?: string,
      *     expense_date: string,
      *     supplier?: ?string,
      *     payment_method?: ?string,
@@ -50,24 +54,20 @@ class ExpenseService
             ? Vault::query()->findOrFail($data['vault_id'])
             : $this->zhakoVault();
 
-        $amountIqd = round((float) $data['amount_iqd'], 2);
-        if ($amountIqd <= 0) {
-            throw new InvalidArgumentException('Expense amount must be greater than zero.');
-        }
+        $currency = strtoupper((string) ($data['currency'] ?? DualCurrency::IQD));
+        $amount = $data['amount']
+            ?? ($currency === DualCurrency::USD ? ($data['amount_usd'] ?? null) : ($data['amount_iqd'] ?? null));
+        $legs = DualCurrency::legs($currency, $amount);
 
-        $rate = $this->exchangeRates->getUsdToIqd();
-        if ($rate <= 0) {
-            throw new InvalidArgumentException('Exchange rate must be greater than zero.');
-        }
+        $this->liquidity->assertCanPayCurrency(
+            $project,
+            Payout::CATEGORY_EXPENSES,
+            $legs['currency'],
+            DualCurrency::primaryAmount($legs),
+            $vault,
+        );
 
-        $amountUsd = round($amountIqd / $rate, 2);
-        if ($amountUsd <= 0) {
-            throw new InvalidArgumentException('Converted USD amount must be greater than zero.');
-        }
-
-        $this->liquidity->assertCanPay($project, Payout::CATEGORY_EXPENSES, $amountUsd, $vault);
-
-        return DB::transaction(function () use ($data, $project, $vault, $amountIqd, $amountUsd, $rate) {
+        return DB::transaction(function () use ($data, $project, $vault, $legs) {
             $documentId = null;
             if (! empty($data['receipt']) && $data['receipt'] instanceof UploadedFile) {
                 $documentId = $this->storeReceipt($data['receipt'], $project, $data['created_by'] ?? null)->id;
@@ -77,9 +77,10 @@ class ExpenseService
                 'project_id' => $project->id,
                 'vault_id' => $vault->id,
                 'category' => (string) $data['category'],
-                'amount_iqd' => $amountIqd,
-                'amount_usd' => $amountUsd,
-                'exchange_rate' => $rate,
+                'amount_iqd' => $legs['amount_iqd'],
+                'amount_usd' => $legs['amount_usd'],
+                'exchange_rate' => $legs['exchange_rate'],
+                'currency' => $legs['currency'],
                 'expense_date' => $data['expense_date'],
                 'supplier' => $data['supplier'] ?? null,
                 'payment_method' => $data['payment_method'] ?? null,
@@ -92,22 +93,12 @@ class ExpenseService
     }
 
     /**
-     * @param  array{
-     *     project_id?: int,
-     *     category?: string,
-     *     amount_iqd?: float|int|string,
-     *     expense_date?: string,
-     *     supplier?: ?string,
-     *     payment_method?: ?string,
-     *     description?: ?string,
-     *     vault_id?: ?int,
-     *     receipt?: ?UploadedFile,
-     * }  $data
+     * @param  array<string, mixed>  $data
      */
     public function update(Expense $expense, array $data): Expense
     {
-        if ($expense->approval_status !== Expense::STATUS_PENDING) {
-            throw new InvalidArgumentException('Only pending expenses can be edited.');
+        if (! $expense->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held expenses can be edited.');
         }
 
         $project = isset($data['project_id'])
@@ -118,27 +109,23 @@ class ExpenseService
             ? Vault::query()->findOrFail($data['vault_id'])
             : ($expense->vault ?? $this->zhakoVault());
 
-        $amountIqd = array_key_exists('amount_iqd', $data)
-            ? round((float) $data['amount_iqd'], 2)
-            : round((float) $expense->amount_iqd, 2);
+        $currency = strtoupper((string) ($data['currency'] ?? $expense->currency ?? DualCurrency::IQD));
+        $amount = $data['amount']
+            ?? ($currency === DualCurrency::USD
+                ? ($data['amount_usd'] ?? $expense->amount_usd)
+                : ($data['amount_iqd'] ?? $expense->amount_iqd));
+        $legs = DualCurrency::legs($currency, $amount);
 
-        if ($amountIqd <= 0) {
-            throw new InvalidArgumentException('Expense amount must be greater than zero.');
-        }
-
-        $rate = $this->exchangeRates->getUsdToIqd();
-        $amountUsd = round($amountIqd / $rate, 2);
-
-        // Exclude this expense from pending reservation while re-checking liquidity.
-        $this->liquidity->assertCanPay(
+        $this->liquidity->assertCanPayCurrency(
             $project,
             Payout::CATEGORY_EXPENSES,
-            $amountUsd,
+            $legs['currency'],
+            DualCurrency::primaryAmount($legs),
             $vault,
             excludeExpenseId: $expense->id,
         );
 
-        return DB::transaction(function () use ($expense, $data, $project, $vault, $amountIqd, $amountUsd, $rate) {
+        return DB::transaction(function () use ($expense, $data, $project, $vault, $legs) {
             if (! empty($data['receipt']) && $data['receipt'] instanceof UploadedFile) {
                 $doc = $this->storeReceipt($data['receipt'], $project, $expense->created_by);
                 $expense->document_id = $doc->id;
@@ -148,13 +135,15 @@ class ExpenseService
                 'project_id' => $project->id,
                 'vault_id' => $vault->id,
                 'category' => $data['category'] ?? $expense->category,
-                'amount_iqd' => $amountIqd,
-                'amount_usd' => $amountUsd,
-                'exchange_rate' => $rate,
+                'amount_iqd' => $legs['amount_iqd'],
+                'amount_usd' => $legs['amount_usd'],
+                'exchange_rate' => $legs['exchange_rate'],
+                'currency' => $legs['currency'],
                 'expense_date' => $data['expense_date'] ?? $expense->expense_date,
                 'supplier' => array_key_exists('supplier', $data) ? $data['supplier'] : $expense->supplier,
                 'payment_method' => array_key_exists('payment_method', $data) ? $data['payment_method'] : $expense->payment_method,
                 'description' => array_key_exists('description', $data) ? $data['description'] : $expense->description,
+                'approval_status' => Expense::STATUS_PENDING,
             ]);
             $expense->save();
 
@@ -162,13 +151,10 @@ class ExpenseService
         });
     }
 
-    /**
-     * Approve pending expense: deduct expenses pool + vault cash, write withdrawal.
-     */
     public function approve(Expense $expense, ?User $approver = null): Expense
     {
-        if ($expense->approval_status !== Expense::STATUS_PENDING) {
-            throw new InvalidArgumentException('Only pending expenses can be approved.');
+        if (! $expense->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held expenses can be approved.');
         }
 
         return DB::transaction(function () use ($expense, $approver) {
@@ -176,46 +162,62 @@ class ExpenseService
             $vault = Vault::query()->lockForUpdate()->findOrFail($expense->vault_id);
             $project = Project::query()->findOrFail($expense->project_id);
 
-            $amountUsd = round((float) $expense->amount_usd, 2);
-            $amountIqd = round((float) $expense->amount_iqd, 2);
+            $currency = strtoupper((string) ($expense->currency ?: (
+                (float) $expense->amount_usd > 0 ? DualCurrency::USD : DualCurrency::IQD
+            )));
+            $amount = $currency === DualCurrency::USD
+                ? (float) $expense->amount_usd
+                : (float) $expense->amount_iqd;
 
-            $pool = $this->liquidity->poolAvailableUsd($project, Payout::CATEGORY_EXPENSES);
-            if ($amountUsd > $pool) {
-                throw new InvalidArgumentException(sprintf(
-                    'Cannot approve: expenses pool has %.2f USD but expense needs %.2f USD.',
-                    $pool,
-                    $amountUsd,
-                ));
+            $ability = $this->liquidity->assertCanPayCurrency(
+                $project,
+                Payout::CATEGORY_EXPENSES,
+                $currency,
+                $amount,
+                $vault,
+                excludeExpenseId: $expense->id,
+            );
+
+            $amountUsd = $ability['amount_usd'];
+            $amountIqd = $ability['amount_iqd'];
+
+            if ($currency === DualCurrency::USD) {
+                $column = LiquidityService::CATEGORY_POOL_COLUMNS[Payout::CATEGORY_EXPENSES];
+                $allocation = ProjectAllocation::query()
+                    ->where('project_id', $project->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $poolBefore = (float) $allocation->{$column};
+                $allocation->{$column} = round($poolBefore - $amountUsd, 2);
+                $allocation->save();
+
+                $this->audit->log(
+                    AuditActions::ALLOCATION_CHANGED,
+                    sprintf('Allocation pool %s reduced by %.2f USD (expense #%d)', $column, $amountUsd, $expense->id),
+                    $allocation,
+                    [
+                        'project_id' => $project->id,
+                        'pool' => $column,
+                        'before' => $poolBefore,
+                        'after' => (float) $allocation->{$column},
+                        'delta_usd' => -$amountUsd,
+                        'reason' => 'expense_approve',
+                        'expense_id' => $expense->id,
+                    ],
+                    $approver,
+                );
             }
-
-            if ($amountUsd > (float) $vault->balance_usd) {
-                throw new InvalidArgumentException('Cannot approve: vault cash balance insufficient for expense.');
-            }
-
-            $column = LiquidityService::CATEGORY_POOL_COLUMNS[Payout::CATEGORY_EXPENSES];
-            $allocation = ProjectAllocation::query()
-                ->where('project_id', $project->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $poolBefore = (float) $allocation->{$column};
-            $allocation->{$column} = round($poolBefore - $amountUsd, 2);
-            $allocation->save();
-
-            $rate = (float) $expense->exchange_rate ?: $this->exchangeRates->getUsdToIqd();
-
-            $vault->balance_usd = round((float) $vault->balance_usd - $amountUsd, 2);
-            $vault->balance_iqd = round((float) $vault->balance_iqd - $amountIqd, 2);
-            $vault->save();
 
             $txn = Transaction::query()->create([
                 'vault_id' => $vault->id,
                 'project_id' => $project->id,
                 'type' => Transaction::TYPE_EXPENSE,
+                'direction' => 'out',
                 'occurred_on' => $expense->expense_date?->toDateString() ?? now()->toDateString(),
                 'amount_usd' => $amountUsd,
                 'amount_iqd' => $amountIqd,
-                'exchange_rate' => $rate,
+                'exchange_rate' => 0,
                 'description' => sprintf(
                     'Expense #%d approved (%s)%s',
                     $expense->id,
@@ -227,6 +229,7 @@ class ExpenseService
                 'reference_id' => $expense->id,
                 'created_by' => $approver?->id ?? $expense->created_by,
             ]);
+            $this->balances->apply($txn, $vault);
 
             $expense->approval_status = Expense::STATUS_APPROVED;
             $expense->approved_at = now();
@@ -236,31 +239,28 @@ class ExpenseService
 
             $this->audit->log(
                 AuditActions::EXPENSE_APPROVED,
-                sprintf('Expense #%d approved (%.2f IQD, %s)', $expense->id, $amountIqd, $expense->category),
+                sprintf(
+                    'Expense #%d approved (%.2f %s, %s)',
+                    $expense->id,
+                    DualCurrency::primaryAmount([
+                        'currency' => $currency,
+                        'amount_usd' => $amountUsd,
+                        'amount_iqd' => $amountIqd,
+                    ]),
+                    $currency,
+                    $expense->category,
+                ),
                 $expense,
                 [
                     'expense_id' => $expense->id,
                     'project_id' => $project->id,
                     'category' => $expense->category,
+                    'currency' => $currency,
                     'amount_iqd' => $amountIqd,
                     'amount_usd' => $amountUsd,
+                    'available_usd' => $ability['available_usd'],
+                    'available_iqd' => $ability['available_iqd'],
                     'transaction_id' => $txn->id,
-                ],
-                $approver,
-            );
-
-            $this->audit->log(
-                AuditActions::ALLOCATION_CHANGED,
-                sprintf('Allocation pool %s reduced by %.2f USD (expense #%d)', $column, $amountUsd, $expense->id),
-                $allocation,
-                [
-                    'project_id' => $project->id,
-                    'pool' => $column,
-                    'before' => $poolBefore,
-                    'after' => (float) $allocation->{$column},
-                    'delta_usd' => -$amountUsd,
-                    'reason' => 'expense_approve',
-                    'expense_id' => $expense->id,
                 ],
                 $approver,
             );
@@ -269,13 +269,40 @@ class ExpenseService
         });
     }
 
+    public function hold(Expense $expense, ?string $notes = null, ?User $actor = null): Expense
+    {
+        if (! $expense->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held expenses can be held.');
+        }
+
+        $expense->approval_status = Expense::STATUS_HELD;
+        $expense->held_at = now();
+        $expense->held_by = $actor?->id;
+        $expense->pay_ability_notes = $notes;
+        $expense->save();
+
+        $this->audit->log(
+            AuditActions::EXPENSE_HELD,
+            sprintf('Expense #%d held (ability to pay)', $expense->id),
+            $expense,
+            [
+                'expense_id' => $expense->id,
+                'notes' => $notes,
+            ],
+            $actor,
+        );
+
+        return $expense->fresh();
+    }
+
     public function reject(Expense $expense, ?string $notes = null, ?User $actor = null): Expense
     {
-        if ($expense->approval_status !== Expense::STATUS_PENDING) {
-            throw new InvalidArgumentException('Only pending expenses can be rejected.');
+        if (! $expense->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held expenses can be rejected.');
         }
 
         $expense->approval_status = Expense::STATUS_REJECTED;
+        $expense->pay_ability_notes = $notes;
         if ($notes !== null && $notes !== '') {
             $expense->description = trim(
                 ($expense->description ? $expense->description."\n" : '').'Rejected: '.$notes,
@@ -291,12 +318,33 @@ class ExpenseService
                 'expense_id' => $expense->id,
                 'project_id' => $expense->project_id,
                 'amount_iqd' => (float) $expense->amount_iqd,
+                'amount_usd' => (float) $expense->amount_usd,
                 'notes' => $notes,
             ],
             $actor,
         );
 
         return $expense->fresh();
+    }
+
+    public function softDelete(Expense $expense, ?User $actor = null): void
+    {
+        if ($expense->approval_status === Expense::STATUS_APPROVED && $expense->transaction_id) {
+            $txn = Transaction::query()->find($expense->transaction_id);
+            if ($txn) {
+                $this->balances->softDeleteAndRebuild($txn);
+            }
+        }
+
+        $expense->delete();
+
+        $this->audit->log(
+            AuditActions::VAULT_SOFT_DELETE_REBUILD,
+            sprintf('Expense #%d soft-deleted', $expense->id),
+            $expense,
+            ['expense_id' => $expense->id],
+            $actor,
+        );
     }
 
     protected function storeReceipt(UploadedFile $file, Project $project, ?int $uploadedBy): Document

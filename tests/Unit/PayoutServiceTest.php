@@ -79,7 +79,7 @@ class PayoutServiceTest extends TestCase
 
         $this->assertSame(Payout::STATUS_PENDING, $payout->status);
         $this->assertSame('100.00', (string) $payout->retention_holdback); // 10%
-        $this->assertSame('1310000.00', (string) $payout->amount_iqd);
+        $this->assertSame('0.00', (string) $payout->amount_iqd); // unused currency stays 0
     }
 
     public function test_create_blocked_when_pool_exhausted(): void

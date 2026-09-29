@@ -40,11 +40,13 @@ class EmployeeAdvanceController extends Controller
 
         return Inertia::render('Advances/Create', [
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
-            'workers' => Worker::query()->orderBy('name')->get(['id', 'name', 'project_id']),
+            'workers' => Worker::query()->orderBy('name')->get(['id', 'name', 'project_id', 'labor_kind']),
             'repaymentMethods' => EmployeeAdvance::REPAYMENT_METHODS,
+            'currencies' => \App\Support\DualCurrency::CURRENCIES,
             'defaults' => [
                 'advanced_on' => now()->toDateString(),
                 'repayment_method' => EmployeeAdvance::REPAY_PAYROLL,
+                'currency' => 'IQD',
             ],
         ]);
     }
@@ -59,7 +61,7 @@ class EmployeeAdvanceController extends Controller
                 Auth::user(),
             );
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['amount_iqd' => $e->getMessage()]);
+            return back()->withErrors(['amount' => $e->getMessage()]);
         }
 
         return redirect()
@@ -84,9 +86,9 @@ class EmployeeAdvanceController extends Controller
         $this->authorize('repay', $advance);
 
         try {
-            $this->advances->repay($advance, $request->validated('amount_iqd'));
+            $this->advances->repay($advance, $request->validated('amount'));
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['amount_iqd' => $e->getMessage()]);
+            return back()->withErrors(['amount' => $e->getMessage()]);
         }
 
         return back()->with('success', __('Repayment recorded.'));

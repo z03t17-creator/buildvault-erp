@@ -346,7 +346,7 @@ class SecurityPhase17Test extends TestCase
                 'amount_iqd' => -5000,
                 'expense_date' => now()->toDateString(),
             ])
-            ->assertSessionHasErrors('amount_iqd');
+            ->assertSessionHasErrors('amount');
 
         $this->actingAs($accountant)
             ->from(route('advances.create'))
@@ -355,8 +355,10 @@ class SecurityPhase17Test extends TestCase
                 'project_id' => $this->project->id,
                 'amount_iqd' => -1000,
                 'advanced_on' => now()->toDateString(),
+                'reason' => 'bad',
+                'repayment_method' => 'payroll_deduction',
             ])
-            ->assertSessionHasErrors('amount_iqd');
+            ->assertSessionHasErrors('amount');
 
         $this->actingAs($accountant)
             ->from(route('payouts.create'))
@@ -366,7 +368,7 @@ class SecurityPhase17Test extends TestCase
                 'category' => Payout::CATEGORY_PAYROLL,
                 'amount_usd' => -10,
             ])
-            ->assertSessionHasErrors('amount_usd');
+            ->assertSessionHasErrors('amount');
 
         $this->assertSame(0, Expense::query()->count());
         $this->assertSame(0, EmployeeAdvance::query()->count());

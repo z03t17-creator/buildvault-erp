@@ -5,14 +5,24 @@ import FlashBanner from '@/Components/FlashBanner';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
+import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, router } from '@inertiajs/react';
 
-export default function Transactions({ vault, balances, transactions, filters, types, projects }) {
+export default function Transactions({
+    vault,
+    balances,
+    transactions,
+    filters,
+    types,
+    projects,
+    canManage,
+}) {
     const t = useTranslations();
-    const iqd = t('IQD');
+    const manage = canManage || useCan('vault.ledgerManage');
     const rows = transactions?.data || [];
     const bal = balances || {};
 
@@ -34,35 +44,31 @@ export default function Transactions({ vault, balances, transactions, filters, t
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('vault_ledger')}
-                    subtitle={t('vault_ledger_subtitle')}
+                    title={t('vault')}
+                    subtitle={t('qasa_ledger_hint')}
                     actions={
-                        <Link href={route('dashboards.vault')}>
-                            <SecondaryButton type="button">{t('vault_dashboard')}</SecondaryButton>
-                        </Link>
+                        <>
+                            <Link href={route('dashboards.vault')}>
+                                <SecondaryButton type="button">{t('vault_dashboard')}</SecondaryButton>
+                            </Link>
+                            {manage && (
+                                <Link href={route('vault.transactions.create')}>
+                                    <PrimaryButton type="button">{t('add_ledger_entry')}</PrimaryButton>
+                                </Link>
+                            )}
+                        </>
                     }
                 />
             }
         >
-            <Head title={t('vault_ledger')} />
+            <Head title={t('vault')} />
 
             <PageShell>
-                <div className="grid gap-3 sm:grid-cols-3">
-                    <BalanceCard
-                        label={t('current_balance')}
-                        value={bal.current_iqd}
-                        iqd={iqd}
-                    />
-                    <BalanceCard
-                        label={t('available_balance')}
-                        value={bal.available_iqd}
-                        iqd={iqd}
-                    />
-                    <BalanceCard
-                        label={t('reserved_balance')}
-                        value={bal.reserved_iqd}
-                        iqd={iqd}
-                    />
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                    <BalanceCard label={`${t('available_cash')} USD`} value={bal.available_usd} currency="USD" />
+                    <BalanceCard label={`${t('available_cash')} IQD`} value={bal.available_iqd} currency="IQD" />
+                    <BalanceCard label={`${t('current_balance')} USD`} value={bal.current_usd} currency="USD" />
+                    <BalanceCard label={`${t('current_balance')} IQD`} value={bal.current_iqd} currency="IQD" />
                 </div>
 
                 {!bal.balance_matches_ledger && (
@@ -101,20 +107,6 @@ export default function Transactions({ vault, balances, transactions, filters, t
                             ))}
                         </select>
                         <input
-                            type="date"
-                            className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
-                            value={filters?.from || ''}
-                            onChange={(e) => apply({ from: e.target.value })}
-                            aria-label={t('from_date')}
-                        />
-                        <input
-                            type="date"
-                            className="rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
-                            value={filters?.to || ''}
-                            onChange={(e) => apply({ to: e.target.value })}
-                            aria-label={t('to_date')}
-                        />
-                        <input
                             type="search"
                             className="min-w-[12rem] flex-1 rounded-md border-slate-300 text-sm dark:border-slate-600 dark:bg-slate-950"
                             placeholder={t('search_ledger')}
@@ -125,14 +117,6 @@ export default function Transactions({ vault, balances, transactions, filters, t
                                 }
                             }}
                         />
-                        <label className="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                            <input
-                                type="checkbox"
-                                checked={!!filters?.include_non_cash}
-                                onChange={(e) => apply({ include_non_cash: e.target.checked ? 1 : 0 })}
-                            />
-                            {t('include_pool_rows')}
-                        </label>
                     </div>
                 </DataPanel>
 
@@ -142,109 +126,102 @@ export default function Transactions({ vault, balances, transactions, filters, t
                             <EmptyState title={t('no_ledger_rows')} />
                         </div>
                     ) : (
-                        <DataTable minWidth="56rem" caption={t('vault_ledger')}>
+                        <DataTable minWidth="64rem" caption={t('vault_ledger')}>
                             <thead>
                                 <tr>
                                     <Th>{t('date')}</Th>
-                                    <Th>{t('type')}</Th>
-                                    <Th align="end">{iqd}</Th>
-                                    <Th>{t('project')}</Th>
-                                    <Th>{t('user')}</Th>
-                                    <Th>{t('reference')}</Th>
                                     <Th>{t('description')}</Th>
-                                    <Th>{t('created_at')}</Th>
+                                    <Th align="center">{t('direction')}</Th>
+                                    <Th align="end">{t('money_in')} USD</Th>
+                                    <Th align="end">{t('money_out')} USD</Th>
+                                    <Th align="end">{t('money_in')} IQD</Th>
+                                    <Th align="end">{t('money_out')} IQD</Th>
+                                    <Th>{t('project')}</Th>
+                                    {manage && <Th align="center">{t('actions')}</Th>}
                                 </tr>
                             </thead>
                             <tbody>
-                                {rows.map((row) => (
-                                    <tr key={row.id}>
-                                        <Td className="whitespace-nowrap tabular-nums">
-                                            {row.date || '—'}
-                                        </Td>
-                                        <Td>
-                                            <span
-                                                className={
-                                                    row.direction === 'in'
-                                                        ? 'text-emerald-700 dark:text-emerald-400'
+                                {rows.map((row) => {
+                                    const inUsd = row.direction === 'in' ? row.amount_usd : 0;
+                                    const outUsd = row.direction === 'out' ? row.amount_usd : 0;
+                                    const inIqd = row.direction === 'in' ? row.amount_iqd : 0;
+                                    const outIqd = row.direction === 'out' ? row.amount_iqd : 0;
+                                    return (
+                                        <tr key={row.id}>
+                                            <Td className="whitespace-nowrap font-mono text-sm tabular-nums">
+                                                {row.date || '—'}
+                                            </Td>
+                                            <Td className="text-left max-w-xs truncate" title={row.description || ''}>
+                                                {row.description || typeLabel(row.type)}
+                                            </Td>
+                                            <Td align="center">
+                                                <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium">
+                                                    {row.direction === 'in'
+                                                        ? t('money_in')
                                                         : row.direction === 'out'
-                                                          ? 'text-rose-700 dark:text-rose-400'
-                                                          : 'text-slate-500'
-                                                }
-                                            >
-                                                {typeLabel(row.type)}
-                                            </span>
-                                        </Td>
-                                        <Td align="end">
-                                            <span dir="ltr" className="inline-block">
-                                                {row.direction === 'out'
-                                                    ? '−'
-                                                    : row.direction === 'in'
-                                                      ? '+'
-                                                      : ''}
-                                                <MoneyAmount
-                                                    value={row.amount_iqd}
-                                                    label={iqd}
-                                                    size="sm"
-                                                    showLabel={false}
-                                                />
-                                            </span>
-                                        </Td>
-                                        <Td>{row.project?.name || '—'}</Td>
-                                        <Td muted>{row.user?.name || '—'}</Td>
-                                        <Td muted className="font-mono text-xs">
-                                            {row.reference || '—'}
-                                        </Td>
-                                        <Td className="max-w-xs truncate" title={row.description || ''}>
-                                            {row.description || '—'}
-                                        </Td>
-                                        <Td muted className="whitespace-nowrap tabular-nums text-xs">
-                                            {row.created_at
-                                                ? new Date(row.created_at).toLocaleString()
-                                                : '—'}
-                                        </Td>
-                                    </tr>
-                                ))}
+                                                          ? t('money_out')
+                                                          : '—'}
+                                                </span>
+                                            </Td>
+                                            <Td align="end" className="font-mono tabular-nums">
+                                                {inUsd ? <MoneyAmount value={inUsd} label="USD" size="sm" showLabel={false} /> : '—'}
+                                            </Td>
+                                            <Td align="end" className="font-mono tabular-nums">
+                                                {outUsd ? <MoneyAmount value={outUsd} label="USD" size="sm" showLabel={false} /> : '—'}
+                                            </Td>
+                                            <Td align="end" className="font-mono tabular-nums">
+                                                {inIqd ? <MoneyAmount value={inIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
+                                            </Td>
+                                            <Td align="end" className="font-mono tabular-nums">
+                                                {outIqd ? <MoneyAmount value={outIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
+                                            </Td>
+                                            <Td className="text-left">{row.project?.name || '—'}</Td>
+                                            {manage && (
+                                                <Td align="center">
+                                                    <div className="inline-flex gap-2">
+                                                        <Link
+                                                            href={route('vault.transactions.edit', row.id)}
+                                                            className="text-xs text-emerald-700 underline dark:text-emerald-400"
+                                                        >
+                                                            {t('edit')}
+                                                        </Link>
+                                                        <button
+                                                            type="button"
+                                                            className="text-xs text-rose-700 underline dark:text-rose-400"
+                                                            onClick={() => {
+                                                                if (confirm(t('confirm_soft_delete'))) {
+                                                                    router.delete(route('vault.transactions.destroy', row.id));
+                                                                }
+                                                            }}
+                                                        >
+                                                            {t('delete')}
+                                                        </button>
+                                                    </div>
+                                                </Td>
+                                            )}
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </DataTable>
                     )}
                 </DataPanel>
 
-                {transactions?.links?.length > 3 && (
-                    <div className="flex flex-wrap gap-2">
-                        {transactions.links.map((link, idx) => (
-                            <button
-                                key={`${link.label}-${idx}`}
-                                type="button"
-                                disabled={!link.url}
-                                className={`rounded border px-3 py-1 text-sm ${
-                                    link.active
-                                        ? 'border-emerald-600 bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40'
-                                        : 'border-slate-300 text-slate-600 dark:border-slate-600'
-                                } disabled:opacity-40`}
-                                onClick={() => link.url && router.get(link.url, {}, { preserveState: true })}
-                                dangerouslySetInnerHTML={{ __html: link.label }}
-                            />
-                        ))}
-                    </div>
-                )}
-
                 {vault?.name && (
-                    <p className="text-xs text-slate-500">
-                        {vault.name} · {t('pool_helper_note')}
-                    </p>
+                    <p className="text-xs text-slate-500">{vault.name}</p>
                 )}
             </PageShell>
         </AuthenticatedLayout>
     );
 }
 
-function BalanceCard({ label, value, iqd }) {
+function BalanceCard({ label, value, currency }) {
     return (
         <div className="bv-panel flex flex-col gap-1 px-4 py-3">
             <p className="text-sm font-medium uppercase tracking-wide text-slate-700 dark:text-slate-300">
                 {label}
             </p>
-            <MoneyAmount value={value} label={iqd} size="lg" />
+            <MoneyAmount value={value} label={currency} size="lg" />
         </div>
     );
 }

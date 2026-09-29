@@ -122,6 +122,7 @@ class Transaction extends Model
         'vault_id',
         'project_id',
         'type',
+        'direction',
         'occurred_on',
         'amount_usd',
         'amount_iqd',

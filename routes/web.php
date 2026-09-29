@@ -4,6 +4,7 @@ use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ClientAdvanceController;
 use App\Http\Controllers\EmployeeAdvanceController;
 use App\Http\Controllers\ExpenseController;
 use App\Http\Controllers\ExportController;
@@ -29,6 +30,7 @@ use App\Http\Controllers\VaultDashboardController;
 use App\Http\Controllers\VaultTransactionController;
 use App\Http\Controllers\WorkerController;
 use App\Models\Document;
+use App\Models\ClientAdvance;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
 use App\Models\Payout;
@@ -63,14 +65,26 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware(['auth', 'verified'])->group(function () {
-    // Vault / money dashboards
+    // Vault / money dashboards + Phase 2 ledger CRUD
     Route::middleware('can:viewDashboard,'.Vault::class)->group(function () {
         Route::get('/dashboards/vault', [VaultDashboardController::class, 'show'])->name('dashboards.vault');
-        Route::redirect('/vault', '/dashboards/vault');
     });
     Route::middleware('can:viewLedger,'.Vault::class)->group(function () {
+        Route::get('/vault', [VaultTransactionController::class, 'index'])->name('vault.index');
         Route::get('/vault/transactions', [VaultTransactionController::class, 'index'])
             ->name('vault.transactions');
+    });
+    Route::middleware('can:manageLedger,'.Vault::class)->group(function () {
+        Route::get('/vault/transactions/create', [VaultTransactionController::class, 'create'])
+            ->name('vault.transactions.create');
+        Route::post('/vault/transactions', [VaultTransactionController::class, 'store'])
+            ->name('vault.transactions.store');
+        Route::get('/vault/transactions/{transaction}/edit', [VaultTransactionController::class, 'edit'])
+            ->name('vault.transactions.edit');
+        Route::put('/vault/transactions/{transaction}', [VaultTransactionController::class, 'update'])
+            ->name('vault.transactions.update');
+        Route::delete('/vault/transactions/{transaction}', [VaultTransactionController::class, 'destroy'])
+            ->name('vault.transactions.destroy');
     });
     Route::middleware('can:viewSettlement,'.Vault::class)->group(function () {
         Route::get('/settlements', [MonthlySettlementController::class, 'index'])
@@ -148,6 +162,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::middleware('can:viewAny,'.Worker::class)->group(function () {
         Route::resource('workers', WorkerController::class);
+        Route::post('/workers/{worker}/classify', [WorkerController::class, 'classify'])
+            ->name('workers.classify');
+        Route::post('/workers/{worker}/statements', [WorkerController::class, 'storeStatement'])
+            ->name('workers.statements.store');
+    });
+
+    Route::middleware('can:viewAny,'.ClientAdvance::class)->group(function () {
+        Route::get('/client-advances', [ClientAdvanceController::class, 'index'])->name('client-advances.index');
+        Route::get('/client-advances/create', [ClientAdvanceController::class, 'create'])->name('client-advances.create');
+        Route::post('/client-advances', [ClientAdvanceController::class, 'store'])->name('client-advances.store');
+        Route::get('/client-advances/{clientAdvance}', [ClientAdvanceController::class, 'show'])->name('client-advances.show');
+        Route::delete('/client-advances/{clientAdvance}', [ClientAdvanceController::class, 'destroy'])->name('client-advances.destroy');
     });
 
     // Phase 10 — Stock / inventory (attendance UI/data removed from product surface)
@@ -198,6 +224,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/payouts/{payout}/approve', [PayoutController::class, 'approve'])
         ->middleware('can:approve,payout')
         ->name('payouts.approve');
+    Route::post('/payouts/{payout}/hold', [PayoutController::class, 'hold'])
+        ->middleware('can:hold,payout')
+        ->name('payouts.hold');
     Route::post('/payouts/{payout}/reject', [PayoutController::class, 'reject'])
         ->middleware('can:reject,payout')
         ->name('payouts.reject');
@@ -224,9 +253,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/expenses/{expense}/approve', [ExpenseController::class, 'approve'])
         ->middleware('can:approve,expense')
         ->name('expenses.approve');
+    Route::post('/expenses/{expense}/hold', [ExpenseController::class, 'hold'])
+        ->middleware('can:hold,expense')
+        ->name('expenses.hold');
     Route::post('/expenses/{expense}/reject', [ExpenseController::class, 'reject'])
         ->middleware('can:reject,expense')
         ->name('expenses.reject');
+    Route::delete('/expenses/{expense}', [ExpenseController::class, 'destroy'])
+        ->middleware('can:delete,expense')
+        ->name('expenses.destroy');
 
     Route::get('/penalties', [PenaltyController::class, 'index'])
         ->middleware('can:viewAny,'.Penalty::class)

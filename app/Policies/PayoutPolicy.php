@@ -36,6 +36,11 @@ class PayoutPolicy
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }
 
+    public function hold(User $user, Payout $payout): bool
+    {
+        return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
+    }
+
     public function reject(User $user, Payout $payout): bool
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);

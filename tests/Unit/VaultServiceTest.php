@@ -96,26 +96,19 @@ class VaultServiceTest extends TestCase
         $this->assertEqualsWithDelta(100.01, array_sum($split), 0.001);
     }
 
-    public function test_deposit_applies_fx_and_updates_vault_and_pools(): void
+    public function test_deposit_is_qasa_single_leg_usd_without_fx_fill(): void
     {
-        Http::fake([
-            'api.exchangerate-api.com/*' => Http::response([
-                'base' => 'USD',
-                'rates' => ['IQD' => 1320],
-            ], 200),
-        ]);
-
         $project = Project::query()->create(['name' => 'FX Site']);
 
         $result = $this->service->deposit($project, 10000, $this->vault);
 
-        $this->assertSame(1320.0, $result['rate']);
+        $this->assertSame(0.0, $result['rate']);
         $this->assertSame(10000.0, $result['amount_usd']);
-        $this->assertSame(13200000.0, $result['amount_iqd']); // 10000 * 1320
+        $this->assertSame(0.0, $result['amount_iqd']); // unused side stays 0
 
         $this->vault->refresh();
         $this->assertSame('10000.00', (string) $this->vault->balance_usd);
-        $this->assertSame('13200000.00', (string) $this->vault->balance_iqd);
+        $this->assertSame('0.00', (string) $this->vault->balance_iqd);
 
         $allocation = ProjectAllocation::query()->where('project_id', $project->id)->first();
         $this->assertNotNull($allocation);
@@ -140,35 +133,38 @@ class VaultServiceTest extends TestCase
         );
 
         $this->assertDatabaseCount('transactions', 2);
-        Http::assertSentCount(1);
 
         $this->assertArrayHasKey('ability', $result);
         $this->assertSame(10000.0, $result['ability']['vault_balance_usd']);
         $this->assertSame(1000.0, $result['ability']['pools']['retention_usd']);
     }
 
-    public function test_deposit_uses_fallback_rate_when_fx_api_fails(): void
+    public function test_iqd_deposit_does_not_allocate_usd_pools(): void
     {
-        Http::fake([
-            'api.exchangerate-api.com/*' => Http::response(null, 500),
-        ]);
+        $project = Project::query()->create(['name' => 'IQD Site']);
+        $result = $this->service->deposit(
+            $project,
+            0,
+            $this->vault,
+            null,
+            'IQD money in',
+            Transaction::TYPE_DEPOSIT,
+            true,
+            null,
+            null,
+            'IQD',
+            131000,
+        );
 
-        $project = Project::query()->create(['name' => 'Fallback FX']);
-        $result = $this->service->deposit($project, 100, $this->vault);
-
-        $this->assertSame(ExchangeRateService::FALLBACK_RATE, $result['rate']);
-        $this->assertSame(131000.0, $result['amount_iqd']); // 100 * 1310
+        $this->assertSame(0.0, $result['amount_usd']);
+        $this->assertSame(131000.0, $result['amount_iqd']);
         $this->assertSame('131000.00', (string) $this->vault->fresh()->balance_iqd);
+        $this->assertSame('0.00', (string) $this->vault->fresh()->balance_usd);
+        $this->assertSame(0.0, $result['split']['expenses_usd']);
     }
 
     public function test_second_deposit_accumulates_pools(): void
     {
-        Http::fake([
-            'api.exchangerate-api.com/*' => Http::response([
-                'rates' => ['IQD' => 1310],
-            ], 200),
-        ]);
-
         $project = Project::query()->create(['name' => 'Accumulate']);
         $this->service->deposit($project, 1000, $this->vault);
         $this->service->deposit($project, 1000, $this->vault);

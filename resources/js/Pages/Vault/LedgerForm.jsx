@@ -16,81 +16,78 @@ import { Head, Link, useForm } from '@inertiajs/react';
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Create({ projects, categories, paymentMethods, currencies, availableCash }) {
+export default function LedgerForm({
+    mode = 'create',
+    transaction,
+    projects,
+    currencies,
+    available,
+}) {
     const t = useTranslations();
-    const { data, setData, post, processing, errors } = useForm({
-        project_id: '',
-        category: 'materials',
-        currency: 'IQD',
-        amount: '',
-        expense_date: new Date().toISOString().slice(0, 10),
-        supplier: '',
-        payment_method: 'cash',
-        description: '',
-        receipt: null,
+    const editing = mode === 'edit';
+    const { data, setData, post, put, processing, errors } = useForm({
+        direction: transaction?.direction || 'in',
+        currency: transaction?.currency || 'USD',
+        amount: transaction?.amount ?? '',
+        occurred_on: transaction?.occurred_on || new Date().toISOString().slice(0, 10),
+        description: transaction?.description || '',
+        project_id: transaction?.project_id || '',
+        reference_code: transaction?.reference_code || '',
     });
+
+    const title = editing ? t('edit_ledger_entry') : t('add_ledger_entry');
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('new_expense')}
+                    title={title}
+                    subtitle={t('qasa_ledger_hint')}
                     actions={
-                        <Link href={route('expenses.index')}>
+                        <Link href={route('vault.transactions')}>
                             <SecondaryButton>{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={t('new_expense')} />
+            <Head title={title} />
             <PageShell narrow>
                 <div className="mb-4 grid gap-3 sm:grid-cols-2">
                     <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} USD</p>
-                        <MoneyAmount value={availableCash?.available_usd} label="USD" size="lg" />
+                        <p className="text-xs uppercase tracking-wider text-slate-500">{t('available_cash')} USD</p>
+                        <MoneyAmount value={available?.available_usd} label="USD" size="lg" />
                     </div>
                     <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase text-slate-500">{t('available_cash')} IQD</p>
-                        <MoneyAmount value={availableCash?.available_iqd} label="IQD" size="lg" />
+                        <p className="text-xs uppercase tracking-wider text-slate-500">{t('available_cash')} IQD</p>
+                        <MoneyAmount value={available?.available_iqd} label="IQD" size="lg" />
                     </div>
                 </div>
+
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            post(route('expenses.store'), { forceFormData: true });
+                            if (editing) {
+                                put(route('vault.transactions.update', transaction.id));
+                            } else {
+                                post(route('vault.transactions.store'));
+                            }
                         }}
                         className="space-y-5"
-                        encType="multipart/form-data"
                     >
                         <FormSection>
                             <FormField>
-                                <InputLabel value={t('project')} />
+                                <InputLabel value={t('direction')} />
                                 <select
                                     className={selectClass}
-                                    value={data.project_id}
-                                    onChange={(e) => setData('project_id', e.target.value)}
-                                    required
+                                    value={data.direction}
+                                    onChange={(e) => setData('direction', e.target.value)}
                                 >
-                                    <option value="">—</option>
-                                    {(projects || []).map((p) => (
-                                        <option key={p.id} value={p.id}>{p.name}</option>
-                                    ))}
+                                    <option value="in">{t('money_in')}</option>
+                                    <option value="out">{t('money_out')}</option>
                                 </select>
-                                <InputError message={errors.project_id} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('category')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.category}
-                                    onChange={(e) => setData('category', e.target.value)}
-                                >
-                                    {(categories || []).map((c) => (
-                                        <option key={c} value={c}>{c}</option>
-                                    ))}
-                                </select>
+                                <InputError message={errors.direction} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('currency')} />
@@ -100,7 +97,9 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                     onChange={(e) => setData('currency', e.target.value)}
                                 >
                                     {(currencies || ['USD', 'IQD']).map((c) => (
-                                        <option key={c} value={c}>{c}</option>
+                                        <option key={c} value={c}>
+                                            {c}
+                                        </option>
                                     ))}
                                 </select>
                                 <InputError message={errors.currency} className="mt-1" />
@@ -116,34 +115,15 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                 <InputError message={errors.amount} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('expense_date')} />
+                                <InputLabel value={t('date')} />
                                 <TextInput
                                     type="date"
                                     className="mt-1 block w-full"
-                                    value={data.expense_date}
-                                    onChange={(e) => setData('expense_date', e.target.value)}
+                                    value={data.occurred_on}
+                                    onChange={(e) => setData('occurred_on', e.target.value)}
                                     required
                                 />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('supplier_person')} />
-                                <TextInput
-                                    className="mt-1 block w-full"
-                                    value={data.supplier}
-                                    onChange={(e) => setData('supplier', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('payment_method')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.payment_method}
-                                    onChange={(e) => setData('payment_method', e.target.value)}
-                                >
-                                    {(paymentMethods || []).map((m) => (
-                                        <option key={m} value={m}>{m}</option>
-                                    ))}
-                                </select>
+                                <InputError message={errors.occurred_on} className="mt-1" />
                             </FormField>
                             <FormField className="sm:col-span-2">
                                 <InputLabel value={t('description')} />
@@ -151,19 +131,38 @@ export default function Create({ projects, categories, paymentMethods, currencie
                                     className="mt-1 block w-full"
                                     value={data.description}
                                     onChange={(e) => setData('description', e.target.value)}
+                                    required
                                 />
+                                <InputError message={errors.description} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('receipt_file')} />
-                                <input
-                                    type="file"
-                                    className="mt-1 block w-full text-sm"
-                                    onChange={(e) => setData('receipt', e.target.files?.[0] || null)}
+                                <InputLabel value={t('project')} />
+                                <select
+                                    className={selectClass}
+                                    value={data.project_id}
+                                    onChange={(e) => setData('project_id', e.target.value)}
+                                >
+                                    <option value="">—</option>
+                                    {(projects || []).map((p) => (
+                                        <option key={p.id} value={p.id}>
+                                            {p.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('reference')} />
+                                <TextInput
+                                    className="mt-1 block w-full"
+                                    value={data.reference_code}
+                                    onChange={(e) => setData('reference_code', e.target.value)}
                                 />
                             </FormField>
                         </FormSection>
                         <FormActions>
-                            <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
+                            <PrimaryButton disabled={processing}>
+                                {editing ? t('save') : t('save')}
+                            </PrimaryButton>
                         </FormActions>
                     </form>
                 </DataPanel>

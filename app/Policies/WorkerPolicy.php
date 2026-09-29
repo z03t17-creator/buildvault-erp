@@ -40,4 +40,13 @@ class WorkerPolicy
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::BOSS_CONTRACTOR]);
     }
+
+    public function classify(User $user, Worker $worker): bool
+    {
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
+    }
 }

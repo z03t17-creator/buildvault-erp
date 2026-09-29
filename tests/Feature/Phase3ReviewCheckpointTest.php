@@ -61,7 +61,7 @@ class Phase3ReviewCheckpointTest extends TestCase
         $deposit = $vaultService->deposit($project, 10000, $vault);
 
         $this->assertSame(10000.0, $deposit['amount_usd']);
-        $this->assertSame(13100000.0, $deposit['amount_iqd']);
+        $this->assertSame(0.0, $deposit['amount_iqd']); // Qasa unused side = 0
         $this->assertSame(4500.0, $deposit['split']['expenses_usd']);
         $this->assertSame(3000.0, $deposit['split']['payroll_usd']);
         $this->assertSame(1000.0, $deposit['split']['retention_usd']);

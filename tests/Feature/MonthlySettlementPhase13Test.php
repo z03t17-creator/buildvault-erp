@@ -81,9 +81,8 @@ class MonthlySettlementPhase13Test extends TestCase
         $this->assertSame(Expense::STATUS_PENDING, $expense->approval_status);
 
         $this->vault->refresh();
-        $rate = 1310.0;
-        $availableUsd = app(LiquidityService::class)->availableUsd($this->vault);
-        $expectedAvailableIqd = round($availableUsd * $rate, 0);
+        // Dual-currency: Available Cash IQD is native — never FX-converted from USD.
+        $expectedAvailableIqd = app(LiquidityService::class)->availableIqd($this->vault);
 
         $preview = app(MonthlySettlementService::class)->preview('2026-09', null, $this->vault);
 
@@ -106,13 +105,16 @@ class MonthlySettlementPhase13Test extends TestCase
     {
         app(VaultService::class)->deposit(
             $this->project,
-            100,
+            0,
             $this->vault,
             null,
             'Seed',
             Transaction::TYPE_DEPOSIT,
-            true,
+            false,
             '2026-09-01',
+            null,
+            \App\Support\DualCurrency::IQD,
+            131_000,
         );
 
         $service = app(MonthlySettlementService::class);
@@ -133,13 +135,16 @@ class MonthlySettlementPhase13Test extends TestCase
     {
         app(VaultService::class)->deposit(
             $this->project,
-            1000,
+            0,
             $this->vault,
             null,
             'Seed',
             Transaction::TYPE_DEPOSIT,
-            true,
+            false,
             '2026-09-01',
+            null,
+            \App\Support\DualCurrency::IQD,
+            1_310_000,
         );
 
         $service = app(MonthlySettlementService::class);

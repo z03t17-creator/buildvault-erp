@@ -291,7 +291,10 @@ class VaultLedgerService
      */
     protected function serialize(Transaction $txn): array
     {
-        $signed = $txn->signedAmountIqd();
+        $signedUsd = $txn->signedAmountUsd();
+        $signedIqd = $txn->signedAmountIqd();
+        $direction = $txn->direction
+            ?: ($txn->isCashInflow() ? 'in' : ($txn->isCashOutflow() ? 'out' : 'none'));
 
         return [
             'id' => $txn->id,
@@ -300,8 +303,11 @@ class VaultLedgerService
             'created_at' => optional($txn->created_at)?->toIso8601String(),
             'amount_iqd' => round((float) $txn->amount_iqd, 2),
             'amount_usd' => round((float) $txn->amount_usd, 2),
-            'signed_amount_iqd' => $signed,
-            'direction' => $signed > 0 ? 'in' : ($signed < 0 ? 'out' : 'none'),
+            'balance_after_usd' => round((float) ($txn->balance_after_usd ?? 0), 2),
+            'balance_after_iqd' => round((float) ($txn->balance_after_iqd ?? 0), 2),
+            'signed_amount_iqd' => $signedIqd,
+            'signed_amount_usd' => $signedUsd,
+            'direction' => $direction,
             'type' => $txn->type,
             'project' => $txn->project
                 ? ['id' => $txn->project->id, 'name' => $txn->project->name]

@@ -97,7 +97,7 @@ class ProjectFinancialPhase5Test extends TestCase
         $this->assertSame(1, ProjectReceipt::query()->where('project_id', $project->id)->count());
 
         $vault = Vault::query()->where('name', VaultSeeder::NAME)->first();
-        $this->assertGreaterThan(0, (float) $vault->balance_usd);
+        $this->assertSame(0.0, (float) $vault->balance_usd); // IQD receipt does not invent USD
         $this->assertGreaterThan(0, (float) $vault->balance_iqd);
 
         $this->actingAs($accountant)

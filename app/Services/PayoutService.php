@@ -7,8 +7,10 @@ use App\Models\Project;
 use App\Models\ProjectAllocation;
 use App\Models\RetentionHold;
 use App\Models\Transaction;
+use App\Models\User;
 use App\Models\Vault;
 use App\Support\AuditActions;
+use App\Support\DualCurrency;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
@@ -17,19 +19,22 @@ class PayoutService
 {
     public function __construct(
         private readonly LiquidityService $liquidity,
-        private readonly ExchangeRateService $exchangeRates,
+        private readonly VaultBalanceService $balances,
         private readonly PenaltyService $penalties,
         private readonly AuditLogger $audit,
         private readonly InsuranceSettings $insurance,
     ) {}
 
     /**
-     * Create a pending payout after ability-to-pay check.
+     * Create a pending payout after ability-to-pay check (Qasa single-leg).
      *
      * @param  array{
      *     project_id: int,
      *     category: string,
-     *     amount_usd: float|int|string,
+     *     amount?: float|int|string,
+     *     amount_usd?: float|int|string,
+     *     amount_iqd?: float|int|string,
+     *     currency?: string,
      *     worker_id?: int|null,
      *     floor_id?: int|null,
      *     retention_holdback?: float|int|string|null,
@@ -45,20 +50,30 @@ class PayoutService
             ? Vault::query()->findOrFail($data['vault_id'])
             : $this->zhakoVault();
 
-        $amountUsd = round((float) $data['amount_usd'], 2);
+        $currency = strtoupper((string) ($data['currency'] ?? DualCurrency::USD));
+        $amount = $data['amount']
+            ?? ($currency === DualCurrency::USD ? ($data['amount_usd'] ?? null) : ($data['amount_iqd'] ?? null));
+        $legs = DualCurrency::legs($currency, $amount);
         $category = (string) $data['category'];
 
-        $this->liquidity->assertCanPay($project, $category, $amountUsd, $vault);
+        $this->liquidity->assertCanPayCurrency(
+            $project,
+            $category,
+            $legs['currency'],
+            DualCurrency::primaryAmount($legs),
+            $vault,
+        );
 
+        $primary = DualCurrency::primaryAmount($legs);
         $holdback = array_key_exists('retention_holdback', $data) && $data['retention_holdback'] !== null
             ? round((float) $data['retention_holdback'], 2)
-            : $this->defaultHoldback($project, $category, $amountUsd, $data['worker_id'] ?? null);
+            : ($legs['currency'] === DualCurrency::USD
+                ? $this->defaultHoldback($project, $category, $primary, $data['worker_id'] ?? null)
+                : 0.0);
 
-        if ($holdback < 0 || $holdback > $amountUsd) {
+        if ($holdback < 0 || $holdback > $primary) {
             throw new InvalidArgumentException('Retention holdback must be between 0 and the payout amount.');
         }
-
-        $rate = $this->exchangeRates->getUsdToIqd();
 
         return Payout::query()->create([
             'vault_id' => $vault->id,
@@ -66,9 +81,10 @@ class PayoutService
             'worker_id' => $data['worker_id'] ?? null,
             'floor_id' => $data['floor_id'] ?? null,
             'category' => $category,
-            'amount_usd' => $amountUsd,
-            'amount_iqd' => round($amountUsd * $rate, 2),
-            'exchange_rate' => $rate,
+            'amount_usd' => $legs['amount_usd'],
+            'amount_iqd' => $legs['amount_iqd'],
+            'exchange_rate' => $legs['exchange_rate'],
+            'currency' => $legs['currency'],
             'retention_holdback' => $holdback,
             'status' => Payout::STATUS_PENDING,
             'notes' => $data['notes'] ?? null,
@@ -76,78 +92,100 @@ class PayoutService
         ]);
     }
 
-    /**
-     * Approve pending payout: deduct vault/pool, ledger withdrawal, optional retention hold.
-     */
-    public function approve(Payout $payout): Payout
+    public function approve(Payout $payout, ?User $approver = null): Payout
     {
-        if ($payout->status !== Payout::STATUS_PENDING) {
-            throw new InvalidArgumentException('Only pending payouts can be approved.');
+        if (! $payout->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held payouts can be approved.');
         }
 
-        return DB::transaction(function () use ($payout) {
+        return DB::transaction(function () use ($payout, $approver) {
             $payout = Payout::query()->lockForUpdate()->findOrFail($payout->id);
             $vault = Vault::query()->lockForUpdate()->findOrFail($payout->vault_id);
             $project = Project::query()->findOrFail($payout->project_id);
 
-            $amount = round((float) $payout->amount_usd, 2);
+            $currency = strtoupper((string) ($payout->currency ?: (
+                (float) $payout->amount_usd > 0 ? DualCurrency::USD : DualCurrency::IQD
+            )));
+            $amount = $currency === DualCurrency::USD
+                ? round((float) $payout->amount_usd, 2)
+                : round((float) $payout->amount_iqd, 2);
             $holdback = round((float) $payout->retention_holdback, 2);
             $cashOut = round($amount - $holdback, 2);
 
-            // Re-check pool (pending already reserved in available formula).
-            $pool = $this->liquidity->poolAvailableUsd($project, $payout->category);
-            if ($amount > $pool) {
-                throw new InvalidArgumentException(sprintf(
-                    'Cannot approve: %s pool has %.2f USD but payout needs %.2f USD.',
-                    $payout->category,
-                    $pool,
-                    $amount,
-                ));
+            $this->liquidity->assertCanPayCurrency(
+                $project,
+                $payout->category,
+                $currency,
+                $amount,
+                $vault,
+                excludePayoutId: $payout->id,
+            );
+
+            if ($currency === DualCurrency::USD) {
+                $column = LiquidityService::CATEGORY_POOL_COLUMNS[$payout->category];
+                $allocation = ProjectAllocation::query()
+                    ->where('project_id', $project->id)
+                    ->lockForUpdate()
+                    ->firstOrFail();
+
+                $poolBefore = (float) $allocation->{$column};
+                $allocation->{$column} = round($poolBefore - $amount, 2);
+                $allocation->save();
+
+                $this->audit->log(
+                    AuditActions::ALLOCATION_CHANGED,
+                    sprintf('Allocation pool %s reduced by %.2f USD (payout #%d)', $column, $amount, $payout->id),
+                    $allocation,
+                    [
+                        'project_id' => $project->id,
+                        'pool' => $column,
+                        'before' => $poolBefore,
+                        'after' => (float) $allocation->{$column},
+                        'delta_usd' => -$amount,
+                        'reason' => 'payout_approve',
+                        'payout_id' => $payout->id,
+                    ],
+                    $approver,
+                );
             }
 
-            if ($cashOut > (float) $vault->balance_usd) {
-                throw new InvalidArgumentException('Cannot approve: vault cash balance insufficient for net payout.');
+            $cashLegs = DualCurrency::legs($currency, max($cashOut, 0.01));
+            if ($cashOut <= 0) {
+                $cashLegs = [
+                    'currency' => $currency,
+                    'amount_usd' => 0.0,
+                    'amount_iqd' => 0.0,
+                    'exchange_rate' => 0.0,
+                ];
+            } else {
+                $cashLegs = DualCurrency::legs($currency, $cashOut);
             }
-
-            $column = LiquidityService::CATEGORY_POOL_COLUMNS[$payout->category];
-            $allocation = ProjectAllocation::query()
-                ->where('project_id', $project->id)
-                ->lockForUpdate()
-                ->firstOrFail();
-
-            $poolBefore = (float) $allocation->{$column};
-            $allocation->{$column} = round($poolBefore - $amount, 2);
-            $allocation->save();
-
-            $rate = (float) $payout->exchange_rate ?: $this->exchangeRates->getUsdToIqd();
-            $cashOutIqd = round($cashOut * $rate, 2);
-
-            $vault->balance_usd = round((float) $vault->balance_usd - $cashOut, 2);
-            $vault->balance_iqd = round((float) $vault->balance_iqd - $cashOutIqd, 2);
-            $vault->save();
 
             $payout->status = Payout::STATUS_APPROVED;
             $payout->approved_at = now();
             $payout->save();
 
-            Transaction::query()->create([
-                'vault_id' => $vault->id,
-                'project_id' => $project->id,
-                'type' => Transaction::typeForPayoutCategory($payout->category),
-                'occurred_on' => now()->toDateString(),
-                'amount_usd' => $cashOut,
-                'amount_iqd' => $cashOutIqd,
-                'exchange_rate' => $rate,
-                'description' => sprintf('Payout #%d approved (%s)', $payout->id, $payout->category),
-                'reference_code' => 'PAY-'.$payout->id,
-                'reference_type' => $payout->getMorphClass(),
-                'reference_id' => $payout->id,
-                'created_by' => $payout->created_by,
-            ]);
+            if ($cashOut > 0) {
+                $txn = Transaction::query()->create([
+                    'vault_id' => $vault->id,
+                    'project_id' => $project->id,
+                    'type' => Transaction::typeForPayoutCategory($payout->category),
+                    'direction' => 'out',
+                    'occurred_on' => now()->toDateString(),
+                    'amount_usd' => $cashLegs['amount_usd'],
+                    'amount_iqd' => $cashLegs['amount_iqd'],
+                    'exchange_rate' => 0,
+                    'description' => sprintf('Payout #%d approved (%s)', $payout->id, $payout->category),
+                    'reference_code' => 'PAY-'.$payout->id,
+                    'reference_type' => $payout->getMorphClass(),
+                    'reference_id' => $payout->id,
+                    'created_by' => $approver?->id ?? $payout->created_by,
+                ]);
+                $this->balances->apply($txn, $vault);
+            }
 
-            if ($this->shouldCreateRetentionHold($payout, $holdback)) {
+            if ($this->shouldCreateRetentionHold($payout, $holdback) && $currency === DualCurrency::USD) {
                 $holdStart = now()->toDateString();
-                $amount = round((float) $payout->amount_usd, 2);
                 $holdPct = $amount > 0
                     ? round(($holdback / $amount) * 100, 2)
                     : $this->insurance->holdbackPercent();
@@ -160,52 +198,67 @@ class PayoutService
                     'pay_period' => now()->format('Y-m'),
                     'hold_pct' => $holdPct,
                     'amount_usd' => $holdback,
+                    'amount_iqd' => 0,
                     'hold_start' => $holdStart,
                     'maturity_date' => RetentionHold::maturityFrom($holdStart)->toDateString(),
                     'status' => RetentionHold::STATUS_HOLDING,
+                    'layer' => 'staff',
+                    'maturity_days' => 180,
                 ]);
             }
 
             $this->audit->log(
                 AuditActions::PAYOUT_APPROVED,
-                sprintf('Payout #%d approved (%s, %.2f USD)', $payout->id, $payout->category, $amount),
+                sprintf('Payout #%d approved (%s, %.2f %s)', $payout->id, $payout->category, $amount, $currency),
                 $payout,
                 [
                     'payout_id' => $payout->id,
                     'project_id' => $project->id,
                     'category' => $payout->category,
-                    'amount_usd' => $amount,
-                    'cash_out_usd' => $cashOut,
+                    'currency' => $currency,
+                    'amount_usd' => (float) $payout->amount_usd,
+                    'amount_iqd' => (float) $payout->amount_iqd,
+                    'cash_out' => $cashOut,
                     'retention_holdback' => $holdback,
                 ],
-            );
-
-            $this->audit->log(
-                AuditActions::ALLOCATION_CHANGED,
-                sprintf('Allocation pool %s reduced by %.2f USD (payout #%d)', $column, $amount, $payout->id),
-                $allocation,
-                [
-                    'project_id' => $project->id,
-                    'pool' => $column,
-                    'before' => $poolBefore,
-                    'after' => (float) $allocation->{$column},
-                    'delta_usd' => -$amount,
-                    'reason' => 'payout_approve',
-                    'payout_id' => $payout->id,
-                ],
+                $approver,
             );
 
             return $payout->fresh(['retentionHolds', 'project', 'worker']);
         });
     }
 
-    public function reject(Payout $payout, ?string $notes = null): Payout
+    public function hold(Payout $payout, ?string $notes = null, ?User $actor = null): Payout
     {
-        if ($payout->status !== Payout::STATUS_PENDING) {
-            throw new InvalidArgumentException('Only pending payouts can be rejected.');
+        if (! $payout->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held payouts can be held.');
+        }
+
+        $payout->status = Payout::STATUS_HELD;
+        $payout->held_at = now();
+        $payout->held_by = $actor?->id;
+        $payout->pay_ability_notes = $notes;
+        $payout->save();
+
+        $this->audit->log(
+            AuditActions::PAYOUT_HELD,
+            sprintf('Payout #%d held (ability to pay)', $payout->id),
+            $payout,
+            ['payout_id' => $payout->id, 'notes' => $notes],
+            $actor,
+        );
+
+        return $payout->fresh();
+    }
+
+    public function reject(Payout $payout, ?string $notes = null, ?User $actor = null): Payout
+    {
+        if (! $payout->isAwaitingPayAbility()) {
+            throw new InvalidArgumentException('Only pending or held payouts can be rejected.');
         }
 
         $payout->status = Payout::STATUS_REJECTED;
+        $payout->pay_ability_notes = $notes;
         if ($notes !== null) {
             $payout->notes = trim(($payout->notes ? $payout->notes."\n" : '').$notes);
         }
@@ -219,8 +272,10 @@ class PayoutService
                 'payout_id' => $payout->id,
                 'project_id' => $payout->project_id,
                 'amount_usd' => (float) $payout->amount_usd,
+                'amount_iqd' => (float) $payout->amount_iqd,
                 'notes' => $notes,
             ],
+            $actor,
         );
 
         return $payout->fresh();
@@ -239,7 +294,6 @@ class PayoutService
                 throw new InvalidArgumentException('Only approved payouts can be reconciled.');
             }
 
-            // Optional: apply worker penalties linked to this payout.
             $this->penalties->applyDeductionsForPayout($payout);
 
             $payout->status = Payout::STATUS_RECONCILED;
@@ -250,25 +304,20 @@ class PayoutService
         });
     }
 
-    /**
-     * Default holdback: configurable insurance % of payroll payouts with a worker.
-     */
     protected function defaultHoldback(Project $project, string $category, float $amountUsd, mixed $workerId): float
     {
-        if ($category !== Payout::CATEGORY_PAYROLL || empty($workerId)) {
+        if ($category !== Payout::CATEGORY_PAYROLL || ! $workerId) {
             return 0.0;
         }
 
-        $pct = $this->insurance->holdbackPercent();
-
-        return round($amountUsd * ($pct / 100), 2);
+        return round($amountUsd * ($this->insurance->holdbackPercent() / 100.0), 2);
     }
 
     protected function shouldCreateRetentionHold(Payout $payout, float $holdback): bool
     {
         return $holdback > 0
-            && $payout->worker_id !== null
-            && in_array($payout->category, [Payout::CATEGORY_PAYROLL, Payout::CATEGORY_RETENTION], true);
+            && $payout->category === Payout::CATEGORY_PAYROLL
+            && $payout->worker_id;
     }
 
     protected function zhakoVault(): Vault

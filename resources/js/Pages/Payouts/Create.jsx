@@ -16,14 +16,14 @@ import { useEffect, useMemo } from 'react';
 const selectClass =
     'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Create({ projects, workers, categories, payrollSuggestions }) {
+export default function Create({ projects, workers, categories, currencies, payrollSuggestions, availableCash }) {
     const t = useTranslations();
-    const iqd = t('IQD');
     const { data, setData, post, processing, errors } = useForm({
         project_id: '',
         worker_id: '',
         category: 'payroll',
-        amount_usd: '',
+        currency: 'USD',
+        amount: '',
         notes: '',
     });
 
@@ -42,8 +42,9 @@ export default function Create({ projects, workers, categories, payrollSuggestio
         if (worker?.project_id && !data.project_id) {
             setData('project_id', String(worker.project_id));
         }
-        if (data.category === 'payroll' && suggestion && (data.amount_usd === '' || data.amount_usd === null)) {
-            setData('amount_usd', String(suggestion.net_pay_usd));
+        if (data.category === 'payroll' && suggestion && (data.amount === '' || data.amount === null)) {
+            setData('amount', String(suggestion.net_pay_usd));
+            setData('currency', 'USD');
         }
     }, [data.worker_id, data.category, suggestion]);
 
@@ -103,15 +104,16 @@ export default function Create({ projects, workers, categories, payrollSuggestio
                                 <div className="rounded-md border border-amber-200/80 bg-amber-50/80 p-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
                                     <p className="font-medium">{t('payroll_net_formula')}</p>
                                     <ul className="mt-2 space-y-1 text-xs">
-                                        <li>{t('col_penalties')}: <MoneyAmount value={Math.round(Number(suggestion.penalties_usd || 0) * (suggestion.net_pay_iqd && suggestion.net_pay_usd ? suggestion.net_pay_iqd / suggestion.net_pay_usd : 1310))} label={iqd} size="sm" /></li>
                                         <li>{t('col_insurance_holdback')}: {Number(suggestion.insurance_holdback_pct).toFixed(0)}% · {suggestion.insurance_holdback_usd} USD</li>
-                                        <li>{t('col_advances')}: <MoneyAmount value={suggestion.advances_iqd} label={iqd} size="sm" /></li>
-                                        <li className="font-semibold">{t('col_net')}: <MoneyAmount value={suggestion.net_pay_iqd} label={iqd} size="md" /></li>
+                                        <li className="font-semibold">{t('col_net')}: {suggestion.net_pay_usd} USD</li>
                                     </ul>
                                     <SecondaryButton
                                         type="button"
                                         className="mt-3"
-                                        onClick={() => setData('amount_usd', String(suggestion.net_pay_usd))}
+                                        onClick={() => {
+                                            setData('amount', String(suggestion.net_pay_usd));
+                                            setData('currency', 'USD');
+                                        }}
                                     >
                                         {t('use_payroll_net')}
                                     </SecondaryButton>
@@ -119,9 +121,17 @@ export default function Create({ projects, workers, categories, payrollSuggestio
                             )}
 
                             <FormField>
-                                <InputLabel value={t('amount_usd') || 'Amount USD'} />
-                                <MoneyInput allowDecimals className="mt-1 block w-full" value={data.amount_usd} onValueChange={(raw) => setData('amount_usd', raw)} required />
-                                <InputError message={errors.amount_usd} className="mt-1" />
+                                <InputLabel value={t('currency')} />
+                                <select className={selectClass} value={data.currency} onChange={(e) => setData('currency', e.target.value)}>
+                                    {(currencies || ['USD', 'IQD']).map((c) => (
+                                        <option key={c} value={c}>{c}</option>
+                                    ))}
+                                </select>
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('amount')} />
+                                <MoneyInput allowDecimals className="mt-1 block w-full" value={data.amount} onValueChange={(raw) => setData('amount', raw)} required />
+                                <InputError message={errors.amount} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('notes')} />

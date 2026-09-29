@@ -147,6 +147,7 @@ class PayrollInsurancePhase8Test extends TestCase
         $worker = Worker::query()->create([
             'project_id' => $project->id,
             'name' => 'Suggest Worker',
+            'labor_kind' => Worker::LABOR_KIND_WORKER,
             'daily_rate_usd' => 50,
             'overtime_rate_usd' => 50,
         ]);

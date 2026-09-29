@@ -97,9 +97,7 @@ class VaultLedgerPhase12Test extends TestCase
             'type' => Transaction::TYPE_EXPENSE,
             'amount_iqd' => 1_310_000,
         ]);
-        $this->assertDatabaseHas('transactions', [
-            'type' => Transaction::TYPE_ALLOCATION,
-        ]);
+        // IQD Money In is single-leg — no FX pool allocation row.
 
         $this->actingAs($accountant)
             ->get(route('vault.transactions', [
@@ -140,13 +138,16 @@ class VaultLedgerPhase12Test extends TestCase
     {
         app(VaultService::class)->deposit(
             $this->project,
-            1000,
+            0,
             $this->vault,
             null,
             'Sept deposit',
             Transaction::TYPE_DEPOSIT,
-            true,
+            false,
             '2026-09-05',
+            null,
+            'IQD',
+            1_000_000,
         );
 
         $preview = app(VaultLedgerService::class)->monthlySettlementPreview('2026-09', $this->vault);

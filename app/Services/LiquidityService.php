@@ -8,6 +8,7 @@ use App\Models\Project;
 use App\Models\ProjectAllocation;
 use App\Models\RetentionHold;
 use App\Models\Vault;
+use App\Support\DualCurrency;
 use Database\Seeders\VaultSeeder;
 use InvalidArgumentException;
 
@@ -59,7 +60,7 @@ class LiquidityService
 
         $sum = Payout::query()
             ->where('vault_id', $vault->id)
-            ->where('status', Payout::STATUS_PENDING)
+            ->whereIn('status', [Payout::STATUS_PENDING, Payout::STATUS_HELD])
             ->sum('amount_usd');
 
         return round((float) $sum, 2);
@@ -74,7 +75,7 @@ class LiquidityService
 
         $query = Expense::query()
             ->where('vault_id', $vault->id)
-            ->where('approval_status', Expense::STATUS_PENDING);
+            ->whereIn('approval_status', [Expense::STATUS_PENDING, Expense::STATUS_HELD]);
 
         if ($excludeExpenseId !== null) {
             $query->where('id', '!=', $excludeExpenseId);
@@ -155,7 +156,7 @@ class LiquidityService
 
         $sum = Payout::query()
             ->where('vault_id', $vault->id)
-            ->where('status', Payout::STATUS_PENDING)
+            ->whereIn('status', [Payout::STATUS_PENDING, Payout::STATUS_HELD])
             ->sum('amount_iqd');
 
         return round((float) $sum, 2);
@@ -167,7 +168,7 @@ class LiquidityService
 
         $query = Expense::query()
             ->where('vault_id', $vault->id)
-            ->where('approval_status', Expense::STATUS_PENDING);
+            ->whereIn('approval_status', [Expense::STATUS_PENDING, Expense::STATUS_HELD]);
 
         if ($excludeExpenseId !== null) {
             $query->where('id', '!=', $excludeExpenseId);
@@ -256,49 +257,120 @@ class LiquidityService
         ?Vault $vault = null,
         ?int $excludeExpenseId = null,
     ): array {
-        if ($amountUsd <= 0) {
-            throw new InvalidArgumentException('Request amount must be greater than zero.');
+        return $this->canPayCurrency(
+            $project,
+            $category,
+            DualCurrency::USD,
+            $amountUsd,
+            $vault,
+            $excludeExpenseId,
+        );
+    }
+
+    /**
+     * Dual-currency ability-to-pay (Available Cash per currency — never blended).
+     *
+     * @return array{
+     *     allowed: bool,
+     *     currency: string,
+     *     amount: float,
+     *     amount_usd: float,
+     *     amount_iqd: float,
+     *     available_usd: float,
+     *     available_iqd: float,
+     *     pending_usd: float,
+     *     pending_iqd: float,
+     *     reserved_usd: float,
+     *     reserved_iqd: float,
+     *     vault_balance_usd: float,
+     *     vault_balance_iqd: float,
+     *     pool_available_usd: float,
+     *     category: string,
+     *     reasons: list<string>,
+     * }
+     */
+    public function canPayCurrency(
+        Project $project,
+        string $category,
+        string $currency,
+        float $amount,
+        ?Vault $vault = null,
+        ?int $excludeExpenseId = null,
+        ?int $excludePayoutId = null,
+    ): array {
+        $legs = DualCurrency::legs($currency, $amount);
+        $vault ??= $this->zhakoVault();
+        $this->poolColumn($category);
+
+        $snap = $this->dualSnapshot($vault, $excludeExpenseId);
+        // Pending already includes this draft when exclude ids applied.
+        if ($excludePayoutId !== null) {
+            $pendingUsd = round(max(0, $snap['pending_usd'] - (float) Payout::query()
+                ->where('id', $excludePayoutId)
+                ->where('status', Payout::STATUS_PENDING)
+                ->value('amount_usd')), 2);
+            $pendingIqd = round(max(0, $snap['pending_iqd'] - (float) Payout::query()
+                ->where('id', $excludePayoutId)
+                ->where('status', Payout::STATUS_PENDING)
+                ->value('amount_iqd')), 2);
+            $snap['available_usd'] = round(max(0, $snap['balance_usd'] - $pendingUsd - $snap['reserved_usd']), 2);
+            $snap['available_iqd'] = round(max(0, $snap['balance_iqd'] - $pendingIqd - $snap['reserved_iqd']), 2);
+            $snap['pending_usd'] = $pendingUsd;
+            $snap['pending_iqd'] = $pendingIqd;
         }
 
-        $amountUsd = round($amountUsd, 2);
-        $vault ??= $this->zhakoVault();
-        $this->poolColumn($category); // validate category
-
-        $pending = $this->pendingCommitmentsUsd($vault, $excludeExpenseId);
-        $reserved = $this->reservedInsuranceUsd($vault);
-        $available = $this->availableUsd($vault, $excludeExpenseId);
         $pool = $this->poolAvailableUsd($project, $category);
-
         $reasons = [];
 
-        if ($amountUsd > $available) {
-            $reasons[] = sprintf(
-                'Request %.2f USD exceeds available liquidity %.2f USD (vault %.2f − pending %.2f − reserved insurance %.2f).',
-                $amountUsd,
-                $available,
-                (float) $vault->balance_usd,
-                $pending,
-                $reserved,
-            );
-        }
-
-        if ($amountUsd > $pool) {
-            $reasons[] = sprintf(
-                'Request %.2f USD exceeds %s pool balance %.2f USD for project #%d.',
-                $amountUsd,
-                $category,
-                $pool,
-                $project->id,
-            );
+        if ($legs['currency'] === DualCurrency::USD) {
+            if ($legs['amount_usd'] > $snap['available_usd']) {
+                $reasons[] = sprintf(
+                    'Request %.2f USD exceeds Available Cash %.2f USD (vault %.2f − pending %.2f − reserved insurance %.2f).',
+                    $legs['amount_usd'],
+                    $snap['available_usd'],
+                    $snap['balance_usd'],
+                    $snap['pending_usd'],
+                    $snap['reserved_usd'],
+                );
+            }
+            if ($legs['amount_usd'] > $pool) {
+                $reasons[] = sprintf(
+                    'Request %.2f USD exceeds %s pool balance %.2f USD for project #%d.',
+                    $legs['amount_usd'],
+                    $category,
+                    $pool,
+                    $project->id,
+                );
+            }
+        } else {
+            if ($legs['amount_iqd'] > $snap['available_iqd']) {
+                $reasons[] = sprintf(
+                    'Request %.2f IQD exceeds Available Cash %.2f IQD (vault %.2f − pending %.2f − reserved insurance %.2f).',
+                    $legs['amount_iqd'],
+                    $snap['available_iqd'],
+                    $snap['balance_iqd'],
+                    $snap['pending_iqd'],
+                    $snap['reserved_iqd'],
+                );
+            }
         }
 
         return [
             'allowed' => $reasons === [],
-            'amount_usd' => $amountUsd,
-            'available_usd' => $available,
-            'pending_payouts_usd' => $pending,
-            'reserved_insurance_usd' => $reserved,
-            'vault_balance_usd' => round((float) $vault->balance_usd, 2),
+            'currency' => $legs['currency'],
+            'amount' => DualCurrency::primaryAmount($legs),
+            'amount_usd' => $legs['amount_usd'],
+            'amount_iqd' => $legs['amount_iqd'],
+            'available_usd' => $snap['available_usd'],
+            'available_iqd' => $snap['available_iqd'],
+            'pending_usd' => $snap['pending_usd'],
+            'pending_iqd' => $snap['pending_iqd'],
+            'reserved_usd' => $snap['reserved_usd'],
+            'reserved_iqd' => $snap['reserved_iqd'],
+            'pending_payouts_usd' => $snap['pending_usd'],
+            'reserved_insurance_usd' => $snap['reserved_usd'],
+            'vault_balance_usd' => $snap['balance_usd'],
+            'vault_balance_iqd' => $snap['balance_iqd'],
             'pool_available_usd' => $pool,
             'category' => $category,
             'reasons' => $reasons,
@@ -317,6 +389,36 @@ class LiquidityService
         ?int $excludeExpenseId = null,
     ): array {
         $result = $this->canPay($project, $category, $amountUsd, $vault, $excludeExpenseId);
+
+        if (! $result['allowed']) {
+            throw new InvalidArgumentException(implode(' ', $result['reasons']));
+        }
+
+        return $result;
+    }
+
+    /**
+     * @throws InvalidArgumentException when the payout must be blocked
+     * @return array<string, mixed>
+     */
+    public function assertCanPayCurrency(
+        Project $project,
+        string $category,
+        string $currency,
+        float $amount,
+        ?Vault $vault = null,
+        ?int $excludeExpenseId = null,
+        ?int $excludePayoutId = null,
+    ): array {
+        $result = $this->canPayCurrency(
+            $project,
+            $category,
+            $currency,
+            $amount,
+            $vault,
+            $excludeExpenseId,
+            $excludePayoutId,
+        );
 
         if (! $result['allowed']) {
             throw new InvalidArgumentException(implode(' ', $result['reasons']));

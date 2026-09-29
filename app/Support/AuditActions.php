@@ -37,6 +37,10 @@ final class AuditActions
 
     public const EXPENSE_REJECTED = 'expense.rejected';
 
+    public const EXPENSE_HELD = 'expense.held';
+
+    public const PAYOUT_HELD = 'payout.held';
+
     /** Explicit USD↔IQD conversion (never silent blend). */
     public const FX_EXPLICIT_CONVERSION = 'fx.explicit_conversion';
 
@@ -44,14 +48,28 @@ final class AuditActions
 
     public const VAULT_SOFT_DELETE_REBUILD = 'vault.soft_delete_rebuild';
 
+    public const VAULT_MONEY_IN = 'vault.money_in';
+
+    public const VAULT_MONEY_OUT = 'vault.money_out';
+
+    public const VAULT_LEDGER_UPDATED = 'vault.ledger_updated';
+
+    public const CLIENT_ADVANCE_RECORDED = 'client_advance.recorded';
+
+    public const STAFF_STATEMENT_SAVED = 'staff_statement.saved';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
         self::PAYOUT_REJECTED,
+        self::PAYOUT_HELD,
         self::ALLOCATION_CHANGED,
         self::FX_RATE_OVERRIDDEN,
         self::FX_EXPLICIT_CONVERSION,
         self::VAULT_DEPOSIT,
+        self::VAULT_MONEY_IN,
+        self::VAULT_MONEY_OUT,
+        self::VAULT_LEDGER_UPDATED,
         self::USER_CREATED,
         self::USER_UPDATED,
         self::USER_ROLE_CHANGED,
@@ -61,18 +79,25 @@ final class AuditActions
         self::PROJECT_RECEIPT,
         self::EXPENSE_APPROVED,
         self::EXPENSE_REJECTED,
+        self::EXPENSE_HELD,
         self::PERSON_CLASSIFIED,
         self::VAULT_SOFT_DELETE_REBUILD,
+        self::CLIENT_ADVANCE_RECORDED,
+        self::STAFF_STATEMENT_SAVED,
     ];
 
     /** @var array<string, string> */
     public const LABELS = [
         self::PAYOUT_APPROVED => 'Payout approved',
         self::PAYOUT_REJECTED => 'Payout rejected',
+        self::PAYOUT_HELD => 'Payout held (ability to pay)',
         self::ALLOCATION_CHANGED => 'Allocation changed',
         self::FX_RATE_OVERRIDDEN => 'FX rate overridden',
         self::FX_EXPLICIT_CONVERSION => 'Explicit FX conversion',
         self::VAULT_DEPOSIT => 'Vault deposit',
+        self::VAULT_MONEY_IN => 'Money In',
+        self::VAULT_MONEY_OUT => 'Money Out',
+        self::VAULT_LEDGER_UPDATED => 'Vault ledger updated',
         self::USER_CREATED => 'User created',
         self::USER_UPDATED => 'User updated',
         self::USER_ROLE_CHANGED => 'User role changed',
@@ -82,7 +107,10 @@ final class AuditActions
         self::PROJECT_RECEIPT => 'Project money received',
         self::EXPENSE_APPROVED => 'Expense approved',
         self::EXPENSE_REJECTED => 'Expense rejected',
+        self::EXPENSE_HELD => 'Expense held (ability to pay)',
         self::PERSON_CLASSIFIED => 'Person classified',
         self::VAULT_SOFT_DELETE_REBUILD => 'Vault balance rebuilt after soft delete',
+        self::CLIENT_ADVANCE_RECORDED => 'Client advance recorded',
+        self::STAFF_STATEMENT_SAVED => 'Staff statement saved',
     ];
 }

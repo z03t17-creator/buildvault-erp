@@ -33,6 +33,8 @@ class Payout extends Model
 
     public const STATUS_PENDING = 'pending';
 
+    public const STATUS_HELD = 'held';
+
     public const STATUS_APPROVED = 'approved';
 
     public const STATUS_RECONCILED = 'reconciled';
@@ -42,6 +44,7 @@ class Payout extends Model
     /** @var list<string> */
     public const STATUSES = [
         self::STATUS_PENDING,
+        self::STATUS_HELD,
         self::STATUS_APPROVED,
         self::STATUS_RECONCILED,
         self::STATUS_REJECTED,
@@ -52,7 +55,9 @@ class Payout extends Model
      */
     protected $attributes = [
         'amount_iqd' => 0,
+        'amount_usd' => 0,
         'exchange_rate' => 0,
+        'currency' => 'USD',
         'retention_holdback' => 0,
         'status' => self::STATUS_PENDING,
     ];
@@ -69,10 +74,14 @@ class Payout extends Model
         'amount_usd',
         'amount_iqd',
         'exchange_rate',
+        'currency',
         'retention_holdback',
         'status',
         'notes',
+        'pay_ability_notes',
         'approved_at',
+        'held_at',
+        'held_by',
         'reconciled_at',
         'created_by',
     ];
@@ -88,8 +97,29 @@ class Payout extends Model
             'exchange_rate' => 'decimal:4',
             'retention_holdback' => 'decimal:2',
             'approved_at' => 'datetime',
+            'held_at' => 'datetime',
             'reconciled_at' => 'datetime',
         ];
+    }
+
+    public function isPending(): bool
+    {
+        return $this->status === self::STATUS_PENDING;
+    }
+
+    public function isHeld(): bool
+    {
+        return $this->status === self::STATUS_HELD;
+    }
+
+    public function isAwaitingPayAbility(): bool
+    {
+        return in_array($this->status, [self::STATUS_PENDING, self::STATUS_HELD], true);
+    }
+
+    public function holder(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'held_by');
     }
 
     public function vault(): BelongsTo

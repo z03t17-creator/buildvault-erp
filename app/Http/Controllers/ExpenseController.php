@@ -6,10 +6,14 @@ use App\Http\Requests\Expense\RejectExpenseRequest;
 use App\Http\Requests\Expense\StoreExpenseRequest;
 use App\Http\Requests\Expense\UpdateExpenseRequest;
 use App\Models\Expense;
+use App\Models\Payout;
 use App\Models\Project;
 use App\Models\Vault;
 use App\Services\ExpenseService;
+use App\Services\LiquidityService;
+use App\Support\DualCurrency;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use InvalidArgumentException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -18,6 +22,7 @@ class ExpenseController extends Controller
 {
     public function __construct(
         private readonly ExpenseService $expenses,
+        private readonly LiquidityService $liquidity,
     ) {}
 
     public function index(): Response
@@ -45,6 +50,8 @@ class ExpenseController extends Controller
             'vaults' => Vault::query()->orderBy('name')->get(['id', 'name']),
             'categories' => Expense::CATEGORIES,
             'paymentMethods' => Expense::PAYMENT_METHODS,
+            'currencies' => DualCurrency::CURRENCIES,
+            'availableCash' => $this->liquidity->dualSnapshot(),
         ]);
     }
 
@@ -59,12 +66,12 @@ class ExpenseController extends Controller
                 'created_by' => $request->user()?->id,
             ]);
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['amount_iqd' => $e->getMessage()]);
+            return back()->withErrors(['amount' => $e->getMessage()]);
         }
 
         return redirect()
             ->route('expenses.show', $expense)
-            ->with('success', __('Expense created (pending).'));
+            ->with('success', __('Expense created (pending ability to pay).'));
     }
 
     public function show(Expense $expense): Response
@@ -72,11 +79,29 @@ class ExpenseController extends Controller
         $this->authorize('view', $expense);
 
         $expense->load(['project', 'vault', 'creator', 'approver', 'document', 'transaction']);
+        $currency = strtoupper((string) ($expense->currency ?: DualCurrency::IQD));
+        $amount = $currency === DualCurrency::USD
+            ? (float) $expense->amount_usd
+            : (float) $expense->amount_iqd;
+
+        $ability = null;
+        if ($expense->isAwaitingPayAbility()) {
+            $ability = $this->liquidity->canPayCurrency(
+                $expense->project,
+                Payout::CATEGORY_EXPENSES,
+                $currency,
+                max($amount, 0.01),
+                $expense->vault,
+                excludeExpenseId: $expense->id,
+            );
+        }
 
         return Inertia::render('Expenses/Show', [
             'expense' => $expense,
             'categories' => Expense::CATEGORIES,
             'paymentMethods' => Expense::PAYMENT_METHODS,
+            'availableCash' => $this->liquidity->dualSnapshot($expense->vault),
+            'payAbility' => $ability,
         ]);
     }
 
@@ -84,7 +109,7 @@ class ExpenseController extends Controller
     {
         $this->authorize('update', $expense);
 
-        abort_unless($expense->isPending(), 403);
+        abort_unless($expense->isAwaitingPayAbility(), 403);
 
         return Inertia::render('Expenses/Edit', [
             'expense' => $expense->load(['project', 'document']),
@@ -92,6 +117,8 @@ class ExpenseController extends Controller
             'vaults' => Vault::query()->orderBy('name')->get(['id', 'name']),
             'categories' => Expense::CATEGORIES,
             'paymentMethods' => Expense::PAYMENT_METHODS,
+            'currencies' => DualCurrency::CURRENCIES,
+            'availableCash' => $this->liquidity->dualSnapshot(),
         ]);
     }
 
@@ -105,7 +132,7 @@ class ExpenseController extends Controller
                 'receipt' => $request->file('receipt'),
             ]);
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['amount_iqd' => $e->getMessage()]);
+            return back()->withErrors(['amount' => $e->getMessage()]);
         }
 
         return redirect()
@@ -123,7 +150,24 @@ class ExpenseController extends Controller
             return back()->withErrors(['approval_status' => $e->getMessage()]);
         }
 
-        return back()->with('success', __('Expense approved; vault/pool debited.'));
+        return back()->with('success', __('Expense approved; Available Cash updated.'));
+    }
+
+    public function hold(Request $request, Expense $expense): RedirectResponse
+    {
+        $this->authorize('hold', $expense);
+
+        $notes = $request->validate([
+            'notes' => ['nullable', 'string', 'max:1000'],
+        ])['notes'] ?? null;
+
+        try {
+            $this->expenses->hold($expense, $notes, $request->user());
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['approval_status' => $e->getMessage()]);
+        }
+
+        return back()->with('success', __('Expense held — ability to pay deferred.'));
     }
 
     public function reject(RejectExpenseRequest $request, Expense $expense): RedirectResponse
@@ -137,5 +181,16 @@ class ExpenseController extends Controller
         }
 
         return back()->with('success', __('Expense rejected.'));
+    }
+
+    public function destroy(Expense $expense): RedirectResponse
+    {
+        $this->authorize('delete', $expense);
+
+        $this->expenses->softDelete($expense, request()->user());
+
+        return redirect()
+            ->route('expenses.index')
+            ->with('success', __('Expense soft-deleted.'));
     }
 }
