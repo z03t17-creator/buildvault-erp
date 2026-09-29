@@ -97,6 +97,18 @@
 
     .bv-table-wrap {
         @apply overflow-x-auto overscroll-x-contain;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .bv-table-wrap-sticky .bv-table thead th:first-child,
+    .bv-table-wrap-sticky .bv-table tbody td:first-child {
+        @apply sticky start-0 z-10 bg-slate-50/95 dark:bg-slate-950/90;
+        box-shadow: 2px 0 8px -4px rgb(15 23 42 / 0.12);
+    }
+
+    html.dark .bv-table-wrap-sticky .bv-table thead th:first-child,
+    html.dark .bv-table-wrap-sticky .bv-table tbody td:first-child {
+        box-shadow: 2px 0 8px -4px rgb(0 0 0 / 0.35);
     }
 
     .bv-table {

@@ -1,10 +1,20 @@
 /**
- * Shared scroll wrapper + table chrome for money / list pages.
- * Pass hideOnMobile when a MobileCardList sibling covers small screens.
+ * Shared scroll wrapper + table chrome for money / list pages (RTL-safe horizontal scroll).
+ * stickyFirstColumn keeps the lead column visible while scrolling on narrow screens.
  */
-export default function DataTable({ children, minWidth = '40rem', caption, hideOnMobile = false }) {
+export default function DataTable({
+    children,
+    minWidth = '40rem',
+    caption,
+    hideOnMobile = false,
+    stickyFirstColumn = true,
+}) {
     return (
-        <div className={`bv-table-wrap ${hideOnMobile ? 'hidden md:block' : ''}`.trim()}>
+        <div
+            className={
+                `bv-table-wrap ${stickyFirstColumn ? 'bv-table-wrap-sticky' : ''} ${hideOnMobile ? 'hidden md:block' : ''}`.trim()
+            }
+        >
             <table className="bv-table" style={{ minWidth }}>
                 {caption && (
                     <caption className="sr-only">{caption}</caption>

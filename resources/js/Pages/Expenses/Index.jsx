@@ -1,7 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
-import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -50,51 +49,7 @@ export default function Index({ expenses }) {
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <MobileCardList>
-                            {list.map((e) => (
-                                <MobileCard
-                                    key={e.id}
-                                    href={route('expenses.show', e.id)}
-                                    title={`#${e.id}`}
-                                    subtitle={e.project?.name || '—'}
-                                    badge={<StatusBadge status={e.approval_status} />}
-                                    rows={[
-                                        {
-                                            label: t('category'),
-                                            value:
-                                                t(`expense_category_${e.category}`) !==
-                                                `expense_category_${e.category}`
-                                                    ? t(`expense_category_${e.category}`)
-                                                    : e.category,
-                                        },
-                                        {
-                                            label: t('expense_date'),
-                                            value:
-                                                typeof e.expense_date === 'string'
-                                                    ? e.expense_date.slice(0, 10)
-                                                    : e.expense_date,
-                                        },
-                                        {
-                                            label: t('amount_iqd'),
-                                            money: true,
-                                            span: 2,
-                                            value:
-                                                e.amount_iqd == null ? (
-                                                    '—'
-                                                ) : (
-                                                    <MoneyAmount
-                                                        value={e.amount_iqd}
-                                                        label={iqd}
-                                                        size="sm"
-                                                        showLabel={false}
-                                                    />
-                                                ),
-                                        },
-                                    ]}
-                                />
-                            ))}
-                        </MobileCardList>
-                        <DataTable minWidth="44rem" caption={t('expenses')} hideOnMobile>
+                        <DataTable minWidth="44rem" caption={t('expenses')}>
                             <thead>
                                 <tr>
                                     <Th>{t('id')}</Th>

@@ -71,7 +71,9 @@ class RoleDashboardPhase14Test extends TestCase
                 ->has('summary.health.ledger_ok')
                 ->has('summary.backup')
                 ->where('summary.users_disabled', 1)
-                ->missing('summary.money_received_iqd')
+                ->has('summary.vault_balance_iqd')
+                ->has('summary.vault_balance_usd')
+                ->has('summary.money_received_iqd')
                 ->missing('summary.by_category')
             );
     }

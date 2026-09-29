@@ -1,7 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
-import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -39,48 +38,7 @@ export default function Index({ advances }) {
                     <EmptyState title={t('client_advances')} description="No client advances yet." />
                 ) : (
                     <DataPanel padded={false}>
-                        <MobileCardList>
-                            {list.map((row) => (
-                                <MobileCard
-                                    key={row.id}
-                                    href={route('client-advances.show', row.id)}
-                                    title={row.client_name}
-                                    subtitle={row.project?.name || row.received_on}
-                                    badge={
-                                        (row.retention_holds || []).length > 0 ? (
-                                            <StatusBadge status="holding" />
-                                        ) : null
-                                    }
-                                    rows={[
-                                        {
-                                            label: 'USD',
-                                            money: true,
-                                            value: (
-                                                <MoneyAmount
-                                                    value={row.amount_usd}
-                                                    label="USD"
-                                                    size="sm"
-                                                    showLabel={false}
-                                                />
-                                            ),
-                                        },
-                                        {
-                                            label: 'IQD',
-                                            money: true,
-                                            value: (
-                                                <MoneyAmount
-                                                    value={row.amount_iqd}
-                                                    label="IQD"
-                                                    size="sm"
-                                                    showLabel={false}
-                                                />
-                                            ),
-                                        },
-                                    ]}
-                                />
-                            ))}
-                        </MobileCardList>
-                        <DataTable minWidth="48rem" hideOnMobile>
+                        <DataTable minWidth="48rem" caption={t('client_advances')}>
                             <thead>
                                 <tr>
                                     <Th>{t('date')}</Th>

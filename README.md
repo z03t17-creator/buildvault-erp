@@ -35,6 +35,16 @@ npm run build
 php artisan serve
 ```
 
+### Mayorca Excel (production data)
+
+The real client workbook should live at `resources/imports/samples/hsabati-mayorca-zhako.xlsx` (also copied to `storage/app/imports/samples/` on first import). After deploy, **wipe demo business rows and import** (keeps Spatie roles + core users):
+
+```bash
+php artisan mayorca:import --wipe --commit
+```
+
+Optional dry-run: `php artisan mayorca:import --wipe --dry-run`. Super Admin can run the same flow from **Dashboard → Import Mayorca workbook** (confirm wipe). Render boot does **not** auto-wipe — run the one-liner manually on the web service shell when ready.
+
 - Login (core): `admin@zhako.test` / `password`
 - Full demo roles (`SEED_DEMO=true`): `boss@zhako.test`, `accountant@zhako.test`, `stock@zhako.test` — all `/ password`
 - See [docs/INSTALL.md](docs/INSTALL.md)

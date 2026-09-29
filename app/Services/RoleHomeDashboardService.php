@@ -111,10 +111,18 @@ class RoleHomeDashboardService
 
         $vault = $this->zhakoVault();
         $ledgerOk = true;
+        $balances = null;
         if ($vault) {
             $balances = $this->ledger->balances($vault);
             $ledgerOk = (bool) $balances['balance_matches_ledger'];
         }
+
+        $month = now()->format('Y-m');
+        $settlement = $vault
+            ? $this->settlements->preview($month, null, $vault)
+            : null;
+
+        $bundledWorkbook = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
 
         return [
             'users' => User::query()->count(),
@@ -127,6 +135,17 @@ class RoleHomeDashboardService
             'pending_payouts' => Payout::query()->where('status', Payout::STATUS_PENDING)->count(),
             'matured_holds' => RetentionHold::query()->where('status', RetentionHold::STATUS_MATURED)->count(),
             'projects' => Project::query()->count(),
+            'people' => \App\Models\Worker::query()->count(),
+            'year_month' => $month,
+            'vault_balance_iqd' => $balances['current_iqd'] ?? null,
+            'vault_balance_usd' => $balances['current_usd'] ?? null,
+            'available_iqd' => $balances['available_iqd'] ?? null,
+            'available_usd' => $balances['available_usd'] ?? null,
+            'reserved_insurance_iqd' => $settlement['reserved_insurance_iqd']
+                ?? ($balances['reserved_iqd'] ?? null),
+            'money_received_iqd' => $settlement['money_received_iqd'] ?? null,
+            'workbook_bundled' => is_file($bundledWorkbook),
+            'workbook_bytes' => is_file($bundledWorkbook) ? filesize($bundledWorkbook) : null,
             'health' => [
                 'ledger_ok' => $ledgerOk,
                 'pending_payouts' => Payout::query()->where('status', Payout::STATUS_PENDING)->count(),

@@ -35,6 +35,7 @@ class DashboardController extends Controller
             'roleHome' => $role,
             'maturedHolds' => $maturedHolds,
             'summary' => $this->roleHomes->summaryForRole($role),
+            'canImportMayorca' => $user?->hasRole(Roles::SUPER_ADMIN) ?? false,
         ]);
     }
 

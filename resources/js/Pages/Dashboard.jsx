@@ -1,14 +1,18 @@
+import DashboardQuickLink from '@/Components/DashboardQuickLink';
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DangerButton from '@/Components/DangerButton';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
-import { Head, Link, router, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
+import { ShieldCheck, Users } from 'lucide-react';
 
 function Stat({ label, value, hint }) {
     return (
@@ -65,22 +69,166 @@ function formatWhen(iso) {
     }
 }
 
-function SuperAdminHome({ summary, t }) {
+function SuperAdminHome({ summary, t, canImportMayorca }) {
     const logins = summary?.last_logins || [];
     const activity = summary?.recent_activity || [];
     const health = summary?.health || {};
     const backup = summary?.backup;
+    const iqd = t('IQD');
+    const usd = t('USD');
+    const importForm = useForm({ confirm_wipe: false });
+
+    const runMayorcaImport = () => {
+        if (
+            !window.confirm(
+                t('mayorca_import_confirm'),
+            )
+        ) {
+            return;
+        }
+        importForm.transform((data) => ({ ...data, confirm_wipe: true }));
+        importForm.post(route('admin.mayorca-import'), {
+            preserveScroll: true,
+            onFinish: () => importForm.setData('confirm_wipe', false),
+        });
+    };
 
     return (
         <div className="space-y-6">
-            <DataPanel title={t('role_home_admin_title')} subtitle={t('role_home_admin_hint')}>
+            <DataPanel
+                title={t('role_home_admin_title')}
+                subtitle={t('role_home_admin_hint')}
+                actions={
+                    <div className="flex flex-wrap gap-2">
+                        <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
+                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
+                    </div>
+                }
+            >
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Stat label={t('role_stat_users')} value={summary?.users ?? 0} />
-                    <Stat label={t('role_stat_users_active')} value={summary?.users_active ?? 0} />
-                    <Stat label={t('role_stat_users_disabled')} value={summary?.users_disabled ?? 0} />
-                    <Stat label={t('role_stat_audit_events')} value={summary?.audit_events ?? 0} />
+                    <MoneyStat
+                        label={t('balance_iqd')}
+                        value={summary?.vault_balance_iqd}
+                        iqd={iqd}
+                        accent
+                    />
+                    <MoneyStat
+                        label={t('balance_usd')}
+                        value={summary?.vault_balance_usd}
+                        iqd={usd}
+                    />
+                    <MoneyStat
+                        label={t('role_stat_available')}
+                        value={summary?.available_iqd}
+                        iqd={iqd}
+                        accent
+                    />
+                    <MoneyStat
+                        label={t('role_stat_available_usd')}
+                        value={summary?.available_usd}
+                        iqd={usd}
+                    />
+                    <MoneyStat
+                        label={t('money_received')}
+                        value={summary?.money_received_iqd}
+                        iqd={iqd}
+                    />
+                    <MoneyStat
+                        label={t('insurance_reserve')}
+                        value={summary?.reserved_insurance_iqd}
+                        iqd={iqd}
+                    />
+                    <Stat
+                        label={t('role_stat_pending_payouts')}
+                        value={summary?.pending_payouts ?? health.pending_payouts ?? 0}
+                    />
+                    <Stat
+                        label={t('role_stat_matured_holds')}
+                        value={summary?.matured_holds ?? health.matured_holds ?? 0}
+                    />
                 </div>
             </DataPanel>
+
+            <DataPanel title={t('role_admin_quick_work')} subtitle={t('role_admin_quick_work_hint')}>
+                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    <DashboardQuickLink
+                        href={route('workers.index')}
+                        label={t('people')}
+                        icon="workers"
+                        tone="teal"
+                    />
+                    <DashboardQuickLink
+                        href={route('vault.index')}
+                        label={t('vault')}
+                        icon="vault"
+                        tone="emerald"
+                    />
+                    <DashboardQuickLink
+                        href={route('spatial.index')}
+                        label={t('spatial_grid')}
+                        icon="spatial"
+                        tone="slate"
+                    />
+                    <DashboardQuickLink
+                        href={route('attendance.index')}
+                        label={t('attendance')}
+                        icon="attendance"
+                        tone="slate"
+                    />
+                    <DashboardQuickLink
+                        href={route('client-advances.index')}
+                        label={t('client_advances')}
+                        icon="clientAdvances"
+                        tone="emerald"
+                    />
+                    <DashboardQuickLink
+                        href={route('users.index')}
+                        label={t('users')}
+                        icon="users"
+                        tone="slate"
+                    />
+                    <DashboardQuickLink
+                        href={route('audit.index')}
+                        label={t('audit')}
+                        icon="audit"
+                        tone="slate"
+                    />
+                    <DashboardQuickLink
+                        href={route('backups.index')}
+                        label={t('backups')}
+                        icon="backups"
+                        tone="slate"
+                    />
+                </div>
+            </DataPanel>
+
+            {canImportMayorca && (
+                <DataPanel
+                    title={t('mayorca_import_panel_title')}
+                    subtitle={t('mayorca_import_panel_hint')}
+                >
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                        <div className="flex items-start gap-3 text-sm text-slate-600 dark:text-slate-300">
+                            <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-amber-600 dark:text-amber-400" />
+                            <p>{t('mayorca_import_panel_body')}</p>
+                        </div>
+                        <DangerButton
+                            type="button"
+                            disabled={importForm.processing || !summary?.workbook_bundled}
+                            onClick={runMayorcaImport}
+                        >
+                            {importForm.processing
+                                ? t('mayorca_import_running')
+                                : t('mayorca_import_button')}
+                        </DangerButton>
+                    </div>
+                    {!summary?.workbook_bundled && (
+                        <p className="mt-3 text-sm text-rose-700 dark:text-rose-300">
+                            {t('mayorca_workbook_missing')}
+                        </p>
+                    )}
+                </DataPanel>
+            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
                 <DataPanel title={t('role_panel_last_logins')} padded={false}>
@@ -95,8 +243,13 @@ function SuperAdminHome({ summary, t }) {
                             {logins.map((u) => (
                                 <tr key={u.id}>
                                     <Td>
-                                        <div className="font-medium">{u.name}</div>
-                                        <div className="text-xs text-slate-500">{u.email}</div>
+                                        <div className="flex items-center gap-2">
+                                            <Users className="h-4 w-4 text-slate-400" aria-hidden />
+                                            <div>
+                                                <div className="font-medium">{u.name}</div>
+                                                <div className="text-xs text-slate-500">{u.email}</div>
+                                            </div>
+                                        </div>
                                     </Td>
                                     <Td muted>{formatWhen(u.last_login_at)}</Td>
                                 </tr>
@@ -147,22 +300,20 @@ function SuperAdminHome({ summary, t }) {
             <DataPanel
                 title={t('role_panel_system_health')}
                 subtitle={t('role_panel_system_health_hint')}
-                actions={
-                    <div className="flex flex-wrap gap-2">
-                        <Shortcut href={route('users.index')} label={t('users')} />
-                        <Shortcut href={route('audit.index')} label={t('audit')} />
-                        <Shortcut href={route('backups.index')} label={t('backups')} />
-                        <Shortcut href={route('retention-holds.index')} label={t('settings')} />
-                    </div>
-                }
             >
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <Stat
-                        label={t('role_health_ledger')}
-                        value={health.ledger_ok ? t('role_health_ok') : t('role_health_check')}
-                    />
-                    <Stat label={t('role_stat_pending_payouts')} value={health.pending_payouts ?? 0} />
-                    <Stat label={t('role_stat_matured_holds')} value={health.matured_holds ?? 0} />
+                    <div className="rounded-lg border border-slate-200/80 bg-white/90 px-4 py-3 dark:border-slate-700 dark:bg-slate-900/70">
+                        <div className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                            {t('role_health_ledger')}
+                        </div>
+                        <div className="mt-2">
+                            <StatusBadge
+                                status={health.ledger_ok ? 'approved' : 'pending'}
+                            />
+                        </div>
+                    </div>
+                    <Stat label={t('role_stat_users_active')} value={summary?.users_active ?? 0} />
+                    <Stat label={t('role_stat_audit_events')} value={summary?.audit_events ?? 0} />
                     <Stat
                         label={t('role_stat_backup')}
                         value={
@@ -497,7 +648,7 @@ function StockManagerHome({ summary, t, iqd }) {
     );
 }
 
-export default function Dashboard({ maturedHolds, roleHome, summary }) {
+export default function Dashboard({ maturedHolds, roleHome, summary, canImportMayorca }) {
     const t = useTranslations();
     const page = usePage();
     const role = roleHome || page.props.auth?.role;
@@ -579,7 +730,13 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
                     </section>
                 )}
 
-                {role === 'Super Admin' && <SuperAdminHome summary={summary} t={t} />}
+                {role === 'Super Admin' && (
+                    <SuperAdminHome
+                        summary={summary}
+                        t={t}
+                        canImportMayorca={canImportMayorca}
+                    />
+                )}
                 {role === 'Boss / Contractor' && (
                     <BossHome summary={summary} t={t} iqd={iqd} />
                 )}

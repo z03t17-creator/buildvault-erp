@@ -84,6 +84,17 @@ This agent environment had **no** `RENDER_API_KEY`, so live deploy must be compl
 
 Test credentials only — rotate before any real company use.
 
+## Load Mayorca Excel (after first deploy)
+
+Boot seeds **slim core** only (`SEED_DEMO=false` by default). To replace leftover demo business rows with the bundled workbook:
+
+```bash
+# Render Shell on the web service
+php artisan mayorca:import --wipe --commit
+```
+
+Workbook path: `resources/imports/samples/hsabati-mayorca-zhako.xlsx` (copied into `storage/app/imports/samples/` automatically). **Not** run on every deploy — only when you intentionally refresh production data. Super Admin can trigger the same wipe+import from the dashboard button.
+
 ## Notes
 
 - Free web services **sleep** after idle traffic; first request wakes them.

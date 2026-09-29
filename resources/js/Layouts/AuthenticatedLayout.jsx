@@ -185,6 +185,7 @@ function SidebarNav({ groups, onNavigate }) {
                                 href={item.href}
                                 active={item.active}
                                 badge={item.badge}
+                                icon={item.key}
                                 onClick={onNavigate}
                             >
                                 {item.label}

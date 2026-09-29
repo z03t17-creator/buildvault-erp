@@ -2,7 +2,6 @@ import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
 import FlashBanner from '@/Components/FlashBanner';
-import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -128,59 +127,7 @@ export default function Transactions({
                         </div>
                     ) : (
                         <>
-                            <MobileCardList>
-                                {rows.map((row) => {
-                                    const inUsd = row.direction === 'in' ? row.amount_usd : 0;
-                                    const outUsd = row.direction === 'out' ? row.amount_usd : 0;
-                                    const inIqd = row.direction === 'in' ? row.amount_iqd : 0;
-                                    const outIqd = row.direction === 'out' ? row.amount_iqd : 0;
-                                    const primary =
-                                        inUsd || outUsd
-                                            ? { value: inUsd || outUsd, label: 'USD' }
-                                            : { value: inIqd || outIqd, label: 'IQD' };
-                                    return (
-                                        <MobileCard
-                                            key={row.id}
-                                            href={
-                                                manage
-                                                    ? route('vault.transactions.edit', row.id)
-                                                    : undefined
-                                            }
-                                            title={row.description || typeLabel(row.type)}
-                                            subtitle={`${row.date || '—'} · ${
-                                                row.direction === 'in'
-                                                    ? t('money_in')
-                                                    : row.direction === 'out'
-                                                      ? t('money_out')
-                                                      : '—'
-                                            }`}
-                                            rows={[
-                                                {
-                                                    label: primary.label,
-                                                    money: true,
-                                                    span: 2,
-                                                    value: primary.value ? (
-                                                        <MoneyAmount
-                                                            value={primary.value}
-                                                            label={primary.label}
-                                                            size="sm"
-                                                            showLabel={false}
-                                                        />
-                                                    ) : (
-                                                        '—'
-                                                    ),
-                                                },
-                                                {
-                                                    label: t('project'),
-                                                    span: 2,
-                                                    value: row.project?.name || '—',
-                                                },
-                                            ]}
-                                        />
-                                    );
-                                })}
-                            </MobileCardList>
-                            <DataTable minWidth="64rem" caption={t('vault_ledger')} hideOnMobile>
+                            <DataTable minWidth="64rem" caption={t('vault_ledger')}>
                                 <thead>
                                     <tr>
                                         <Th>{t('date')}</Th>

@@ -12,6 +12,7 @@ use App\Http\Controllers\ExportController;
 use App\Http\Controllers\FloorController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LocaleController;
+use App\Http\Controllers\MayorcaImportController;
 use App\Http\Controllers\MonthlySettlementController;
 use App\Http\Controllers\PayoutController;
 use App\Http\Controllers\PayrollDashboardController;
@@ -61,6 +62,10 @@ Route::post('/locale', [LocaleController::class, 'update'])->name('locale.update
 Route::get('/dashboard', DashboardController::class)
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
+
+Route::post('/admin/mayorca-import', [MayorcaImportController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('admin.mayorca-import');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
