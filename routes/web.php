@@ -66,6 +66,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Vault / money dashboards
     Route::middleware('can:viewDashboard,'.Vault::class)->group(function () {
         Route::get('/dashboards/vault', [VaultDashboardController::class, 'show'])->name('dashboards.vault');
+        Route::redirect('/vault', '/dashboards/vault');
     });
     Route::middleware('can:viewLedger,'.Vault::class)->group(function () {
         Route::get('/vault/transactions', [VaultTransactionController::class, 'index'])

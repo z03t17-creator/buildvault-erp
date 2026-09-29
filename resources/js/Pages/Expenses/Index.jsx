@@ -91,7 +91,9 @@ export default function Index({ expenses }) {
                                             )}
                                         </Td>
                                         <Td muted className="tabular-nums">
-                                            {e.expense_date}
+                                            {typeof e.expense_date === 'string'
+                                                ? e.expense_date.slice(0, 10)
+                                                : e.expense_date}
                                         </Td>
                                         <Td>
                                             <StatusBadge status={e.approval_status} />

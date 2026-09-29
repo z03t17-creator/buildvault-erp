@@ -55,9 +55,7 @@ export default function Index({ workers }) {
                                     <Th>{t('name')}</Th>
                                     <Th>{t('role')}</Th>
                                     <Th>{t('project')}</Th>
-                                    <Th align="end">
-                                        {t('daily_rate')} ({iqd})
-                                    </Th>
+                                    <Th align="end">{t('daily_rate')}</Th>
                                 </tr>
                             </thead>
                             <tbody>
