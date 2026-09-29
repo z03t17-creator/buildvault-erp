@@ -1,12 +1,13 @@
+import DataPanel from '@/Components/DataPanel';
 import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-import PageShell from '@/Components/PageShell';
 
 export default function Show({ tower, project }) {
     const t = useTranslations();
@@ -41,14 +42,12 @@ export default function Show({ tower, project }) {
             }
         >
             <Head title={tower.name} />
-            <PageShell>
-                    <h3 className="font-display text-xl font-semibold text-slate-900 dark:text-white">
-                        {t('floors')}
-                    </h3>
+            <PageShell narrow>
+                <DataPanel title={t('floors')} padded={floors.length === 0}>
                     {floors.length === 0 ? (
                         <EmptyState title={t('no_floors')} />
                     ) : (
-                        <ul className="divide-y divide-slate-200 border border-slate-200/80 bg-white/80 dark:divide-slate-800 dark:border-slate-700 dark:bg-slate-900/70">
+                        <ul className="divide-y divide-slate-200 dark:divide-slate-800">
                             {floors.map((floor) => (
                                 <li key={floor.id}>
                                     <Link
@@ -61,8 +60,8 @@ export default function Show({ tower, project }) {
                             ))}
                         </ul>
                     )}
-                </PageShell>
-
-                </AuthenticatedLayout>
+                </DataPanel>
+            </PageShell>
+        </AuthenticatedLayout>
     );
 }

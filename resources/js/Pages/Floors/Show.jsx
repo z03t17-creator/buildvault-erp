@@ -1,11 +1,20 @@
-import PageHeader from '@/Components/PageHeader';
-import SecondaryButton from '@/Components/SecondaryButton';
-import PageShell from '@/Components/PageShell';
 import DataPanel from '@/Components/DataPanel';
+import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
+import SecondaryButton from '@/Components/SecondaryButton';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
+
+function Field({ label, children }) {
+    return (
+        <div>
+            <dt className="text-xs font-semibold uppercase tracking-wider text-slate-400">{label}</dt>
+            <dd className="mt-1.5 text-sm font-medium text-slate-800 dark:text-slate-100">{children}</dd>
+        </div>
+    );
+}
 
 export default function Show({ floor, tower, project }) {
     const t = useTranslations();
@@ -35,28 +44,20 @@ export default function Show({ floor, tower, project }) {
             <Head title={floor.name} />
             <PageShell narrow>
                 <DataPanel>
-                    <dl className="grid gap-4 sm:grid-cols-2">
-                        <div>
-                            <dt className="text-xs uppercase tracking-wider text-slate-400">{t('tower')}</dt>
-                            <dd className="mt-1">
-                                <Link href={route('towers.show', tower.id)} className="font-medium text-emerald-700 underline dark:text-emerald-400">
-                                    {tower?.name}
-                                </Link>
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-xs uppercase tracking-wider text-slate-400">{t('project')}</dt>
-                            <dd className="mt-1">
-                                <Link href={route('projects.show', project.id)} className="font-medium text-emerald-700 underline dark:text-emerald-400">
-                                    {project?.name}
-                                </Link>
-                            </dd>
-                        </div>
+                    <dl className="grid gap-6 sm:grid-cols-2">
+                        <Field label={t('tower')}>
+                            <Link href={route('towers.show', tower.id)} className="text-emerald-700 underline dark:text-emerald-400">
+                                {tower?.name}
+                            </Link>
+                        </Field>
+                        <Field label={t('project')}>
+                            <Link href={route('projects.show', project.id)} className="text-emerald-700 underline dark:text-emerald-400">
+                                {project?.name}
+                            </Link>
+                        </Field>
                     </dl>
                 </DataPanel>
-
-                </PageShell>
-
-                </AuthenticatedLayout>
+            </PageShell>
+        </AuthenticatedLayout>
     );
 }

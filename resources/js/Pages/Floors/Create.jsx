@@ -1,11 +1,12 @@
+import DataPanel from '@/Components/DataPanel';
+import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
-import PageShell from '@/Components/PageShell';
-import DataPanel from '@/Components/DataPanel';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link, useForm } from '@inertiajs/react';
@@ -31,20 +32,24 @@ export default function Create({ tower, project }) {
             <Head title={t('create_floor')} />
             <PageShell narrow>
                 <DataPanel>
-                <form
-                    onSubmit={(e) => {
-                        e.preventDefault();
-                        post(route('towers.floors.store', tower.id));
-                    }}
-                    className="space-y-5"
-                >
-                    <div>
-                        <InputLabel htmlFor="name" value={t('name')} />
-                        <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
-                        <InputError message={errors.name} className="mt-1" />
-                    </div>
-                    <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
-                </form>
+                    <form
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            post(route('towers.floors.store', tower.id));
+                        }}
+                        className="space-y-5"
+                    >
+                        <FormSection>
+                            <FormField>
+                                <InputLabel htmlFor="name" value={t('name')} />
+                                <TextInput id="name" className="mt-1 block w-full" value={data.name} onChange={(e) => setData('name', e.target.value)} required />
+                                <InputError message={errors.name} className="mt-1" />
+                            </FormField>
+                        </FormSection>
+                        <FormActions>
+                            <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
+                        </FormActions>
+                    </form>
                 </DataPanel>
             </PageShell>
         </AuthenticatedLayout>

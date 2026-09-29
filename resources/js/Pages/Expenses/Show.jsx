@@ -101,16 +101,18 @@ export default function Show({ expense }) {
                             <Field label={t('approved_by')}>{expense.approver.name}</Field>
                         )}
                         {expense.document && (
-                            <Field label={t('receipt_file')} className="sm:col-span-2">
-                                <a
-                                    href={route('documents.file', expense.document.id)}
-                                    className="text-emerald-700 underline dark:text-emerald-400"
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    {expense.document.original_name}
-                                </a>
-                            </Field>
+                            <div className="sm:col-span-2">
+                                <Field label={t('receipt_file')}>
+                                    <a
+                                        href={route('documents.file', expense.document.id)}
+                                        className="text-emerald-700 underline dark:text-emerald-400"
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {expense.document.original_name}
+                                    </a>
+                                </Field>
+                            </div>
                         )}
                         {expense.description && (
                             <div className="sm:col-span-2">
