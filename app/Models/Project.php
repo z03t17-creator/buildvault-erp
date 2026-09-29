@@ -144,5 +144,15 @@ class Project extends Model
     {
         return $this->hasMany(ProductionRecord::class);
     }
+
+    public function buildingBlocks(): HasMany
+    {
+        return $this->hasMany(BuildingBlock::class);
+    }
+
+    public function apartmentUnits(): HasMany
+    {
+        return $this->hasMany(ApartmentUnit::class);
+    }
 }
 

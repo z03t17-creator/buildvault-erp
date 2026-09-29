@@ -58,6 +58,10 @@ final class AuditActions
 
     public const STAFF_STATEMENT_SAVED = 'staff_statement.saved';
 
+    public const SPATIAL_CELL_UPDATED = 'spatial.cell_updated';
+
+    public const SPATIAL_BULK_ASSIGNED = 'spatial.bulk_assigned';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
@@ -84,6 +88,8 @@ final class AuditActions
         self::VAULT_SOFT_DELETE_REBUILD,
         self::CLIENT_ADVANCE_RECORDED,
         self::STAFF_STATEMENT_SAVED,
+        self::SPATIAL_CELL_UPDATED,
+        self::SPATIAL_BULK_ASSIGNED,
     ];
 
     /** @var array<string, string> */
@@ -112,5 +118,7 @@ final class AuditActions
         self::VAULT_SOFT_DELETE_REBUILD => 'Vault balance rebuilt after soft delete',
         self::CLIENT_ADVANCE_RECORDED => 'Client advance recorded',
         self::STAFF_STATEMENT_SAVED => 'Staff statement saved',
+        self::SPATIAL_CELL_UPDATED => 'Spatial cell updated',
+        self::SPATIAL_BULK_ASSIGNED => 'Spatial bulk assignment',
     ];
 }

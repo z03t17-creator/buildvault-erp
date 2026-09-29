@@ -20,6 +20,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RetentionHoldController;
+use App\Http\Controllers\SpatialGridController;
 use App\Http\Controllers\StockDashboardController;
 use App\Http\Controllers\StockItemController;
 use App\Http\Controllers\StockMovementController;
@@ -33,6 +34,7 @@ use App\Models\Document;
 use App\Models\ClientAdvance;
 use App\Models\EmployeeAdvance;
 use App\Models\Expense;
+use App\Models\ApartmentUnit;
 use App\Models\Payout;
 use App\Models\Penalty;
 use App\Models\ProductionRecord;
@@ -316,6 +318,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::put('/productions/{production}', [ProductionRecordController::class, 'update'])
         ->middleware('can:update,production')
         ->name('productions.update');
+
+    // Phase 3 — Floor × apartment spatial progress matrix
+    Route::get('/spatial', [SpatialGridController::class, 'index'])
+        ->middleware('can:viewAny,'.ApartmentUnit::class)
+        ->name('spatial.index');
+    Route::patch('/spatial/units/{apartmentUnit}', [SpatialGridController::class, 'update'])
+        ->middleware('can:update,apartmentUnit')
+        ->name('spatial.units.update');
+    Route::post('/spatial/bulk-assign', [SpatialGridController::class, 'bulkAssign'])
+        ->middleware('can:bulkAssign,'.ApartmentUnit::class)
+        ->name('spatial.bulk-assign');
 
     Route::middleware('can:viewAny,'.User::class)->group(function () {
         Route::get('/users', [UserController::class, 'index'])->name('users.index');

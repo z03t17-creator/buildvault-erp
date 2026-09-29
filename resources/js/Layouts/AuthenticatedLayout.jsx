@@ -17,7 +17,7 @@ const NAV_GROUPS = [
     {
         id: 'ops',
         labelKey: 'nav_group_operations',
-        keys: ['payouts', 'expenses', 'penalties', 'advances', 'productions', 'insurance'],
+        keys: ['payouts', 'expenses', 'penalties', 'advances', 'productions', 'spatial', 'insurance'],
     },
     {
         id: 'system',
@@ -110,6 +110,12 @@ function buildNavCatalog(t, maturedCount) {
             href: route('productions.index'),
             active: route().current('productions.*'),
             label: t('productions'),
+        },
+        spatial: {
+            key: 'spatial',
+            href: route('spatial.index'),
+            active: route().current('spatial.*'),
+            label: t('spatial_grid'),
         },
         insurance: {
             key: 'insurance',

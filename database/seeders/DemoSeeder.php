@@ -22,6 +22,7 @@ class DemoSeeder extends Seeder
             DemoAdvancesSeeder::class,
             DemoPenaltiesSeeder::class,
             DemoProductionSeeder::class,
+            DemoSpatialSeeder::class,
             DemoStockSeeder::class,
             DemoSettlementsSeeder::class,
         ]);

@@ -38,8 +38,15 @@ const STYLES = {
     subcontractor: 'bg-orange-100 text-orange-900 ring-orange-200/80 dark:bg-orange-900/40 dark:text-orange-200 dark:ring-orange-800/60',
     laborer: SLATE,
 
-    // Payouts
+    // Spatial progress (Phase 3)
     pending: AMBER,
+    in_progress: SKY,
+    completed: EMERALD,
+    inspected:
+        'bg-teal-100 text-teal-800 ring-teal-200/80 dark:bg-teal-900/40 dark:text-teal-300 dark:ring-teal-800/60',
+    company: SLATE,
+
+    // Payouts (pending already amber above)
     approved: EMERALD,
     reconciled: SKY,
     rejected: CRIMSON,

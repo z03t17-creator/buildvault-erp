@@ -33,16 +33,19 @@ class ApartmentUnit extends Model
 
     public const STATUS_IN_PROGRESS = 'in_progress';
 
-    public const STATUS_DONE = 'done';
+    public const STATUS_COMPLETED = 'completed';
 
-    public const STATUS_COMPANY = 'company';
+    public const STATUS_INSPECTED = 'inspected';
+
+    /** @deprecated Use STATUS_COMPLETED */
+    public const STATUS_DONE = self::STATUS_COMPLETED;
 
     /** @var list<string> */
     public const STATUSES = [
         self::STATUS_PENDING,
         self::STATUS_IN_PROGRESS,
-        self::STATUS_DONE,
-        self::STATUS_COMPANY,
+        self::STATUS_COMPLETED,
+        self::STATUS_INSPECTED,
     ];
 
     /**
