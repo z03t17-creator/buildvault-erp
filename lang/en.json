@@ -911,5 +911,14 @@
     "validation_project_required": "Choose a project.",
     "validation_client_name_required": "Enter the building client name.",
     "client_form_preview_no_lock": "No 10% lock",
-    "client_form_preview_full_available": "Available now"
+    "client_form_preview_full_available": "Available now",
+    "client_show_hint": "Building-client money recorded into Zhako — not a staff advance.",
+    "client_show_money_hint": "One currency only (:currency). Locked and available stay separate.",
+    "client_show_details": "Payment details",
+    "client_show_details_hint": "Who paid, which project, and when.",
+    "client_show_vault_link": "Vault Money In",
+    "client_show_retention_hint": "10% insurance hold for six months when locked at record time.",
+    "client_show_no_retention": "No 10% lock on this payment",
+    "client_show_no_retention_hint": "The full amount counted as available when recorded.",
+    "client_show_hold_dates": "Hold :start → matures :end"
 }

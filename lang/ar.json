@@ -911,5 +911,14 @@
     "validation_project_required": "اختر مشروعاً.",
     "validation_client_name_required": "أدخل اسم عميل البناء.",
     "client_form_preview_no_lock": "بدون حجز ١٠٪",
-    "client_form_preview_full_available": "متاح الآن"
+    "client_form_preview_full_available": "متاح الآن",
+    "client_show_hint": "مال عميل البناء المسجّل إلى ژاكو — ليست سلفة طاقم.",
+    "client_show_money_hint": "عملة واحدة فقط (:currency). المحبوس والمتاح منفصلان.",
+    "client_show_details": "تفاصيل الدفع",
+    "client_show_details_hint": "من دفع، أي مشروع، ومتى.",
+    "client_show_vault_link": "وارد القاصة",
+    "client_show_retention_hint": "حجز تأمين ١٠٪ لستة أشهر عند التفعيل وقت التسجيل.",
+    "client_show_no_retention": "لا حجز ١٠٪ على هذا الدفع",
+    "client_show_no_retention_hint": "المبلغ كاملاً حُسب متاحاً عند التسجيل.",
+    "client_show_hold_dates": "الحجز :start → الاستحقاق :end"
 }

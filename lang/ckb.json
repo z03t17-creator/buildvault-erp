@@ -911,5 +911,14 @@
     "validation_project_required": "پڕۆژەیەک هەڵبژێرە.",
     "validation_client_name_required": "ناوی کڕیاری بینا بنووسە.",
     "client_form_preview_no_lock": "بێ قفڵی ١٠٪",
-    "client_form_preview_full_available": "ئێستا بەردەست"
+    "client_form_preview_full_available": "ئێستا بەردەست",
+    "client_show_hint": "پارەی کڕیاری بینا تۆمارکراو بۆ ژاکۆ — نە پێشەکی ستاف.",
+    "client_show_money_hint": "تەنها یەک دراو (:currency). قفڵکراو و بەردەست جیا دەمێننەوە.",
+    "client_show_details": "وردەکاری پارەدان",
+    "client_show_details_hint": "کێ پارەی دا، کام پڕۆژە، و کەی.",
+    "client_show_vault_link": "پارەی هاتووی قاسە",
+    "client_show_retention_hint": "قفڵی دڵنیایی ١٠٪ بۆ شەش مانگ کاتێک لە کاتی تۆماردا قفڵ کرا.",
+    "client_show_no_retention": "قفڵی ١٠٪ لەسەر ئەم پارەدانە نییە",
+    "client_show_no_retention_hint": "هەموو بڕەکە وەک بەردەست ژمێردرا لە کاتی تۆماردا.",
+    "client_show_hold_dates": "قفڵ :start → بەسەرچوون :end"
 }
