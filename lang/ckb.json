@@ -863,5 +863,22 @@
     "ledger_empty_hint": "هیچ ڕیزێک نییە. پارە هاتن تۆمار بکە یان فلتەرەکان بسڕەوە.",
     "ledger_page_of": "لاپەڕە :current لە :last · :total ڕیز",
     "previous": "پێشوو",
-    "next": "دواتر"
+    "next": "دواتر",
+    "money_form_hint": "تەنها یەک دراو تۆمار بکە — USD یان IQD.",
+    "money_form_direction_hint": "پارە هاتن یان پارە چوون هەڵبژێرە.",
+    "money_form_currency_hint": "کارتێکی دراو هەڵبژێرە، پاشان بڕەکە بنووسە.",
+    "edit_money_in": "دەستکاری پارە هاتن",
+    "edit_money_out": "دەستکاری پارە چوون",
+    "record_money_in": "تۆماری پارە هاتن",
+    "record_money_out": "تۆماری پارە چوون",
+    "date_placeholder": "YYYY-MM-DD",
+    "date_format_hint": "ساڵ-مانگ-ڕۆژ، نموونە 2026-09-29.",
+    "money_in_description_placeholder": "نموونە: گواستنەوەی کڕیار، پارە خستنە ناو",
+    "money_out_description_placeholder": "نموونە: پارەدانی دابینکەر، وەرگرتنی پارە",
+    "optional_project": "بێ پڕۆژە (ئارەزوومەندانە)",
+    "reference_placeholder": "ژمارەی پسوڵە یان وەسڵ",
+    "validation_amount_required": "بڕێک بنووسە کە لە سفر گەورەتر بێت.",
+    "validation_description_required": "وەسفێکی کورت بنووسە.",
+    "validation_date_required": "بەرواری دروست بنووسە وەک YYYY-MM-DD.",
+    "validation_currency_required": "USD یان IQD هەڵبژێرە."
 }

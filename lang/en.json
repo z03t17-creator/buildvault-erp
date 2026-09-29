@@ -863,5 +863,22 @@
     "ledger_empty_hint": "No matching rows. Record Money In or clear filters.",
     "ledger_page_of": "Page :current of :last · :total rows",
     "previous": "Previous",
-    "next": "Next"
+    "next": "Next",
+    "money_form_hint": "Record one currency only — USD or IQD.",
+    "money_form_direction_hint": "Choose Money In or Money Out.",
+    "money_form_currency_hint": "Tap a currency card, then enter the amount.",
+    "edit_money_in": "Edit Money In",
+    "edit_money_out": "Edit Money Out",
+    "record_money_in": "Record Money In",
+    "record_money_out": "Record Money Out",
+    "date_placeholder": "YYYY-MM-DD",
+    "date_format_hint": "Use year-month-day, for example 2026-09-29.",
+    "money_in_description_placeholder": "e.g. Client transfer, cash deposit",
+    "money_out_description_placeholder": "e.g. Supplier payment, cash withdrawal",
+    "optional_project": "No project (optional)",
+    "reference_placeholder": "Invoice or receipt number",
+    "validation_amount_required": "Enter an amount greater than zero.",
+    "validation_description_required": "Add a short description.",
+    "validation_date_required": "Enter a valid date as YYYY-MM-DD.",
+    "validation_currency_required": "Choose USD or IQD."
 }

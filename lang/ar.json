@@ -863,5 +863,22 @@
     "ledger_empty_hint": "لا صفوف مطابقة. سجّل وارد أو امسح الفلاتر.",
     "ledger_page_of": "صفحة :current من :last · :total صف",
     "previous": "السابق",
-    "next": "التالي"
+    "next": "التالي",
+    "money_form_hint": "سجّل عملة واحدة فقط — دولار أو دينار.",
+    "money_form_direction_hint": "اختر وارد أو صادر.",
+    "money_form_currency_hint": "اختر بطاقة العملة ثم أدخل المبلغ.",
+    "edit_money_in": "تعديل وارد",
+    "edit_money_out": "تعديل صادر",
+    "record_money_in": "تسجيل وارد",
+    "record_money_out": "تسجيل صادر",
+    "date_placeholder": "YYYY-MM-DD",
+    "date_format_hint": "استخدم سنة-شهر-يوم، مثل 2026-09-29.",
+    "money_in_description_placeholder": "مثل: تحويل عميل، إيداع نقدي",
+    "money_out_description_placeholder": "مثل: دفع لمورد، سحب نقدي",
+    "optional_project": "بدون مشروع (اختياري)",
+    "reference_placeholder": "رقم فاتورة أو إيصال",
+    "validation_amount_required": "أدخل مبلغاً أكبر من صفر.",
+    "validation_description_required": "أضف وصفاً قصيراً.",
+    "validation_date_required": "أدخل تاريخاً صالحاً بصيغة YYYY-MM-DD.",
+    "validation_currency_required": "اختر الدولار أو الدينار."
 }

@@ -1,4 +1,3 @@
-import DataPanel from '@/Components/DataPanel';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -11,20 +10,153 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
+import { useMemo, useState } from 'react';
 
-const selectClass =
-    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1.5 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+
+const moneyFieldClass =
+    'mt-1.5 block w-full min-h-[3.25rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-xl font-semibold tabular-nums shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+
+function DirectionCard({ active, tone, icon, title, hint, onClick }) {
+    const tones = {
+        in: active
+            ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/30 dark:border-emerald-400 dark:bg-emerald-950/40'
+            : 'border-slate-200 bg-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-emerald-600',
+        out: active
+            ? 'border-rose-500 bg-rose-50 ring-2 ring-rose-500/30 dark:border-rose-400 dark:bg-rose-950/40'
+            : 'border-slate-200 bg-white hover:border-rose-300 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-rose-600',
+    };
+    const iconTone =
+        tone === 'in'
+            ? 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950'
+            : 'bg-rose-600 text-white dark:bg-rose-500 dark:text-slate-950';
+
+    return (
+        <button
+            type="button"
+            onClick={onClick}
+            className={
+                'flex min-h-[6.5rem] flex-col justify-between rounded-2xl border p-4 text-start transition ' +
+                tones[tone]
+            }
+            aria-pressed={active}
+        >
+            <span
+                className={
+                    'inline-flex h-11 w-11 items-center justify-center rounded-xl ' + iconTone
+                }
+            >
+                <NavIcon name={icon} className="text-lg" />
+            </span>
+            <span>
+                <span className="block text-base font-semibold text-slate-900 dark:text-white">
+                    {title}
+                </span>
+                <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
+                    {hint}
+                </span>
+            </span>
+        </button>
+    );
+}
+
+function CurrencyCard({
+    currency,
+    active,
+    available,
+    amount,
+    onSelect,
+    onAmountChange,
+    amountError,
+    t,
+    allowDecimals,
+}) {
+    return (
+        <div
+            className={
+                'w-full rounded-2xl border p-4 transition ' +
+                (active
+                    ? 'border-teal-500 bg-teal-50/80 ring-2 ring-teal-500/25 dark:border-teal-400 dark:bg-teal-950/30'
+                    : 'border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-900')
+            }
+        >
+            <button
+                type="button"
+                onClick={onSelect}
+                className="flex w-full items-start justify-between gap-3 text-start"
+                aria-pressed={active}
+            >
+                <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        {currency}
+                    </p>
+                    <p className="mt-1 text-sm font-medium text-slate-600 dark:text-slate-300">
+                        {t('available_cash')}
+                    </p>
+                    <p
+                        dir="ltr"
+                        className="mt-0.5 font-sans text-xl font-semibold tabular-nums text-slate-900 dark:text-white"
+                    >
+                        <MoneyAmount
+                            value={available}
+                            label={currency}
+                            size="lg"
+                            showLabel={false}
+                            accent={active}
+                        />
+                    </p>
+                </div>
+                <span
+                    className={
+                        'inline-flex h-9 w-9 items-center justify-center rounded-xl text-sm font-bold ' +
+                        (active
+                            ? 'bg-teal-600 text-white dark:bg-teal-500 dark:text-slate-950'
+                            : 'bg-slate-100 text-slate-500 dark:bg-slate-800')
+                    }
+                >
+                    {currency === 'USD' ? '$' : 'د.ع'}
+                </span>
+            </button>
+
+            {active && (
+                <div className="mt-4 border-t border-teal-200/70 pt-4 dark:border-teal-800/50">
+                    <InputLabel value={t('amount')} htmlFor={`amount-${currency}`} />
+                    <MoneyInput
+                        id={`amount-${currency}`}
+                        className={moneyFieldClass}
+                        value={amount}
+                        onValueChange={onAmountChange}
+                        allowDecimals={allowDecimals}
+                        isFocused
+                        placeholder="0"
+                    />
+                    <InputError message={amountError} className="mt-1" />
+                </div>
+            )}
+        </div>
+    );
+}
+
+function isValidIsoDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) {
+        return false;
+    }
+    const d = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
 
 export default function LedgerForm({
     mode = 'create',
     transaction,
     projects,
-    currencies,
     available,
 }) {
     const t = useTranslations();
     const editing = mode === 'edit';
+    const [localErrors, setLocalErrors] = useState({});
     const { data, setData, post, put, processing, errors } = useForm({
         direction: transaction?.direction || 'in',
         currency: transaction?.currency || 'USD',
@@ -35,137 +167,237 @@ export default function LedgerForm({
         reference_code: transaction?.reference_code || '',
     });
 
-    const title = editing ? t('edit_ledger_entry') : t('add_ledger_entry');
+    const title = editing
+        ? data.direction === 'out'
+            ? t('edit_money_out')
+            : t('edit_money_in')
+        : data.direction === 'out'
+          ? t('money_out')
+          : t('money_in');
+
+    const submitLabel =
+        data.direction === 'out' ? t('record_money_out') : t('record_money_in');
+
+    const mergedErrors = useMemo(
+        () => ({ ...localErrors, ...errors }),
+        [localErrors, errors],
+    );
+
+    const validate = () => {
+        const next = {};
+        if (!data.amount || Number(data.amount) <= 0) {
+            next.amount = t('validation_amount_required');
+        }
+        if (!String(data.description || '').trim()) {
+            next.description = t('validation_description_required');
+        }
+        if (!isValidIsoDate(data.occurred_on)) {
+            next.occurred_on = t('validation_date_required');
+        }
+        if (!['USD', 'IQD'].includes(data.currency)) {
+            next.currency = t('validation_currency_required');
+        }
+        setLocalErrors(next);
+        return Object.keys(next).length === 0;
+    };
+
+    const submit = (e) => {
+        e.preventDefault();
+        if (!validate()) {
+            return;
+        }
+        if (editing) {
+            put(route('vault.transactions.update', transaction.id));
+        } else {
+            post(route('vault.transactions.store'));
+        }
+    };
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
                     title={title}
-                    subtitle={t('qasa_ledger_hint')}
+                    subtitle={t('money_form_hint')}
+                    icon={
+                        <NavIcon
+                            name={data.direction === 'out' ? 'moneyOut' : 'moneyIn'}
+                            className="text-lg"
+                        />
+                    }
                     actions={
                         <Link href={route('vault.transactions')}>
-                            <SecondaryButton>{t('back')}</SecondaryButton>
+                            <SecondaryButton type="button">
+                                <NavIcon name="vault" className="text-sm" />
+                                {t('vault_ledger')}
+                            </SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
             <Head title={title} />
-            <PageShell narrow>
-                <div className="mb-4 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase tracking-wider text-slate-500">{t('available_cash')} USD</p>
-                        <MoneyAmount value={available?.available_usd} label="USD" size="lg" />
+            <PageShell narrow className="!space-y-6">
+                <section>
+                    <div className="mb-3">
+                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                            {t('direction')}
+                        </h2>
+                        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                            {t('money_form_direction_hint')}
+                        </p>
                     </div>
-                    <div className="rounded-md border border-slate-200 p-3 dark:border-slate-700">
-                        <p className="text-xs uppercase tracking-wider text-slate-500">{t('available_cash')} IQD</p>
-                        <MoneyAmount value={available?.available_iqd} label="IQD" size="lg" />
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <DirectionCard
+                            tone="in"
+                            active={data.direction === 'in'}
+                            icon="moneyIn"
+                            title={t('money_in')}
+                            hint={t('vault_box_money_in_hint')}
+                            onClick={() => setData('direction', 'in')}
+                        />
+                        <DirectionCard
+                            tone="out"
+                            active={data.direction === 'out'}
+                            icon="moneyOut"
+                            title={t('money_out')}
+                            hint={t('vault_box_money_out_hint')}
+                            onClick={() => setData('direction', 'out')}
+                        />
                     </div>
-                </div>
+                    <InputError message={mergedErrors.direction} className="mt-2" />
+                </section>
 
-                <DataPanel>
-                    <form
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            if (editing) {
-                                put(route('vault.transactions.update', transaction.id));
-                            } else {
-                                post(route('vault.transactions.store'));
+                <section>
+                    <div className="mb-3">
+                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                            {t('currency')}
+                        </h2>
+                        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                            {t('money_form_currency_hint')}
+                        </p>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                        <CurrencyCard
+                            currency="USD"
+                            active={data.currency === 'USD'}
+                            available={available?.available_usd}
+                            amount={data.currency === 'USD' ? data.amount : ''}
+                            onSelect={() => setData('currency', 'USD')}
+                            onAmountChange={(raw) => setData('amount', raw)}
+                            amountError={
+                                data.currency === 'USD' ? mergedErrors.amount : undefined
                             }
-                        }}
-                        className="space-y-5"
-                    >
-                        <FormSection>
-                            <FormField>
-                                <InputLabel value={t('direction')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.direction}
-                                    onChange={(e) => setData('direction', e.target.value)}
-                                >
-                                    <option value="in">{t('money_in')}</option>
-                                    <option value="out">{t('money_out')}</option>
-                                </select>
-                                <InputError message={errors.direction} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('currency')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.currency}
-                                    onChange={(e) => setData('currency', e.target.value)}
-                                >
-                                    {(currencies || ['USD', 'IQD']).map((c) => (
-                                        <option key={c} value={c}>
-                                            {c}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.currency} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('amount')} />
-                                <MoneyInput
-                                    className="mt-1 block w-full"
-                                    value={data.amount}
-                                    onValueChange={(raw) => setData('amount', raw)}
-                                    required
-                                />
-                                <InputError message={errors.amount} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('date')} />
+                            t={t}
+                            allowDecimals
+                        />
+                        <CurrencyCard
+                            currency="IQD"
+                            active={data.currency === 'IQD'}
+                            available={available?.available_iqd}
+                            amount={data.currency === 'IQD' ? data.amount : ''}
+                            onSelect={() => setData('currency', 'IQD')}
+                            onAmountChange={(raw) => setData('amount', raw)}
+                            amountError={
+                                data.currency === 'IQD' ? mergedErrors.amount : undefined
+                            }
+                            t={t}
+                            allowDecimals={false}
+                        />
+                    </div>
+                    <InputError message={mergedErrors.currency} className="mt-2" />
+                </section>
+
+                <form noValidate onSubmit={submit} className="bv-card space-y-5 p-5 sm:p-6">
+                    <FormSection>
+                        <FormField>
+                            <InputLabel value={t('date')} htmlFor="occurred_on" />
+                            <div className="relative">
+                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
+                                    <NavIcon name="calendar" className="text-sm" />
+                                </span>
                                 <TextInput
-                                    type="date"
-                                    className="mt-1 block w-full"
+                                    id="occurred_on"
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    placeholder={t('date_placeholder')}
+                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
                                     value={data.occurred_on}
                                     onChange={(e) => setData('occurred_on', e.target.value)}
-                                    required
                                 />
-                                <InputError message={errors.occurred_on} className="mt-1" />
-                            </FormField>
-                            <FormField className="sm:col-span-2">
-                                <InputLabel value={t('description')} />
-                                <TextInput
-                                    className="mt-1 block w-full"
-                                    value={data.description}
-                                    onChange={(e) => setData('description', e.target.value)}
-                                    required
-                                />
-                                <InputError message={errors.description} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('project')} />
-                                <select
-                                    className={selectClass}
-                                    value={data.project_id}
-                                    onChange={(e) => setData('project_id', e.target.value)}
-                                >
-                                    <option value="">—</option>
-                                    {(projects || []).map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('reference')} />
-                                <TextInput
-                                    className="mt-1 block w-full"
-                                    value={data.reference_code}
-                                    onChange={(e) => setData('reference_code', e.target.value)}
-                                />
-                            </FormField>
-                        </FormSection>
-                        <FormActions>
-                            <PrimaryButton disabled={processing}>
-                                {editing ? t('save') : t('save')}
-                            </PrimaryButton>
-                        </FormActions>
-                    </form>
-                </DataPanel>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
+                            <InputError message={mergedErrors.occurred_on} className="mt-1" />
+                        </FormField>
+
+                        <FormField>
+                            <InputLabel value={t('description')} htmlFor="description" />
+                            <TextInput
+                                id="description"
+                                className={fieldClass}
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                placeholder={
+                                    data.direction === 'out'
+                                        ? t('money_out_description_placeholder')
+                                        : t('money_in_description_placeholder')
+                                }
+                            />
+                            <InputError message={mergedErrors.description} className="mt-1" />
+                        </FormField>
+
+                        <FormField>
+                            <InputLabel value={t('project')} htmlFor="project_id" />
+                            <select
+                                id="project_id"
+                                className={fieldClass}
+                                value={data.project_id || ''}
+                                onChange={(e) => setData('project_id', e.target.value)}
+                            >
+                                <option value="">{t('optional_project')}</option>
+                                {(projects || []).map((p) => (
+                                    <option key={p.id} value={p.id}>
+                                        {p.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={mergedErrors.project_id} className="mt-1" />
+                        </FormField>
+
+                        <FormField>
+                            <InputLabel value={t('reference')} htmlFor="reference_code" />
+                            <TextInput
+                                id="reference_code"
+                                className={fieldClass}
+                                value={data.reference_code}
+                                onChange={(e) => setData('reference_code', e.target.value)}
+                                placeholder={t('reference_placeholder')}
+                            />
+                            <InputError message={mergedErrors.reference_code} className="mt-1" />
+                        </FormField>
+                    </FormSection>
+
+                    <FormActions>
+                        <PrimaryButton
+                            disabled={processing}
+                            className={
+                                data.direction === 'out'
+                                    ? '!bg-rose-600 hover:!bg-rose-500'
+                                    : '!bg-emerald-600 hover:!bg-emerald-500'
+                            }
+                        >
+                            <NavIcon
+                                name={data.direction === 'out' ? 'moneyOut' : 'moneyIn'}
+                                className="text-sm"
+                            />
+                            {editing ? t('save') : submitLabel}
+                        </PrimaryButton>
+                        <Link href={route('vault.transactions')}>
+                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
+                        </Link>
+                    </FormActions>
+                </form>
             </PageShell>
         </AuthenticatedLayout>
     );
