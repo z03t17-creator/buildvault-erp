@@ -6,6 +6,10 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * Phase 13 — audit snapshots of monthly financial settlement (IQD).
+ *
+ * project_scope_key mirrors project_id (0 = all-projects / null) so the
+ * unique index remains enforceable when project_id is NULL (SQL NULLs are
+ * distinct in UNIQUE indexes on both MySQL/MariaDB and SQLite).
  */
 return new class extends Migration
 {
@@ -16,6 +20,7 @@ return new class extends Migration
             $table->foreignId('vault_id')->constrained()->cascadeOnDelete();
             $table->string('year_month', 7); // YYYY-MM
             $table->foreignId('project_id')->nullable()->constrained()->nullOnDelete();
+            $table->unsignedBigInteger('project_scope_key')->default(0);
             $table->decimal('money_received_iqd', 18, 2)->default(0);
             $table->decimal('available_vault_balance_iqd', 18, 2)->default(0);
             $table->decimal('project_expenses_iqd', 18, 2)->default(0);
@@ -33,7 +38,10 @@ return new class extends Migration
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
 
-            $table->unique(['vault_id', 'year_month', 'project_id'], 'monthly_settlements_vault_month_project_uq');
+            $table->unique(
+                ['vault_id', 'year_month', 'project_scope_key'],
+                'monthly_settlements_vault_month_scope_uq'
+            );
             $table->index(['year_month']);
         });
     }

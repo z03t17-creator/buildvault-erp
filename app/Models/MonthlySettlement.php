@@ -14,6 +14,7 @@ class MonthlySettlement extends Model
         'vault_id',
         'year_month',
         'project_id',
+        'project_scope_key',
         'money_received_iqd',
         'available_vault_balance_iqd',
         'project_expenses_iqd',
@@ -31,12 +32,22 @@ class MonthlySettlement extends Model
         'created_by',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (MonthlySettlement $settlement): void {
+            $settlement->project_scope_key = $settlement->project_id === null
+                ? 0
+                : (int) $settlement->project_id;
+        });
+    }
+
     /**
      * @return array<string, string>
      */
     protected function casts(): array
     {
         return [
+            'project_scope_key' => 'integer',
             'money_received_iqd' => 'decimal:2',
             'available_vault_balance_iqd' => 'decimal:2',
             'project_expenses_iqd' => 'decimal:2',
