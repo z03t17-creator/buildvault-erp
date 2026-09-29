@@ -56,6 +56,40 @@ class MayorcaWorkbookImportService
         return storage_path('app/'.self::DEFAULT_SAMPLE_PATH);
     }
 
+    public static function bundledSampleAbsolutePath(): string
+    {
+        return base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
+    }
+
+    /**
+     * Always prefer the repo-bundled workbook over a stale storage copy
+     * (Render ephemeral FS can keep an older write-sample xlsx across boots).
+     */
+    public static function ensureBundledSampleSynced(): string
+    {
+        $storage = self::sampleAbsolutePath();
+        $bundled = self::bundledSampleAbsolutePath();
+
+        if (! is_file($bundled)) {
+            return $storage;
+        }
+
+        $dir = dirname($storage);
+        if (! is_dir($dir)) {
+            mkdir($dir, 0775, true);
+        }
+
+        $needsCopy = ! is_file($storage)
+            || filesize($storage) !== filesize($bundled)
+            || md5_file($storage) !== md5_file($bundled);
+
+        if ($needsCopy) {
+            copy($bundled, $storage);
+        }
+
+        return $storage;
+    }
+
     /**
      * @return array{
      *   dry_run: bool,

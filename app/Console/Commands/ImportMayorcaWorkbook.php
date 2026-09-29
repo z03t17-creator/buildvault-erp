@@ -28,17 +28,12 @@ class ImportMayorcaWorkbook extends Command
         }
 
         $path = $this->resolvePath((string) ($this->option('path') ?: ''));
-        // Prefer bundled resources sample when storage copy is missing.
-        if (! is_file($path)) {
-            $bundled = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
-            if (is_file($bundled)) {
-                $storage = MayorcaWorkbookImportService::sampleAbsolutePath();
-                if (! is_dir(dirname($storage))) {
-                    mkdir(dirname($storage), 0775, true);
-                }
-                copy($bundled, $storage);
-                $path = $storage;
-            }
+        // When using the default sample path, always sync from the repo-bundled workbook
+        // so a stale storage copy cannot win over resources/imports/samples/*.xlsx.
+        if ($this->option('path') === null || $this->option('path') === '') {
+            $path = MayorcaWorkbookImportService::ensureBundledSampleSynced();
+        } elseif (! is_file($path)) {
+            $path = MayorcaWorkbookImportService::ensureBundledSampleSynced();
         }
         $dryRun = (bool) $this->option('dry-run');
         $wipe = (bool) $this->option('wipe');

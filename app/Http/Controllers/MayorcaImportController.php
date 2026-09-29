@@ -22,7 +22,7 @@ class MayorcaImportController extends Controller
             'confirm_wipe' => ['required', 'accepted'],
         ]);
 
-        $path = $this->resolveWorkbookPath();
+        $path = MayorcaWorkbookImportService::ensureBundledSampleSynced();
         if (! is_file($path)) {
             return back()->with('error', __('mayorca_workbook_missing'));
         }
@@ -32,33 +32,14 @@ class MayorcaImportController extends Controller
 
         $people = (int) ($result['people'] ?? 0);
         $warnings = count($result['warnings'] ?? []);
+        $expenses = (int) ($result['counts']['expenses'] ?? 0);
 
         return back()->with(
             'success',
             __('mayorca_import_success', [
                 'people' => $people,
                 'warnings' => $warnings,
-            ])
+            ]).' (expenses: '.$expenses.', workbook: '.filesize($path).' B)'
         );
-    }
-
-    protected function resolveWorkbookPath(): string
-    {
-        $path = MayorcaWorkbookImportService::sampleAbsolutePath();
-        if (is_file($path)) {
-            return $path;
-        }
-
-        $bundled = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
-        if (is_file($bundled)) {
-            if (! is_dir(dirname($path))) {
-                mkdir(dirname($path), 0775, true);
-            }
-            copy($bundled, $path);
-
-            return $path;
-        }
-
-        return $path;
     }
 }
