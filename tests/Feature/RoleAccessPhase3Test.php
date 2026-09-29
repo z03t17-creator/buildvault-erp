@@ -164,7 +164,12 @@ class RoleAccessPhase3Test extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->where('roleHome', Roles::ACCOUNTANT)
-                ->has('summary.pending_payouts')
+                ->has('summary.available_usd')
+                ->has('summary.available_iqd')
+                ->has('summary.charts')
+                ->missing('summary.workbook_bundled')
+                ->missing('summary.available_payment_iqd')
+                ->missing('summary.recent_transactions')
             );
     }
 

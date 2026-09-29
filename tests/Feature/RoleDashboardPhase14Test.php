@@ -2,14 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\EmployeeAdvance;
-use App\Models\Expense;
-use App\Models\Payout;
-use App\Models\Project;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\User;
-use App\Models\Vault;
 use App\Models\Worker;
 use App\Support\Roles;
 use Database\Seeders\DemoUsersSeeder;
@@ -102,46 +97,13 @@ class RoleDashboardPhase14Test extends TestCase
             );
     }
 
-    public function test_accountant_dashboard_props_cover_daily_ops(): void
+    public function test_accountant_dashboard_props_include_available_cash_charts_and_modules(): void
     {
         $accountant = User::query()->where('email', DemoUsersSeeder::ACCOUNTANT_EMAIL)->firstOrFail();
-        $vault = Vault::query()->where('name', VaultSeeder::NAME)->firstOrFail();
-        $project = Project::query()->create(['name' => 'Ops Site']);
-        $worker = Worker::query()->create([
-            'project_id' => $project->id,
-            'name' => 'Ops Worker',
-        ]);
 
-        Payout::query()->create([
-            'vault_id' => $vault->id,
-            'project_id' => $project->id,
-            'worker_id' => $worker->id,
-            'category' => Payout::CATEGORY_PAYROLL,
-            'status' => Payout::STATUS_PENDING,
-            'amount_usd' => 100,
-            'amount_iqd' => 131_000,
-            'created_by' => $accountant->id,
-        ]);
-
-        Expense::query()->create([
-            'project_id' => $project->id,
-            'category' => Expense::CATEGORY_FUEL,
-            'amount_iqd' => 50_000,
-            'expense_date' => now()->toDateString(),
-            'approval_status' => Expense::STATUS_PENDING,
-            'created_by' => $accountant->id,
-        ]);
-
-        EmployeeAdvance::query()->create([
-            'worker_id' => $worker->id,
-            'project_id' => $project->id,
-            'amount_iqd' => 25_000,
-            'remaining_iqd' => 25_000,
-            'status' => EmployeeAdvance::STATUS_OPEN,
-            'repayment_method' => EmployeeAdvance::REPAY_PAYROLL,
-            'advanced_on' => now()->toDateString(),
-            'reason' => 'Tools',
-            'entered_by' => $accountant->id,
+        Worker::query()->create([
+            'name' => 'Accountant Unclassified Person',
+            'labor_kind' => Worker::LABOR_KIND_UNCLASSIFIED,
         ]);
 
         $this->actingAs($accountant)
@@ -150,18 +112,24 @@ class RoleDashboardPhase14Test extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Dashboard')
                 ->where('roleHome', Roles::ACCOUNTANT)
-                ->has('summary.payroll_due_count')
-                ->has('summary.payroll_due_iqd')
-                ->has('summary.pending_calculations')
-                ->has('summary.advances_open_iqd')
-                ->has('summary.penalties_pending_iqd')
-                ->has('summary.insurance_held_iqd')
-                ->has('summary.money_received_iqd')
-                ->has('summary.available_payment_iqd')
-                ->has('summary.recent_transactions')
-                ->where('summary.payroll_due_count', 1)
+                ->has('summary.available_iqd')
+                ->has('summary.available_usd')
+                ->has('summary.charts.available')
+                ->has('summary.charts.spend_usd')
+                ->has('summary.charts.spend_iqd')
+                ->has('summary.charts.locked_free.usd')
+                ->has('summary.charts.locked_free.iqd')
+                ->has('summary.unclassified_people')
+                ->where('summary.unclassified_people', 1)
+                ->missing('summary.payroll_due_count')
+                ->missing('summary.available_payment_iqd')
+                ->missing('summary.recent_transactions')
+                ->missing('summary.money_received_iqd')
                 ->missing('summary.users_active')
+                ->missing('summary.workbook_bundled')
                 ->missing('summary.by_category')
+                ->missing('summary.last_logins')
+                ->missing('summary.health')
             );
     }
 
@@ -225,8 +193,18 @@ class RoleDashboardPhase14Test extends TestCase
                 'absent' => ['users_active', 'by_category', 'recent_transactions', 'project_cards', 'workbook_bundled', 'health', 'last_logins'],
             ],
             DemoUsersSeeder::ACCOUNTANT_EMAIL => [
-                'present' => ['available_payment_iqd', 'recent_transactions'],
-                'absent' => ['users_active', 'by_category', 'project_cards', 'charts'],
+                'present' => ['available_usd', 'available_iqd', 'charts', 'unclassified_people'],
+                'absent' => [
+                    'users_active',
+                    'by_category',
+                    'project_cards',
+                    'workbook_bundled',
+                    'available_payment_iqd',
+                    'recent_transactions',
+                    'payroll_due_count',
+                    'health',
+                    'last_logins',
+                ],
             ],
             DemoUsersSeeder::STOCK_EMAIL => [
                 'present' => ['by_category', 'recent_movements'],

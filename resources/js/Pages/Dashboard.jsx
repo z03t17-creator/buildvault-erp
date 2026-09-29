@@ -79,24 +79,58 @@ const HOME_BOX_STYLES = {
         shell: 'bg-rose-600 text-white shadow-rose-900/20 hover:bg-rose-500 dark:bg-rose-500 dark:text-slate-950 dark:hover:bg-rose-400',
         icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
     },
+    settlements: {
+        shell: 'bg-sky-600 text-white shadow-sky-900/20 hover:bg-sky-500 dark:bg-sky-500 dark:text-slate-950 dark:hover:bg-sky-400',
+        icon: 'bg-white/20 text-white dark:bg-slate-950/15 dark:text-slate-950',
+    },
 };
 
-function HomeModuleBox({ href, icon, tone, title, hint }) {
+function HomeModuleBox({
+    href,
+    icon,
+    tone,
+    title,
+    hint,
+    primaryLabel,
+    secondaryHref,
+    secondaryLabel,
+}) {
     const style = HOME_BOX_STYLES[tone] || HOME_BOX_STYLES.projects;
+    const shell =
+        'group flex min-h-[7.5rem] flex-col justify-between rounded-2xl p-4 shadow-lg transition hover:-translate-y-0.5 ' +
+        style.shell;
+    const iconShell =
+        'inline-flex h-11 w-11 items-center justify-center rounded-xl text-lg ' + style.icon;
+    const chip =
+        'rounded-lg bg-black/15 px-2.5 py-1 text-xs font-semibold underline-offset-2 hover:bg-black/25 hover:underline';
+
+    if (secondaryHref && secondaryLabel) {
+        return (
+            <div className={shell}>
+                <span className={iconShell}>
+                    <NavIcon name={icon} className="text-lg" />
+                </span>
+                <span>
+                    <span className="block text-base font-semibold tracking-tight">{title}</span>
+                    {hint && (
+                        <span className="mt-0.5 block text-xs font-medium opacity-85">{hint}</span>
+                    )}
+                    <span className="mt-2 flex flex-wrap gap-2">
+                        <Link href={href} className={chip}>
+                            {primaryLabel || title}
+                        </Link>
+                        <Link href={secondaryHref} className={chip}>
+                            {secondaryLabel}
+                        </Link>
+                    </span>
+                </span>
+            </div>
+        );
+    }
 
     return (
-        <Link
-            href={href}
-            className={
-                'group flex min-h-[7.5rem] flex-col justify-between rounded-2xl p-4 shadow-lg transition hover:-translate-y-0.5 ' +
-                style.shell
-            }
-        >
-            <span
-                className={
-                    'inline-flex h-11 w-11 items-center justify-center rounded-xl text-lg ' + style.icon
-                }
-            >
+        <Link href={href} className={shell}>
+            <span className={iconShell}>
                 <NavIcon name={icon} className="text-lg" />
             </span>
             <span>
@@ -146,7 +180,7 @@ function DualBarChart({ title, subtitle, bars, ariaLabel }) {
     );
 }
 
-function QuietRoleHome({ summary, t }) {
+function QuietRoleHome({ summary, t, modules: modulesOverride, modulesHint }) {
     const usd = t('USD');
     const iqd = t('IQD');
     const charts = summary?.charts || {};
@@ -156,7 +190,7 @@ function QuietRoleHome({ summary, t }) {
     const lockedFree = charts.locked_free || {};
     const unclassified = summary?.unclassified_people ?? 0;
 
-    const modules = [
+    const modules = modulesOverride || [
         {
             key: 'vault',
             href: route('vault.index'),
@@ -253,7 +287,7 @@ function QuietRoleHome({ summary, t }) {
                         {t('home_modules')}
                     </h2>
                     <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                        {t('home_modules_hint')}
+                        {modulesHint || t('home_modules_hint')}
                     </p>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
@@ -392,97 +426,85 @@ function BossHome({ summary, t }) {
     return <QuietRoleHome summary={summary} t={t} />;
 }
 
-function AccountantHome({ summary, t, iqd }) {
-    const txns = summary?.recent_transactions || [];
+function accountantModules(t) {
+    return [
+        {
+            key: 'vault',
+            href: route('vault.index'),
+            secondaryHref: route('dashboards.vault'),
+            primaryLabel: t('home_dest_ledger'),
+            secondaryLabel: t('home_dest_qasa'),
+            icon: 'vault',
+            tone: 'vault',
+            title: t('home_box_vault'),
+            hint: t('home_box_vault_hint'),
+        },
+        {
+            key: 'expenses',
+            href: route('expenses.index'),
+            secondaryHref: route('expenses.create'),
+            primaryLabel: t('home_dest_expenses'),
+            secondaryLabel: t('home_dest_expense_create'),
+            icon: 'expenses',
+            tone: 'expenses',
+            title: t('home_box_expenses'),
+            hint: t('home_box_acct_expenses_hint'),
+        },
+        {
+            key: 'clients',
+            href: route('client-advances.index'),
+            secondaryHref: route('client-advances.create'),
+            primaryLabel: t('home_dest_client_advances'),
+            secondaryLabel: t('home_dest_client_advance_create'),
+            icon: 'clientAdvances',
+            tone: 'clients',
+            title: t('home_box_client_advances'),
+            hint: t('home_box_client_advances_hint'),
+        },
+        {
+            key: 'staff-pay',
+            href: route('advances.index'),
+            secondaryHref: route('workers.index', { labor_kind: 'staff' }),
+            primaryLabel: t('home_dest_staff_advances'),
+            secondaryLabel: t('home_dest_staff'),
+            icon: 'advances',
+            tone: 'staff',
+            title: t('home_box_staff_pay'),
+            hint: t('home_box_staff_pay_hint'),
+        },
+        {
+            key: 'salary',
+            href: route('dashboards.payroll'),
+            secondaryHref: route('workers.index', { labor_kind: 'worker' }),
+            primaryLabel: t('home_dest_payroll'),
+            secondaryLabel: t('home_dest_workers'),
+            icon: 'payroll',
+            tone: 'salary',
+            title: t('home_box_salary'),
+            hint: t('home_box_acct_salary_hint'),
+        },
+        {
+            key: 'settlements',
+            href: route('settlements.index'),
+            secondaryHref: route('payouts.index'),
+            primaryLabel: t('home_dest_settlements'),
+            secondaryLabel: t('home_dest_payouts'),
+            icon: 'settlements',
+            tone: 'settlements',
+            title: t('home_box_settlements'),
+            hint: t('home_box_settlements_hint'),
+        },
+    ];
+}
 
+function AccountantHome({ summary, t }) {
     return (
-        <div className="space-y-6">
-            <DataPanel
-                title={t('role_home_accountant_title')}
-                subtitle={t('role_home_accountant_hint')}
-                actions={
-                    <div className="flex flex-wrap gap-2">
-                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
-                        <Shortcut href={route('expenses.index')} label={t('expenses')} />
-                        <Shortcut href={route('dashboards.payroll')} label={t('payroll_summary')} />
-                        <Shortcut href={route('payouts.index')} label={t('payouts')} />
-                    </div>
-                }
-            >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <MoneyStat
-                        label={t('role_stat_available_payment')}
-                        value={summary?.available_payment_iqd}
-                        iqd={iqd}
-                        accent
-                    />
-                    <MoneyStat label={t('money_received')} value={summary?.money_received_iqd} iqd={iqd} />
-                    <Stat
-                        label={t('role_stat_payroll_due')}
-                        value={summary?.payroll_due_count ?? 0}
-                    />
-                    <MoneyStat
-                        label={t('role_stat_payroll_due_money')}
-                        value={summary?.payroll_due_iqd}
-                        iqd={iqd}
-                    />
-                    <Stat label={t('role_stat_pending_calcs')} value={summary?.pending_calculations ?? 0} />
-                    <MoneyStat label={t('role_stat_advances')} value={summary?.advances_open_iqd} iqd={iqd} />
-                    <MoneyStat
-                        label={t('role_stat_penalties')}
-                        value={summary?.penalties_pending_iqd}
-                        iqd={iqd}
-                    />
-                    <MoneyStat label={t('insurance_reserve')} value={summary?.insurance_held_iqd} iqd={iqd} />
-                    <MoneyStat
-                        label={t('role_stat_pending_expenses')}
-                        value={summary?.pending_expenses_iqd}
-                        iqd={iqd}
-                    />
-                    <Stat
-                        label={t('role_stat_matured_holds')}
-                        value={summary?.insurance_matured_count ?? 0}
-                    />
-                </div>
-            </DataPanel>
-
-            <DataPanel title={t('role_panel_recent_txns')} padded={false}>
-                <DataTable minWidth="36rem" caption={t('role_panel_recent_txns')}>
-                    <thead>
-                        <tr>
-                            <Th>{t('date')}</Th>
-                            <Th>{t('type')}</Th>
-                            <Th>{t('project')}</Th>
-                            <Th align="end">{t('amount_iqd')}</Th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {txns.map((row) => (
-                            <tr key={row.id}>
-                                <Td muted>{row.occurred_on || '—'}</Td>
-                                <Td>{t(`txn_type_${row.type}`, row.type)}</Td>
-                                <Td muted>{row.project_name || '—'}</Td>
-                                <Td align="end">
-                                    <MoneyAmount
-                                        value={row.amount_iqd}
-                                        label={iqd}
-                                        size="sm"
-                                        showLabel={false}
-                                    />
-                                </Td>
-                            </tr>
-                        ))}
-                        {!txns.length && (
-                            <tr>
-                                <Td colSpan={4} muted className="py-8 text-center">
-                                    {t('role_empty_transactions')}
-                                </Td>
-                            </tr>
-                        )}
-                    </tbody>
-                </DataTable>
-            </DataPanel>
-        </div>
+        <QuietRoleHome
+            summary={summary}
+            t={t}
+            modules={accountantModules(t)}
+            modulesHint={t('home_modules_accountant_hint')}
+        />
     );
 }
 
@@ -684,9 +706,7 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
                 {role === 'Boss / Contractor' && (
                     <BossHome summary={summary} t={t} />
                 )}
-                {role === 'Accountant' && (
-                    <AccountantHome summary={summary} t={t} iqd={iqd} />
-                )}
+                {role === 'Accountant' && <AccountantHome summary={summary} t={t} />}
                 {role === 'Stock Manager' && (
                     <StockManagerHome summary={summary} t={t} iqd={iqd} />
                 )}

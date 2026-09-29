@@ -2,12 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\EmployeeAdvance;
-use App\Models\Expense;
-use App\Models\Payout;
-use App\Models\Penalty;
 use App\Models\Project;
-use App\Models\RetentionHold;
 use App\Models\StockItem;
 use App\Models\Transaction;
 use App\Models\Vault;
@@ -22,10 +17,8 @@ use Database\Seeders\VaultSeeder;
 class RoleHomeDashboardService
 {
     public function __construct(
-        private readonly LiquidityService $liquidity,
         private readonly StockService $stock,
         private readonly VaultLedgerService $ledger,
-        private readonly MonthlySettlementService $settlements,
     ) {}
 
     /**
@@ -43,7 +36,8 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Quiet home shared by Super Admin + Boss: available cash, module charts, classify stripe.
+     * Quiet home shared by Super Admin + Boss + Accountant:
+     * available cash, module charts, classify stripe.
      *
      * @return array<string, mixed>
      */
@@ -159,72 +153,14 @@ class RoleHomeDashboardService
     }
 
     /**
+     * Accountant home — quiet Available Cash + money-ops boxes + charts.
+     * No KPI lecture dump, recent-tx table, Users, Mayorca, or backups payload.
+     *
      * @return array<string, mixed>
      */
     private function accountant(): array
     {
-        $vault = $this->zhakoVault();
-        $month = now()->format('Y-m');
-        $settlement = $vault
-            ? $this->settlements->preview($month, null, $vault)
-            : null;
-
-        $payrollDue = Payout::query()
-            ->where('status', Payout::STATUS_PENDING)
-            ->where('category', Payout::CATEGORY_PAYROLL);
-        $pendingPayouts = Payout::query()->where('status', Payout::STATUS_PENDING);
-        $pendingExpenses = Expense::query()->where('approval_status', Expense::STATUS_PENDING);
-        $openAdvances = EmployeeAdvance::query()->where('status', EmployeeAdvance::STATUS_OPEN);
-        $pendingPenalties = Penalty::query()->where('status', Penalty::STATUS_PENDING);
-        $maturedHolds = RetentionHold::query()->where('status', RetentionHold::STATUS_MATURED);
-        $holdingInsurance = RetentionHold::query()->where('status', RetentionHold::STATUS_HOLDING);
-
-        $recentTx = [];
-        if ($vault) {
-            $recentTx = Transaction::query()
-                ->forVault($vault->id)
-                ->with(['project:id,name', 'creator:id,name'])
-                ->orderByDesc('occurred_on')
-                ->orderByDesc('id')
-                ->limit(8)
-                ->get()
-                ->map(fn (Transaction $t) => [
-                    'id' => $t->id,
-                    'type' => $t->type,
-                    'amount_iqd' => round((float) $t->amount_iqd, 2),
-                    'occurred_on' => optional($t->occurred_on)?->toDateString(),
-                    'description' => $t->description,
-                    'project_name' => $t->project?->name,
-                    'creator_name' => $t->creator?->name,
-                ])
-                ->values()
-                ->all();
-        }
-
-        return [
-            'year_month' => $month,
-            'payroll_due_count' => (clone $payrollDue)->count(),
-            'payroll_due_iqd' => round((float) (clone $payrollDue)->sum('amount_iqd'), 2),
-            'pending_calculations' => (clone $pendingPayouts)->count() + (clone $pendingExpenses)->count(),
-            'pending_payouts' => (clone $pendingPayouts)->count(),
-            'pending_expenses_count' => (clone $pendingExpenses)->count(),
-            'pending_expenses_iqd' => round((float) (clone $pendingExpenses)->sum('amount_iqd'), 2),
-            'advances_open_count' => (clone $openAdvances)->count(),
-            'advances_open_iqd' => round((float) (clone $openAdvances)->sum('amount_iqd'), 2),
-            'penalties_pending_count' => (clone $pendingPenalties)->count(),
-            'penalties_pending_iqd' => round((float) (clone $pendingPenalties)->sum('amount_iqd'), 2),
-            'insurance_matured_count' => (clone $maturedHolds)->count(),
-            'insurance_holding_count' => (clone $holdingInsurance)->count(),
-            'insurance_held_iqd' => $settlement['reserved_insurance_iqd']
-                ?? ($vault ? $this->liquidity->reservedInsuranceIqd($vault) : 0.0),
-            'money_received_iqd' => $settlement['money_received_iqd'] ?? 0.0,
-            'expenses_month_iqd' => $settlement['project_expenses_iqd'] ?? 0.0,
-            'available_payment_iqd' => $settlement['available_money_for_payment_iqd'] ?? 0.0,
-            'matured_holds' => (clone $maturedHolds)->count(),
-            'projects' => Project::query()->count(),
-            'workers' => \App\Models\Worker::query()->count(),
-            'recent_transactions' => $recentTx,
-        ];
+        return $this->quietHomeCore();
     }
 
     /**
