@@ -185,6 +185,33 @@ class ReportsPhase15Test extends TestCase
             );
     }
 
+    public function test_vault_ledger_pdf_export_handles_serialized_rows(): void
+    {
+        $admin = $this->userWithRole(Roles::SUPER_ADMIN);
+        Vault::query()->create([
+            'name' => VaultSeeder::NAME,
+            'balance_usd' => 1000,
+            'balance_iqd' => 1_310_000,
+        ]);
+        Transaction::query()->create([
+            'vault_id' => Vault::query()->firstOrFail()->id,
+            'type' => Transaction::TYPE_DEPOSIT,
+            'amount_usd' => 100,
+            'amount_iqd' => 131_000,
+            'exchange_rate' => 1310,
+            'occurred_on' => now()->toDateString(),
+            'description' => 'Phase 20 vault ledger PDF regression',
+            'created_by' => $admin->id,
+        ]);
+
+        $pdf = $this->actingAs($admin)->get(route('reports.export', [
+            'type' => ReportTypes::VAULT_LEDGER,
+            'format' => 'pdf',
+        ]));
+        $pdf->assertOk();
+        $this->assertStringStartsWith('%PDF', $pdf->getContent());
+    }
+
     public function test_unknown_report_type_is_404(): void
     {
         $admin = $this->userWithRole(Roles::SUPER_ADMIN);

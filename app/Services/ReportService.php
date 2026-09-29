@@ -340,17 +340,29 @@ class ReportService
             'per_page' => 500,
         ]);
 
-        /** @var Collection<int, Transaction> $tx */
+        // Ledger listing already serializes Transaction models to arrays.
         $tx = collect($listing['transactions']->items());
 
-        $rows = $tx->map(fn (Transaction $t) => [
-            'date' => optional($t->occurred_on)->toDateString() ?: optional($t->created_at)->toDateString(),
-            'type' => $t->type,
-            'project' => $t->project?->name ?? '—',
-            'reference' => $t->reference_code ?: ($t->description ?: '—'),
-            'direction' => $t->isCashInflow() ? 'in' : ($t->isCashOutflow() ? 'out' : 'non_cash'),
-            'amount_iqd' => round((float) $t->amount_iqd, 2),
-        ])->all();
+        $rows = $tx->map(function (array $t) {
+            $direction = $t['direction'] ?? 'none';
+            if (! empty($t['is_non_cash'])) {
+                $direction = 'non_cash';
+            }
+
+            return [
+                'date' => $t['date'] ?? null,
+                'type' => $t['type'] ?? '—',
+                'project' => is_array($t['project'] ?? null)
+                    ? ($t['project']['name'] ?? '—')
+                    : '—',
+                'reference' => $t['reference']
+                    ?? $t['reference_code']
+                    ?? $t['description']
+                    ?? '—',
+                'direction' => $direction === 'none' ? 'non_cash' : $direction,
+                'amount_iqd' => round((float) ($t['amount_iqd'] ?? 0), 2),
+            ];
+        })->all();
 
         $balances = $listing['balances'];
 
