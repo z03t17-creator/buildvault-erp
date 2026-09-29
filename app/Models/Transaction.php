@@ -6,9 +6,12 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Transaction extends Model
 {
+    use SoftDeletes;
+
     /** Legacy / generic vault credit (also used for non-receipt deposits). */
     public const TYPE_DEPOSIT = 'deposit';
 
@@ -45,6 +48,9 @@ class Transaction extends Model
     /** Legacy non-cash / misc adjustment. */
     public const TYPE_ADJUSTMENT = 'adjustment';
 
+    /** Explicit audited FX conversion leg (Phase 1+). */
+    public const TYPE_FX_CONVERSION = 'fx_conversion';
+
     /** @var list<string> */
     public const TYPES = [
         self::TYPE_DEPOSIT,
@@ -59,6 +65,7 @@ class Transaction extends Model
         self::TYPE_STOCK_PURCHASE,
         self::TYPE_TRANSFER,
         self::TYPE_ADJUSTMENT,
+        self::TYPE_FX_CONVERSION,
     ];
 
     /**
@@ -95,6 +102,7 @@ class Transaction extends Model
         self::TYPE_ADJUSTMENT,
         self::TYPE_INSURANCE,
         self::TYPE_PENALTY,
+        self::TYPE_FX_CONVERSION,
     ];
 
     /**
@@ -118,6 +126,8 @@ class Transaction extends Model
         'amount_usd',
         'amount_iqd',
         'exchange_rate',
+        'balance_after_usd',
+        'balance_after_iqd',
         'description',
         'reference_code',
         'reference_type',
@@ -135,6 +145,8 @@ class Transaction extends Model
             'amount_usd' => 'decimal:2',
             'amount_iqd' => 'decimal:2',
             'exchange_rate' => 'decimal:4',
+            'balance_after_usd' => 'decimal:2',
+            'balance_after_iqd' => 'decimal:2',
         ];
     }
 
@@ -188,6 +200,24 @@ class Transaction extends Model
     public function signedAmountIqd(): float
     {
         $amount = round((float) $this->amount_iqd, 2);
+
+        if ($this->isCashInflow()) {
+            return $amount;
+        }
+
+        if ($this->isCashOutflow()) {
+            return -1 * $amount;
+        }
+
+        return 0.0;
+    }
+
+    /**
+     * Signed USD effect on vault cash (+ in, − out, 0 non-cash).
+     */
+    public function signedAmountUsd(): float
+    {
+        $amount = round((float) $this->amount_usd, 2);
 
         if ($this->isCashInflow()) {
             return $amount;

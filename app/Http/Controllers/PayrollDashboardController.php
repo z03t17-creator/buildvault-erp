@@ -36,8 +36,8 @@ class PayrollDashboardController extends Controller
         $projectId = $request->query('project_id');
         $projectId = $projectId !== null && $projectId !== '' ? (int) $projectId : null;
 
+        // Rate kept for display/reference only — do not invent IQD from USD.
         $rate = $this->exchangeRates->getUsdToIqd();
-        $toIqd = static fn (float $usd): float => round($usd * $rate, 0);
 
         $workersQuery = Worker::query()
             ->with('project:id,name')
@@ -49,7 +49,7 @@ class PayrollDashboardController extends Controller
 
         $workers = $workersQuery->get();
 
-        $rows = $workers->map(function (Worker $worker) use ($from, $to, $toIqd) {
+        $rows = $workers->map(function (Worker $worker) use ($from, $to) {
             $calc = $this->payroll->calculate($worker, $from, $to);
             $penalties = (float) $calc['penalties_usd'];
             $advancesIqd = (float) $calc['advances_iqd'];
@@ -59,6 +59,7 @@ class PayrollDashboardController extends Controller
                 'worker_id' => $worker->id,
                 'name' => $worker->name,
                 'role' => $worker->role,
+                'labor_kind' => $worker->labor_kind,
                 'project' => $worker->project
                     ? ['id' => $worker->project->id, 'name' => $worker->project->name]
                     : null,
@@ -74,12 +75,14 @@ class PayrollDashboardController extends Controller
                 'insurance_holdback_pct' => $calc['insurance_holdback_pct'],
                 'insurance_holdback_usd' => $holdbackUsd,
                 'net_pay_usd' => $calc['net_pay_usd'],
-                'base_pay_iqd' => $toIqd((float) $calc['base_pay_usd']),
-                'overtime_pay_iqd' => $toIqd((float) $calc['overtime_pay_usd']),
-                'gross_pay_iqd' => $toIqd((float) $calc['gross_pay_usd']),
-                'penalties_iqd' => $toIqd($penalties),
-                'insurance_holdback_iqd' => $toIqd($holdbackUsd),
-                'net_pay_iqd' => $toIqd((float) $calc['net_pay_usd']),
+                // Native IQD only — no automatic FX blend from USD payroll fields.
+                'base_pay_iqd' => null,
+                'overtime_pay_iqd' => null,
+                'gross_pay_iqd' => null,
+                'penalties_iqd' => $calc['recorded_penalties_iqd'] ?? null,
+                'insurance_holdback_iqd' => null,
+                'net_pay_iqd' => null,
+                'monthly_salary_iqd' => (float) ($worker->monthly_salary_iqd ?? 0),
             ];
         })->values();
 
@@ -88,13 +91,13 @@ class PayrollDashboardController extends Controller
             'overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
             'penalties_usd' => round((float) $rows->sum('penalties_usd'), 2),
             'advances_iqd' => (float) $rows->sum('advances_iqd'),
-            'insurance_holdback_iqd' => (float) $rows->sum('insurance_holdback_iqd'),
+            'insurance_holdback_iqd' => null,
             'net_pay_usd' => round((float) $rows->sum('net_pay_usd'), 2),
-            'penalties_iqd' => (float) $rows->sum('penalties_iqd'),
-            'gross_pay_iqd' => (float) $rows->sum('gross_pay_iqd'),
-            'net_pay_iqd' => (float) $rows->sum('net_pay_iqd'),
-            'base_pay_iqd' => (float) $rows->sum('base_pay_iqd'),
-            'overtime_pay_iqd' => (float) $rows->sum('overtime_pay_iqd'),
+            'penalties_iqd' => round((float) $rows->sum(fn ($r) => (float) ($r['penalties_iqd'] ?? 0)), 2),
+            'gross_pay_iqd' => null,
+            'net_pay_iqd' => null,
+            'base_pay_iqd' => null,
+            'overtime_pay_iqd' => null,
         ];
 
         return Inertia::render('Dashboards/Payroll', [
@@ -107,6 +110,7 @@ class PayrollDashboardController extends Controller
             'rows' => $rows,
             'totals' => $totals,
             'exchangeRate' => $rate,
+            'autoBlendDisabled' => true,
             'netFormula' => 'base_ot_minus_penalties_insurance_advances',
         ]);
     }

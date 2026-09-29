@@ -26,12 +26,13 @@ class RetentionHoldController extends Controller
         $this->authorize('viewRetention', Vault::class);
 
         $rate = $this->exchangeRates->getUsdToIqd();
-        $mapHold = static function (RetentionHold $h) use ($rate): RetentionHold {
-            $h->setAttribute('amount_iqd', round((float) $h->amount_usd * $rate, 0));
-            if ($h->released_amount_usd !== null) {
+        // Use native dual columns — do not invent IQD via FX.
+        $mapHold = static function (RetentionHold $h): RetentionHold {
+            $h->setAttribute('amount_iqd', round((float) ($h->amount_iqd ?? 0), 2));
+            if ($h->released_amount_usd !== null || $h->released_amount_iqd !== null) {
                 $h->setAttribute(
                     'released_amount_iqd',
-                    round((float) $h->released_amount_usd * $rate, 0),
+                    round((float) ($h->released_amount_iqd ?? 0), 2),
                 );
             }
 
@@ -47,6 +48,7 @@ class RetentionHoldController extends Controller
             'matured' => collect($this->holds->maturedAwaitingRelease())->map($mapHold)->values(),
             'settings' => $this->insurance->all(),
             'exchangeRate' => $rate,
+            'autoBlendDisabled' => true,
         ]);
     }
 

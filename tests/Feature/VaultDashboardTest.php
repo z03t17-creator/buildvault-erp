@@ -19,7 +19,7 @@ class VaultDashboardTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_vault_dashboard_renders_iqd_surfaces_and_keeps_fx_plumbing(): void
+    public function test_vault_dashboard_renders_dual_currency_without_fx_blend(): void
     {
         Cache::flush();
         Http::fake([
@@ -55,6 +55,7 @@ class VaultDashboardTest extends TestCase
             'project_id' => $project->id,
             'worker_id' => $worker->id,
             'amount_usd' => 100,
+            'amount_iqd' => 250000,
             'hold_start' => now()->subMonths(2)->toDateString(),
             'maturity_date' => now()->addMonths(4)->toDateString(),
             'status' => RetentionHold::STATUS_HOLDING,
@@ -79,11 +80,15 @@ class VaultDashboardTest extends TestCase
             ->where('vault.balance_usd', 10000)
             ->where('vault.balance_iqd', 13255000)
             ->where('fx.rate', 1325.5)
+            ->where('fx.auto_blend', false)
             ->where('insurance.holding_usd', 100)
-            ->where('insurance.holding_iqd', 132550)
+            // Native IQD — not amount_usd * rate
+            ->where('insurance.holding_iqd', 250000)
             ->where('pools.payroll_usd', 3000)
-            ->where('pools.payroll_iqd', 3976500)
-            ->where('liquidity.available_iqd', 13122450)
+            ->where('pools.payroll_iqd', null)
+            // available_iqd = balance_iqd − reserved_iqd (native)
+            ->where('liquidity.available_iqd', 13005000)
+            ->where('liquidity.available_usd', 9900)
             ->has('cashFlow', 30)
             ->has('health', 3)
             ->where('health.0.label', 'Liquidity')

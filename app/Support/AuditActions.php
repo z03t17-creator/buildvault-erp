@@ -37,12 +37,20 @@ final class AuditActions
 
     public const EXPENSE_REJECTED = 'expense.rejected';
 
+    /** Explicit USD↔IQD conversion (never silent blend). */
+    public const FX_EXPLICIT_CONVERSION = 'fx.explicit_conversion';
+
+    public const PERSON_CLASSIFIED = 'person.classified';
+
+    public const VAULT_SOFT_DELETE_REBUILD = 'vault.soft_delete_rebuild';
+
     /** @var list<string> */
     public const ALL = [
         self::PAYOUT_APPROVED,
         self::PAYOUT_REJECTED,
         self::ALLOCATION_CHANGED,
         self::FX_RATE_OVERRIDDEN,
+        self::FX_EXPLICIT_CONVERSION,
         self::VAULT_DEPOSIT,
         self::USER_CREATED,
         self::USER_UPDATED,
@@ -53,6 +61,8 @@ final class AuditActions
         self::PROJECT_RECEIPT,
         self::EXPENSE_APPROVED,
         self::EXPENSE_REJECTED,
+        self::PERSON_CLASSIFIED,
+        self::VAULT_SOFT_DELETE_REBUILD,
     ];
 
     /** @var array<string, string> */
@@ -61,6 +71,7 @@ final class AuditActions
         self::PAYOUT_REJECTED => 'Payout rejected',
         self::ALLOCATION_CHANGED => 'Allocation changed',
         self::FX_RATE_OVERRIDDEN => 'FX rate overridden',
+        self::FX_EXPLICIT_CONVERSION => 'Explicit FX conversion',
         self::VAULT_DEPOSIT => 'Vault deposit',
         self::USER_CREATED => 'User created',
         self::USER_UPDATED => 'User updated',
@@ -71,5 +82,7 @@ final class AuditActions
         self::PROJECT_RECEIPT => 'Project money received',
         self::EXPENSE_APPROVED => 'Expense approved',
         self::EXPENSE_REJECTED => 'Expense rejected',
+        self::PERSON_CLASSIFIED => 'Person classified',
+        self::VAULT_SOFT_DELETE_REBUILD => 'Vault balance rebuilt after soft delete',
     ];
 }

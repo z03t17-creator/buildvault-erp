@@ -40,11 +40,20 @@ class VaultDashboardController extends Controller
             ->orderByDesc('id')
             ->first();
 
-        $pending = $vault ? $this->liquidity->pendingPayoutsUsd($vault) : 0.0;
-        $reserved = $vault ? $this->liquidity->reservedInsuranceUsd($vault) : 0.0;
-        $available = $vault ? $this->liquidity->availableUsd($vault) : 0.0;
+        $snap = $vault
+            ? $this->liquidity->dualSnapshot($vault)
+            : [
+                'available_usd' => 0.0,
+                'available_iqd' => 0.0,
+                'pending_usd' => 0.0,
+                'pending_iqd' => 0.0,
+                'reserved_usd' => 0.0,
+                'reserved_iqd' => 0.0,
+            ];
 
-        $toIqd = fn (float $usd): float => round($usd * $rate, 0);
+        $pending = $snap['pending_usd'];
+        $reserved = $snap['reserved_usd'];
+        $available = $snap['available_usd'];
 
         $poolTotals = ProjectAllocation::query()
             ->selectRaw('
@@ -57,13 +66,13 @@ class VaultDashboardController extends Controller
             ->first();
 
         $holdStats = RetentionHold::query()
-            ->selectRaw('status, COUNT(*) as cnt, COALESCE(SUM(amount_usd), 0) as total')
+            ->selectRaw('status, COUNT(*) as cnt, COALESCE(SUM(amount_usd), 0) as total_usd, COALESCE(SUM(amount_iqd), 0) as total_iqd')
             ->when($vault, fn ($q) => $q->where('vault_id', $vault->id))
             ->groupBy('status')
             ->get()
             ->keyBy('status');
 
-        $cashFlow = $this->cashFlowSeries($vault, 30, $rate);
+        $cashFlow = $this->cashFlowSeries($vault, 30);
 
         return Inertia::render('Dashboards/Vault', [
             'vault' => $vault ? [
@@ -76,28 +85,31 @@ class VaultDashboardController extends Controller
                 'available_usd' => $available,
                 'pending_payouts_usd' => $pending,
                 'reserved_insurance_usd' => $reserved,
-                'available_iqd' => $toIqd($available),
-                'pending_payouts_iqd' => $toIqd($pending),
-                'reserved_insurance_iqd' => $toIqd($reserved),
+                // Native IQD — never FX-blended from USD
+                'available_iqd' => $snap['available_iqd'],
+                'pending_payouts_iqd' => $snap['pending_iqd'],
+                'reserved_insurance_iqd' => $snap['reserved_iqd'],
             ],
-            // FX kept for ledger/payout plumbing + tests; not shown in UI (IQD-only product).
+            // FX rate available for explicit conversion only (audit-logged via ExchangeRateService).
             'fx' => [
                 'rate' => $rate,
                 'source' => $latestFx?->source ?? ExchangeRateService::SOURCE_FALLBACK,
                 'fetched_at' => $latestFx?->fetched_at?->toIso8601String(),
                 'fallback_rate' => ExchangeRateService::FALLBACK_RATE,
+                'auto_blend' => false,
             ],
             'insurance' => [
                 'retention_pool_usd' => round((float) ($poolTotals->retention ?? 0), 2),
-                'holding_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->total ?? 0), 2),
+                'holding_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->total_usd ?? 0), 2),
                 'holding_count' => (int) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->cnt ?? 0),
-                'matured_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total ?? 0), 2),
+                'matured_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total_usd ?? 0), 2),
                 'matured_count' => (int) ($holdStats->get(RetentionHold::STATUS_MATURED)?->cnt ?? 0),
-                'released_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total ?? 0), 2),
-                'retention_pool_iqd' => $toIqd((float) ($poolTotals->retention ?? 0)),
-                'holding_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->total ?? 0)),
-                'matured_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total ?? 0)),
-                'released_iqd' => $toIqd((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total ?? 0)),
+                'released_usd' => round((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total_usd ?? 0), 2),
+                'holding_iqd' => round((float) ($holdStats->get(RetentionHold::STATUS_HOLDING)?->total_iqd ?? 0), 2),
+                'matured_iqd' => round((float) ($holdStats->get(RetentionHold::STATUS_MATURED)?->total_iqd ?? 0), 2),
+                'released_iqd' => round((float) ($holdStats->get(RetentionHold::STATUS_RELEASED)?->total_iqd ?? 0), 2),
+                // Pool allocations remain USD-denominated; do not invent IQD via FX.
+                'retention_pool_iqd' => null,
             ],
             'pools' => [
                 'expenses_usd' => round((float) ($poolTotals->expenses ?? 0), 2),
@@ -105,13 +117,14 @@ class VaultDashboardController extends Controller
                 'retention_usd' => round((float) ($poolTotals->retention ?? 0), 2),
                 'penalty_usd' => round((float) ($poolTotals->penalty ?? 0), 2),
                 'profit_usd' => round((float) ($poolTotals->profit ?? 0), 2),
-                'expenses_iqd' => $toIqd((float) ($poolTotals->expenses ?? 0)),
-                'payroll_iqd' => $toIqd((float) ($poolTotals->payroll ?? 0)),
-                'retention_iqd' => $toIqd((float) ($poolTotals->retention ?? 0)),
-                'penalty_iqd' => $toIqd((float) ($poolTotals->penalty ?? 0)),
-                'profit_iqd' => $toIqd((float) ($poolTotals->profit ?? 0)),
+                // No automatic USD→IQD blend for pool display.
+                'expenses_iqd' => null,
+                'payroll_iqd' => null,
+                'retention_iqd' => null,
+                'penalty_iqd' => null,
+                'profit_iqd' => null,
             ],
-            'health' => $this->healthBadges($vault, $available, $pending, $reserved, $holdStats, $rate),
+            'health' => $this->healthBadges($vault, $available, $pending, $reserved, $holdStats),
             'cashFlow' => $cashFlow,
         ]);
     }
@@ -149,11 +162,10 @@ class VaultDashboardController extends Controller
         float $pending,
         float $reserved,
         $holdStats,
-        float $rate,
     ): array {
         $balance = $vault ? (float) $vault->balance_usd : 0.0;
         $maturedCount = (int) ($holdStats->get(RetentionHold::STATUS_MATURED)?->cnt ?? 0);
-        $fmt = fn (float $usd): string => NumberFormat::number(round($usd * $rate, 0));
+        $fmtUsd = fn (float $usd): string => NumberFormat::number($usd, 2).' USD';
 
         $liquidityStatus = 'critical';
         $liquidityDetail = __('health_no_liquidity');
@@ -165,19 +177,19 @@ class VaultDashboardController extends Controller
             } elseif ($ratio < 0.15 || $pending > $available) {
                 $liquidityStatus = 'warning';
                 $liquidityDetail = __('health_available_pct', [
-                    'amount' => $fmt($available),
+                    'amount' => $fmtUsd($available),
                     'pct' => (int) round($ratio * 100),
                 ]);
             } else {
                 $liquidityStatus = 'healthy';
                 $liquidityDetail = __('health_available', [
-                    'amount' => $fmt($available),
+                    'amount' => $fmtUsd($available),
                 ]);
             }
         }
 
         $insuranceStatus = 'healthy';
-        $insuranceDetail = __('health_reserved', ['amount' => $fmt($reserved)]);
+        $insuranceDetail = __('health_reserved', ['amount' => $fmtUsd($reserved)]);
         if ($maturedCount > 0) {
             $insuranceStatus = 'warning';
             $insuranceDetail = __('health_matured_holds', ['count' => $maturedCount]);
@@ -199,7 +211,7 @@ class VaultDashboardController extends Controller
                 $allocDetail = __('health_payroll_depleted');
             } else {
                 $allocStatus = 'healthy';
-                $allocDetail = __('health_pools_total', ['amount' => $fmt($poolSum)]);
+                $allocDetail = __('health_pools_total', ['amount' => $fmtUsd($poolSum)]);
             }
         }
 
@@ -228,14 +240,14 @@ class VaultDashboardController extends Controller
     /**
      * @return list<array{date: string, label: string, inflow_usd: float, outflow_usd: float, net_usd: float, inflow_iqd: float, outflow_iqd: float, net_iqd: float}>
      */
-    protected function cashFlowSeries(?Vault $vault, int $days, float $rate): array
+    protected function cashFlowSeries(?Vault $vault, int $days): array
     {
         $end = Carbon::today();
         $start = $end->copy()->subDays($days - 1);
 
         $rows = collect();
         if ($vault) {
-                $rows = Transaction::query()
+            $rows = Transaction::query()
                 ->where('vault_id', $vault->id)
                 ->whereDate('created_at', '>=', $start)
                 ->whereDate('created_at', '<=', $end)
@@ -258,8 +270,9 @@ class VaultDashboardController extends Controller
             $row = $rows->get($key);
             $in = round((float) ($row->inflow ?? 0), 2);
             $out = round((float) ($row->outflow ?? 0), 2);
-            $inIqd = round((float) ($row->inflow_iqd ?? ($in * $rate)), 0);
-            $outIqd = round((float) ($row->outflow_iqd ?? ($out * $rate)), 0);
+            // Native IQD columns only — never invent via FX rate.
+            $inIqd = round((float) ($row->inflow_iqd ?? 0), 2);
+            $outIqd = round((float) ($row->outflow_iqd ?? 0), 2);
             $series[] = [
                 'date' => $key,
                 'label' => $d->format('M j'),
@@ -268,7 +281,7 @@ class VaultDashboardController extends Controller
                 'net_usd' => round($in - $out, 2),
                 'inflow_iqd' => $inIqd,
                 'outflow_iqd' => $outIqd,
-                'net_iqd' => round($inIqd - $outIqd, 0),
+                'net_iqd' => round($inIqd - $outIqd, 2),
             ];
         }
 

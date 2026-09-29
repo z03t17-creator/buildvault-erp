@@ -86,7 +86,8 @@ class PayrollInsurancePhase8Test extends TestCase
                 ->where('rows.0.advances_iqd', fn ($v) => (float) $v === 13100.0)
                 ->where('rows.0.insurance_holdback_usd', fn ($v) => (float) $v === 10.0)
                 ->where('rows.0.net_pay_usd', fn ($v) => (float) $v === 30.0)
-                ->where('rows.0.net_pay_iqd', fn ($v) => (float) $v === 39300.0)
+                ->where('rows.0.net_pay_iqd', null)
+                ->where('autoBlendDisabled', true)
             );
     }
 

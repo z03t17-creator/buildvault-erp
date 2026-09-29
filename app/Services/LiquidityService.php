@@ -98,7 +98,125 @@ class LiquidityService
             ])
             ->sum('amount_usd');
 
+        $client = 0.0;
+        if (class_exists(\App\Models\ClientRetentionHold::class)) {
+            $client = (float) \App\Models\ClientRetentionHold::query()
+                ->where('vault_id', $vault->id)
+                ->whereIn('status', [
+                    \App\Models\ClientRetentionHold::STATUS_HOLDING,
+                    \App\Models\ClientRetentionHold::STATUS_MATURED,
+                ])
+                ->sum('amount_usd');
+        }
+
+        return round((float) $sum + $client, 2);
+    }
+
+    /**
+     * Native IQD insurance reserved (never FX-converted from USD).
+     */
+    public function reservedInsuranceIqd(?Vault $vault = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $sum = RetentionHold::query()
+            ->where('vault_id', $vault->id)
+            ->whereIn('status', [
+                RetentionHold::STATUS_HOLDING,
+                RetentionHold::STATUS_MATURED,
+            ])
+            ->sum('amount_iqd');
+
+        $client = (float) \App\Models\ClientRetentionHold::query()
+            ->where('vault_id', $vault->id)
+            ->whereIn('status', [
+                \App\Models\ClientRetentionHold::STATUS_HOLDING,
+                \App\Models\ClientRetentionHold::STATUS_MATURED,
+            ])
+            ->sum('amount_iqd');
+
+        return round((float) $sum + $client, 2);
+    }
+
+    /**
+     * Pending payouts + pending expenses in native IQD (no FX blend).
+     */
+    public function pendingCommitmentsIqd(?Vault $vault = null, ?int $excludeExpenseId = null): float
+    {
+        return round(
+            $this->pendingPayoutsIqd($vault) + $this->pendingExpensesIqd($vault, $excludeExpenseId),
+            2,
+        );
+    }
+
+    public function pendingPayoutsIqd(?Vault $vault = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $sum = Payout::query()
+            ->where('vault_id', $vault->id)
+            ->where('status', Payout::STATUS_PENDING)
+            ->sum('amount_iqd');
+
         return round((float) $sum, 2);
+    }
+
+    public function pendingExpensesIqd(?Vault $vault = null, ?int $excludeExpenseId = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $query = Expense::query()
+            ->where('vault_id', $vault->id)
+            ->where('approval_status', Expense::STATUS_PENDING);
+
+        if ($excludeExpenseId !== null) {
+            $query->where('id', '!=', $excludeExpenseId);
+        }
+
+        return round((float) $query->sum('amount_iqd'), 2);
+    }
+
+    /**
+     * Available IQD = Vault IQD − pending IQD − reserved IQD (native columns only).
+     */
+    public function availableIqd(?Vault $vault = null, ?int $excludeExpenseId = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $pending = $this->pendingCommitmentsIqd($vault, $excludeExpenseId);
+        $reserved = $this->reservedInsuranceIqd($vault);
+
+        return round(max(0, (float) $vault->balance_iqd - $pending - $reserved), 2);
+    }
+
+    /**
+     * Dual snapshot — USD and IQD isolated (never summed or FX-blended).
+     *
+     * @return array{
+     *     balance_usd: float,
+     *     balance_iqd: float,
+     *     available_usd: float,
+     *     available_iqd: float,
+     *     pending_usd: float,
+     *     pending_iqd: float,
+     *     reserved_usd: float,
+     *     reserved_iqd: float,
+     * }
+     */
+    public function dualSnapshot(?Vault $vault = null, ?int $excludeExpenseId = null): array
+    {
+        $vault ??= $this->zhakoVault();
+
+        return [
+            'balance_usd' => round((float) $vault->balance_usd, 2),
+            'balance_iqd' => round((float) $vault->balance_iqd, 2),
+            'available_usd' => $this->availableUsd($vault, $excludeExpenseId),
+            'available_iqd' => $this->availableIqd($vault, $excludeExpenseId),
+            'pending_usd' => $this->pendingCommitmentsUsd($vault, $excludeExpenseId),
+            'pending_iqd' => $this->pendingCommitmentsIqd($vault, $excludeExpenseId),
+            'reserved_usd' => $this->reservedInsuranceUsd($vault),
+            'reserved_iqd' => $this->reservedInsuranceIqd($vault),
+        ];
     }
 
     /**

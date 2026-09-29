@@ -21,7 +21,7 @@ class ImportTemplateTest extends TestCase
         $response->assertOk();
         $response->assertInertia(fn ($page) => $page
             ->component('Imports/Index')
-            ->has('types', 4)
+            ->has('types', 3)
             ->where('types.0.type', Import::TYPE_WORKERS)
             ->has('modes')
             ->has('recent'));

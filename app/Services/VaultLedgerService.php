@@ -59,8 +59,7 @@ class VaultLedgerService
     public function listing(?Vault $vault = null, array $filters = []): array
     {
         $vault ??= $this->zhakoVault();
-        $rate = $this->exchangeRates->getUsdToIqd();
-        $balances = $this->balances($vault, $rate);
+        $balances = $this->balances($vault);
 
         $includeNonCash = filter_var($filters['include_non_cash'] ?? true, FILTER_VALIDATE_BOOLEAN);
         $type = isset($filters['type']) && is_string($filters['type']) && $filters['type'] !== ''
@@ -142,6 +141,9 @@ class VaultLedgerService
     }
 
     /**
+     * Dual-currency balances — USD and IQD from native columns only.
+     * Never FX-converts available/reserved/pending across currencies.
+     *
      * @return array{
      *     current_iqd: float,
      *     available_iqd: float,
@@ -152,36 +154,37 @@ class VaultLedgerService
      *     reserved_usd: float,
      *     pending_usd: float,
      *     ledger_cash_iqd: float,
+     *     ledger_cash_usd: float,
      *     balance_matches_ledger: bool,
+     *     balance_matches_ledger_usd: bool,
      * }
      */
     public function balances(?Vault $vault = null, ?float $rate = null): array
     {
         $vault ??= $this->zhakoVault();
-        $rate ??= $this->exchangeRates->getUsdToIqd();
-        $toIqd = static fn (float $usd): float => round($usd * $rate, 0);
+        // $rate retained for call-site compatibility; intentionally unused for blend.
+        unset($rate);
 
-        $currentUsd = round((float) $vault->balance_usd, 2);
-        $currentIqd = round((float) $vault->balance_iqd, 2);
-        $availableUsd = $this->liquidity->availableUsd($vault);
-        $reservedUsd = $this->liquidity->reservedInsuranceUsd($vault);
-        $pendingUsd = $this->liquidity->pendingCommitmentsUsd($vault);
+        $snap = $this->liquidity->dualSnapshot($vault);
 
         $ledgerCashIqd = $this->ledgerCashBalanceIqd($vault);
-        // Tolerate FX rounding on mixed USD/IQD history (within 1 IQD).
-        $matches = abs($ledgerCashIqd - $currentIqd) < 1.0;
+        $ledgerCashUsd = $this->ledgerCashBalanceUsd($vault);
+        $currentUsd = $snap['balance_usd'];
+        $currentIqd = $snap['balance_iqd'];
 
         return [
             'current_iqd' => $currentIqd,
-            'available_iqd' => $toIqd($availableUsd),
-            'reserved_iqd' => $toIqd($reservedUsd),
-            'pending_iqd' => $toIqd($pendingUsd),
+            'available_iqd' => $snap['available_iqd'],
+            'reserved_iqd' => $snap['reserved_iqd'],
+            'pending_iqd' => $snap['pending_iqd'],
             'current_usd' => $currentUsd,
-            'available_usd' => $availableUsd,
-            'reserved_usd' => $reservedUsd,
-            'pending_usd' => $pendingUsd,
+            'available_usd' => $snap['available_usd'],
+            'reserved_usd' => $snap['reserved_usd'],
+            'pending_usd' => $snap['pending_usd'],
             'ledger_cash_iqd' => $ledgerCashIqd,
-            'balance_matches_ledger' => $matches,
+            'ledger_cash_usd' => $ledgerCashUsd,
+            'balance_matches_ledger' => abs($ledgerCashIqd - $currentIqd) < 1.0,
+            'balance_matches_ledger_usd' => abs($ledgerCashUsd - $currentUsd) < 0.01,
         ];
     }
 
@@ -201,6 +204,26 @@ class VaultLedgerService
             ->forVault($vault->id)
             ->whereIn('type', Transaction::CASH_OUTFLOW_TYPES)
             ->sum('amount_iqd');
+
+        return round($in - $out, 2);
+    }
+
+    /**
+     * Sum signed cash-affecting ledger USD (should match vault.balance_usd).
+     */
+    public function ledgerCashBalanceUsd(?Vault $vault = null): float
+    {
+        $vault ??= $this->zhakoVault();
+
+        $in = (float) Transaction::query()
+            ->forVault($vault->id)
+            ->whereIn('type', Transaction::CASH_INFLOW_TYPES)
+            ->sum('amount_usd');
+
+        $out = (float) Transaction::query()
+            ->forVault($vault->id)
+            ->whereIn('type', Transaction::CASH_OUTFLOW_TYPES)
+            ->sum('amount_usd');
 
         return round($in - $out, 2);
     }

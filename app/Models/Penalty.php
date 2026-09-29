@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Penalty extends Model
 {
+    use SoftDeletes;
+
     public const STATUS_PENDING = 'pending';
 
     public const STATUS_APPLIED = 'applied';
@@ -63,6 +66,7 @@ class Penalty extends Model
         'notes',
         'amount_usd',
         'amount_iqd',
+        'currency',
         'occurred_on',
         'deducted_from_payout',
         'payout_id',

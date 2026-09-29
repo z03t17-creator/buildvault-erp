@@ -3,10 +3,13 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class EmployeeAdvance extends Model
 {
+    use SoftDeletes;
+
     public const STATUS_OPEN = 'open';
 
     public const STATUS_REPAID = 'repaid';
@@ -42,6 +45,9 @@ class EmployeeAdvance extends Model
     protected $attributes = [
         'status' => self::STATUS_OPEN,
         'repayment_method' => self::REPAY_PAYROLL,
+        'amount_usd' => 0,
+        'remaining_usd' => 0,
+        'currency' => 'IQD',
     ];
 
     /**
@@ -52,6 +58,9 @@ class EmployeeAdvance extends Model
         'project_id',
         'amount_iqd',
         'remaining_iqd',
+        'amount_usd',
+        'remaining_usd',
+        'currency',
         'advanced_on',
         'reason',
         'repayment_method',
@@ -68,6 +77,8 @@ class EmployeeAdvance extends Model
         return [
             'amount_iqd' => 'decimal:2',
             'remaining_iqd' => 'decimal:2',
+            'amount_usd' => 'decimal:2',
+            'remaining_usd' => 'decimal:2',
             'advanced_on' => 'date',
         ];
     }

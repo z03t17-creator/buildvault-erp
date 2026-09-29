@@ -3,10 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class ProjectReceipt extends Model
+class ClientAdvance extends Model
 {
     use SoftDeletes;
 
@@ -15,14 +16,15 @@ class ProjectReceipt extends Model
      */
     protected $fillable = [
         'project_id',
-        'transaction_id',
-        'amount_iqd',
+        'vault_id',
+        'client_name',
         'amount_usd',
-        'exchange_rate',
+        'amount_iqd',
+        'currency',
         'received_on',
-        'source',
         'reference',
         'notes',
+        'transaction_id',
         'entered_by',
     ];
 
@@ -32,9 +34,8 @@ class ProjectReceipt extends Model
     protected function casts(): array
     {
         return [
-            'amount_iqd' => 'decimal:2',
             'amount_usd' => 'decimal:2',
-            'exchange_rate' => 'decimal:4',
+            'amount_iqd' => 'decimal:2',
             'received_on' => 'date',
         ];
     }
@@ -42,6 +43,11 @@ class ProjectReceipt extends Model
     public function project(): BelongsTo
     {
         return $this->belongsTo(Project::class);
+    }
+
+    public function vault(): BelongsTo
+    {
+        return $this->belongsTo(Vault::class);
     }
 
     public function transaction(): BelongsTo
@@ -52,5 +58,10 @@ class ProjectReceipt extends Model
     public function enteredBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'entered_by');
+    }
+
+    public function retentionHolds(): HasMany
+    {
+        return $this->hasMany(ClientRetentionHold::class);
     }
 }

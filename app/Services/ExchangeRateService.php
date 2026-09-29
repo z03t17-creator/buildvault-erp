@@ -87,6 +87,75 @@ class ExchangeRateService
     }
 
     /**
+     * Explicit USD↔IQD conversion — the ONLY allowed blend path.
+     * Always audit-logged. Dashboards/settlement must not call getUsdToIqd()
+     * to invent the other currency.
+     *
+     * @return array{from: string, to: string, amount_from: float, amount_to: float, rate: float}
+     */
+    public function convertExplicit(
+        float $amount,
+        string $from,
+        string $to,
+        ?float $rate = null,
+        ?string $note = null,
+    ): array {
+        $from = strtoupper($from);
+        $to = strtoupper($to);
+
+        if ($amount <= 0) {
+            throw new InvalidArgumentException('Conversion amount must be greater than zero.');
+        }
+
+        if (! in_array($from, ['USD', 'IQD'], true) || ! in_array($to, ['USD', 'IQD'], true)) {
+            throw new InvalidArgumentException('Only USD and IQD are supported.');
+        }
+
+        if ($from === $to) {
+            throw new InvalidArgumentException('from and to currencies must differ.');
+        }
+
+        $rate ??= $this->getUsdToIqd();
+        if ($rate <= 0) {
+            throw new InvalidArgumentException('FX rate must be greater than zero.');
+        }
+
+        $amount = round($amount, 2);
+        $amountTo = $from === 'USD'
+            ? round($amount * $rate, 2)
+            : round($amount / $rate, 2);
+
+        $this->audit->log(
+            AuditActions::FX_EXPLICIT_CONVERSION,
+            sprintf(
+                'Explicit FX conversion: %.2f %s → %.2f %s @ %.6f',
+                $amount,
+                $from,
+                $amountTo,
+                $to,
+                $rate,
+            ),
+            null,
+            [
+                'from' => $from,
+                'to' => $to,
+                'amount_from' => $amount,
+                'amount_to' => $amountTo,
+                'rate' => $rate,
+                'note' => $note,
+            ],
+        );
+
+        return [
+            'from' => $from,
+            'to' => $to,
+            'amount_from' => $amount,
+            'amount_to' => $amountTo,
+            'rate' => round($rate, 6),
+        ];
+    }
+
+    /**
      * Fetch from the exchange-rate API, persist the row, fall back to 1310.00 on failure.
      */
     protected function fetchAndPersist(): float

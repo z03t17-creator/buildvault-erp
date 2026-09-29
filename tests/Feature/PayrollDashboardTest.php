@@ -64,8 +64,9 @@ class PayrollDashboardTest extends TestCase
             ->where('rows.0.penalties_usd', fn ($v) => (float) $v === 0.0)
             ->where('rows.0.net_pay_usd', fn ($v) => (float) $v === 250.0)
             ->where('totals.net_pay_usd', fn ($v) => (float) $v === 250.0)
-            ->where('rows.0.net_pay_iqd', fn ($v) => (float) $v === 327500.0)
-            ->where('totals.net_pay_iqd', fn ($v) => (float) $v === 327500.0)
+            ->where('rows.0.net_pay_iqd', null)
+            ->where('totals.net_pay_iqd', null)
+            ->where('autoBlendDisabled', true)
             ->where('exchangeRate', 1310)
             ->missing('rows.0.days_present'));
     }

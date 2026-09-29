@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class RetentionHold extends Model
+class ClientRetentionHold extends Model
 {
     use SoftDeletes;
 
@@ -24,39 +24,31 @@ class RetentionHold extends Model
         self::STATUS_RELEASED,
     ];
 
-    /**
-     * Default months until insurance is returned to staff (overridable via settings).
-     */
-    public const MATURITY_MONTHS = 6;
+    public const DEFAULT_HOLD_PCT = 10.0;
 
-    /** Default day-based maturity aligned with owner 10%/180-day rule. */
-    public const MATURITY_DAYS = 180;
-
-    public const LAYER_STAFF = 'staff';
+    public const DEFAULT_MATURITY_DAYS = 180;
 
     /**
      * @var array<string, mixed>
      */
     protected $attributes = [
         'status' => self::STATUS_HOLDING,
-        'layer' => self::LAYER_STAFF,
+        'hold_pct' => self::DEFAULT_HOLD_PCT,
+        'maturity_days' => self::DEFAULT_MATURITY_DAYS,
+        'amount_usd' => 0,
         'amount_iqd' => 0,
-        'maturity_days' => self::MATURITY_DAYS,
     ];
 
     /**
      * @var list<string>
      */
     protected $fillable = [
-        'vault_id',
+        'client_advance_id',
         'project_id',
-        'worker_id',
-        'payout_id',
-        'pay_period',
-        'hold_pct',
+        'vault_id',
         'amount_usd',
         'amount_iqd',
-        'layer',
+        'hold_pct',
         'maturity_days',
         'hold_start',
         'maturity_date',
@@ -76,27 +68,24 @@ class RetentionHold extends Model
             'amount_iqd' => 'decimal:2',
             'hold_pct' => 'decimal:2',
             'maturity_days' => 'integer',
-            'released_amount_usd' => 'decimal:2',
-            'released_amount_iqd' => 'decimal:2',
             'hold_start' => 'date',
             'maturity_date' => 'date',
             'released_at' => 'datetime',
+            'released_amount_usd' => 'decimal:2',
+            'released_amount_iqd' => 'decimal:2',
         ];
     }
 
-    /**
-     * Maturity = hold_start + configured months (default 6; admin-editable).
-     */
-    public static function maturityFrom(Carbon|string $holdStart, ?int $months = null): Carbon
+    public static function maturityFrom(Carbon|string $holdStart, ?int $days = null): Carbon
     {
-        $months ??= app(\App\Services\InsuranceSettings::class)->maturityMonths();
+        $days ??= self::DEFAULT_MATURITY_DAYS;
 
-        return Carbon::parse($holdStart)->startOfDay()->addMonthsNoOverflow(max(1, $months));
+        return Carbon::parse($holdStart)->startOfDay()->addDays(max(1, $days));
     }
 
-    public function vault(): BelongsTo
+    public function clientAdvance(): BelongsTo
     {
-        return $this->belongsTo(Vault::class);
+        return $this->belongsTo(ClientAdvance::class);
     }
 
     public function project(): BelongsTo
@@ -104,13 +93,8 @@ class RetentionHold extends Model
         return $this->belongsTo(Project::class);
     }
 
-    public function worker(): BelongsTo
+    public function vault(): BelongsTo
     {
-        return $this->belongsTo(Worker::class);
-    }
-
-    public function payout(): BelongsTo
-    {
-        return $this->belongsTo(Payout::class);
+        return $this->belongsTo(Vault::class);
     }
 }

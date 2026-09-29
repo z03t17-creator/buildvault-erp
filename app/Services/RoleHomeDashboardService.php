@@ -265,7 +265,7 @@ class RoleHomeDashboardService
             'insurance_matured_count' => (clone $maturedHolds)->count(),
             'insurance_holding_count' => (clone $holdingInsurance)->count(),
             'insurance_held_iqd' => $settlement['reserved_insurance_iqd']
-                ?? ($vault ? round($this->liquidity->reservedInsuranceUsd($vault) * $this->fx->getUsdToIqd(), 0) : 0.0),
+                ?? ($vault ? $this->liquidity->reservedInsuranceIqd($vault) : 0.0),
             'money_received_iqd' => $settlement['money_received_iqd'] ?? 0.0,
             'expenses_month_iqd' => $settlement['project_expenses_iqd'] ?? 0.0,
             'available_payment_iqd' => $settlement['available_money_for_payment_iqd'] ?? 0.0,
