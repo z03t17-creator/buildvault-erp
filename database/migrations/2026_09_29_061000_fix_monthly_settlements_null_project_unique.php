@@ -84,13 +84,16 @@ return new class extends Migration
 
     /**
      * Keep the newest snapshot per vault/month/scope; drop older duplicates.
+     *
+     * Use havingRaw(COUNT(*)) — Laravel's having('c', …) quotes the alias,
+     * which PostgreSQL rejects (SQLSTATE 42703). SQLite/MySQL accept either.
      */
     private function dedupeSettlements(): void
     {
         $duplicates = DB::table('monthly_settlements')
-            ->select('vault_id', 'year_month', 'project_scope_key', DB::raw('MAX(id) as keep_id'), DB::raw('COUNT(*) as c'))
+            ->select('vault_id', 'year_month', 'project_scope_key', DB::raw('MAX(id) as keep_id'))
             ->groupBy('vault_id', 'year_month', 'project_scope_key')
-            ->having('c', '>', 1)
+            ->havingRaw('COUNT(*) > ?', [1])
             ->get();
 
         foreach ($duplicates as $dup) {
@@ -122,6 +125,17 @@ return new class extends Migration
             return false;
         }
 
+        // PostgreSQL: information_schema.statistics is extended stats, not indexes.
+        if ($driver === 'pgsql') {
+            $rows = $connection->select(
+                'SELECT 1 FROM pg_indexes WHERE schemaname = current_schema() AND tablename = ? AND indexname = ? LIMIT 1',
+                [$table, $indexName]
+            );
+
+            return count($rows) > 0;
+        }
+
+        // MySQL / MariaDB
         $rows = $connection->select(
             'SELECT INDEX_NAME FROM information_schema.statistics WHERE table_schema = ? AND table_name = ? AND index_name = ? LIMIT 1',
             [$database, $table, $indexName]
