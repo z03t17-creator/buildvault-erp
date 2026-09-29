@@ -1,6 +1,7 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -48,7 +49,42 @@ export default function Index({ penalties }) {
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <DataTable minWidth="48rem">
+                        <MobileCardList>
+                            {list.map((p) => (
+                                <MobileCard
+                                    key={p.id}
+                                    href={route('penalties.show', p.id)}
+                                    title={p.worker?.name || '—'}
+                                    subtitle={p.reason || p.project?.name || '—'}
+                                    badge={<StatusBadge status={p.status} />}
+                                    rows={[
+                                        {
+                                            label: t('penalty_type'),
+                                            value: t(`penalty_type_${p.type}`) || p.type,
+                                        },
+                                        {
+                                            label: t('date'),
+                                            value: p.occurred_on || '—',
+                                        },
+                                        {
+                                            label: t('amount_iqd'),
+                                            money: true,
+                                            span: 2,
+                                            value: (
+                                                <MoneyAmount
+                                                    value={p.amount_iqd_display ?? p.amount_iqd}
+                                                    label={iqd}
+                                                    size="sm"
+                                                    showLabel={false}
+                                                    className="text-rose-700 dark:text-rose-300"
+                                                />
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            ))}
+                        </MobileCardList>
+                        <DataTable minWidth="48rem" hideOnMobile>
                             <thead>
                                 <tr>
                                     <Th>{t('worker')}</Th>
@@ -80,7 +116,7 @@ export default function Index({ penalties }) {
                                         <Td muted className="tabular-nums">
                                             {p.occurred_on || '—'}
                                         </Td>
-                                        <Td align="end">
+                                        <Td align="end" money>
                                             <MoneyAmount
                                                 value={p.amount_iqd_display ?? p.amount_iqd}
                                                 label={iqd}

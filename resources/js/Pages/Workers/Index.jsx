@@ -1,6 +1,7 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -84,7 +85,44 @@ export default function Index({ workers, filters, laborKinds }) {
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <DataTable minWidth="44rem" caption={t('people')}>
+                        <MobileCardList>
+                            {list.map((worker) => (
+                                <MobileCard
+                                    key={worker.id}
+                                    href={route('workers.show', worker.id)}
+                                    title={worker.name}
+                                    subtitle={worker.project?.name || nameLabel(worker)}
+                                    badge={<StatusBadge status={worker.labor_kind || 'unclassified'} />}
+                                    rows={[
+                                        {
+                                            label: t('monthly_salary_usd'),
+                                            money: true,
+                                            value: (
+                                                <MoneyAmount
+                                                    value={worker.monthly_salary_usd}
+                                                    label="USD"
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                            ),
+                                        },
+                                        {
+                                            label: t('monthly_salary_iqd'),
+                                            money: true,
+                                            value: (
+                                                <MoneyAmount
+                                                    value={worker.monthly_salary_iqd}
+                                                    label="IQD"
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            ))}
+                        </MobileCardList>
+                        <DataTable minWidth="44rem" caption={t('people')} hideOnMobile>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
@@ -110,10 +148,10 @@ export default function Index({ workers, filters, laborKinds }) {
                                             <StatusBadge status={worker.labor_kind || 'unclassified'} />
                                         </Td>
                                         <Td className="text-left">{worker.project?.name || '—'}</Td>
-                                        <Td align="end" className="font-mono tabular-nums">
+                                        <Td align="end" money>
                                             <MoneyAmount value={worker.monthly_salary_usd} label="USD" size="sm" showLabel={false} />
                                         </Td>
-                                        <Td align="end" className="font-mono tabular-nums">
+                                        <Td align="end" money>
                                             <MoneyAmount value={worker.monthly_salary_iqd} label="IQD" size="sm" showLabel={false} />
                                         </Td>
                                     </tr>

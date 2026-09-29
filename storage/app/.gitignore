@@ -3,4 +3,6 @@
 !public/
 !uploads/
 !backups/
+!imports/
+!imports/**
 !.gitignore

@@ -6,14 +6,27 @@ use RuntimeException;
 use ZipArchive;
 
 /**
- * Minimal XLSX reader for import templates (shared strings + inlineStr).
+ * Minimal XLSX reader (shared strings + inlineStr) — single or multi-sheet.
  */
 class SimpleXlsxReader
 {
     /**
+     * Read the first worksheet (sheet1.xml).
+     *
      * @return list<list<string>>
      */
     public function read(string $path): array
+    {
+        $sheets = $this->readAll($path);
+        $first = reset($sheets);
+
+        return $first !== false ? $first['rows'] : [];
+    }
+
+    /**
+     * @return list<array{name: string, rows: list<list<string>>}>
+     */
+    public function readAll(string $path): array
     {
         $zip = new ZipArchive;
         if ($zip->open($path) !== true) {
@@ -26,14 +39,78 @@ class SimpleXlsxReader
             $shared = $this->parseSharedStrings($sharedXml);
         }
 
-        $sheetXml = $zip->getFromName('xl/worksheets/sheet1.xml');
-        $zip->close();
+        $sheetMeta = $this->workbookSheets($zip);
+        $result = [];
 
-        if ($sheetXml === false) {
-            throw new RuntimeException('XLSX is missing sheet1.xml');
+        foreach ($sheetMeta as $meta) {
+            $sheetXml = $zip->getFromName($meta['path']);
+            if ($sheetXml === false) {
+                continue;
+            }
+            $result[] = [
+                'name' => $meta['name'],
+                'rows' => $this->parseSheet($sheetXml, $shared),
+            ];
         }
 
-        return $this->parseSheet($sheetXml, $shared);
+        $zip->close();
+
+        if ($result === []) {
+            throw new RuntimeException('XLSX has no readable worksheets');
+        }
+
+        return $result;
+    }
+
+    /**
+     * @return list<array{name: string, path: string}>
+     */
+    protected function workbookSheets(ZipArchive $zip): array
+    {
+        $workbook = $zip->getFromName('xl/workbook.xml');
+        $rels = $zip->getFromName('xl/_rels/workbook.xml.rels');
+        if ($workbook === false) {
+            return [['name' => 'Sheet1', 'path' => 'xl/worksheets/sheet1.xml']];
+        }
+
+        $ridToTarget = [];
+        if ($rels !== false) {
+            $relsDoc = new \DOMDocument;
+            $relsDoc->loadXML($rels);
+            foreach ($relsDoc->getElementsByTagName('Relationship') as $rel) {
+                $id = $rel->getAttribute('Id');
+                $target = str_replace('\\', '/', $rel->getAttribute('Target'));
+                if ($id === '' || $target === '') {
+                    continue;
+                }
+                // Targets in workbook.xml.rels are relative to xl/
+                if (str_starts_with($target, '/')) {
+                    $ridToTarget[$id] = ltrim($target, '/');
+                } else {
+                    $ridToTarget[$id] = 'xl/'.ltrim($target, './');
+                }
+            }
+        }
+
+        $doc = new \DOMDocument;
+        $doc->loadXML($workbook);
+        $sheets = [];
+        $index = 0;
+        foreach ($doc->getElementsByTagName('sheet') as $sheet) {
+            $index++;
+            $name = $sheet->getAttribute('name') ?: "Sheet{$index}";
+            $rid = $sheet->getAttributeNS(
+                'http://schemas.openxmlformats.org/officeDocument/2006/relationships',
+                'id'
+            );
+            if ($rid === '') {
+                $rid = $sheet->getAttribute('r:id');
+            }
+            $path = $ridToTarget[$rid] ?? "xl/worksheets/sheet{$index}.xml";
+            $sheets[] = ['name' => $name, 'path' => $path];
+        }
+
+        return $sheets !== [] ? $sheets : [['name' => 'Sheet1', 'path' => 'xl/worksheets/sheet1.xml']];
     }
 
     /**

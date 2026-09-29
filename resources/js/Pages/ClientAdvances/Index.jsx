@@ -1,6 +1,7 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -38,7 +39,48 @@ export default function Index({ advances }) {
                     <EmptyState title={t('client_advances')} description="No client advances yet." />
                 ) : (
                     <DataPanel padded={false}>
-                        <DataTable minWidth="48rem">
+                        <MobileCardList>
+                            {list.map((row) => (
+                                <MobileCard
+                                    key={row.id}
+                                    href={route('client-advances.show', row.id)}
+                                    title={row.client_name}
+                                    subtitle={row.project?.name || row.received_on}
+                                    badge={
+                                        (row.retention_holds || []).length > 0 ? (
+                                            <StatusBadge status="holding" />
+                                        ) : null
+                                    }
+                                    rows={[
+                                        {
+                                            label: 'USD',
+                                            money: true,
+                                            value: (
+                                                <MoneyAmount
+                                                    value={row.amount_usd}
+                                                    label="USD"
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                            ),
+                                        },
+                                        {
+                                            label: 'IQD',
+                                            money: true,
+                                            value: (
+                                                <MoneyAmount
+                                                    value={row.amount_iqd}
+                                                    label="IQD"
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                            ),
+                                        },
+                                    ]}
+                                />
+                            ))}
+                        </MobileCardList>
+                        <DataTable minWidth="48rem" hideOnMobile>
                             <thead>
                                 <tr>
                                     <Th>{t('date')}</Th>
@@ -64,10 +106,10 @@ export default function Index({ advances }) {
                                         </Td>
                                         <Td className="text-left">{row.project?.name || '—'}</Td>
                                         <Td align="center">{row.currency}</Td>
-                                        <Td align="end" className="font-mono tabular-nums">
+                                        <Td align="end" money>
                                             <MoneyAmount value={row.amount_usd} label="USD" size="sm" showLabel={false} />
                                         </Td>
-                                        <Td align="end" className="font-mono tabular-nums">
+                                        <Td align="end" money>
                                             <MoneyAmount value={row.amount_iqd} label="IQD" size="sm" showLabel={false} />
                                         </Td>
                                         <Td align="center">

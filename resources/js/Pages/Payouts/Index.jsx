@@ -1,6 +1,7 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -58,7 +59,44 @@ export default function Index({ payouts }) {
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <DataTable minWidth="40rem" caption={tr(t, 'payouts', 'Payouts')}>
+                        <MobileCardList>
+                            {list.map((p) => (
+                                <MobileCard
+                                    key={p.id}
+                                    href={route('payouts.show', p.id)}
+                                    title={`#${p.id}`}
+                                    subtitle={p.project?.name || p.category}
+                                    badge={<StatusBadge status={p.status} />}
+                                    rows={[
+                                        {
+                                            label: tr(t, 'category', 'Category'),
+                                            value: p.category,
+                                        },
+                                        {
+                                            label: tr(t, 'amount_iqd', `Amount (${iqd})`),
+                                            money: true,
+                                            value:
+                                                p.amount_iqd != null ? (
+                                                    <MoneyAmount
+                                                        value={p.amount_iqd}
+                                                        label={iqd}
+                                                        size="sm"
+                                                        showLabel={false}
+                                                    />
+                                                ) : (
+                                                    <MoneyAmount
+                                                        value={p.amount_usd}
+                                                        label={usd}
+                                                        size="sm"
+                                                        showLabel
+                                                    />
+                                                ),
+                                        },
+                                    ]}
+                                />
+                            ))}
+                        </MobileCardList>
+                        <DataTable minWidth="40rem" caption={tr(t, 'payouts', 'Payouts')} hideOnMobile>
                             <thead>
                                 <tr>
                                     <Th>{tr(t, 'id', 'ID')}</Th>
@@ -81,7 +119,7 @@ export default function Index({ payouts }) {
                                         </Td>
                                         <Td muted>{p.project?.name || '—'}</Td>
                                         <Td className="capitalize">{p.category}</Td>
-                                        <Td align="end">
+                                        <Td align="end" money>
                                             {p.amount_iqd != null ? (
                                                 <MoneyAmount
                                                     value={p.amount_iqd}

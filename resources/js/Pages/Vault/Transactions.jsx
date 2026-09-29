@@ -2,6 +2,7 @@ import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
 import FlashBanner from '@/Components/FlashBanner';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -126,84 +127,138 @@ export default function Transactions({
                             <EmptyState title={t('no_ledger_rows')} />
                         </div>
                     ) : (
-                        <DataTable minWidth="64rem" caption={t('vault_ledger')}>
-                            <thead>
-                                <tr>
-                                    <Th>{t('date')}</Th>
-                                    <Th>{t('description')}</Th>
-                                    <Th align="center">{t('direction')}</Th>
-                                    <Th align="end">{t('money_in')} USD</Th>
-                                    <Th align="end">{t('money_out')} USD</Th>
-                                    <Th align="end">{t('money_in')} IQD</Th>
-                                    <Th align="end">{t('money_out')} IQD</Th>
-                                    <Th>{t('project')}</Th>
-                                    {manage && <Th align="center">{t('actions')}</Th>}
-                                </tr>
-                            </thead>
-                            <tbody>
+                        <>
+                            <MobileCardList>
                                 {rows.map((row) => {
                                     const inUsd = row.direction === 'in' ? row.amount_usd : 0;
                                     const outUsd = row.direction === 'out' ? row.amount_usd : 0;
                                     const inIqd = row.direction === 'in' ? row.amount_iqd : 0;
                                     const outIqd = row.direction === 'out' ? row.amount_iqd : 0;
+                                    const primary =
+                                        inUsd || outUsd
+                                            ? { value: inUsd || outUsd, label: 'USD' }
+                                            : { value: inIqd || outIqd, label: 'IQD' };
                                     return (
-                                        <tr key={row.id}>
-                                            <Td className="whitespace-nowrap font-mono text-sm tabular-nums">
-                                                {row.date || '—'}
-                                            </Td>
-                                            <Td className="text-left max-w-xs truncate" title={row.description || ''}>
-                                                {row.description || typeLabel(row.type)}
-                                            </Td>
-                                            <Td align="center">
-                                                <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium">
-                                                    {row.direction === 'in'
-                                                        ? t('money_in')
-                                                        : row.direction === 'out'
-                                                          ? t('money_out')
-                                                          : '—'}
-                                                </span>
-                                            </Td>
-                                            <Td align="end" className="font-mono tabular-nums">
-                                                {inUsd ? <MoneyAmount value={inUsd} label="USD" size="sm" showLabel={false} /> : '—'}
-                                            </Td>
-                                            <Td align="end" className="font-mono tabular-nums">
-                                                {outUsd ? <MoneyAmount value={outUsd} label="USD" size="sm" showLabel={false} /> : '—'}
-                                            </Td>
-                                            <Td align="end" className="font-mono tabular-nums">
-                                                {inIqd ? <MoneyAmount value={inIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
-                                            </Td>
-                                            <Td align="end" className="font-mono tabular-nums">
-                                                {outIqd ? <MoneyAmount value={outIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
-                                            </Td>
-                                            <Td className="text-left">{row.project?.name || '—'}</Td>
-                                            {manage && (
-                                                <Td align="center">
-                                                    <div className="inline-flex gap-2">
-                                                        <Link
-                                                            href={route('vault.transactions.edit', row.id)}
-                                                            className="text-xs text-emerald-700 underline dark:text-emerald-400"
-                                                        >
-                                                            {t('edit')}
-                                                        </Link>
-                                                        <button
-                                                            type="button"
-                                                            className="text-xs text-rose-700 underline dark:text-rose-400"
-                                                            onClick={() => {
-                                                                if (confirm(t('confirm_soft_delete'))) {
-                                                                    router.delete(route('vault.transactions.destroy', row.id));
-                                                                }
-                                                            }}
-                                                        >
-                                                            {t('delete')}
-                                                        </button>
-                                                    </div>
-                                                </Td>
-                                            )}
-                                        </tr>
+                                        <MobileCard
+                                            key={row.id}
+                                            href={
+                                                manage
+                                                    ? route('vault.transactions.edit', row.id)
+                                                    : undefined
+                                            }
+                                            title={row.description || typeLabel(row.type)}
+                                            subtitle={`${row.date || '—'} · ${
+                                                row.direction === 'in'
+                                                    ? t('money_in')
+                                                    : row.direction === 'out'
+                                                      ? t('money_out')
+                                                      : '—'
+                                            }`}
+                                            rows={[
+                                                {
+                                                    label: primary.label,
+                                                    money: true,
+                                                    span: 2,
+                                                    value: primary.value ? (
+                                                        <MoneyAmount
+                                                            value={primary.value}
+                                                            label={primary.label}
+                                                            size="sm"
+                                                            showLabel={false}
+                                                        />
+                                                    ) : (
+                                                        '—'
+                                                    ),
+                                                },
+                                                {
+                                                    label: t('project'),
+                                                    span: 2,
+                                                    value: row.project?.name || '—',
+                                                },
+                                            ]}
+                                        />
                                     );
                                 })}
-                            </tbody>
-                        </DataTable>
+                            </MobileCardList>
+                            <DataTable minWidth="64rem" caption={t('vault_ledger')} hideOnMobile>
+                                <thead>
+                                    <tr>
+                                        <Th>{t('date')}</Th>
+                                        <Th>{t('description')}</Th>
+                                        <Th align="center">{t('direction')}</Th>
+                                        <Th align="end">{t('money_in')} USD</Th>
+                                        <Th align="end">{t('money_out')} USD</Th>
+                                        <Th align="end">{t('money_in')} IQD</Th>
+                                        <Th align="end">{t('money_out')} IQD</Th>
+                                        <Th>{t('project')}</Th>
+                                        {manage && <Th align="center">{t('actions')}</Th>}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {rows.map((row) => {
+                                        const inUsd = row.direction === 'in' ? row.amount_usd : 0;
+                                        const outUsd = row.direction === 'out' ? row.amount_usd : 0;
+                                        const inIqd = row.direction === 'in' ? row.amount_iqd : 0;
+                                        const outIqd = row.direction === 'out' ? row.amount_iqd : 0;
+                                        return (
+                                            <tr key={row.id}>
+                                                <Td className="whitespace-nowrap font-mono text-sm tabular-nums">
+                                                    {row.date || '—'}
+                                                </Td>
+                                                <Td className="text-left max-w-xs truncate" title={row.description || ''}>
+                                                    {row.description || typeLabel(row.type)}
+                                                </Td>
+                                                <Td align="center">
+                                                    <span className="inline-flex rounded px-2 py-0.5 text-xs font-medium">
+                                                        {row.direction === 'in'
+                                                            ? t('money_in')
+                                                            : row.direction === 'out'
+                                                              ? t('money_out')
+                                                              : '—'}
+                                                    </span>
+                                                </Td>
+                                                <Td align="end" money>
+                                                    {inUsd ? <MoneyAmount value={inUsd} label="USD" size="sm" showLabel={false} /> : '—'}
+                                                </Td>
+                                                <Td align="end" money>
+                                                    {outUsd ? <MoneyAmount value={outUsd} label="USD" size="sm" showLabel={false} /> : '—'}
+                                                </Td>
+                                                <Td align="end" money>
+                                                    {inIqd ? <MoneyAmount value={inIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
+                                                </Td>
+                                                <Td align="end" money>
+                                                    {outIqd ? <MoneyAmount value={outIqd} label="IQD" size="sm" showLabel={false} /> : '—'}
+                                                </Td>
+                                                <Td className="text-left">{row.project?.name || '—'}</Td>
+                                                {manage && (
+                                                    <Td align="center">
+                                                        <div className="inline-flex gap-2">
+                                                            <Link
+                                                                href={route('vault.transactions.edit', row.id)}
+                                                                className="text-xs text-emerald-700 underline dark:text-emerald-400"
+                                                            >
+                                                                {t('edit')}
+                                                            </Link>
+                                                            <button
+                                                                type="button"
+                                                                className="text-xs text-rose-700 underline dark:text-rose-400"
+                                                                onClick={() => {
+                                                                    if (confirm(t('confirm_soft_delete'))) {
+                                                                        router.delete(route('vault.transactions.destroy', row.id));
+                                                                    }
+                                                                }}
+                                                            >
+                                                                {t('delete')}
+                                                            </button>
+                                                        </div>
+                                                    </Td>
+                                                )}
+                                            </tr>
+                                        );
+                                    })}
+                                </tbody>
+                            </DataTable>
+                        </>
                     )}
                 </DataPanel>
 
