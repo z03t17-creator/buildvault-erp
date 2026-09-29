@@ -920,5 +920,18 @@
     "client_show_retention_hint": "قفڵی دڵنیایی ١٠٪ بۆ شەش مانگ کاتێک لە کاتی تۆماردا قفڵ کرا.",
     "client_show_no_retention": "قفڵی ١٠٪ لەسەر ئەم پارەدانە نییە",
     "client_show_no_retention_hint": "هەموو بڕەکە وەک بەردەست ژمێردرا لە کاتی تۆماردا.",
-    "client_show_hold_dates": "قفڵ :start → بەسەرچوون :end"
+    "client_show_hold_dates": "قفڵ :start → بەسەرچوون :end",
+    "projects_page_hint": "شوێن و تاوەر و کاری شوێنی — نە قاسە و نە مووچە.",
+    "projects_overview": "سەیری شوێنەکان",
+    "projects_overview_hint": ":count شوێن — بودجەی دۆلار و دینار جیا دەمێننەوە.",
+    "projects_stat_active_hint": "شوێنی بیناکاری چالاک",
+    "projects_stat_planning_hint": "هێشتا دەستی پێنەکراوە",
+    "projects_stat_towers_hint": ":people کەس لەسەر شوێنەکان",
+    "projects_stat_people_hint": "ستاف و کرێکار لەسەر شوێنەکان",
+    "projects_budget_usd": "بودجەی دۆلار",
+    "projects_budget_iqd": "بودجەی دینار",
+    "projects_empty_title": "هێشتا پڕۆژە نییە",
+    "projects_empty_hint": "شوێنێک دروست بکە بۆ تاوەر و نهۆم و تۆڕی شوێنی.",
+    "projects_table_title": "هەموو شوێنەکان",
+    "projects_table_hint": "شوێنێک بکەرەوە بۆ تاوەر و خەڵک و پێشکەوتنی شوێنی."
 }

@@ -920,5 +920,18 @@
     "client_show_retention_hint": "حجز تأمين ١٠٪ لستة أشهر عند التفعيل وقت التسجيل.",
     "client_show_no_retention": "لا حجز ١٠٪ على هذا الدفع",
     "client_show_no_retention_hint": "المبلغ كاملاً حُسب متاحاً عند التسجيل.",
-    "client_show_hold_dates": "الحجز :start → الاستحقاق :end"
+    "client_show_hold_dates": "الحجز :start → الاستحقاق :end",
+    "projects_page_hint": "مواقع وأبراج والعمل المكاني — ليست القاصة أو الرواتب.",
+    "projects_overview": "نظرة على المواقع",
+    "projects_overview_hint": ":count مواقع — ميزانيات الدولار والدينار منفصلة.",
+    "projects_stat_active_hint": "مواقع قيد التنفيذ",
+    "projects_stat_planning_hint": "لم تبدأ بعد",
+    "projects_stat_towers_hint": ":people أشخاص مرتبطون عبر المواقع",
+    "projects_stat_people_hint": "طاقم وعمال على المواقع",
+    "projects_budget_usd": "ميزانية دولار",
+    "projects_budget_iqd": "ميزانية دينار",
+    "projects_empty_title": "لا مشاريع بعد",
+    "projects_empty_hint": "أنشئ موقعاً لفتح الأبراج والطوابق والشبكة المكانية.",
+    "projects_table_title": "كل المواقع",
+    "projects_table_hint": "افتح موقعاً للأبراج والأشخاص والتقدم المكاني."
 }

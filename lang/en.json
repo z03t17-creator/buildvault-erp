@@ -920,5 +920,18 @@
     "client_show_retention_hint": "10% insurance hold for six months when locked at record time.",
     "client_show_no_retention": "No 10% lock on this payment",
     "client_show_no_retention_hint": "The full amount counted as available when recorded.",
-    "client_show_hold_dates": "Hold :start → matures :end"
+    "client_show_hold_dates": "Hold :start → matures :end",
+    "projects_page_hint": "Sites, towers, and spatial work — not vault or payroll.",
+    "projects_overview": "Sites overview",
+    "projects_overview_hint": ":count sites — USD and IQD budgets stay separate.",
+    "projects_stat_active_hint": "Live construction sites",
+    "projects_stat_planning_hint": "Not started yet",
+    "projects_stat_towers_hint": ":people people linked across sites",
+    "projects_stat_people_hint": "Staff and workers on sites",
+    "projects_budget_usd": "Budget USD",
+    "projects_budget_iqd": "Budget IQD",
+    "projects_empty_title": "No projects yet",
+    "projects_empty_hint": "Create a site to open towers, floors, and the spatial grid.",
+    "projects_table_title": "All sites",
+    "projects_table_hint": "Open a site for towers, people, and spatial progress."
 }
