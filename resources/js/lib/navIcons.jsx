@@ -33,6 +33,8 @@ const NAV_ICON_MAP = {
     stockIn: 'fi-rr-box-open',
     stockOut: 'fi-rr-box',
     stockMovements: 'fi-rr-exchange',
+    moneyIn: 'fi-rr-arrow-small-down',
+    moneyOut: 'fi-rr-arrow-small-up',
 };
 
 const TONE_CHIP = {

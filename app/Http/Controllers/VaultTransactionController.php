@@ -76,6 +76,9 @@ class VaultTransactionController extends Controller
 
         return Inertia::render('Vault/LedgerForm', [
             'mode' => 'create',
+            'transaction' => [
+                'direction' => request()->query('direction') === 'out' ? 'out' : 'in',
+            ],
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'currencies' => DualCurrency::CURRENCIES,
             'inflowTypes' => Transaction::CASH_INFLOW_TYPES,
