@@ -180,5 +180,21 @@ class DemoStockSeeder extends Seeder
             'reference' => 'OUT-DEMO-REB-1',
             'notes' => self::MARKERS[1].' OUT',
         ], $actor);
+
+        // Cross-project attribution: small paint issue to Site B.
+        $projectB = Project::query()->where('name', DemoHierarchySeeder::PROJECT_B_NAME)->first();
+        if ($projectB) {
+            $service->stockOut([
+                'stock_item_id' => $paint->id,
+                'quantity' => 1,
+                'moved_on' => now()->toDateString(),
+                'project_id' => $projectB->id,
+                'receiver' => 'Site B prep crew',
+                'issuer' => $actor?->name ?? 'Stock Manager',
+                'purpose' => 'Sample boards',
+                'reference' => 'OUT-DEMO-PNT-B1',
+                'notes' => self::MARKERS[2].' OUT site-B',
+            ], $actor);
+        }
     }
 }

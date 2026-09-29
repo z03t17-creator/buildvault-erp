@@ -28,23 +28,15 @@ class DatabaseSeeder extends Seeder
             return;
         }
 
-        // Ordered once — demo seeders must not re-$this->call each other.
         $this->call([
-            DemoHierarchySeeder::class,
-            DemoUsersSeeder::class,
-            DemoInsuranceSeeder::class,
-            DemoExpensesSeeder::class,
-            DemoAdvancesSeeder::class,
-            DemoPenaltiesSeeder::class,
-            DemoProductionSeeder::class,
-            DemoStockSeeder::class,
+            DemoSeeder::class,
         ]);
     }
 
     /**
      * Demo seed is for local/dev/testing. Production (Render) skips unless SEED_DEMO=true.
      */
-    protected function shouldSeedDemo(): bool
+    public function shouldSeedDemo(): bool
     {
         $flag = env('SEED_DEMO');
 

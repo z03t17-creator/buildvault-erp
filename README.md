@@ -26,6 +26,8 @@ composer install
 cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite   # if using SQLite
+# Slim boot (roles + admin + vault only). For full demo sample data:
+#   SEED_DEMO=true php artisan migrate --seed
 php artisan migrate --seed
 php artisan storage:link   # public avatars → storage/app/public/uploads/workers
 npm install
@@ -33,7 +35,9 @@ npm run build
 php artisan serve
 ```
 
-- Login: `admin@zhako.test` / `password` (dev Super Admin — see [docs/INSTALL.md](docs/INSTALL.md))
+- Login (core): `admin@zhako.test` / `password`
+- Full demo roles (`SEED_DEMO=true`): `boss@zhako.test`, `accountant@zhako.test`, `stock@zhako.test` — all `/ password`
+- See [docs/INSTALL.md](docs/INSTALL.md)
 - Full local setup: [docs/INSTALL.md](docs/INSTALL.md)
 - SiteBunker deploy: [docs/DEPLOY.md](docs/DEPLOY.md)
 - **Public demo (Render):** [docs/RENDER.md](docs/RENDER.md) — `render.yaml` + Docker → `*.onrender.com`
