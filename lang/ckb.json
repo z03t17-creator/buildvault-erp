@@ -699,7 +699,7 @@
     "hold": "ڕاگرتن",
     "pay_ability_notes": "تێبینی توانای پارەدان",
     "client_name": "ناوی کڕیار",
-    "new_client_advance": "پێشەکی کڕیاری نوێ",
+    "new_client_advance": "تۆماری پارەی کڕیار",
     "lock_retention": "قوفڵکردنی ١٠٪ بۆ ٦ مانگ",
     "villa_no": "ژمارەی ڤێلا",
     "fine_amount": "بڕی غەرامە",
@@ -880,5 +880,15 @@
     "validation_amount_required": "بڕێک بنووسە کە لە سفر گەورەتر بێت.",
     "validation_description_required": "وەسفێکی کورت بنووسە.",
     "validation_date_required": "بەرواری دروست بنووسە وەک YYYY-MM-DD.",
-    "validation_currency_required": "USD یان IQD هەڵبژێرە."
+    "validation_currency_required": "USD یان IQD هەڵبژێرە.",
+    "client_advances_page_hint": "پارەی کڕیاری بینا بۆ ژاکۆ — نە پێشەکی ستاف یان کرێکار.",
+    "client_advances_empty_title": "هێشتا پێشەکی کڕیار نییە",
+    "client_advances_empty_hint": "کاتێک کڕیاری بینا پارە دەدات بە ژاکۆ، لێرە تۆماری بکە. دەتوانرێت ١٠٪ بۆ ٦ مانگ قفڵ بکرێت.",
+    "client_advances_totals": "پارەی هاتووی کڕیار",
+    "client_advances_totals_hint": ":count تۆمار · :locked لەگەڵ قفڵی ١٠٪ — USD و IQD جیا.",
+    "client_money_in": "پارەی هاتووی کڕیار",
+    "client_advances_table_title": "پارەدانی کڕیار",
+    "client_advances_table_hint": "هەر ڕیزێک تەنها یەک دراو.",
+    "client_retention_col": "قفڵی ١٠٪",
+    "client_retention_locked": "قفڵکراو"
 }

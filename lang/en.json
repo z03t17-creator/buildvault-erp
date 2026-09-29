@@ -700,7 +700,7 @@
     "hold": "Hold",
     "pay_ability_notes": "Ability-to-pay notes",
     "client_name": "Client name",
-    "new_client_advance": "New client advance",
+    "new_client_advance": "Record client money",
     "lock_retention": "Lock 10% for 6 months",
     "villa_no": "Villa No",
     "fine_amount": "Fine Amount",
@@ -880,5 +880,15 @@
     "validation_amount_required": "Enter an amount greater than zero.",
     "validation_description_required": "Add a short description.",
     "validation_date_required": "Enter a valid date as YYYY-MM-DD.",
-    "validation_currency_required": "Choose USD or IQD."
+    "validation_currency_required": "Choose USD or IQD.",
+    "client_advances_page_hint": "Building-client money into Zhako — not staff/worker advances.",
+    "client_advances_empty_title": "No client advances yet",
+    "client_advances_empty_hint": "When a building client pays Zhako, record it here. 10% can lock for 6 months.",
+    "client_advances_totals": "Client money in",
+    "client_advances_totals_hint": ":count records · :locked with 10% lock — USD and IQD separate.",
+    "client_money_in": "Client money in",
+    "client_advances_table_title": "Client payments",
+    "client_advances_table_hint": "Each row is one currency only.",
+    "client_retention_col": "10% lock",
+    "client_retention_locked": "Locked"
 }
