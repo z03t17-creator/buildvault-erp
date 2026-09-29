@@ -191,7 +191,9 @@ export default function Index({ advances }) {
                                                             className="text-sm"
                                                         />
                                                     </span>
-                                                    {row.received_on || '—'}
+                                                    {row.received_on
+                                                        ? String(row.received_on).slice(0, 10)
+                                                        : '—'}
                                                 </span>
                                             </Td>
                                             <Td>
