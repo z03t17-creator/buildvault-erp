@@ -124,6 +124,10 @@ class RoleAccessPhase3Test extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->where('roleHome', Roles::BOSS_CONTRACTOR)
                 ->has('summary.available_iqd')
+                ->has('summary.available_usd')
+                ->has('summary.charts')
+                ->has('summary.unclassified_people')
+                ->missing('summary.workbook_bundled')
                 ->where('auth.role', Roles::BOSS_CONTRACTOR)
             );
     }

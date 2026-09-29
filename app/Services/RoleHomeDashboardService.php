@@ -22,12 +22,10 @@ use Database\Seeders\VaultSeeder;
 class RoleHomeDashboardService
 {
     public function __construct(
-        private readonly ExchangeRateService $fx,
         private readonly LiquidityService $liquidity,
         private readonly StockService $stock,
         private readonly VaultLedgerService $ledger,
         private readonly MonthlySettlementService $settlements,
-        private readonly ProjectFinancialService $projectFinancials,
     ) {}
 
     /**
@@ -45,14 +43,14 @@ class RoleHomeDashboardService
     }
 
     /**
+     * Quiet home shared by Super Admin + Boss: available cash, module charts, classify stripe.
+     *
      * @return array<string, mixed>
      */
-    private function superAdmin(): array
+    private function quietHomeCore(): array
     {
         $vault = $this->zhakoVault();
         $balances = $vault ? $this->ledger->balances($vault) : null;
-        $month = now()->format('Y-m');
-
         $spend = $this->spendMixByCurrency($vault?->id);
 
         $unclassifiedPeople = \App\Models\Worker::query()
@@ -62,10 +60,8 @@ class RoleHomeDashboardService
             })
             ->count();
 
-        $bundledWorkbook = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
-
         return [
-            'year_month' => $month,
+            'year_month' => now()->format('Y-m'),
             'available_iqd' => $balances['available_iqd'] ?? 0.0,
             'available_usd' => $balances['available_usd'] ?? 0.0,
             'reserved_iqd' => $balances['reserved_iqd'] ?? 0.0,
@@ -99,6 +95,18 @@ class RoleHomeDashboardService
             'unclassified_people' => $unclassifiedPeople,
             'people' => \App\Models\Worker::query()->count(),
             'projects' => Project::query()->count(),
+        ];
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function superAdmin(): array
+    {
+        $bundledWorkbook = base_path('resources/imports/samples/hsabati-mayorca-zhako.xlsx');
+
+        return [
+            ...$this->quietHomeCore(),
             'workbook_bundled' => is_file($bundledWorkbook),
             'workbook_bytes' => is_file($bundledWorkbook) ? filesize($bundledWorkbook) : null,
         ];
@@ -140,73 +148,14 @@ class RoleHomeDashboardService
     }
 
     /**
+     * Boss / Contractor home — same quiet Available Cash + boxes + charts as Super Admin.
+     * No Super-Admin-only workbook / Users / Mayorca / backups / audit payload.
+     *
      * @return array<string, mixed>
      */
     private function boss(): array
     {
-        $vault = $this->zhakoVault();
-        $month = now()->format('Y-m');
-        $settlement = $vault
-            ? $this->settlements->preview($month, null, $vault)
-            : null;
-
-        $balances = $vault ? $this->ledger->balances($vault) : null;
-
-        $moneyReceived = $settlement['money_received_iqd'] ?? $this->sumTypes(
-            Transaction::MONEY_RECEIVED_TYPES,
-            $vault?->id,
-        );
-        $payroll = $settlement['payroll_iqd'] ?? $this->sumTypes([Transaction::TYPE_PAYROLL], $vault?->id);
-        $advances = $settlement['employee_advances_iqd'] ?? $this->sumTypes([Transaction::TYPE_ADVANCE], $vault?->id);
-        $insurance = $settlement['reserved_insurance_iqd']
-            ?? ($balances['reserved_iqd'] ?? 0.0);
-        $projectExpenses = $settlement['project_expenses_iqd'] ?? $this->sumTypes([Transaction::TYPE_EXPENSE], $vault?->id);
-        $otherExpenses = $settlement['other_expenses_iqd'] ?? 0.0;
-        $materialSpend = $this->totalMaterialSpendIqd();
-
-        $spent = $settlement
-            ? (float) $settlement['month_outflows_iqd']
-            : round($projectExpenses + $payroll + $advances + $otherExpenses, 2);
-
-        $projectCards = Project::query()
-            ->orderBy('name')
-            ->limit(8)
-            ->get()
-            ->map(function (Project $project) {
-                $fin = $this->projectFinancials->summary($project);
-
-                return [
-                    'id' => $project->id,
-                    'name' => $project->name,
-                    'status' => $project->status,
-                    'money_received_iqd' => $fin['money_received_iqd'],
-                    'material_cost_iqd' => $fin['material_cost_iqd'],
-                    'payroll_cost_iqd' => $fin['payroll_cost_iqd'],
-                    'project_expenses_iqd' => $fin['project_expenses_iqd'],
-                    'net_position_iqd' => $fin['net_position_iqd'],
-                    'contract_value_iqd' => $fin['contract_value_iqd'],
-                ];
-            })
-            ->values()
-            ->all();
-
-        return [
-            'year_month' => $month,
-            'money_received_iqd' => round((float) $moneyReceived, 2),
-            'money_spent_iqd' => round((float) $spent, 2),
-            'vault_balance_iqd' => $balances['current_iqd'] ?? null,
-            'available_iqd' => $balances['available_iqd'] ?? null,
-            'reserved_insurance_iqd' => round((float) $insurance, 2),
-            'pending_payouts_iqd' => $balances['pending_iqd'] ?? null,
-            'payroll_totals_iqd' => round((float) $payroll, 2),
-            'advances_iqd' => round((float) $advances, 2),
-            'stock_material_spend_iqd' => round((float) $materialSpend, 2),
-            'project_expenses_iqd' => round((float) $projectExpenses, 2),
-            'projects' => count($projectCards),
-            'project_cards' => $projectCards,
-            'workers' => \App\Models\Worker::query()->count(),
-            'pending_payouts_count' => Payout::query()->where('status', Payout::STATUS_PENDING)->count(),
-        ];
+        return $this->quietHomeCore();
     }
 
     /**
@@ -333,29 +282,6 @@ class RoleHomeDashboardService
             'by_category' => $byCategory,
             'recent_movements' => $recent,
         ];
-    }
-
-    private function totalMaterialSpendIqd(): float
-    {
-        return round((float) \App\Models\StockMovement::query()
-            ->where('type', \App\Models\StockMovement::TYPE_OUT)
-            ->selectRaw('COALESCE(SUM(quantity * COALESCE(purchase_price_iqd, 0)), 0) as total')
-            ->value('total'), 2);
-    }
-
-    /**
-     * @param  list<string>  $types
-     */
-    private function sumTypes(array $types, ?int $vaultId): float
-    {
-        if (! $vaultId) {
-            return 0.0;
-        }
-
-        return round((float) Transaction::query()
-            ->forVault($vaultId)
-            ->whereIn('type', $types)
-            ->sum('amount_iqd'), 2);
     }
 
     private function zhakoVault(): ?Vault

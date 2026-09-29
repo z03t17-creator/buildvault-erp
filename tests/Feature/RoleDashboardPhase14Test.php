@@ -8,7 +8,6 @@ use App\Models\Payout;
 use App\Models\Project;
 use App\Models\StockItem;
 use App\Models\StockMovement;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Vault;
 use App\Models\Worker;
@@ -69,25 +68,13 @@ class RoleDashboardPhase14Test extends TestCase
             );
     }
 
-    public function test_boss_dashboard_props_are_financial_only(): void
+    public function test_boss_dashboard_props_include_available_cash_charts_and_modules(): void
     {
         $boss = User::query()->where('email', DemoUsersSeeder::BOSS_EMAIL)->firstOrFail();
-        $vault = Vault::query()->where('name', VaultSeeder::NAME)->firstOrFail();
-        $project = Project::query()->create([
-            'name' => 'Profit Site',
-            'contract_value_iqd' => 10_000_000,
-        ]);
 
-        Transaction::query()->create([
-            'vault_id' => $vault->id,
-            'project_id' => $project->id,
-            'type' => Transaction::TYPE_MONEY_RECEIVED,
-            'amount_iqd' => 2_500_000,
-            'amount_usd' => 0,
-            'exchange_rate' => 1310,
-            'occurred_on' => now()->toDateString(),
-            'description' => 'Client receipt',
-            'created_by' => $boss->id,
+        Worker::query()->create([
+            'name' => 'Boss Unclassified Person',
+            'labor_kind' => Worker::LABOR_KIND_UNCLASSIFIED,
         ]);
 
         $this->actingAs($boss)
@@ -96,17 +83,21 @@ class RoleDashboardPhase14Test extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Dashboard')
                 ->where('roleHome', Roles::BOSS_CONTRACTOR)
-                ->has('summary.money_received_iqd')
-                ->has('summary.money_spent_iqd')
                 ->has('summary.available_iqd')
-                ->has('summary.reserved_insurance_iqd')
-                ->has('summary.payroll_totals_iqd')
-                ->has('summary.advances_iqd')
-                ->has('summary.stock_material_spend_iqd')
-                ->has('summary.project_cards')
-                ->where('summary.project_cards.0.name', 'Profit Site')
+                ->has('summary.available_usd')
+                ->has('summary.charts.available')
+                ->has('summary.charts.spend_usd')
+                ->has('summary.charts.spend_iqd')
+                ->has('summary.charts.locked_free.usd')
+                ->has('summary.charts.locked_free.iqd')
+                ->has('summary.unclassified_people')
+                ->where('summary.unclassified_people', 1)
+                ->missing('summary.project_cards')
+                ->missing('summary.money_received_iqd')
                 ->missing('summary.users_active')
                 ->missing('summary.last_logins')
+                ->missing('summary.health')
+                ->missing('summary.workbook_bundled')
                 ->missing('summary.by_category')
             );
     }
@@ -230,12 +221,12 @@ class RoleDashboardPhase14Test extends TestCase
                 'absent' => ['by_category', 'available_payment_iqd', 'users_active', 'health', 'last_logins'],
             ],
             DemoUsersSeeder::BOSS_EMAIL => [
-                'present' => ['project_cards', 'money_received_iqd'],
-                'absent' => ['users_active', 'by_category', 'recent_transactions'],
+                'present' => ['available_usd', 'available_iqd', 'charts', 'unclassified_people'],
+                'absent' => ['users_active', 'by_category', 'recent_transactions', 'project_cards', 'workbook_bundled', 'health', 'last_logins'],
             ],
             DemoUsersSeeder::ACCOUNTANT_EMAIL => [
                 'present' => ['available_payment_iqd', 'recent_transactions'],
-                'absent' => ['users_active', 'by_category', 'project_cards'],
+                'absent' => ['users_active', 'by_category', 'project_cards', 'charts'],
             ],
             DemoUsersSeeder::STOCK_EMAIL => [
                 'present' => ['by_category', 'recent_movements'],

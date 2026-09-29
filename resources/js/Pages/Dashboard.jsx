@@ -146,7 +146,7 @@ function DualBarChart({ title, subtitle, bars, ariaLabel }) {
     );
 }
 
-function SuperAdminHome({ summary, t }) {
+function QuietRoleHome({ summary, t }) {
     const usd = t('USD');
     const iqd = t('IQD');
     const charts = summary?.charts || {};
@@ -384,117 +384,12 @@ function SuperAdminHome({ summary, t }) {
     );
 }
 
-function BossHome({ summary, t, iqd }) {
-    const cards = summary?.project_cards || [];
+function SuperAdminHome({ summary, t }) {
+    return <QuietRoleHome summary={summary} t={t} />;
+}
 
-    return (
-        <div className="space-y-6">
-            <DataPanel
-                title={t('role_home_boss_title')}
-                subtitle={t('role_home_boss_hint')}
-                actions={
-                    <div className="flex flex-wrap gap-2">
-                        <Shortcut href={route('dashboards.vault')} label={t('open_zhako_vault')} />
-                        <Shortcut href={route('settlements.index')} label={t('settlements')} />
-                        <Shortcut href={route('projects.index')} label={t('projects')} />
-                        <Shortcut href={route('reports.index')} label={t('reports')} />
-                    </div>
-                }
-            >
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                    <MoneyStat label={t('money_received')} value={summary?.money_received_iqd} iqd={iqd} accent />
-                    <MoneyStat label={t('role_stat_money_spent')} value={summary?.money_spent_iqd} iqd={iqd} />
-                    <MoneyStat label={t('role_stat_available')} value={summary?.available_iqd} iqd={iqd} accent />
-                    <MoneyStat
-                        label={t('insurance_reserve')}
-                        value={summary?.reserved_insurance_iqd}
-                        iqd={iqd}
-                    />
-                    <MoneyStat label={t('balance_iqd')} value={summary?.vault_balance_iqd} iqd={iqd} />
-                    <MoneyStat label={t('payroll_cost')} value={summary?.payroll_totals_iqd} iqd={iqd} />
-                    <MoneyStat label={t('role_stat_advances')} value={summary?.advances_iqd} iqd={iqd} />
-                    <MoneyStat
-                        label={t('material_cost')}
-                        value={summary?.stock_material_spend_iqd}
-                        iqd={iqd}
-                    />
-                </div>
-            </DataPanel>
-
-            <DataPanel
-                title={t('role_panel_project_profit')}
-                subtitle={t('role_panel_project_profit_hint')}
-            >
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-                    {cards.map((p) => (
-                        <Link
-                            key={p.id}
-                            href={route('projects.show', p.id)}
-                            className="block rounded-lg border border-slate-200/80 bg-slate-50/60 p-4 transition hover:border-emerald-400/60 dark:border-slate-700 dark:bg-slate-950/40 dark:hover:border-emerald-700/50"
-                        >
-                            <div className="font-display text-base font-semibold text-slate-900 dark:text-white">
-                                {p.name}
-                            </div>
-                            <dl className="mt-3 space-y-1.5 text-sm">
-                                <div className="flex items-center justify-between gap-3">
-                                    <dt className="text-slate-500">{t('money_received')}</dt>
-                                    <dd>
-                                        <MoneyAmount
-                                            value={p.money_received_iqd}
-                                            label={iqd}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                    </dd>
-                                </div>
-                                <div className="flex items-center justify-between gap-3">
-                                    <dt className="text-slate-500">{t('material_cost')}</dt>
-                                    <dd>
-                                        <MoneyAmount
-                                            value={p.material_cost_iqd}
-                                            label={iqd}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                    </dd>
-                                </div>
-                                <div className="flex items-center justify-between gap-3">
-                                    <dt className="text-slate-500">{t('payroll_cost')}</dt>
-                                    <dd>
-                                        <MoneyAmount
-                                            value={p.payroll_cost_iqd}
-                                            label={iqd}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                    </dd>
-                                </div>
-                                <div className="flex items-center justify-between gap-3 border-t border-slate-200/80 pt-2 dark:border-slate-700">
-                                    <dt className="font-medium text-slate-700 dark:text-slate-200">
-                                        {t('net_position')}
-                                    </dt>
-                                    <dd>
-                                        <MoneyAmount
-                                            value={p.net_position_iqd}
-                                            label={iqd}
-                                            size="md"
-                                            showLabel={false}
-                                            accent={Number(p.net_position_iqd) >= 0}
-                                        />
-                                    </dd>
-                                </div>
-                            </dl>
-                        </Link>
-                    ))}
-                    {!cards.length && (
-                        <p className="text-sm text-slate-500 dark:text-slate-400 sm:col-span-2">
-                            {t('role_empty_projects')}
-                        </p>
-                    )}
-                </div>
-            </DataPanel>
-        </div>
-    );
+function BossHome({ summary, t }) {
+    return <QuietRoleHome summary={summary} t={t} />;
 }
 
 function AccountantHome({ summary, t, iqd }) {
@@ -787,7 +682,7 @@ export default function Dashboard({ maturedHolds, roleHome, summary }) {
 
                 {role === 'Super Admin' && <SuperAdminHome summary={summary} t={t} />}
                 {role === 'Boss / Contractor' && (
-                    <BossHome summary={summary} t={t} iqd={iqd} />
+                    <BossHome summary={summary} t={t} />
                 )}
                 {role === 'Accountant' && (
                     <AccountantHome summary={summary} t={t} iqd={iqd} />
