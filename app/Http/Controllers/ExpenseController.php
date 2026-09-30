@@ -25,19 +25,69 @@ class ExpenseController extends Controller
         private readonly LiquidityService $liquidity,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Expense::class);
+
+        $category = $request->string('category')->toString();
+        $status = $request->string('status')->toString();
+
+        if ($category !== '' && ! in_array($category, Expense::CATEGORIES, true)) {
+            $category = '';
+        }
+        if ($status !== '' && ! in_array($status, Expense::STATUSES, true)) {
+            $status = '';
+        }
+
+        $base = Expense::query();
+
+        $statusCounts = (clone $base)
+            ->selectRaw('approval_status, count(*) as aggregate')
+            ->groupBy('approval_status')
+            ->pluck('aggregate', 'approval_status');
+
+        $totalsQuery = clone $base;
+        if ($category !== '') {
+            $totalsQuery->where('category', $category);
+        }
+        if ($status !== '') {
+            $totalsQuery->where('approval_status', $status);
+        }
+
+        $spendTotals = [
+            'amount_usd' => (float) (clone $totalsQuery)->sum('amount_usd'),
+            'amount_iqd' => (float) (clone $totalsQuery)->sum('amount_iqd'),
+            'count' => (int) (clone $totalsQuery)->count(),
+        ];
 
         $query = Expense::query()
             ->with(['project:id,name', 'creator:id,name', 'document:id,path,original_name,mime_type'])
             ->orderByDesc('expense_date')
             ->orderByDesc('id');
 
+        if ($category !== '') {
+            $query->where('category', $category);
+        }
+        if ($status !== '') {
+            $query->where('approval_status', $status);
+        }
+
         return Inertia::render('Expenses/Index', [
             'expenses' => $query->get(),
             'categories' => Expense::CATEGORIES,
             'statuses' => Expense::STATUSES,
+            'filters' => [
+                'category' => $category,
+                'status' => $status,
+            ],
+            'statusCounts' => [
+                'all' => (int) $base->count(),
+                'pending' => (int) ($statusCounts[Expense::STATUS_PENDING] ?? 0),
+                'held' => (int) ($statusCounts[Expense::STATUS_HELD] ?? 0),
+                'approved' => (int) ($statusCounts[Expense::STATUS_APPROVED] ?? 0),
+                'rejected' => (int) ($statusCounts[Expense::STATUS_REJECTED] ?? 0),
+            ],
+            'spendTotals' => $spendTotals,
         ]);
     }
 
