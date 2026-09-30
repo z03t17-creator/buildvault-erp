@@ -47,8 +47,19 @@ class WorkerController extends Controller
             ->groupBy('labor_kind')
             ->pluck('aggregate', 'labor_kind');
 
+        $workers = $query->get();
+
+        $salaryTotals = [
+            'monthly_salary_usd' => (float) Worker::query()
+                ->where('labor_kind', Worker::LABOR_KIND_WORKER)
+                ->sum('monthly_salary_usd'),
+            'monthly_salary_iqd' => (float) Worker::query()
+                ->where('labor_kind', Worker::LABOR_KIND_WORKER)
+                ->sum('monthly_salary_iqd'),
+        ];
+
         return Inertia::render('Workers/Index', [
-            'workers' => $query->get(),
+            'workers' => $workers,
             'filters' => ['labor_kind' => $kind],
             'laborKinds' => Worker::LABOR_KINDS,
             'kindCounts' => [
@@ -57,6 +68,7 @@ class WorkerController extends Controller
                 'staff' => (int) ($kindCounts[Worker::LABOR_KIND_STAFF] ?? 0),
                 'worker' => (int) ($kindCounts[Worker::LABOR_KIND_WORKER] ?? 0),
             ],
+            'salaryTotals' => $salaryTotals,
         ]);
     }
 
