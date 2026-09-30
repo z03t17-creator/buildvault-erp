@@ -42,10 +42,21 @@ class WorkerController extends Controller
             $query->where('labor_kind', $kind);
         }
 
+        $kindCounts = Worker::query()
+            ->selectRaw('labor_kind, count(*) as aggregate')
+            ->groupBy('labor_kind')
+            ->pluck('aggregate', 'labor_kind');
+
         return Inertia::render('Workers/Index', [
             'workers' => $query->get(),
             'filters' => ['labor_kind' => $kind],
             'laborKinds' => Worker::LABOR_KINDS,
+            'kindCounts' => [
+                'all' => (int) $kindCounts->sum(),
+                'unclassified' => (int) ($kindCounts[Worker::LABOR_KIND_UNCLASSIFIED] ?? 0),
+                'staff' => (int) ($kindCounts[Worker::LABOR_KIND_STAFF] ?? 0),
+                'worker' => (int) ($kindCounts[Worker::LABOR_KIND_WORKER] ?? 0),
+            ],
         ]);
     }
 
