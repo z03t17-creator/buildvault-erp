@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Worker\StoreWorkerRequest;
 use App\Http\Requests\Worker\UpdateWorkerRequest;
+use App\Models\Attendance;
 use App\Models\EmployeeAdvance;
+use App\Models\Penalty;
 use App\Models\Project;
 use App\Models\StaffStatement;
 use App\Models\Worker;
@@ -129,11 +131,40 @@ class WorkerController extends Controller
             }
         }
 
+        $penalties = Penalty::query()
+            ->where('worker_id', $worker->id)
+            ->orderByDesc('occurred_on')
+            ->orderByDesc('id')
+            ->limit(12)
+            ->get(['id', 'type', 'reason', 'amount_usd', 'amount_iqd', 'currency', 'occurred_on', 'status']);
+
+        $monthStart = now()->startOfMonth()->toDateString();
+        $monthEnd = now()->endOfMonth()->toDateString();
+        $attendanceRows = Attendance::query()
+            ->where('worker_id', $worker->id)
+            ->whereBetween('date', [$monthStart, $monthEnd])
+            ->get(['status', 'forfeit_day']);
+
+        $attendanceMonth = [
+            'month' => now()->format('Y-m'),
+            'present' => $attendanceRows->where('status', Attendance::STATUS_PRESENT)->count(),
+            'late' => $attendanceRows->where('status', Attendance::STATUS_LATE)->count(),
+            'absent' => $attendanceRows->where('status', Attendance::STATUS_ABSENT_UNEXCUSED)->count(),
+            'leave' => $attendanceRows->whereIn('status', [
+                Attendance::STATUS_LEAVE_PAID,
+                Attendance::STATUS_LEAVE_SICK,
+            ])->count(),
+            'forfeit_days' => $attendanceRows->where('forfeit_day', true)->count(),
+            'total' => $attendanceRows->count(),
+        ];
+
         return Inertia::render('Workers/Show', [
             'worker' => $worker,
             'advances' => $advances,
             'statements' => $statements,
             'settlement' => $settlement,
+            'penalties' => $penalties,
+            'attendanceMonth' => $attendanceMonth,
             'laborKinds' => [Worker::LABOR_KIND_STAFF, Worker::LABOR_KIND_WORKER],
             'canClassify' => request()->user()?->can('classify', $worker) ?? false,
         ]);
