@@ -6,6 +6,7 @@ use App\Http\Requests\Advance\RepayAdvanceRequest;
 use App\Http\Requests\Advance\StoreAdvanceRequest;
 use App\Models\EmployeeAdvance;
 use App\Models\Project;
+use App\Models\RetentionHold;
 use App\Models\Worker;
 use App\Services\EmployeeAdvanceService;
 use Illuminate\Http\RedirectResponse;
@@ -24,13 +25,33 @@ class EmployeeAdvanceController extends Controller
     {
         $this->authorize('viewAny', EmployeeAdvance::class);
 
+        $advances = EmployeeAdvance::query()
+            ->with(['worker:id,name,labor_kind', 'project:id,name', 'enteredBy:id,name'])
+            ->orderByDesc('advanced_on')
+            ->orderByDesc('id')
+            ->get();
+
         return Inertia::render('Advances/Index', [
-            'advances' => EmployeeAdvance::query()
-                ->with(['worker:id,name', 'project:id,name', 'enteredBy:id,name'])
-                ->orderByDesc('advanced_on')
-                ->orderByDesc('id')
-                ->get(),
+            'advances' => $advances,
             'repaymentMethods' => EmployeeAdvance::REPAYMENT_METHODS,
+            'totals' => [
+                'amount_usd' => (float) $advances->sum('amount_usd'),
+                'amount_iqd' => (float) $advances->sum('amount_iqd'),
+                'remaining_usd' => (float) $advances->sum('remaining_usd'),
+                'remaining_iqd' => (float) $advances->sum('remaining_iqd'),
+                'open' => (int) $advances->where('status', EmployeeAdvance::STATUS_OPEN)->count(),
+                'repaid' => (int) $advances->where('status', EmployeeAdvance::STATUS_REPAID)->count(),
+            ],
+            'staffHolds' => [
+                'holding' => RetentionHold::query()
+                    ->where('layer', RetentionHold::LAYER_STAFF)
+                    ->where('status', RetentionHold::STATUS_HOLDING)
+                    ->count(),
+                'matured' => RetentionHold::query()
+                    ->where('layer', RetentionHold::LAYER_STAFF)
+                    ->where('status', RetentionHold::STATUS_MATURED)
+                    ->count(),
+            ],
         ]);
     }
 
@@ -73,7 +94,7 @@ class EmployeeAdvanceController extends Controller
     {
         $this->authorize('view', $advance);
 
-        $advance->load(['worker', 'project', 'enteredBy:id,name']);
+        $advance->load(['worker:id,name,labor_kind,project_id', 'project:id,name', 'enteredBy:id,name']);
 
         return Inertia::render('Advances/Show', [
             'advance' => $advance,
