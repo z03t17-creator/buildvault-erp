@@ -15,10 +15,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 const fieldClass =
-    'mt-1.5 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 const moneyFieldClass =
-    'mt-1.5 block w-full min-h-[3.25rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-xl font-semibold tabular-nums shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 function DirectionCard({ active, tone, icon, title, hint, onClick }) {
     const tones = {
@@ -39,20 +39,21 @@ function DirectionCard({ active, tone, icon, title, hint, onClick }) {
             type="button"
             onClick={onClick}
             className={
-                'flex min-h-[6.5rem] flex-col justify-between rounded-2xl border p-4 text-start transition ' +
+                'flex min-h-[5rem] items-start gap-3 rounded-xl border p-3 text-start transition ' +
                 tones[tone]
             }
             aria-pressed={active}
         >
             <span
                 className={
-                    'inline-flex h-11 w-11 items-center justify-center rounded-xl ' + iconTone
+                    'inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ' +
+                    iconTone
                 }
             >
-                <NavIcon name={icon} className="text-lg" />
+                <NavIcon name={icon} className="text-base" />
             </span>
-            <span>
-                <span className="block text-base font-semibold text-slate-900 dark:text-white">
+            <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
                     {title}
                 </span>
                 <span className="mt-0.5 block text-xs font-medium text-slate-500 dark:text-slate-400">
@@ -237,10 +238,10 @@ export default function LedgerForm({
             }
         >
             <Head title={title} />
-            <PageShell narrow className="!space-y-6">
+            <PageShell narrow className="!space-y-4">
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('direction')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
@@ -269,8 +270,8 @@ export default function LedgerForm({
                 </section>
 
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('currency')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
@@ -308,8 +309,8 @@ export default function LedgerForm({
                     <InputError message={mergedErrors.currency} className="mt-2" />
                 </section>
 
-                <form noValidate onSubmit={submit} className="bv-card space-y-5 p-5 sm:p-6">
-                    <FormSection>
+                <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
+                    <FormSection cols={2}>
                         <FormField>
                             <InputLabel value={t('date')} htmlFor="occurred_on" />
                             <div className="relative">
@@ -332,22 +333,6 @@ export default function LedgerForm({
                         </FormField>
 
                         <FormField>
-                            <InputLabel value={t('description')} htmlFor="description" />
-                            <TextInput
-                                id="description"
-                                className={fieldClass}
-                                value={data.description}
-                                onChange={(e) => setData('description', e.target.value)}
-                                placeholder={
-                                    data.direction === 'out'
-                                        ? t('money_out_description_placeholder')
-                                        : t('money_in_description_placeholder')
-                                }
-                            />
-                            <InputError message={mergedErrors.description} className="mt-1" />
-                        </FormField>
-
-                        <FormField>
                             <InputLabel value={t('project')} htmlFor="project_id" />
                             <select
                                 id="project_id"
@@ -363,6 +348,22 @@ export default function LedgerForm({
                                 ))}
                             </select>
                             <InputError message={mergedErrors.project_id} className="mt-1" />
+                        </FormField>
+
+                        <FormField>
+                            <InputLabel value={t('description')} htmlFor="description" />
+                            <TextInput
+                                id="description"
+                                className={fieldClass}
+                                value={data.description}
+                                onChange={(e) => setData('description', e.target.value)}
+                                placeholder={
+                                    data.direction === 'out'
+                                        ? t('money_out_description_placeholder')
+                                        : t('money_in_description_placeholder')
+                                }
+                            />
+                            <InputError message={mergedErrors.description} className="mt-1" />
                         </FormField>
 
                         <FormField>

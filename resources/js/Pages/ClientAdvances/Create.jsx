@@ -15,10 +15,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 const fieldClass =
-    'mt-1.5 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 const moneyFieldClass =
-    'mt-1.5 block w-full min-h-[3.25rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-xl font-semibold tabular-nums shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-emerald-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 function roundMoney(n) {
     return Math.round((Number(n) || 0) * 100) / 100;
@@ -116,7 +116,7 @@ function RetentionChoice({ active, locked, title, hint, onClick }) {
             onClick={onClick}
             aria-pressed={active}
             className={
-                'flex min-h-[5.5rem] flex-col justify-between rounded-2xl border p-4 text-start transition ' +
+                'flex min-h-[4.25rem] items-start gap-3 rounded-xl border p-3 text-start transition ' +
                 (active
                     ? locked
                         ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/25 dark:border-amber-400 dark:bg-amber-950/30'
@@ -126,16 +126,16 @@ function RetentionChoice({ active, locked, title, hint, onClick }) {
         >
             <span
                 className={
-                    'inline-flex h-10 w-10 items-center justify-center rounded-xl ' +
+                    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ' +
                     (locked
                         ? 'bg-amber-500/15 text-amber-800 dark:text-amber-200'
                         : 'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300')
                 }
             >
-                <NavIcon name={locked ? 'insurance' : 'moneyIn'} className="text-base" />
+                <NavIcon name={locked ? 'insurance' : 'moneyIn'} className="text-sm" />
             </span>
-            <span>
-                <span className="mt-2 block text-sm font-semibold text-slate-900 dark:text-white">
+            <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
                     {title}
                 </span>
                 <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
@@ -258,10 +258,10 @@ export default function Create({ projects }) {
             }
         >
             <Head title={t('new_client_advance')} />
-            <PageShell narrow className="!space-y-6">
+            <PageShell narrow className="!space-y-4">
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('currency')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
@@ -300,15 +300,15 @@ export default function Create({ projects }) {
                 </section>
 
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('client_form_split_title')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                             {t('client_form_split_hint')}
                         </p>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="grid gap-2 sm:grid-cols-2">
                         <RetentionChoice
                             active={lockOn}
                             locked
@@ -358,8 +358,8 @@ export default function Create({ projects }) {
                     )}
                 </section>
 
-                <form noValidate onSubmit={submit} className="bv-card space-y-5 p-5 sm:p-6">
-                    <FormSection>
+                <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
+                    <FormSection cols={2}>
                         <FormField>
                             <InputLabel value={t('project')} htmlFor="project_id" />
                             <select

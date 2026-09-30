@@ -15,10 +15,10 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 const fieldClass =
-    'mt-1.5 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 const moneyFieldClass =
-    'mt-1.5 block w-full min-h-[3.25rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-xl font-semibold tabular-nums shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+    'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 const STATUS_META = {
     planning: { icon: 'projects', tone: 'slate' },
@@ -68,20 +68,20 @@ function StatusCard({ code, active, title, hint, onClick }) {
             onClick={onClick}
             aria-pressed={active}
             className={
-                'flex min-h-[5.25rem] flex-col justify-between rounded-2xl border p-3.5 text-start transition ' +
+                'flex min-h-[4.25rem] items-start gap-3 rounded-xl border p-3 text-start transition ' +
                 tones[meta.tone]
             }
         >
             <span
                 className={
-                    'inline-flex h-9 w-9 items-center justify-center rounded-xl ' +
+                    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ' +
                     iconTone[meta.tone]
                 }
             >
                 <NavIcon name={meta.icon} className="text-sm" />
             </span>
-            <span>
-                <span className="mt-2 block text-sm font-semibold text-slate-900 dark:text-white">
+            <span className="min-w-0">
+                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
                     {title}
                 </span>
                 <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
@@ -301,10 +301,10 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
             }
         >
             <Head title={title} />
-            <PageShell narrow className="!space-y-6">
+            <PageShell narrow className="!space-y-4">
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('project_form_agreement_title')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
@@ -376,15 +376,15 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
                 </section>
 
                 <section>
-                    <div className="mb-3">
-                        <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                    <div className="mb-2">
+                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
                             {t('status')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                             {t('project_form_status_hint')}
                         </p>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
                         {statusList.map((s) => (
                             <StatusCard
                                 key={s}
@@ -399,8 +399,8 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
                     <InputError message={mergedErrors.status} className="mt-2" />
                 </section>
 
-                <form noValidate onSubmit={submit} className="bv-card space-y-5 p-5 sm:p-6">
-                    <FormSection>
+                <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
+                    <FormSection cols={3}>
                         <FormField>
                             <InputLabel value={t('name')} htmlFor="name" />
                             <TextInput
@@ -473,7 +473,6 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
                                     onChange={(e) => setData('start_date', e.target.value)}
                                 />
                             </div>
-                            <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
                             <InputError message={mergedErrors.start_date} className="mt-1" />
                         </FormField>
 
@@ -517,12 +516,12 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
                             <InputError message={mergedErrors.budget_iqd} className="mt-1" />
                         </FormField>
 
-                        <FormField className="sm:col-span-2">
+                        <FormField className="sm:col-span-2 lg:col-span-2">
                             <InputLabel value={t('description')} htmlFor="description" />
                             <textarea
                                 id="description"
-                                className={`${fieldClass} min-h-[5.5rem] py-2`}
-                                rows={3}
+                                className={`${fieldClass} min-h-[4.5rem] py-2`}
+                                rows={2}
                                 value={data.description}
                                 onChange={(e) => setData('description', e.target.value)}
                                 placeholder={t('project_form_description_placeholder')}
