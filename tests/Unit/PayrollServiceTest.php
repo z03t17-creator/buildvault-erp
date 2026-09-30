@@ -48,6 +48,21 @@ class PayrollServiceTest extends TestCase
         $this->assertSame(100.0, $result['net_pay_usd']);
     }
 
+    public function test_monthly_salary_usd_preferred_over_daily_rate(): void
+    {
+        $worker = Worker::query()->create([
+            'name' => 'Monthly Preferred',
+            'daily_rate_usd' => 100,
+            'monthly_salary_usd' => 450,
+            'overtime_rate_usd' => 0,
+        ]);
+
+        $result = $this->service->calculate($worker, '2026-09-01', '2026-09-30');
+
+        $this->assertSame(450.0, $result['base_pay_usd']);
+        $this->assertSame(450.0, $result['net_pay_usd']);
+    }
+
     public function test_manual_ot_hours_on_worker(): void
     {
         $worker = $this->worker(daily: 40, ot: 60, manualOt: 2.5);

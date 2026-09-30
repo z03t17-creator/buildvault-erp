@@ -41,6 +41,7 @@ class PayrollDashboardTest extends TestCase
         $worker = Worker::query()->create([
             'project_id' => $project->id,
             'name' => 'Pay Dash Worker',
+            'labor_kind' => Worker::LABOR_KIND_WORKER,
             'daily_rate_usd' => 100,
             'overtime_rate_usd' => 75,
             'manual_ot_hours' => 2,
@@ -77,8 +78,16 @@ class PayrollDashboardTest extends TestCase
         $a = Project::query()->create(['name' => 'Site A']);
         $b = Project::query()->create(['name' => 'Site B']);
 
-        Worker::query()->create(['project_id' => $a->id, 'name' => 'A Worker']);
-        Worker::query()->create(['project_id' => $b->id, 'name' => 'B Worker']);
+        Worker::query()->create([
+            'project_id' => $a->id,
+            'name' => 'A Worker',
+            'labor_kind' => Worker::LABOR_KIND_WORKER,
+        ]);
+        Worker::query()->create([
+            'project_id' => $b->id,
+            'name' => 'B Worker',
+            'labor_kind' => Worker::LABOR_KIND_WORKER,
+        ]);
 
         $response = $this->actingAs($user)->get(route('dashboards.payroll', [
             'month' => '2026-09',

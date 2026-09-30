@@ -39,8 +39,10 @@ class PayrollDashboardController extends Controller
         // Rate kept for display/reference only — do not invent IQD from USD.
         $rate = $this->exchangeRates->getUsdToIqd();
 
+        // Salary family (مووچە): monthly-salary Workers only — not unit-rate Staff.
         $workersQuery = Worker::query()
             ->with('project:id,name')
+            ->where('labor_kind', Worker::LABOR_KIND_WORKER)
             ->orderBy('name');
 
         if ($projectId) {
@@ -76,7 +78,7 @@ class PayrollDashboardController extends Controller
                 'insurance_holdback_usd' => $holdbackUsd,
                 'net_pay_usd' => $calc['net_pay_usd'],
                 // Native IQD only — no automatic FX blend from USD payroll fields.
-                'base_pay_iqd' => null,
+                'base_pay_iqd' => (float) ($worker->monthly_salary_iqd ?? 0) ?: null,
                 'overtime_pay_iqd' => null,
                 'gross_pay_iqd' => null,
                 'penalties_iqd' => $calc['recorded_penalties_iqd'] ?? null,
@@ -89,15 +91,21 @@ class PayrollDashboardController extends Controller
         $totals = [
             'workers' => $rows->count(),
             'overtime_hours' => round((float) $rows->sum('overtime_hours'), 2),
+            'base_pay_usd' => round((float) $rows->sum('base_pay_usd'), 2),
+            'overtime_pay_usd' => round((float) $rows->sum('overtime_pay_usd'), 2),
+            'gross_pay_usd' => round((float) $rows->sum('gross_pay_usd'), 2),
             'penalties_usd' => round((float) $rows->sum('penalties_usd'), 2),
+            'advances_usd' => round((float) $rows->sum('advances_usd'), 2),
             'advances_iqd' => (float) $rows->sum('advances_iqd'),
+            'insurance_holdback_usd' => round((float) $rows->sum('insurance_holdback_usd'), 2),
             'insurance_holdback_iqd' => null,
             'net_pay_usd' => round((float) $rows->sum('net_pay_usd'), 2),
             'penalties_iqd' => round((float) $rows->sum(fn ($r) => (float) ($r['penalties_iqd'] ?? 0)), 2),
             'gross_pay_iqd' => null,
             'net_pay_iqd' => null,
-            'base_pay_iqd' => null,
+            'base_pay_iqd' => round((float) $rows->sum(fn ($r) => (float) ($r['base_pay_iqd'] ?? 0)), 2) ?: null,
             'overtime_pay_iqd' => null,
+            'monthly_salary_iqd' => round((float) $rows->sum('monthly_salary_iqd'), 2),
         ];
 
         return Inertia::render('Dashboards/Payroll', [
@@ -111,7 +119,6 @@ class PayrollDashboardController extends Controller
             'totals' => $totals,
             'exchangeRate' => $rate,
             'autoBlendDisabled' => true,
-            'netFormula' => 'base_ot_minus_penalties_insurance_advances',
         ]);
     }
 }

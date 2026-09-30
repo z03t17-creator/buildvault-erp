@@ -53,13 +53,15 @@ class PayrollService
         $to = Carbon::parse($to)->startOfDay();
 
         $dailyRate = (float) $worker->daily_rate_usd;
+        $monthlySalary = (float) ($worker->monthly_salary_usd ?? 0);
         $otRate = (float) $worker->overtime_rate_usd;
         $overtimeHours = $manualOvertimeHours !== null
             ? max(0.0, $manualOvertimeHours)
             : max(0.0, (float) ($worker->manual_ot_hours ?? 0));
 
-        // Period base salary — not derived from check-in days.
-        $basePay = round($dailyRate, 2);
+        // Period base: monthly salary for Workers, else legacy daily_rate_usd.
+        // Not derived from check-in days.
+        $basePay = round($monthlySalary > 0 ? $monthlySalary : $dailyRate, 2);
         $otPay = round($overtimeHours * $otRate, 2);
         $gross = round($basePay + $otPay, 2);
 
