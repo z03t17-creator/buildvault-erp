@@ -50,6 +50,14 @@ class StockItemController extends Controller
             ->orderBy('category')
             ->pluck('category');
 
+        $overview = [
+            'products' => $items->count(),
+            'stock_value_iqd' => round((float) $items->sum(fn (StockItem $item) => (float) $item->stock_value_iqd), 2),
+            'low_stock' => $items->where('is_low_stock', true)->count(),
+            'out_of_stock' => $items->where('is_out_of_stock', true)->count(),
+            'total_quantity' => round((float) $items->sum(fn (StockItem $item) => (float) $item->quantity), 3),
+        ];
+
         return Inertia::render('Stock/Items/Index', [
             'items' => $items,
             'filters' => [
@@ -57,6 +65,7 @@ class StockItemController extends Controller
                 'category' => $category,
             ],
             'categories' => $categories,
+            'overview' => $overview,
         ]);
     }
 
