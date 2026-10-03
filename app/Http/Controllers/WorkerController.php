@@ -166,7 +166,8 @@ class WorkerController extends Controller
             'penalties' => $penalties,
             'attendanceMonth' => $attendanceMonth,
             'laborKinds' => [Worker::LABOR_KIND_STAFF, Worker::LABOR_KIND_WORKER],
-            'canClassify' => request()->user()?->can('classify', $worker) ?? false,
+            'canClassify' => (request()->user()?->can('classify', $worker) ?? false)
+                && $worker->isUnclassified(),
         ]);
     }
 

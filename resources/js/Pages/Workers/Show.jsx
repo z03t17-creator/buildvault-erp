@@ -187,7 +187,6 @@ export default function Show({
     settlement,
     penalties,
     attendanceMonth,
-    laborKinds,
     canClassify,
 }) {
     const t = useTranslations();
@@ -213,16 +212,27 @@ export default function Show({
               moneyHead: 'text-indigo-800 dark:text-indigo-300',
               icon: 'payroll',
           }
-        : {
-              field: 'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100',
-              btn: '!bg-amber-600 hover:!bg-amber-500 dark:!bg-amber-400 dark:!text-amber-950 dark:hover:!bg-amber-300',
-              btnSoft: '!bg-amber-600 hover:!bg-amber-500',
-              hero: 'bg-amber-500 text-amber-950 dark:bg-amber-400',
-              iconBox:
-                  'bg-amber-500/15 text-amber-900 dark:bg-amber-400/15 dark:text-amber-200',
-              moneyHead: 'text-amber-800 dark:text-amber-300',
-              icon: 'workers',
-          };
+        : isStaff
+          ? {
+                field: 'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100',
+                btn: '!bg-amber-600 hover:!bg-amber-500 dark:!bg-amber-400 dark:!text-amber-950 dark:hover:!bg-amber-300',
+                btnSoft: '!bg-amber-600 hover:!bg-amber-500',
+                hero: 'bg-amber-500 text-amber-950 dark:bg-amber-400',
+                iconBox:
+                    'bg-amber-500/15 text-amber-900 dark:bg-amber-400/15 dark:text-amber-200',
+                moneyHead: 'text-amber-800 dark:text-amber-300',
+                icon: 'workers',
+            }
+          : {
+                field: 'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100',
+                btn: '!bg-slate-800 hover:!bg-slate-700 dark:!bg-slate-200 dark:!text-slate-900',
+                btnSoft: '!bg-slate-800 hover:!bg-slate-700',
+                hero: 'bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900',
+                iconBox:
+                    'bg-slate-500/15 text-slate-800 dark:bg-slate-400/15 dark:text-slate-200',
+                moneyHead: 'text-slate-800 dark:text-slate-200',
+                icon: 'users',
+            };
 
     const classify = useForm({
         labor_kind: isUnclassified ? 'staff' : worker.labor_kind,
@@ -258,12 +268,15 @@ export default function Show({
         ? route('workers.index', { labor_kind: 'staff' })
         : isWorker
           ? route('workers.index', { labor_kind: 'worker' })
-          : route('workers.index');
+          : route('workers.index', { labor_kind: 'unclassified' });
     const backLabel = isStaff
         ? t('staff_directory')
         : isWorker
           ? t('worker_directory')
-          : t('people');
+          : t('people_unclassified');
+    const chooseKind = (kind) => classify.setData('labor_kind', kind);
+    const pickingStaff = classify.data.labor_kind === 'staff';
+    const pickingWorker = classify.data.labor_kind === 'worker';
 
     const advanceList = advances || [];
     const statementList = statements || [];
@@ -590,67 +603,117 @@ export default function Show({
                     </>
                 )}
 
-                {canClassify && (
-                    <section className="bv-card p-4 sm:p-5">
-                        <div className="mb-3 flex items-start gap-3">
-                            <span
-                                className={
-                                    'inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ' +
-                                    accent.iconBox
-                                }
-                            >
-                                <NavIcon name="edit" className="text-base" />
-                            </span>
-                            <div>
-                                <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
-                                    {t('classify_person')}
-                                </h2>
-                                <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                                    {t('staff_classify_hint')}
-                                </p>
+                {canClassify && isUnclassified && (
+                    <section className="bv-card overflow-hidden p-0">
+                        <div className="border-b border-slate-200/80 bg-slate-50/80 px-4 py-4 sm:px-5 dark:border-slate-800 dark:bg-slate-900/50">
+                            <div className="flex items-start gap-3">
+                                <span
+                                    className={
+                                        'inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ' +
+                                        accent.hero
+                                    }
+                                >
+                                    <NavIcon name="edit" className="text-base" />
+                                </span>
+                                <div className="min-w-0">
+                                    <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                        {t('classify_person')}
+                                    </h2>
+                                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                        {t('person_classify_hero_hint')}
+                                    </p>
+                                </div>
                             </div>
                         </div>
+
                         <form
                             noValidate
+                            className="p-4 sm:p-5"
                             onSubmit={(e) => {
                                 e.preventDefault();
                                 classify.post(route('workers.classify', worker.id));
                             }}
                         >
-                            <FormSection cols={2}>
-                                <FormField>
-                                    <InputLabel value={t('labor_kind')} />
-                                    <select
-                                        className={accent.field}
-                                        value={classify.data.labor_kind}
-                                        onChange={(e) =>
-                                            classify.setData('labor_kind', e.target.value)
-                                        }
-                                    >
-                                        {(laborKinds || ['staff', 'worker']).map((k) => (
-                                            <option key={k} value={k}>
-                                                {t(`labor_kind_${k}`)}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </FormField>
-                                {classify.data.labor_kind === 'staff' ? (
-                                    <>
+                            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                                {t('person_classify_pick')}
+                            </p>
+                            <div className="grid gap-3 sm:grid-cols-2">
+                                <button
+                                    type="button"
+                                    onClick={() => chooseKind('staff')}
+                                    className={
+                                        'rounded-2xl border p-4 text-start transition ' +
+                                        (pickingStaff
+                                            ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/30 dark:border-amber-400 dark:bg-amber-950/40 dark:ring-amber-400/30'
+                                            : 'border-slate-200 bg-white hover:border-amber-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-amber-700')
+                                    }
+                                >
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/15 text-amber-900 dark:bg-amber-400/15 dark:text-amber-200">
+                                        <NavIcon name="workers" className="text-base" />
+                                    </span>
+                                    <p className="mt-3 font-display text-sm font-semibold text-slate-900 dark:text-white">
+                                        {t('labor_kind_staff')}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                        {t('person_classify_staff_path')}
+                                    </p>
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => chooseKind('worker')}
+                                    className={
+                                        'rounded-2xl border p-4 text-start transition ' +
+                                        (pickingWorker
+                                            ? 'border-indigo-500 bg-indigo-50 ring-2 ring-indigo-500/30 dark:border-indigo-400 dark:bg-indigo-950/40 dark:ring-indigo-400/30'
+                                            : 'border-slate-200 bg-white hover:border-indigo-300 dark:border-slate-700 dark:bg-slate-950 dark:hover:border-indigo-700')
+                                    }
+                                >
+                                    <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                                        <NavIcon name="payroll" className="text-base" />
+                                    </span>
+                                    <p className="mt-3 font-display text-sm font-semibold text-slate-900 dark:text-white">
+                                        {t('labor_kind_worker')}
+                                    </p>
+                                    <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400">
+                                        {t('person_classify_worker_path')}
+                                    </p>
+                                </button>
+                            </div>
+                            <InputError
+                                message={classify.errors.labor_kind}
+                                className="mt-2"
+                            />
+
+                            {pickingStaff ? (
+                                <div className="mt-5">
+                                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+                                        {t('person_classify_staff_fields')}
+                                    </p>
+                                    <FormSection cols={3}>
                                         <FormField>
                                             <InputLabel value={t('rate_unit')} />
                                             <TextInput
-                                                className={accent.field}
+                                                className="mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                                                 value={classify.data.rate_unit}
                                                 onChange={(e) =>
-                                                    classify.setData('rate_unit', e.target.value)
+                                                    classify.setData(
+                                                        'rate_unit',
+                                                        e.target.value,
+                                                    )
                                                 }
-                                                placeholder={t('staff_rate_unit_placeholder')}
+                                                placeholder={t(
+                                                    'staff_rate_unit_placeholder',
+                                                )}
+                                            />
+                                            <InputError
+                                                message={classify.errors.rate_unit}
+                                                className="mt-1"
                                             />
                                         </FormField>
                                         <FormField>
                                             <InputLabel value={t('currency')} />
                                             <select
-                                                className={accent.field}
+                                                className="mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                                                 value={classify.data.rate_currency}
                                                 onChange={(e) =>
                                                     classify.setData(
@@ -662,24 +725,39 @@ export default function Show({
                                                 <option value="USD">{usd}</option>
                                                 <option value="IQD">{iqd}</option>
                                             </select>
+                                            <InputError
+                                                message={classify.errors.rate_currency}
+                                                className="mt-1"
+                                            />
                                         </FormField>
                                         <FormField>
                                             <InputLabel value={t('unit_rate')} />
                                             <MoneyInput
-                                                className={accent.field}
+                                                className="mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                                                 value={classify.data.unit_rate}
                                                 onValueChange={(raw) =>
                                                     classify.setData('unit_rate', raw)
                                                 }
                                             />
+                                            <InputError
+                                                message={classify.errors.unit_rate}
+                                                className="mt-1"
+                                            />
                                         </FormField>
-                                    </>
-                                ) : (
-                                    <>
+                                    </FormSection>
+                                </div>
+                            ) : null}
+
+                            {pickingWorker ? (
+                                <div className="mt-5">
+                                    <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-indigo-800 dark:text-indigo-300">
+                                        {t('person_classify_worker_fields')}
+                                    </p>
+                                    <FormSection cols={2}>
                                         <FormField>
                                             <InputLabel value={t('monthly_salary_usd')} />
                                             <MoneyInput
-                                                className={accent.field}
+                                                className="mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                                                 value={classify.data.monthly_salary_usd}
                                                 onValueChange={(raw) =>
                                                     classify.setData(
@@ -688,11 +766,17 @@ export default function Show({
                                                     )
                                                 }
                                             />
+                                            <InputError
+                                                message={
+                                                    classify.errors.monthly_salary_usd
+                                                }
+                                                className="mt-1"
+                                            />
                                         </FormField>
                                         <FormField>
                                             <InputLabel value={t('monthly_salary_iqd')} />
                                             <MoneyInput
-                                                className={accent.field}
+                                                className="mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
                                                 value={classify.data.monthly_salary_iqd}
                                                 onValueChange={(raw) =>
                                                     classify.setData(
@@ -701,16 +785,37 @@ export default function Show({
                                                     )
                                                 }
                                             />
+                                            <InputError
+                                                message={
+                                                    classify.errors.monthly_salary_iqd
+                                                }
+                                                className="mt-1"
+                                            />
                                         </FormField>
-                                    </>
-                                )}
-                            </FormSection>
-                            <FormActions className="mt-4">
+                                    </FormSection>
+                                </div>
+                            ) : null}
+
+                            <FormActions className="mt-5">
                                 <PrimaryButton
-                                    disabled={classify.processing}
-                                    className={accent.btnSoft}
+                                    disabled={
+                                        classify.processing ||
+                                        (!pickingStaff && !pickingWorker)
+                                    }
+                                    className={
+                                        pickingWorker
+                                            ? '!bg-indigo-600 hover:!bg-indigo-500 dark:!bg-indigo-400 dark:!text-indigo-950'
+                                            : pickingStaff
+                                              ? '!bg-amber-600 hover:!bg-amber-500 dark:!bg-amber-400 dark:!text-amber-950'
+                                              : accent.btnSoft
+                                    }
                                 >
-                                    {t('classify_person')}
+                                    <NavIcon name="edit" className="text-sm" />
+                                    {pickingWorker
+                                        ? t('person_classify_as_worker')
+                                        : pickingStaff
+                                          ? t('person_classify_as_staff')
+                                          : t('classify_person')}
                                 </PrimaryButton>
                             </FormActions>
                         </form>
@@ -804,12 +909,16 @@ export default function Show({
                             <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                                 {isWorker
                                     ? t('worker_advances_title')
-                                    : t('staff_advances_title')}
+                                    : isStaff
+                                      ? t('staff_advances_title')
+                                      : t('person_advances_title')}
                             </p>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
                                 {isWorker
                                     ? t('worker_advances_hint')
-                                    : t('staff_advances_hint')}
+                                    : isStaff
+                                      ? t('staff_advances_hint')
+                                      : t('person_advances_hint')}
                             </p>
                         </div>
                     </div>
@@ -821,7 +930,9 @@ export default function Show({
                                 description={
                                     isWorker
                                         ? t('worker_advances_empty_hint')
-                                        : t('staff_advances_empty_hint')
+                                        : isStaff
+                                          ? t('staff_advances_empty_hint')
+                                          : t('person_advances_empty_hint')
                                 }
                             />
                         </div>

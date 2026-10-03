@@ -123,6 +123,7 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
     const activeKind = filters?.labor_kind || '';
     const isStaffView = activeKind === 'staff';
     const isWorkerView = activeKind === 'worker';
+    const isUnclassifiedView = activeKind === 'unclassified';
     const counts = kindCounts || {
         all: list.length,
         unclassified: 0,
@@ -134,7 +135,7 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
         monthly_salary_iqd: 0,
     };
 
-    // Page 17 (Worker) = indigo salary family; Page 14 (Staff) = amber
+    // Page 17 Worker = indigo; Page 14 Staff = amber; Page 27 Unclassified = slate
     const accent = isWorkerView
         ? {
               btn: '!bg-indigo-600 hover:!bg-indigo-500 dark:!bg-indigo-400 dark:!text-indigo-950 dark:hover:!bg-indigo-300',
@@ -152,22 +153,39 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
               ring: 'ring-indigo-500/40 dark:ring-indigo-400/40',
               moneyAccent: 'text-indigo-900 dark:text-indigo-100',
           }
-        : {
-              btn: '!bg-amber-600 hover:!bg-amber-500 dark:!bg-amber-400 dark:!text-amber-950 dark:hover:!bg-amber-300',
-              btnSoft: '!bg-amber-600 hover:!bg-amber-500',
-              chipActive:
-                  'bg-amber-600 text-white dark:bg-amber-400 dark:text-amber-950',
-              chipIdle:
-                  'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-900 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100',
-              chipCountActive:
-                  'bg-white/20 text-white dark:bg-amber-950/20 dark:text-amber-950',
-              iconBox:
-                  'bg-amber-500/15 text-amber-900 dark:bg-amber-400/15 dark:text-amber-200',
-              link: 'text-amber-950 underline-offset-2 hover:underline dark:text-amber-100',
-              moneyHead: 'text-amber-800 dark:text-amber-300',
-              ring: 'ring-amber-500/40 dark:ring-amber-400/40',
-              moneyAccent: 'text-slate-900 dark:text-white',
-          };
+        : isUnclassifiedView
+          ? {
+                btn: '!bg-slate-800 hover:!bg-slate-700 dark:!bg-slate-200 dark:!text-slate-900',
+                btnSoft: '!bg-slate-800 hover:!bg-slate-700',
+                chipActive:
+                    'bg-slate-700 text-white dark:bg-slate-300 dark:text-slate-900',
+                chipIdle:
+                    'bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-slate-900 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700',
+                chipCountActive:
+                    'bg-white/20 text-white dark:bg-slate-900/30 dark:text-slate-900',
+                iconBox:
+                    'bg-slate-500/15 text-slate-800 dark:bg-slate-400/15 dark:text-slate-200',
+                link: 'text-slate-900 underline-offset-2 hover:underline dark:text-slate-100',
+                moneyHead: 'text-slate-800 dark:text-slate-200',
+                ring: 'ring-slate-500/40 dark:ring-slate-400/40',
+                moneyAccent: 'text-slate-900 dark:text-white',
+            }
+          : {
+                btn: '!bg-amber-600 hover:!bg-amber-500 dark:!bg-amber-400 dark:!text-amber-950 dark:hover:!bg-amber-300',
+                btnSoft: '!bg-amber-600 hover:!bg-amber-500',
+                chipActive:
+                    'bg-amber-600 text-white dark:bg-amber-400 dark:text-amber-950',
+                chipIdle:
+                    'bg-slate-100 text-slate-700 hover:bg-amber-50 hover:text-amber-900 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-amber-950/40 dark:hover:text-amber-100',
+                chipCountActive:
+                    'bg-white/20 text-white dark:bg-amber-950/20 dark:text-amber-950',
+                iconBox:
+                    'bg-amber-500/15 text-amber-900 dark:bg-amber-400/15 dark:text-amber-200',
+                link: 'text-amber-950 underline-offset-2 hover:underline dark:text-amber-100',
+                moneyHead: 'text-amber-800 dark:text-amber-300',
+                ring: 'ring-amber-500/40 dark:ring-amber-400/40',
+                moneyAccent: 'text-slate-900 dark:text-white',
+            };
 
     const apply = (labor_kind) => {
         router.get(
@@ -187,13 +205,21 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
         ? t('staff_directory')
         : isWorkerView
           ? t('worker_directory')
-          : t('people');
+          : isUnclassifiedView
+            ? t('people_unclassified')
+            : t('people');
     const pageHint = isStaffView
         ? t('staff_page_hint')
         : isWorkerView
           ? t('worker_directory_hint')
-          : t('people_page_hint');
-    const headerIcon = isWorkerView ? 'payroll' : 'workers';
+          : isUnclassifiedView
+            ? t('people_unclassified_hint')
+            : t('people_page_hint');
+    const headerIcon = isWorkerView
+        ? 'payroll'
+        : isUnclassifiedView
+          ? 'users'
+          : 'workers';
     const ctaLabel = isStaffView
         ? t('staff_add')
         : isWorkerView
@@ -217,23 +243,31 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
         ? t('staff_empty_title')
         : isWorkerView
           ? t('worker_empty_title')
-          : t('people_empty_title');
+          : isUnclassifiedView
+            ? t('people_unclassified_empty_title')
+            : t('people_empty_title');
     const emptyHint = isStaffView
         ? t('staff_empty_hint')
         : isWorkerView
           ? t('worker_empty_hint')
-          : t('people_empty_hint');
+          : isUnclassifiedView
+            ? t('people_unclassified_empty_hint')
+            : t('people_empty_hint');
 
     const tableTitle = isStaffView
         ? t('staff_table_title')
         : isWorkerView
           ? t('worker_table_title')
-          : t('people_table_title');
+          : isUnclassifiedView
+            ? t('people_unclassified_table_title')
+            : t('people_table_title');
     const tableHint = isStaffView
         ? t('staff_table_hint')
         : isWorkerView
           ? t('worker_table_hint')
-          : t('people_table_hint');
+          : isUnclassifiedView
+            ? t('people_unclassified_table_hint')
+            : t('people_table_hint');
 
     return (
         <AuthenticatedLayout
@@ -315,17 +349,23 @@ export default function Index({ workers, filters, laborKinds, kindCounts, salary
                         <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
                             {isWorkerView
                                 ? t('worker_overview')
-                                : t('staff_overview')}
+                                : isUnclassifiedView
+                                  ? t('people_unclassified_overview')
+                                  : t('staff_overview')}
                         </h2>
                         <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                             {isWorkerView
                                 ? t('worker_overview_hint', {
                                       worker: counts.worker,
                                   })
-                                : t('staff_overview_hint', {
-                                      staff: counts.staff,
-                                      unclassified: counts.unclassified,
-                                  })}
+                                : isUnclassifiedView
+                                  ? t('people_unclassified_overview_hint', {
+                                        unclassified: counts.unclassified,
+                                    })
+                                  : t('staff_overview_hint', {
+                                        staff: counts.staff,
+                                        unclassified: counts.unclassified,
+                                    })}
                         </p>
                     </div>
                     <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
