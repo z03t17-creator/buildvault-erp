@@ -21,14 +21,6 @@ const fieldClass =
 const moneyFieldClass =
     'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-slate-500 focus:outline-none focus:ring-2 focus:ring-slate-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-const STATUS_META = {
-    planning: { icon: 'projects', tone: 'slate' },
-    active: { icon: 'projects', tone: 'emerald' },
-    on_hold: { icon: 'insurance', tone: 'amber' },
-    completed: { icon: 'spatial', tone: 'sky' },
-    archived: { icon: 'docs', tone: 'slate' },
-};
-
 function isValidIsoDate(value) {
     if (!value) {
         return true; // optional
@@ -38,59 +30,6 @@ function isValidIsoDate(value) {
     }
     const d = new Date(`${value}T00:00:00`);
     return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
-}
-
-function StatusCard({ code, active, title, hint, onClick }) {
-    const meta = STATUS_META[code] || STATUS_META.planning;
-    const tones = {
-        slate: active
-            ? 'border-slate-600 bg-slate-100 ring-2 ring-slate-500/25 dark:border-slate-400 dark:bg-slate-800'
-            : 'border-slate-200 bg-white hover:border-slate-400 dark:border-slate-700 dark:bg-slate-900',
-        emerald: active
-            ? 'border-emerald-500 bg-emerald-50 ring-2 ring-emerald-500/25 dark:border-emerald-400 dark:bg-emerald-950/30'
-            : 'border-slate-200 bg-white hover:border-emerald-300 dark:border-slate-700 dark:bg-slate-900',
-        amber: active
-            ? 'border-amber-500 bg-amber-50 ring-2 ring-amber-500/25 dark:border-amber-400 dark:bg-amber-950/30'
-            : 'border-slate-200 bg-white hover:border-amber-300 dark:border-slate-700 dark:bg-slate-900',
-        sky: active
-            ? 'border-sky-500 bg-sky-50 ring-2 ring-sky-500/25 dark:border-sky-400 dark:bg-sky-950/30'
-            : 'border-slate-200 bg-white hover:border-sky-300 dark:border-slate-700 dark:bg-slate-900',
-    };
-    const iconTone = {
-        slate: 'bg-slate-800 text-white dark:bg-slate-200 dark:text-slate-900',
-        emerald: 'bg-emerald-600 text-white dark:bg-emerald-500 dark:text-slate-950',
-        amber: 'bg-amber-500 text-white dark:bg-amber-400 dark:text-slate-950',
-        sky: 'bg-sky-600 text-white dark:bg-sky-500 dark:text-slate-950',
-    };
-
-    return (
-        <button
-            type="button"
-            onClick={onClick}
-            aria-pressed={active}
-            className={
-                'flex min-h-[4.25rem] items-start gap-3 rounded-xl border p-3 text-start transition ' +
-                tones[meta.tone]
-            }
-        >
-            <span
-                className={
-                    'inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ' +
-                    iconTone[meta.tone]
-                }
-            >
-                <NavIcon name={meta.icon} className="text-sm" />
-            </span>
-            <span className="min-w-0">
-                <span className="block text-sm font-semibold text-slate-900 dark:text-white">
-                    {title}
-                </span>
-                <span className="mt-0.5 block text-xs text-slate-500 dark:text-slate-400">
-                    {hint}
-                </span>
-            </span>
-        </button>
-    );
 }
 
 function AgreementCard({
@@ -190,7 +129,7 @@ function PreviewStat({ label, value, currency }) {
     );
 }
 
-export default function ProjectForm({ mode = 'create', project, statuses }) {
+export default function ProjectForm({ mode = 'create', project }) {
     const t = useTranslations();
     const usd = t('USD');
     const iqd = t('IQD');
@@ -204,6 +143,8 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
         description: project?.description || '',
         location: project?.location || '',
         contract_number: project?.contract_number || '',
+        // Status is not shown on the form; create defaults to planning,
+        // edit preserves the existing value when saving other fields.
         status: project?.status || 'planning',
         start_date: project?.start_date ? String(project.start_date).slice(0, 10) : '',
         end_date: project?.end_date ? String(project.end_date).slice(0, 10) : '',
@@ -278,10 +219,6 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
             post(route('projects.store'));
         }
     };
-
-    const statusList = statuses?.length
-        ? statuses
-        : ['planning', 'active', 'on_hold', 'completed', 'archived'];
 
     return (
         <AuthenticatedLayout
@@ -374,30 +311,6 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
                         }
                         className="mt-1"
                     />
-                </section>
-
-                <section>
-                    <div className="mb-2">
-                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
-                            {t('status')}
-                        </h2>
-                        <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                            {t('project_form_status_hint')}
-                        </p>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-                        {statusList.map((s) => (
-                            <StatusCard
-                                key={s}
-                                code={s}
-                                active={data.status === s}
-                                title={t(`status_${s}`, s.replace(/_/g, ' '))}
-                                hint={t(`project_form_status_${s}_hint`)}
-                                onClick={() => setData('status', s)}
-                            />
-                        ))}
-                    </div>
-                    <InputError message={mergedErrors.status} className="mt-2" />
                 </section>
 
                 <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">

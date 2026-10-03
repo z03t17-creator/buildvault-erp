@@ -1,5 +1,5 @@
 import ProjectForm from '@/Pages/Projects/ProjectForm';
 
-export default function Create({ statuses }) {
-    return <ProjectForm mode="create" statuses={statuses} />;
+export default function Create() {
+    return <ProjectForm mode="create" />;
 }

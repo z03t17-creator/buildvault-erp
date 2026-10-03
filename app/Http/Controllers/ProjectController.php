@@ -57,16 +57,18 @@ class ProjectController extends Controller
     {
         $this->authorize('create', Project::class);
 
-        return Inertia::render('Projects/Create', [
-            'statuses' => Project::STATUSES,
-        ]);
+        return Inertia::render('Projects/Create');
     }
 
     public function store(StoreProjectRequest $request): RedirectResponse
     {
         $this->authorize('create', Project::class);
 
-        $project = Project::query()->create($request->validated());
+        $data = $request->validated();
+        // Form no longer collects status; model default is planning.
+        $data['status'] = $data['status'] ?? Project::STATUS_PLANNING;
+
+        $project = Project::query()->create($data);
 
         return redirect()
             ->route('projects.show', $project)
@@ -104,7 +106,6 @@ class ProjectController extends Controller
 
         return Inertia::render('Projects/Edit', [
             'project' => $project,
-            'statuses' => Project::STATUSES,
         ]);
     }
 
