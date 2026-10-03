@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -60,7 +61,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                     {t('stock_out_project_required')}
                 </p>
                 <DataPanel>
-                    <form
+                    <form noValidate
                         onSubmit={(e) => {
                             e.preventDefault();
                             post(route('stock.out.store'));
@@ -105,11 +106,10 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('date')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    type="date"
+                                <DateInput
+                                    className="mt-1"
                                     value={data.moved_on}
-                                    onChange={(e) => setData('moved_on', e.target.value)}
+                                    onValueChange={(next) => setData('moved_on', next)}
                                     required
                                 />
                             </FormField>

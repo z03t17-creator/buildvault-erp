@@ -1,5 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DateInput from '@/Components/DateInput';
 import EmptyState from '@/Components/EmptyState';
 import FlashBanner from '@/Components/FlashBanner';
 import MoneyAmount from '@/Components/MoneyAmount';
@@ -293,24 +294,23 @@ export default function Transactions({
                                 }}
                             />
                         </label>
-                        <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
-                            <NavIcon name="calendar" className="text-sm text-slate-400" />
-                            <input
-                                type="date"
-                                className={inputClass}
+                        <div className="flex flex-wrap items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+                            <DateInput
+                                className="min-w-[10.5rem]"
                                 value={filters?.from || ''}
-                                onChange={(e) => apply({ from: e.target.value })}
+                                onValueChange={(next) => apply({ from: next })}
                                 aria-label={t('from_date')}
+                                openOnFocus={false}
                             />
                             <span className="text-slate-400">–</span>
-                            <input
-                                type="date"
-                                className={inputClass}
+                            <DateInput
+                                className="min-w-[10.5rem]"
                                 value={filters?.to || ''}
-                                onChange={(e) => apply({ to: e.target.value })}
+                                onValueChange={(next) => apply({ to: next })}
                                 aria-label={t('to_date')}
+                                openOnFocus={false}
                             />
-                        </label>
+                        </div>
                     </div>
 
                     {rows.length === 0 ? (

@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -46,7 +47,7 @@ export default function Edit({ expense, projects, categories, paymentMethods }) 
             <Head title={`${t('edit')} #${expense.id}`} />
             <PageShell narrow>
                 <DataPanel>
-                    <form
+                    <form noValidate
                         onSubmit={(e) => {
                             e.preventDefault();
                             post(route('expenses.update', expense.id), { forceFormData: true });
@@ -99,11 +100,10 @@ export default function Edit({ expense, projects, categories, paymentMethods }) 
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('expense_date')} />
-                                <TextInput
-                                    type="date"
-                                    className="mt-1 block w-full"
+                                <DateInput
+                                    className="mt-1"
                                     value={data.expense_date}
-                                    onChange={(e) => setData('expense_date', e.target.value)}
+                                    onValueChange={(next) => setData('expense_date', next)}
                                     required
                                 />
                             </FormField>

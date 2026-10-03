@@ -1,3 +1,4 @@
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -229,12 +230,11 @@ export default function Create({ projects, workers, repaymentMethods, currencies
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('date')} />
-                                <TextInput
-                                    className={fieldClass}
+                                <DateInput
+                                    className="mt-1"
                                     value={data.advanced_on}
-                                    onChange={(e) => setData('advanced_on', e.target.value)}
-                                    placeholder="YYYY-MM-DD"
-                                    inputMode="numeric"
+                                    onValueChange={(next) => setData('advanced_on', next)}
+                                    required
                                 />
                                 <InputError message={mergedErrors.advanced_on} className="mt-1" />
                             </FormField>

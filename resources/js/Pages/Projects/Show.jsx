@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import EmptyState from '@/Components/EmptyState';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
@@ -196,7 +197,7 @@ export default function Show({ project, financialSummary, recentMaterials, canVi
                 {canViewFinancials && (
                     <DataPanel title={t('money_received')} subtitle={t('money_received_hint')}>
                         {canRecordReceipt && (
-                            <form
+                            <form noValidate
                                 onSubmit={(e) => {
                                     e.preventDefault();
                                     receiptForm.post(route('projects.receipts.store', project.id), {
@@ -227,12 +228,13 @@ export default function Show({ project, financialSummary, recentMaterials, canVi
                                         </FormField>
                                         <FormField>
                                             <InputLabel htmlFor="received_on" value={t('received_on')} />
-                                            <TextInput
+                                            <DateInput
                                                 id="received_on"
-                                                type="date"
-                                                className="mt-1 block w-full"
+                                                className="mt-1"
                                                 value={receiptForm.data.received_on}
-                                                onChange={(e) => receiptForm.setData('received_on', e.target.value)}
+                                                onValueChange={(next) =>
+                                                    receiptForm.setData('received_on', next)
+                                                }
                                                 required
                                             />
                                             <InputError message={receiptForm.errors.received_on} className="mt-1" />

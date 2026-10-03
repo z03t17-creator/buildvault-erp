@@ -1,3 +1,4 @@
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -445,23 +446,13 @@ export default function Create({
                         </FormField>
                         <FormField>
                             <InputLabel value={t('expense_date')} htmlFor="expense_date" />
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    id="expense_date"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={data.expense_date}
-                                    onChange={(e) =>
-                                        setData('expense_date', e.target.value)
-                                    }
-                                />
-                            </div>
+                            <DateInput
+                                id="expense_date"
+                                className="mt-1"
+                                value={data.expense_date}
+                                onValueChange={(next) => setData('expense_date', next)}
+                                required
+                            />
                             <InputError
                                 message={mergedErrors.expense_date}
                                 className="mt-1"

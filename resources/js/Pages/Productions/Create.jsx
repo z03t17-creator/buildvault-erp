@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -78,7 +79,7 @@ export default function Create({ projects, workers, unitTypes, defaults }) {
             <Head title={t('record_production')} />
             <PageShell narrow>
                 <DataPanel>
-                    <form
+                    <form noValidate
                         onSubmit={(e) => {
                             e.preventDefault();
                             post(route('productions.store'));
@@ -202,11 +203,10 @@ export default function Create({ projects, workers, unitTypes, defaults }) {
                             </div>
                             <FormField>
                                 <InputLabel value={t('date')} />
-                                <TextInput
-                                    type="date"
-                                    className="mt-1 block w-full"
+                                <DateInput
+                                    className="mt-1"
                                     value={data.recorded_on}
-                                    onChange={(e) => setData('recorded_on', e.target.value)}
+                                    onValueChange={(next) => setData('recorded_on', next)}
                                     required
                                 />
                                 <InputError message={errors.recorded_on} className="mt-1" />

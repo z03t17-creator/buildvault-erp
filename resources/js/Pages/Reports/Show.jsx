@@ -1,5 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DateInput from '@/Components/DateInput';
 import EmptyState from '@/Components/EmptyState';
 import InputLabel from '@/Components/InputLabel';
 import MoneyAmount from '@/Components/MoneyAmount';
@@ -111,26 +112,26 @@ export default function Show({ report, meta, filterOptions, exportUrls }) {
                             {needed.includes('from') && (
                                 <div>
                                     <InputLabel value={t('from_date')} />
-                                    <input
-                                        type="date"
-                                        className={selectClass}
+                                    <DateInput
+                                        className="mt-1.5"
                                         value={filters.from}
-                                        onChange={(e) =>
-                                            setFilters((prev) => ({ ...prev, from: e.target.value }))
+                                        onValueChange={(next) =>
+                                            setFilters((prev) => ({ ...prev, from: next }))
                                         }
+                                        openOnFocus={false}
                                     />
                                 </div>
                             )}
                             {needed.includes('to') && (
                                 <div>
                                     <InputLabel value={t('to_date')} />
-                                    <input
-                                        type="date"
-                                        className={selectClass}
+                                    <DateInput
+                                        className="mt-1.5"
                                         value={filters.to}
-                                        onChange={(e) =>
-                                            setFilters((prev) => ({ ...prev, to: e.target.value }))
+                                        onValueChange={(next) =>
+                                            setFilters((prev) => ({ ...prev, to: next }))
                                         }
+                                        openOnFocus={false}
                                     />
                                 </div>
                             )}

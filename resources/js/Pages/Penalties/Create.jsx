@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -57,7 +58,7 @@ export default function Create({ projects, workers, payouts, types, defaults }) 
             <Head title={t('record_penalty')} />
             <PageShell narrow>
                 <DataPanel>
-                    <form
+                    <form noValidate
                         onSubmit={(e) => {
                             e.preventDefault();
                             post(route('penalties.store'));
@@ -96,7 +97,12 @@ export default function Create({ projects, workers, payouts, types, defaults }) 
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('date')} />
-                                <TextInput type="date" className="mt-1 block w-full" value={data.occurred_on} onChange={(e) => setData('occurred_on', e.target.value)} required />
+                                <DateInput
+                                    className="mt-1"
+                                    value={data.occurred_on}
+                                    onValueChange={(next) => setData('occurred_on', next)}
+                                    required
+                                />
                                 <InputError message={errors.occurred_on} className="mt-1" />
                             </FormField>
                             <FormField>

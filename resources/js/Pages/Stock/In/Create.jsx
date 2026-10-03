@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -56,7 +57,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                     {t('stock_in_no_expense_hint')}
                 </p>
                 <DataPanel>
-                    <form
+                    <form noValidate
                         onSubmit={(e) => {
                             e.preventDefault();
                             post(route('stock.in.store'));
@@ -109,11 +110,10 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('date')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    type="date"
+                                <DateInput
+                                    className="mt-1"
                                     value={data.moved_on}
-                                    onChange={(e) => setData('moved_on', e.target.value)}
+                                    onValueChange={(next) => setData('moved_on', next)}
                                     required
                                 />
                             </FormField>

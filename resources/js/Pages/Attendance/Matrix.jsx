@@ -1,5 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DateInput from '@/Components/DateInput';
 import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -238,24 +239,20 @@ export default function Matrix({
                             <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                 {t('date')}
                             </label>
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={dateInput}
-                                    onChange={(e) => setDateInput(e.target.value)}
-                                    onBlur={applyDate}
-                                    onKeyDown={(e) => {
-                                        if (e.key === 'Enter') applyDate();
-                                    }}
-                                />
-                            </div>
+                            <DateInput
+                                className="mt-1"
+                                value={dateInput}
+                                onValueChange={(next) => {
+                                    setDateInput(next);
+                                    if (isValidIsoDate(next)) {
+                                        filter({
+                                            date: next,
+                                            project_id: projectId || '',
+                                        });
+                                    }
+                                }}
+                                onBlur={applyDate}
+                            />
                         </div>
                         <div>
                             <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">

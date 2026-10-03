@@ -1,3 +1,4 @@
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -313,21 +314,13 @@ export default function LedgerForm({
                     <FormSection cols={2}>
                         <FormField>
                             <InputLabel value={t('date')} htmlFor="occurred_on" />
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    id="occurred_on"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={data.occurred_on}
-                                    onChange={(e) => setData('occurred_on', e.target.value)}
-                                />
-                            </div>
+                            <DateInput
+                                id="occurred_on"
+                                className="mt-1"
+                                value={data.occurred_on}
+                                onValueChange={(next) => setData('occurred_on', next)}
+                                required
+                            />
                             <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
                             <InputError message={mergedErrors.occurred_on} className="mt-1" />
                         </FormField>

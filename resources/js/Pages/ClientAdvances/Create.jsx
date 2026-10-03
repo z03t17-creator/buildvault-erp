@@ -1,3 +1,4 @@
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -393,21 +394,13 @@ export default function Create({ projects }) {
 
                         <FormField>
                             <InputLabel value={t('date')} htmlFor="received_on" />
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    id="received_on"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={data.received_on}
-                                    onChange={(e) => setData('received_on', e.target.value)}
-                                />
-                            </div>
+                            <DateInput
+                                id="received_on"
+                                className="mt-1"
+                                value={data.received_on}
+                                onValueChange={(next) => setData('received_on', next)}
+                                required
+                            />
                             <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
                             <InputError message={mergedErrors.received_on} className="mt-1" />
                         </FormField>

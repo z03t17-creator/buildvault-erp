@@ -1,3 +1,4 @@
+import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -458,41 +459,23 @@ export default function ProjectForm({ mode = 'create', project, statuses }) {
 
                         <FormField>
                             <InputLabel value={t('start_date')} htmlFor="start_date" />
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    id="start_date"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={data.start_date}
-                                    onChange={(e) => setData('start_date', e.target.value)}
-                                />
-                            </div>
+                            <DateInput
+                                id="start_date"
+                                className="mt-1"
+                                value={data.start_date}
+                                onValueChange={(next) => setData('start_date', next)}
+                            />
                             <InputError message={mergedErrors.start_date} className="mt-1" />
                         </FormField>
 
                         <FormField>
                             <InputLabel value={t('end_date')} htmlFor="end_date" />
-                            <div className="relative">
-                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
-                                    <NavIcon name="calendar" className="text-sm" />
-                                </span>
-                                <TextInput
-                                    id="end_date"
-                                    type="text"
-                                    inputMode="numeric"
-                                    autoComplete="off"
-                                    placeholder={t('date_placeholder')}
-                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
-                                    value={data.end_date}
-                                    onChange={(e) => setData('end_date', e.target.value)}
-                                />
-                            </div>
+                            <DateInput
+                                id="end_date"
+                                className="mt-1"
+                                value={data.end_date}
+                                onValueChange={(next) => setData('end_date', next)}
+                            />
                             <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
                             <InputError message={mergedErrors.end_date} className="mt-1" />
                         </FormField>

@@ -87,6 +87,25 @@
 }
 
 @layer components {
+    /* Date fields: whole control opens the native calendar; hide default glyph. */
+    .bv-date-input {
+        color-scheme: light;
+        font-variant-numeric: tabular-nums;
+    }
+
+    html.dark .bv-date-input {
+        color-scheme: dark;
+    }
+
+    .bv-date-input::-webkit-calendar-picker-indicator {
+        cursor: pointer;
+        opacity: 0;
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
     .bv-surface {
         @apply border bg-white/95 dark:bg-slate-900/90;
         border-color: rgb(226 232 240 / 0.9);

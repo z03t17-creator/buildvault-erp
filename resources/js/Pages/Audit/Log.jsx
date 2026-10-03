@@ -1,5 +1,6 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import DateInput from '@/Components/DateInput';
 import EmptyState from '@/Components/EmptyState';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputLabel from '@/Components/InputLabel';
@@ -159,24 +160,20 @@ export default function Log({ entries, filters, actions, users, overview }) {
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('audit_from')} />
-                                <TextInput
-                                    className={fieldClass}
+                                <DateInput
+                                    className="mt-1"
                                     value={from}
-                                    onChange={(e) => setFrom(e.target.value)}
-                                    placeholder="YYYY-MM-DD"
-                                    inputMode="numeric"
-                                    dir="ltr"
+                                    onValueChange={setFrom}
+                                    openOnFocus={false}
                                 />
                             </FormField>
                             <FormField>
                                 <InputLabel value={t('audit_to')} />
-                                <TextInput
-                                    className={fieldClass}
+                                <DateInput
+                                    className="mt-1"
                                     value={to}
-                                    onChange={(e) => setTo(e.target.value)}
-                                    placeholder="YYYY-MM-DD"
-                                    inputMode="numeric"
-                                    dir="ltr"
+                                    onValueChange={setTo}
+                                    openOnFocus={false}
                                 />
                             </FormField>
                         </FormSection>
