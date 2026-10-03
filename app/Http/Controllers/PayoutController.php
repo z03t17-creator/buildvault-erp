@@ -27,17 +27,115 @@ class PayoutController extends Controller
         private readonly LiquidityService $liquidity,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Payout::class);
+
+        $status = $request->string('status')->toString();
+        $category = $request->string('category')->toString();
+
+        if ($status !== '' && ! in_array($status, Payout::STATUSES, true)) {
+            $status = '';
+        }
+        if ($category !== '' && ! in_array($category, Payout::CATEGORIES, true)) {
+            $category = '';
+        }
 
         $query = Payout::query()
             ->with(['project:id,name', 'worker:id,name', 'vault:id,name'])
             ->orderByDesc('id');
 
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+        if ($category !== '') {
+            $query->where('category', $category);
+        }
+
+        $payouts = $query->get();
+
+        $statusScoped = Payout::query();
+        if ($category !== '') {
+            $statusScoped->where('category', $category);
+        }
+        $statusRows = (clone $statusScoped)->get(['status']);
+        $statusCounts = [
+            'all' => $statusRows->count(),
+            'pending' => $statusRows->where('status', Payout::STATUS_PENDING)->count(),
+            'held' => $statusRows->where('status', Payout::STATUS_HELD)->count(),
+            'approved' => $statusRows->where('status', Payout::STATUS_APPROVED)->count(),
+            'reconciled' => $statusRows->where('status', Payout::STATUS_RECONCILED)->count(),
+            'rejected' => $statusRows->where('status', Payout::STATUS_REJECTED)->count(),
+        ];
+
+        $categoryScoped = Payout::query();
+        if ($status !== '') {
+            $categoryScoped->where('status', $status);
+        }
+        $categoryRows = (clone $categoryScoped)->get(['category']);
+        $categoryCounts = collect(Payout::CATEGORIES)
+            ->mapWithKeys(fn (string $c) => [$c => $categoryRows->where('category', $c)->count()])
+            ->all();
+
+        $open = $payouts->whereIn('status', [
+            Payout::STATUS_PENDING,
+            Payout::STATUS_HELD,
+            Payout::STATUS_APPROVED,
+        ]);
+        $pending = $payouts->where('status', Payout::STATUS_PENDING);
+
+        $overview = [
+            'count' => $payouts->count(),
+            'pending' => $pending->count(),
+            'held' => $payouts->where('status', Payout::STATUS_HELD)->count(),
+            'approved' => $payouts->where('status', Payout::STATUS_APPROVED)->count(),
+            'reconciled' => $payouts->where('status', Payout::STATUS_RECONCILED)->count(),
+            'rejected' => $payouts->where('status', Payout::STATUS_REJECTED)->count(),
+            'open_usd' => round((float) $open->sum(fn (Payout $p) => (float) $p->amount_usd), 2),
+            'open_iqd' => round((float) $open->sum(fn (Payout $p) => (float) $p->amount_iqd), 0),
+            'pending_usd' => round((float) $pending->sum(fn (Payout $p) => (float) $p->amount_usd), 2),
+            'pending_iqd' => round((float) $pending->sum(fn (Payout $p) => (float) $p->amount_iqd), 0),
+        ];
+
+        try {
+            $availableCash = $this->liquidity->dualSnapshot();
+        } catch (InvalidArgumentException) {
+            $availableCash = [
+                'balance_usd' => 0,
+                'balance_iqd' => 0,
+                'available_usd' => 0,
+                'available_iqd' => 0,
+                'pending_usd' => 0,
+                'pending_iqd' => 0,
+                'reserved_usd' => 0,
+                'reserved_iqd' => 0,
+            ];
+        }
+
+        $ability = [
+            'available_usd' => (float) $availableCash['available_usd'],
+            'available_iqd' => (float) $availableCash['available_iqd'],
+            'pending_commitments_usd' => (float) $availableCash['pending_usd'],
+            'pending_commitments_iqd' => (float) $availableCash['pending_iqd'],
+            'blocks_usd' => (float) $availableCash['available_usd'] <= 0
+                && $overview['pending_usd'] > 0,
+            'blocks_iqd' => (float) $availableCash['available_iqd'] <= 0
+                && $overview['pending_iqd'] > 0,
+        ];
+
         return Inertia::render('Payouts/Index', [
-            'payouts' => $query->get(),
+            'payouts' => $payouts,
             'statuses' => Payout::STATUSES,
+            'categories' => Payout::CATEGORIES,
+            'filters' => [
+                'status' => $status !== '' ? $status : null,
+                'category' => $category !== '' ? $category : null,
+            ],
+            'statusCounts' => $statusCounts,
+            'categoryCounts' => $categoryCounts,
+            'overview' => $overview,
+            'availableCash' => $availableCash,
+            'ability' => $ability,
         ]);
     }
 
