@@ -6,7 +6,7 @@
     "email": "Email",
     "password": "Password",
     "remember_me": "Remember me",
-    "forgot_password": "Forgot your password?",
+    "forgot_password": "Forgot password?",
     "menu": "Menu",
     "logged_in": "You're logged in!",
     "log_out": "Log out",
@@ -1270,5 +1270,12 @@
     "role_label_super-admin": "Super Admin",
     "role_label_boss-contractor": "Boss / Contractor",
     "role_label_accountant": "Accountant",
-    "role_label_stock-manager": "Stock Manager"
+    "role_label_stock-manager": "Stock Manager",
+    "login_page_hint": "Sign in with your Zhako staff account.",
+    "forgot_password_title": "Forgot password",
+    "forgot_password_hint": "Enter your email and we will send a reset link.",
+    "forgot_password_send": "Send reset link",
+    "reset_password_title": "Reset password",
+    "reset_password_hint": "Choose a new password for your account.",
+    "reset_password_submit": "Save new password"
 }

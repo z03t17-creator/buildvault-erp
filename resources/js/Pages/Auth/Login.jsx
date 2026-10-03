@@ -9,8 +9,8 @@ import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const inputClass =
-    'mt-1.5 block w-full min-h-touch rounded-xl border-slate-300 focus:border-teal-500 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1.5 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3.5 text-sm font-medium text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Login({ status, canResetPassword }) {
     const t = useTranslations();
@@ -31,28 +31,25 @@ export default function Login({ status, canResetPassword }) {
         <GuestLayout>
             <Head title={t('login')} />
 
-            <div className="mb-7">
-                <div className="bv-icon-chip mb-3">
+            <div className="mb-6">
+                <div className="mb-3 inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-teal-600 text-white dark:bg-teal-400 dark:text-teal-950">
                     <NavIcon name="lock" className="text-lg" />
                 </div>
-                <p className="text-xs font-semibold uppercase tracking-[0.16em] text-teal-700 dark:text-teal-300">
-                    BuildVault
-                </p>
-                <h1 className="mt-1.5 font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
+                <h1 className="font-display text-2xl font-semibold tracking-tight text-slate-900 dark:text-white">
                     {t('login')}
                 </h1>
-                <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
-                    ZHAKO construction ERP · USD & IQD vault
+                <p className="mt-1.5 text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+                    {t('login_page_hint')}
                 </p>
             </div>
 
-            {status && (
+            {status ? (
                 <FlashBanner tone="success" className="mb-5">
                     {status}
                 </FlashBanner>
-            )}
+            ) : null}
 
-            <form onSubmit={submit} className="space-y-5">
+            <form noValidate onSubmit={submit} className="space-y-5">
                 <div>
                     <InputLabel htmlFor="email" value={t('email')} />
                     <TextInput
@@ -60,9 +57,10 @@ export default function Login({ status, canResetPassword }) {
                         type="email"
                         name="email"
                         value={data.email}
-                        className={inputClass}
+                        className={fieldClass}
                         autoComplete="username"
-                        isFocused={true}
+                        isFocused
+                        dir="ltr"
                         onChange={(e) => setData('email', e.target.value)}
                     />
                     <InputError message={errors.email} className="mt-2" />
@@ -75,33 +73,38 @@ export default function Login({ status, canResetPassword }) {
                         type="password"
                         name="password"
                         value={data.password}
-                        className={inputClass}
+                        className={fieldClass}
                         autoComplete="current-password"
                         onChange={(e) => setData('password', e.target.value)}
                     />
                     <InputError message={errors.password} className="mt-2" />
                 </div>
 
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
                     <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
                         <Checkbox
                             name="remember"
                             checked={data.remember}
-                            onChange={(e) => setData('remember', e.target.checked)}
+                            onChange={(e) =>
+                                setData('remember', e.target.checked)
+                            }
                         />
                         <span>{t('remember_me')}</span>
                     </label>
-                    {canResetPassword && (
+                    {canResetPassword ? (
                         <Link
                             href={route('password.request')}
-                            className="text-sm font-medium text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
+                            className="text-sm font-semibold text-teal-800 underline-offset-2 hover:underline dark:text-teal-300"
                         >
                             {t('forgot_password')}
                         </Link>
-                    )}
+                    ) : null}
                 </div>
 
-                <PrimaryButton className="w-full" disabled={processing}>
+                <PrimaryButton
+                    className="w-full !bg-teal-700 hover:!bg-teal-600 dark:!bg-teal-400 dark:!text-teal-950 dark:hover:!bg-teal-300"
+                    disabled={processing}
+                >
                     <NavIcon name="lock" solid className="text-sm" />
                     {t('login')}
                 </PrimaryButton>

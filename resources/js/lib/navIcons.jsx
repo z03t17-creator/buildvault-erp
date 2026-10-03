@@ -20,6 +20,7 @@ const NAV_ICON_MAP = {
     spatial: 'fi-rr-grid',
     attendance: 'fi-rr-calendar-clock',
     insurance: 'fi-rr-lock',
+    lock: 'fi-rr-lock',
     docs: 'fi-rr-folder',
     imports: 'fi-rr-file-import',
     reports: 'fi-rr-chart-histogram',

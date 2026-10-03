@@ -284,3 +284,72 @@
         transform: translateY(0);
     }
 }
+
+@keyframes bv-guest-glow {
+    0%,
+    100% {
+        transform: translate3d(0, 0, 0) scale(1);
+        opacity: 0.9;
+    }
+    50% {
+        transform: translate3d(4%, 3%, 0) scale(1.06);
+        opacity: 1;
+    }
+}
+
+@layer components {
+    .bv-guest {
+        background-image:
+            radial-gradient(ellipse 85% 50% at 10% -5%, rgb(13 148 136 / 0.18), transparent 55%),
+            radial-gradient(ellipse 60% 40% at 95% 15%, rgb(245 158 11 / 0.1), transparent 50%),
+            linear-gradient(165deg, rgb(248 250 252) 0%, rgb(241 245 249) 45%, rgb(236 253 245 / 0.55) 100%);
+    }
+
+    html.dark .bv-guest {
+        background-image:
+            radial-gradient(ellipse 80% 45% at 8% -8%, rgb(45 212 191 / 0.14), transparent 55%),
+            radial-gradient(ellipse 55% 35% at 100% 20%, rgb(251 191 36 / 0.08), transparent 50%),
+            linear-gradient(165deg, rgb(15 23 42) 0%, rgb(11 18 32) 55%, rgb(15 23 42) 100%);
+    }
+
+    .bv-guest-grid {
+        background-image:
+            linear-gradient(rgb(15 23 42 / 0.04) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(15 23 42 / 0.04) 1px, transparent 1px);
+        background-size: 28px 28px;
+        mask-image: radial-gradient(ellipse 70% 60% at 50% 40%, black 20%, transparent 75%);
+    }
+
+    html.dark .bv-guest-grid {
+        background-image:
+            linear-gradient(rgb(148 163 184 / 0.08) 1px, transparent 1px),
+            linear-gradient(90deg, rgb(148 163 184 / 0.08) 1px, transparent 1px);
+    }
+
+    .bv-guest-glow {
+        animation: bv-guest-glow 12s ease-in-out infinite;
+    }
+
+    .bv-guest-glow-delay {
+        animation: bv-guest-glow 14s ease-in-out infinite;
+        animation-delay: -4s;
+    }
+
+    .bv-guest-brand {
+        animation: bv-fade-up var(--bv-motion-slow, 420ms) ease both;
+    }
+
+    .bv-guest-panel {
+        animation: bv-fade-up var(--bv-motion-slow, 420ms) ease both;
+        animation-delay: 80ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .bv-guest-glow,
+        .bv-guest-glow-delay,
+        .bv-guest-brand,
+        .bv-guest-panel {
+            animation: none;
+        }
+    }
+}

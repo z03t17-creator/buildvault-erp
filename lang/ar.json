@@ -1270,5 +1270,12 @@
     "role_label_super-admin": "Super Admin",
     "role_label_boss-contractor": "Boss / Contractor",
     "role_label_accountant": "Accountant",
-    "role_label_stock-manager": "Stock Manager"
+    "role_label_stock-manager": "Stock Manager",
+    "login_page_hint": "سجّل الدخول بحساب طاقم ژاكۆ.",
+    "forgot_password_title": "نسيت كلمة المرور",
+    "forgot_password_hint": "أدخل بريدك وسنرسل رابط إعادة التعيين.",
+    "forgot_password_send": "إرسال رابط التعيين",
+    "reset_password_title": "إعادة تعيين كلمة المرور",
+    "reset_password_hint": "اختر كلمة مرور جديدة لحسابك.",
+    "reset_password_submit": "حفظ كلمة المرور الجديدة"
 }

@@ -1270,5 +1270,12 @@
     "role_label_super-admin": "Super Admin",
     "role_label_boss-contractor": "Boss / Contractor",
     "role_label_accountant": "Accountant",
-    "role_label_stock-manager": "Stock Manager"
+    "role_label_stock-manager": "Stock Manager",
+    "login_page_hint": "بە هەژماری ستافی ژاکۆ بچۆ ژوورەوە.",
+    "forgot_password_title": "وشەی نهێنیت لەبیرچووە",
+    "forgot_password_hint": "ئیمەیڵەکەت بنووسە و لینکی نوێکردنەوە دەنێرین.",
+    "forgot_password_send": "لینکی نوێکردنەوە بنێرە",
+    "reset_password_title": "نوێکردنەوەی وشەی نهێنی",
+    "reset_password_hint": "وشەی نهێنی نوێ بۆ هەژمارەکەت هەڵبژێرە.",
+    "reset_password_submit": "وشەی نهێنی نوێ پاشەکەوت بکە"
 }
