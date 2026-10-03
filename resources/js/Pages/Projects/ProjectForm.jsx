@@ -142,7 +142,7 @@ export default function ProjectForm({ mode = 'create', project }) {
         client: project?.client || '',
         description: project?.description || '',
         location: project?.location || '',
-        contract_number: project?.contract_number || '',
+        // Contract number is not collected on the form; column stays nullable.
         // Status is not shown on the form; create defaults to planning,
         // edit preserves the existing value when saving other fields.
         status: project?.status || 'planning',
@@ -350,24 +350,6 @@ export default function ProjectForm({ mode = 'create', project }) {
                                 placeholder={t('project_form_location_placeholder')}
                             />
                             <InputError message={mergedErrors.location} className="mt-1" />
-                        </FormField>
-
-                        <FormField>
-                            <InputLabel
-                                value={t('contract_number')}
-                                htmlFor="contract_number"
-                            />
-                            <TextInput
-                                id="contract_number"
-                                className={fieldClass}
-                                value={data.contract_number}
-                                onChange={(e) => setData('contract_number', e.target.value)}
-                                placeholder={t('project_form_contract_placeholder')}
-                            />
-                            <InputError
-                                message={mergedErrors.contract_number}
-                                className="mt-1"
-                            />
                         </FormField>
 
                         <FormField>
