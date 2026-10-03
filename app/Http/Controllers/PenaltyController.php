@@ -12,6 +12,8 @@ use App\Models\Worker;
 use App\Services\ExchangeRateService;
 use App\Services\PenaltyService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use InvalidArgumentException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -23,31 +25,117 @@ class PenaltyController extends Controller
         private readonly ExchangeRateService $exchangeRates,
     ) {}
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', Penalty::class);
 
         $rate = $this->exchangeRates->getUsdToIqd();
+        $status = $request->string('status')->toString();
+        $type = $request->string('type')->toString();
 
-        $penalties = Penalty::query()
+        if ($status !== '' && ! in_array($status, Penalty::STATUSES, true)) {
+            $status = '';
+        }
+        if ($type !== '' && ! in_array($type, Penalty::TYPES, true)) {
+            $type = '';
+        }
+
+        $query = Penalty::query()
             ->with(['worker:id,name', 'project:id,name', 'payout:id,status,amount_usd', 'creator:id,name'])
-            ->orderByDesc('id')
-            ->get()
-            ->map(function (Penalty $p) use ($rate) {
-                $iqd = $p->amount_iqd !== null
-                    ? (float) $p->amount_iqd
-                    : round((float) $p->amount_usd * $rate, 0);
-                $p->setAttribute('amount_iqd_display', $iqd);
+            ->orderByDesc('id');
 
-                return $p;
-            });
+        if ($status !== '') {
+            $query->where('status', $status);
+        }
+        if ($type !== '') {
+            $query->where('type', $type);
+        }
+
+        $penalties = $query->get()->map(function (Penalty $p) use ($rate) {
+            $p->setAttribute('amount_iqd_display', $this->displayIqd($p, $rate));
+            $p->setAttribute('amount_usd_display', (float) $p->amount_usd);
+
+            return $p;
+        });
+
+        $scoped = Penalty::query();
+        if ($type !== '') {
+            $scoped->where('type', $type);
+        }
+        $statusRows = (clone $scoped)->get(['status']);
+        $statusCounts = [
+            'all' => $statusRows->count(),
+            'pending' => $statusRows->where('status', Penalty::STATUS_PENDING)->count(),
+            'applied' => $statusRows->where('status', Penalty::STATUS_APPLIED)->count(),
+            'waived' => $statusRows->where('status', Penalty::STATUS_WAIVED)->count(),
+        ];
+
+        $typeScoped = Penalty::query();
+        if ($status !== '') {
+            $typeScoped->where('status', $status);
+        }
+        $typeRows = (clone $typeScoped)->get(['type']);
+        $typeCounts = collect(Penalty::TYPES)
+            ->mapWithKeys(fn (string $t) => [$t => $typeRows->where('type', $t)->count()])
+            ->all();
+
+        $overview = $this->buildOverview($penalties, $rate);
 
         return Inertia::render('Penalties/Index', [
             'penalties' => $penalties,
             'exchangeRate' => $rate,
             'types' => Penalty::TYPES,
             'statuses' => Penalty::STATUSES,
+            'filters' => [
+                'status' => $status !== '' ? $status : null,
+                'type' => $type !== '' ? $type : null,
+            ],
+            'statusCounts' => $statusCounts,
+            'typeCounts' => $typeCounts,
+            'overview' => $overview,
         ]);
+    }
+
+    /**
+     * @param  Collection<int, Penalty>  $penalties
+     * @return array{
+     *     count: int,
+     *     pending: int,
+     *     applied: int,
+     *     waived: int,
+     *     amount_usd: float,
+     *     amount_iqd: float,
+     *     pending_usd: float,
+     *     pending_iqd: float
+     * }
+     */
+    private function buildOverview(Collection $penalties, float $rate): array
+    {
+        $active = $penalties->whereIn('status', [
+            Penalty::STATUS_PENDING,
+            Penalty::STATUS_APPLIED,
+        ]);
+        $pending = $penalties->where('status', Penalty::STATUS_PENDING);
+
+        return [
+            'count' => $penalties->count(),
+            'pending' => $pending->count(),
+            'applied' => $penalties->where('status', Penalty::STATUS_APPLIED)->count(),
+            'waived' => $penalties->where('status', Penalty::STATUS_WAIVED)->count(),
+            'amount_usd' => round((float) $active->sum(fn (Penalty $p) => (float) $p->amount_usd), 2),
+            'amount_iqd' => round((float) $active->sum(fn (Penalty $p) => $this->displayIqd($p, $rate)), 0),
+            'pending_usd' => round((float) $pending->sum(fn (Penalty $p) => (float) $p->amount_usd), 2),
+            'pending_iqd' => round((float) $pending->sum(fn (Penalty $p) => $this->displayIqd($p, $rate)), 0),
+        ];
+    }
+
+    private function displayIqd(Penalty $penalty, float $rate): float
+    {
+        if ($penalty->amount_iqd !== null) {
+            return round((float) $penalty->amount_iqd, 0);
+        }
+
+        return round((float) $penalty->amount_usd * $rate, 0);
     }
 
     public function create(): Response
