@@ -57,6 +57,7 @@ class BusinessDataWipeService
         'workers',
         'projects',
         'backups',
+        'activity_log',
     ];
 
     public function __construct(
