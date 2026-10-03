@@ -3,6 +3,7 @@
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\AuditLogController;
 use App\Http\Controllers\BackupController;
+use App\Http\Controllers\BusinessWipeController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ClientAdvanceController;
@@ -66,6 +67,10 @@ Route::get('/dashboard', DashboardController::class)
 Route::post('/admin/mayorca-import', [MayorcaImportController::class, 'store'])
     ->middleware(['auth', 'verified'])
     ->name('admin.mayorca-import');
+
+Route::post('/admin/business-wipe', [BusinessWipeController::class, 'store'])
+    ->middleware(['auth', 'verified'])
+    ->name('admin.business-wipe');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

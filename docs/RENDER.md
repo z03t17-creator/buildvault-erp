@@ -88,15 +88,18 @@ Test credentials only — rotate before any real company use.
 
 Boot seeds **slim core** only (`SEED_DEMO=false` by default): roles, vault at zero, and the four demo login users. No projects, people, advances, or ledger rows.
 
-To clear leftover demo / Mayorca business data and leave empty books (roles + logins kept):
+**Preferred — no Shell (Shell is paid):** Super Admin → **Imports** → **Wipe to empty books**.
+
+**One-shot on deploy (also no Shell):** set env `BUSINESS_WIPE_ON_BOOT=true`, let the service redeploy, confirm books are empty, then set `BUSINESS_WIPE_ON_BOOT=false` immediately (free-tier cold starts would wipe again if left on).
+
+Optional CLI (Render Shell, costs money on some plans):
 
 ```bash
-# Render Shell on the web service — dry-run first, then commit
 php artisan business:wipe --dry-run
 php artisan business:wipe --commit
 ```
 
-Re-deploy alone does **not** wipe production data (seeders are idempotent). Run `business:wipe --commit` once when you want empty books on an already-seeded database.
+Re-deploy alone does **not** wipe production data unless `BUSINESS_WIPE_ON_BOOT` is true.
 
 ## Load Mayorca Excel (optional)
 

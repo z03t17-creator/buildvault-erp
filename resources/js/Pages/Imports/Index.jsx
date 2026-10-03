@@ -91,6 +91,7 @@ export default function Index({
     });
 
     const mayorcaForm = useForm({ confirm_wipe: false });
+    const emptyBooksForm = useForm({ confirm_wipe: false });
 
     const submit = (e) => {
         e.preventDefault();
@@ -105,6 +106,17 @@ export default function Index({
         mayorcaForm.post(route('admin.mayorca-import'), {
             preserveScroll: true,
             onFinish: () => mayorcaForm.setData('confirm_wipe', false),
+        });
+    };
+
+    const runEmptyBooksWipe = () => {
+        if (!window.confirm(t('empty_books_wipe_confirm'))) {
+            return;
+        }
+        emptyBooksForm.transform((data) => ({ ...data, confirm_wipe: true }));
+        emptyBooksForm.post(route('admin.business-wipe'), {
+            preserveScroll: true,
+            onFinish: () => emptyBooksForm.setData('confirm_wipe', false),
         });
     };
 
@@ -143,45 +155,80 @@ export default function Index({
             <Head title={t('imports')} />
             <PageShell className="!space-y-6">
                 {canImportMayorca && (
-                    <section className="bv-card overflow-hidden p-0">
-                        <div className="border-b border-amber-200/80 bg-amber-50/80 px-4 py-4 sm:px-5 dark:border-amber-900/50 dark:bg-amber-950/30">
-                            <div className="flex items-start gap-3">
-                                <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-amber-950 dark:bg-amber-400">
-                                    <NavIcon name="imports" className="text-base" />
-                                </span>
-                                <div className="min-w-0">
-                                    <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
-                                        {t('mayorca_import_panel_title')}
-                                    </h2>
-                                    <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
-                                        {t('mayorca_import_panel_hint')}
-                                    </p>
+                    <>
+                        <section className="bv-card overflow-hidden p-0">
+                            <div className="border-b border-teal-200/80 bg-teal-50/80 px-4 py-4 sm:px-5 dark:border-teal-900/50 dark:bg-teal-950/30">
+                                <div className="flex items-start gap-3">
+                                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-teal-600 text-white dark:bg-teal-500">
+                                        <NavIcon name="vault" className="text-base" />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                            {t('empty_books_wipe_panel_title')}
+                                        </h2>
+                                        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                                            {t('empty_books_wipe_panel_hint')}
+                                        </p>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                        <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
-                            <p className="text-sm text-slate-600 dark:text-slate-300">
-                                {t('mayorca_import_panel_body')}
-                            </p>
-                            <DangerButton
-                                type="button"
-                                disabled={
-                                    mayorcaForm.processing || !workbookBundled
-                                }
-                                onClick={runMayorcaImport}
-                            >
-                                <NavIcon name="imports" className="text-sm" />
-                                {mayorcaForm.processing
-                                    ? t('mayorca_import_running')
-                                    : t('mayorca_import_button')}
-                            </DangerButton>
-                        </div>
-                        {!workbookBundled && (
-                            <p className="border-t border-rose-200/70 px-4 py-3 text-sm text-rose-700 sm:px-5 dark:border-rose-900/40 dark:text-rose-300">
-                                {t('mayorca_workbook_missing')}
-                            </p>
-                        )}
-                    </section>
+                            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    {t('empty_books_wipe_panel_body')}
+                                </p>
+                                <DangerButton
+                                    type="button"
+                                    disabled={emptyBooksForm.processing}
+                                    onClick={runEmptyBooksWipe}
+                                >
+                                    <NavIcon name="vault" className="text-sm" />
+                                    {emptyBooksForm.processing
+                                        ? t('empty_books_wipe_running')
+                                        : t('empty_books_wipe_button')}
+                                </DangerButton>
+                            </div>
+                        </section>
+
+                        <section className="bv-card overflow-hidden p-0">
+                            <div className="border-b border-amber-200/80 bg-amber-50/80 px-4 py-4 sm:px-5 dark:border-amber-900/50 dark:bg-amber-950/30">
+                                <div className="flex items-start gap-3">
+                                    <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-amber-500 text-amber-950 dark:bg-amber-400">
+                                        <NavIcon name="imports" className="text-base" />
+                                    </span>
+                                    <div className="min-w-0">
+                                        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                            {t('mayorca_import_panel_title')}
+                                        </h2>
+                                        <p className="mt-0.5 text-sm text-slate-600 dark:text-slate-300">
+                                            {t('mayorca_import_panel_hint')}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-5">
+                                <p className="text-sm text-slate-600 dark:text-slate-300">
+                                    {t('mayorca_import_panel_body')}
+                                </p>
+                                <DangerButton
+                                    type="button"
+                                    disabled={
+                                        mayorcaForm.processing || !workbookBundled
+                                    }
+                                    onClick={runMayorcaImport}
+                                >
+                                    <NavIcon name="imports" className="text-sm" />
+                                    {mayorcaForm.processing
+                                        ? t('mayorca_import_running')
+                                        : t('mayorca_import_button')}
+                                </DangerButton>
+                            </div>
+                            {!workbookBundled && (
+                                <p className="border-t border-rose-200/70 px-4 py-3 text-sm text-rose-700 sm:px-5 dark:border-rose-900/40 dark:text-rose-300">
+                                    {t('mayorca_workbook_missing')}
+                                </p>
+                            )}
+                        </section>
+                    </>
                 )}
 
                 <section>

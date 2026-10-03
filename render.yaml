@@ -67,3 +67,7 @@ services:
       # Set to "true" once (or via shell) if you need sample projects/users on Render.
       - key: SEED_DEMO
         value: "false"
+      # One-shot empty books on boot. Leave "false". Set "true" only for a single
+      # redeploy wipe (no Shell), then set back to "false" immediately.
+      - key: BUSINESS_WIPE_ON_BOOT
+        value: "false"

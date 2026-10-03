@@ -66,4 +66,46 @@ class BusinessWipePhase30Test extends TestCase
         $admin = \App\Models\User::query()->where('email', UserSeeder::ADMIN_EMAIL)->first();
         $this->assertTrue($admin?->hasRole(Roles::SUPER_ADMIN));
     }
+
+    public function test_super_admin_can_wipe_empty_books_from_web(): void
+    {
+        $this->seed([
+            \Database\Seeders\RoleSeeder::class,
+            \Database\Seeders\UserSeeder::class,
+            \Database\Seeders\VaultSeeder::class,
+            DemoUsersSeeder::class,
+        ]);
+
+        Project::query()->create([
+            'name' => 'Web Wipe Tower',
+            'status' => Project::STATUS_ACTIVE,
+        ]);
+
+        $admin = \App\Models\User::query()->where('email', UserSeeder::ADMIN_EMAIL)->first();
+        $this->assertNotNull($admin);
+
+        $this->actingAs($admin)
+            ->post(route('admin.business-wipe'), ['confirm_wipe' => '1'])
+            ->assertRedirect();
+
+        $this->assertSame(0, Project::query()->count());
+        $this->assertDatabaseHas('users', ['email' => UserSeeder::ADMIN_EMAIL]);
+    }
+
+    public function test_non_admin_cannot_wipe_empty_books_from_web(): void
+    {
+        $this->seed([
+            \Database\Seeders\RoleSeeder::class,
+            \Database\Seeders\UserSeeder::class,
+            \Database\Seeders\VaultSeeder::class,
+            DemoUsersSeeder::class,
+        ]);
+
+        $boss = \App\Models\User::query()->where('email', DemoUsersSeeder::BOSS_EMAIL)->first();
+        $this->assertNotNull($boss);
+
+        $this->actingAs($boss)
+            ->post(route('admin.business-wipe'), ['confirm_wipe' => '1'])
+            ->assertForbidden();
+    }
 }

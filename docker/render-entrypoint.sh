@@ -45,6 +45,15 @@ php artisan migrate --force --no-interaction
 echo "Seeding core roles/admin/vault (SEED_DEMO=${SEED_DEMO})…"
 php artisan db:seed --force --no-interaction
 
+# One-shot empty books (no Shell). Set BUSINESS_WIPE_ON_BOOT=true in Render env,
+# deploy once, then set it back to false so cold starts do not wipe again.
+WIPE_FLAG="$(echo "${BUSINESS_WIPE_ON_BOOT:-false}" | tr '[:upper:]' '[:lower:]')"
+if [[ "${WIPE_FLAG}" == "true" || "${WIPE_FLAG}" == "1" || "${WIPE_FLAG}" == "yes" ]]; then
+  echo "BUSINESS_WIPE_ON_BOOT is set — wiping business data (keeping core logins)…"
+  php artisan business:wipe --commit --no-interaction
+  echo "Wipe finished. Set BUSINESS_WIPE_ON_BOOT=false in Render env after this deploy."
+fi
+
 php artisan config:cache || true
 php artisan route:cache || true
 php artisan view:cache || true
