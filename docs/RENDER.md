@@ -84,9 +84,23 @@ This agent environment had **no** `RENDER_API_KEY`, so live deploy must be compl
 
 Test credentials only — rotate before any real company use.
 
-## Load Mayorca Excel (after first deploy)
+## Empty books (wipe demo, keep logins)
 
-Boot seeds **slim core** only (`SEED_DEMO=false` by default). To replace leftover demo business rows with the bundled workbook:
+Boot seeds **slim core** only (`SEED_DEMO=false` by default): roles, vault at zero, and the four demo login users. No projects, people, advances, or ledger rows.
+
+To clear leftover demo / Mayorca business data and leave empty books (roles + logins kept):
+
+```bash
+# Render Shell on the web service — dry-run first, then commit
+php artisan business:wipe --dry-run
+php artisan business:wipe --commit
+```
+
+Re-deploy alone does **not** wipe production data (seeders are idempotent). Run `business:wipe --commit` once when you want empty books on an already-seeded database.
+
+## Load Mayorca Excel (optional)
+
+To replace empty (or leftover) books with the bundled workbook:
 
 ```bash
 # Render Shell on the web service
