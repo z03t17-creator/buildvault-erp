@@ -89,44 +89,77 @@ class MonthlySettlementService
         [$from, $to] = $this->monthBounds($yearMonth);
         $projectId = $projectId && $projectId > 0 ? $projectId : null;
 
-        $moneyReceived = $this->sumTypes($vault, self::MONEY_RECEIVED_TYPES, $from, $to, $projectId);
-        $projectExpenses = $this->sumTypes($vault, self::PROJECT_EXPENSE_TYPES, $from, $to, $projectId);
-        $payroll = $this->sumTypes($vault, [Transaction::TYPE_PAYROLL], $from, $to, $projectId);
-        $advances = $this->sumTypes($vault, [Transaction::TYPE_ADVANCE], $from, $to, $projectId);
-        $insurance = $this->sumTypes($vault, [Transaction::TYPE_INSURANCE], $from, $to, $projectId);
-        $penalties = $this->sumTypes($vault, [Transaction::TYPE_PENALTY], $from, $to, $projectId);
-        $otherExpenses = $this->sumTypes($vault, self::OTHER_EXPENSE_TYPES, $from, $to, $projectId);
-        $approvedPayments = $this->approvedPaymentsIqd($vault, $from, $to, $projectId);
+        $moneyReceived = $this->sumTypesDual($vault, self::MONEY_RECEIVED_TYPES, $from, $to, $projectId);
+        $projectExpenses = $this->sumTypesDual($vault, self::PROJECT_EXPENSE_TYPES, $from, $to, $projectId);
+        $payroll = $this->sumTypesDual($vault, [Transaction::TYPE_PAYROLL], $from, $to, $projectId);
+        $advances = $this->sumTypesDual($vault, [Transaction::TYPE_ADVANCE], $from, $to, $projectId);
+        $insurance = $this->sumTypesDual($vault, [Transaction::TYPE_INSURANCE], $from, $to, $projectId);
+        $penalties = $this->sumTypesDual($vault, [Transaction::TYPE_PENALTY], $from, $to, $projectId);
+        $otherExpenses = $this->sumTypesDual($vault, self::OTHER_EXPENSE_TYPES, $from, $to, $projectId);
+        $approvedPayments = $this->approvedPaymentsDual($vault, $from, $to, $projectId);
 
         $balances = $this->ledger->balances($vault);
-        $availableVault = (float) $balances['available_iqd'];
-        $currentVault = (float) $balances['current_iqd'];
-        $pending = (float) $balances['pending_iqd'];
-        $reserved = (float) $balances['reserved_iqd'];
+        $availableVaultIqd = (float) $balances['available_iqd'];
+        $availableVaultUsd = (float) $balances['available_usd'];
+        $currentVaultIqd = (float) $balances['current_iqd'];
+        $currentVaultUsd = (float) $balances['current_usd'];
+        $pendingIqd = (float) $balances['pending_iqd'];
+        $pendingUsd = (float) $balances['pending_usd'];
+        $reservedIqd = (float) $balances['reserved_iqd'];
+        $reservedUsd = (float) $balances['reserved_usd'];
 
-        $monthOutflows = round(
-            $projectExpenses + $payroll + $advances + $otherExpenses,
+        $monthOutflowsIqd = round(
+            $projectExpenses['iqd'] + $payroll['iqd'] + $advances['iqd'] + $otherExpenses['iqd'],
+            2,
+        );
+        $monthOutflowsUsd = round(
+            $projectExpenses['usd'] + $payroll['usd'] + $advances['usd'] + $otherExpenses['usd'],
             2,
         );
 
         // Real ability-to-pay: never invent cash. Available money for payment is
         // the live vault available balance (vault − pending − reserved insurance).
-        $availableForPayment = $this->availableMoneyForPayment($availableVault);
+        // Native per currency — never FX-blend USD into IQD (or the reverse).
+        $availableForPaymentIqd = $this->availableMoneyForPayment($availableVaultIqd);
+        $availableForPaymentUsd = $this->availableMoneyForPayment($availableVaultUsd);
 
-        $ability = $this->abilityToPay($availableForPayment, $requestedPayoutIqd);
+        $ability = $this->abilityToPay($availableForPaymentIqd, $requestedPayoutIqd);
 
-        $lines = [
-            ['key' => 'money_received', 'amount_iqd' => $moneyReceived, 'kind' => 'in'],
-            ['key' => 'available_vault_balance', 'amount_iqd' => $availableVault, 'kind' => 'balance'],
-            ['key' => 'project_expenses', 'amount_iqd' => $projectExpenses, 'kind' => 'out'],
-            ['key' => 'payroll', 'amount_iqd' => $payroll, 'kind' => 'out'],
-            ['key' => 'employee_advances', 'amount_iqd' => $advances, 'kind' => 'out'],
-            ['key' => 'insurance', 'amount_iqd' => $insurance, 'kind' => 'accounting'],
-            ['key' => 'penalties', 'amount_iqd' => $penalties, 'kind' => 'accounting'],
-            ['key' => 'other_expenses', 'amount_iqd' => $otherExpenses, 'kind' => 'out'],
-            ['key' => 'approved_payments', 'amount_iqd' => $approvedPayments, 'kind' => 'out'],
-            ['key' => 'available_money_for_payment', 'amount_iqd' => $availableForPayment, 'kind' => 'result'],
+        // Month ledger activity only — live vault balance stays in the hero, not here.
+        $monthLines = [
+            ['key' => 'money_received', 'amount_usd' => $moneyReceived['usd'], 'amount_iqd' => $moneyReceived['iqd'], 'kind' => 'in'],
+            ['key' => 'project_expenses', 'amount_usd' => $projectExpenses['usd'], 'amount_iqd' => $projectExpenses['iqd'], 'kind' => 'out'],
+            ['key' => 'payroll', 'amount_usd' => $payroll['usd'], 'amount_iqd' => $payroll['iqd'], 'kind' => 'out'],
+            ['key' => 'employee_advances', 'amount_usd' => $advances['usd'], 'amount_iqd' => $advances['iqd'], 'kind' => 'out'],
+            ['key' => 'insurance', 'amount_usd' => $insurance['usd'], 'amount_iqd' => $insurance['iqd'], 'kind' => 'accounting'],
+            ['key' => 'penalties', 'amount_usd' => $penalties['usd'], 'amount_iqd' => $penalties['iqd'], 'kind' => 'accounting'],
+            ['key' => 'other_expenses', 'amount_usd' => $otherExpenses['usd'], 'amount_iqd' => $otherExpenses['iqd'], 'kind' => 'out'],
+            ['key' => 'approved_payments', 'amount_usd' => $approvedPayments['usd'], 'amount_iqd' => $approvedPayments['iqd'], 'kind' => 'out'],
         ];
+
+        // Keep legacy keys for snapshots / older tests; UI must not treat live
+        // vault balance as a month activity row (avoids bogus mega-totals).
+        $lines = array_merge(
+            [
+                [
+                    'key' => 'available_vault_balance',
+                    'amount_usd' => $availableVaultUsd,
+                    'amount_iqd' => $availableVaultIqd,
+                    'kind' => 'balance',
+                    'live' => true,
+                ],
+            ],
+            $monthLines,
+            [
+                [
+                    'key' => 'available_money_for_payment',
+                    'amount_usd' => $availableForPaymentUsd,
+                    'amount_iqd' => $availableForPaymentIqd,
+                    'kind' => 'result',
+                    'live' => true,
+                ],
+            ],
+        );
 
         $snapshot = MonthlySettlement::query()
             ->where('vault_id', $vault->id)
@@ -150,20 +183,35 @@ class MonthlySettlementService
                 'id' => $vault->id,
                 'name' => $vault->name,
             ],
-            'money_received_iqd' => $moneyReceived,
-            'available_vault_balance_iqd' => $availableVault,
-            'project_expenses_iqd' => $projectExpenses,
-            'payroll_iqd' => $payroll,
-            'employee_advances_iqd' => $advances,
-            'insurance_iqd' => $insurance,
-            'penalties_iqd' => $penalties,
-            'other_expenses_iqd' => $otherExpenses,
-            'approved_payments_iqd' => $approvedPayments,
-            'available_money_for_payment_iqd' => $availableForPayment,
-            'current_vault_iqd' => $currentVault,
-            'pending_commitments_iqd' => $pending,
-            'reserved_insurance_iqd' => $reserved,
-            'month_outflows_iqd' => $monthOutflows,
+            'money_received_iqd' => $moneyReceived['iqd'],
+            'money_received_usd' => $moneyReceived['usd'],
+            'available_vault_balance_iqd' => $availableVaultIqd,
+            'available_vault_balance_usd' => $availableVaultUsd,
+            'project_expenses_iqd' => $projectExpenses['iqd'],
+            'project_expenses_usd' => $projectExpenses['usd'],
+            'payroll_iqd' => $payroll['iqd'],
+            'payroll_usd' => $payroll['usd'],
+            'employee_advances_iqd' => $advances['iqd'],
+            'employee_advances_usd' => $advances['usd'],
+            'insurance_iqd' => $insurance['iqd'],
+            'insurance_usd' => $insurance['usd'],
+            'penalties_iqd' => $penalties['iqd'],
+            'penalties_usd' => $penalties['usd'],
+            'other_expenses_iqd' => $otherExpenses['iqd'],
+            'other_expenses_usd' => $otherExpenses['usd'],
+            'approved_payments_iqd' => $approvedPayments['iqd'],
+            'approved_payments_usd' => $approvedPayments['usd'],
+            'available_money_for_payment_iqd' => $availableForPaymentIqd,
+            'available_money_for_payment_usd' => $availableForPaymentUsd,
+            'current_vault_iqd' => $currentVaultIqd,
+            'current_vault_usd' => $currentVaultUsd,
+            'pending_commitments_iqd' => $pendingIqd,
+            'pending_commitments_usd' => $pendingUsd,
+            'reserved_insurance_iqd' => $reservedIqd,
+            'reserved_insurance_usd' => $reservedUsd,
+            'month_outflows_iqd' => $monthOutflowsIqd,
+            'month_outflows_usd' => $monthOutflowsUsd,
+            'month_lines' => $monthLines,
             'lines' => $lines,
             'ability' => $ability,
             'snapshot' => $snapshot ? $this->serializeSnapshot($snapshot) : null,
@@ -314,14 +362,15 @@ class MonthlySettlementService
 
     /**
      * @param  list<string>  $types
+     * @return array{usd: float, iqd: float}
      */
-    protected function sumTypes(
+    protected function sumTypesDual(
         Vault $vault,
         array $types,
         string $from,
         string $to,
         ?int $projectId,
-    ): float {
+    ): array {
         $query = Transaction::query()
             ->forVault($vault->id)
             ->whereIn('type', $types)
@@ -332,18 +381,39 @@ class MonthlySettlementService
             $query->where('project_id', $projectId);
         }
 
-        return round((float) $query->sum('amount_iqd'), 2);
+        $row = $query->selectRaw('COALESCE(SUM(amount_usd), 0) as usd_sum, COALESCE(SUM(amount_iqd), 0) as iqd_sum')
+            ->first();
+
+        return [
+            'usd' => round((float) ($row->usd_sum ?? 0), 2),
+            'iqd' => round((float) ($row->iqd_sum ?? 0), 2),
+        ];
     }
 
     /**
-     * Approved + reconciled payouts posted in the month (IQD).
+     * @param  list<string>  $types
      */
-    protected function approvedPaymentsIqd(
+    protected function sumTypes(
         Vault $vault,
+        array $types,
         string $from,
         string $to,
         ?int $projectId,
     ): float {
+        return $this->sumTypesDual($vault, $types, $from, $to, $projectId)['iqd'];
+    }
+
+    /**
+     * Approved + reconciled payouts posted in the month (native per currency).
+     *
+     * @return array{usd: float, iqd: float}
+     */
+    protected function approvedPaymentsDual(
+        Vault $vault,
+        string $from,
+        string $to,
+        ?int $projectId,
+    ): array {
         $query = Payout::query()
             ->where('vault_id', $vault->id)
             ->whereIn('status', [Payout::STATUS_APPROVED, Payout::STATUS_RECONCILED])
@@ -364,7 +434,25 @@ class MonthlySettlementService
             $query->where('project_id', $projectId);
         }
 
-        return round((float) $query->sum('amount_iqd'), 2);
+        $row = $query->selectRaw('COALESCE(SUM(amount_usd), 0) as usd_sum, COALESCE(SUM(amount_iqd), 0) as iqd_sum')
+            ->first();
+
+        return [
+            'usd' => round((float) ($row->usd_sum ?? 0), 2),
+            'iqd' => round((float) ($row->iqd_sum ?? 0), 2),
+        ];
+    }
+
+    /**
+     * Approved + reconciled payouts posted in the month (IQD).
+     */
+    protected function approvedPaymentsIqd(
+        Vault $vault,
+        string $from,
+        string $to,
+        ?int $projectId,
+    ): float {
+        return $this->approvedPaymentsDual($vault, $from, $to, $projectId)['iqd'];
     }
 
     /**
