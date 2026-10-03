@@ -19,9 +19,6 @@ export default function Create() {
     const t = useTranslations();
     const { data, setData, post, processing, errors } = useForm({
         name: '',
-        contact_name: '',
-        phone: '',
-        email: '',
         notes: '',
     });
 
@@ -29,43 +26,40 @@ export default function Create() {
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('new_supplier')}
-                    subtitle={t('suppliers_form_hint')}
-                    icon={<NavIcon name="suppliers" className="text-lg" />}
+                    title={t('new_stock_category')}
+                    subtitle={t('stock_categories_form_hint')}
+                    icon={<NavIcon name="stockCategories" className="text-lg" />}
                     actions={
-                        <Link href={route('stock.suppliers.index')}>
+                        <Link href={route('stock.categories.index')}>
                             <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={t('new_supplier')} />
+            <Head title={t('new_stock_category')} />
             <PageShell narrow className="!space-y-6">
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            post(route('stock.suppliers.store'));
+                            post(route('stock.categories.store'));
                         }}
                         className="space-y-5"
                     >
-                        <FormSection cols={2}>
-                            {['name', 'contact_name', 'phone', 'email'].map((field) => (
-                                <FormField key={field}>
-                                    <InputLabel value={t(field)} />
-                                    <TextInput
-                                        className={fieldClass}
-                                        type={field === 'email' ? 'email' : 'text'}
-                                        value={data[field]}
-                                        onChange={(e) => setData(field, e.target.value)}
-                                        required={field === 'name'}
-                                        autoFocus={field === 'name'}
-                                    />
-                                    <InputError message={errors[field]} className="mt-1" />
-                                </FormField>
-                            ))}
-                            <FormField className="sm:col-span-2">
+                        <FormSection cols={1}>
+                            <FormField>
+                                <InputLabel value={t('name')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    required
+                                    autoFocus
+                                />
+                                <InputError message={errors.name} className="mt-1" />
+                            </FormField>
+                            <FormField>
                                 <InputLabel value={t('notes')} />
                                 <textarea
                                     className={fieldClass + ' py-2'}

@@ -15,6 +15,7 @@ class StockItem extends Model
         'name',
         'sku',
         'category',
+        'stock_category_id',
         'unit',
         'quantity',
         'min_quantity',
@@ -34,6 +35,11 @@ class StockItem extends Model
             'min_quantity' => 'decimal:3',
             'purchase_price_iqd' => 'decimal:2',
         ];
+    }
+
+    public function stockCategory(): BelongsTo
+    {
+        return $this->belongsTo(StockCategory::class);
     }
 
     public function supplier(): BelongsTo

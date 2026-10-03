@@ -28,6 +28,7 @@ class UpdateStockItemRequest extends FormRequest
                 Rule::unique('stock_items', 'sku')->ignore($itemId),
             ],
             'category' => ['nullable', 'string', 'max:64'],
+            'stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'unit' => ['required', 'string', 'max:32'],
             'min_quantity' => ['nullable', 'numeric', 'min:0'],
             'purchase_price_iqd' => ['nullable', 'numeric', 'min:0'],

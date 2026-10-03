@@ -10,10 +10,14 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const selectClass =
-    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+
+const moneyFieldClass =
+    'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Create({ items, suppliers, projects, defaults }) {
     const t = useTranslations();
@@ -36,17 +40,21 @@ export default function Create({ items, suppliers, projects, defaults }) {
             header={
                 <PageHeader
                     title={t('stock_in')}
-                    subtitle={t('stock_in_hint')}
+                    subtitle={t('stock_in_form_hint')}
+                    icon={<NavIcon name="stockIn" className="text-lg" />}
                     actions={
-                        <Link href={route('stock.dashboard')}>
-                            <SecondaryButton>{t('back')}</SecondaryButton>
+                        <Link href={route('stock.movements.index', { type: 'in' })}>
+                            <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
             <Head title={t('stock_in')} />
-            <PageShell narrow>
+            <PageShell narrow className="!space-y-6">
+                <p className="rounded-xl border border-emerald-200/70 bg-emerald-50/70 px-4 py-3 text-sm text-emerald-950 dark:border-emerald-900/40 dark:bg-emerald-950/30 dark:text-emerald-100">
+                    {t('stock_in_no_expense_hint')}
+                </p>
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
@@ -55,14 +63,11 @@ export default function Create({ items, suppliers, projects, defaults }) {
                         }}
                         className="space-y-5"
                     >
-                        <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/50 dark:text-slate-400">
-                            {t('stock_in_no_expense_hint')}
-                        </p>
-                        <FormSection>
-                            <FormField>
+                        <FormSection cols={2}>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('product')} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.stock_item_id}
                                     onChange={(e) => {
                                         const id = e.target.value;
@@ -92,7 +97,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={t('quantity')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     type="number"
                                     step="0.001"
                                     min="0.001"
@@ -105,7 +110,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={t('date')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     type="date"
                                     value={data.moved_on}
                                     onChange={(e) => setData('moved_on', e.target.value)}
@@ -115,7 +120,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={t('supplier')} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.supplier_id}
                                     onChange={(e) => setData('supplier_id', e.target.value)}
                                 >
@@ -130,7 +135,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={`${t('purchase_price_iqd')} (${iqd})`} />
                                 <MoneyInput
-                                    className="mt-1 block w-full"
+                                    className={moneyFieldClass}
                                     value={data.purchase_price_iqd}
                                     onValueChange={(raw) => setData('purchase_price_iqd', raw)}
                                 />
@@ -139,7 +144,7 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={`${t('project')} (${t('optional')})`} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.project_id}
                                     onChange={(e) => setData('project_id', e.target.value)}
                                 >
@@ -155,15 +160,15 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             <FormField>
                                 <InputLabel value={t('invoice_ref')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     value={data.invoice_ref}
                                     onChange={(e) => setData('invoice_ref', e.target.value)}
                                 />
                             </FormField>
-                            <FormField>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />
                                 <textarea
-                                    className={selectClass}
+                                    className={fieldClass + ' py-2'}
                                     rows={3}
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
@@ -171,7 +176,12 @@ export default function Create({ items, suppliers, projects, defaults }) {
                             </FormField>
                         </FormSection>
                         <FormActions>
-                            <PrimaryButton disabled={processing}>{t('record_stock_in')}</PrimaryButton>
+                            <PrimaryButton
+                                disabled={processing}
+                                className="!bg-emerald-600 hover:!bg-emerald-500"
+                            >
+                                {t('record_stock_in')}
+                            </PrimaryButton>
                         </FormActions>
                     </form>
                 </DataPanel>

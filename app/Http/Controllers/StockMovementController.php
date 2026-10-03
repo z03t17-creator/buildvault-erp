@@ -54,8 +54,18 @@ class StockMovementController extends Controller
             $query->where('project_id', $projectId);
         }
 
+        $movements = $query->limit(200)->get();
+
+        $overview = [
+            'movements' => $movements->count(),
+            'in_count' => $movements->where('type', StockMovement::TYPE_IN)->count(),
+            'out_count' => $movements->where('type', StockMovement::TYPE_OUT)->count(),
+            'in_qty' => round((float) $movements->where('type', StockMovement::TYPE_IN)->sum('quantity'), 3),
+            'out_qty' => round((float) $movements->where('type', StockMovement::TYPE_OUT)->sum('quantity'), 3),
+        ];
+
         return Inertia::render('Stock/Movements/Index', [
-            'movements' => $query->limit(200)->get(),
+            'movements' => $movements,
             'filters' => [
                 'type' => in_array($type, StockMovement::TYPES, true) ? $type : '',
                 'stock_item_id' => $itemId,
@@ -63,6 +73,7 @@ class StockMovementController extends Controller
             ],
             'items' => StockItem::query()->orderBy('name')->get(['id', 'name', 'sku']),
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'overview' => $overview,
         ]);
     }
 

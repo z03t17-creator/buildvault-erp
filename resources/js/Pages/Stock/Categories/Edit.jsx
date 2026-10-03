@@ -15,57 +15,56 @@ import { Head, Link, useForm } from '@inertiajs/react';
 const fieldClass =
     'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Create() {
+export default function Edit({ category }) {
     const t = useTranslations();
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        contact_name: '',
-        phone: '',
-        email: '',
-        notes: '',
+    const { data, setData, put, processing, errors } = useForm({
+        name: category.name || '',
+        notes: category.notes || '',
     });
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('new_supplier')}
-                    subtitle={t('suppliers_form_hint')}
-                    icon={<NavIcon name="suppliers" className="text-lg" />}
+                    title={t('edit_stock_category')}
+                    subtitle={t('stock_categories_form_hint')}
+                    icon={<NavIcon name="stockCategories" className="text-lg" />}
                     actions={
-                        <Link href={route('stock.suppliers.index')}>
+                        <Link href={route('stock.categories.index')}>
                             <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={t('new_supplier')} />
+            <Head title={t('edit_stock_category')} />
             <PageShell narrow className="!space-y-6">
+                <p className="rounded-xl border border-rose-200/70 bg-rose-50/70 px-4 py-3 text-sm text-rose-950 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-100">
+                    {t('stock_categories_linked_hint', {
+                        count: category.stock_items_count ?? 0,
+                    })}
+                </p>
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
                             e.preventDefault();
-                            post(route('stock.suppliers.store'));
+                            put(route('stock.categories.update', category.id));
                         }}
                         className="space-y-5"
                     >
-                        <FormSection cols={2}>
-                            {['name', 'contact_name', 'phone', 'email'].map((field) => (
-                                <FormField key={field}>
-                                    <InputLabel value={t(field)} />
-                                    <TextInput
-                                        className={fieldClass}
-                                        type={field === 'email' ? 'email' : 'text'}
-                                        value={data[field]}
-                                        onChange={(e) => setData(field, e.target.value)}
-                                        required={field === 'name'}
-                                        autoFocus={field === 'name'}
-                                    />
-                                    <InputError message={errors[field]} className="mt-1" />
-                                </FormField>
-                            ))}
-                            <FormField className="sm:col-span-2">
+                        <FormSection cols={1}>
+                            <FormField>
+                                <InputLabel value={t('name')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    required
+                                    autoFocus
+                                />
+                                <InputError message={errors.name} className="mt-1" />
+                            </FormField>
+                            <FormField>
                                 <InputLabel value={t('notes')} />
                                 <textarea
                                     className={fieldClass + ' py-2'}
@@ -81,7 +80,7 @@ export default function Create() {
                                 disabled={processing}
                                 className="!bg-rose-600 hover:!bg-rose-500"
                             >
-                                {t('save')}
+                                {t('update')}
                             </PrimaryButton>
                         </FormActions>
                     </form>

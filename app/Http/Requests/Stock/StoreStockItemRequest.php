@@ -20,6 +20,7 @@ class StoreStockItemRequest extends FormRequest
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['nullable', 'string', 'max:64', 'unique:stock_items,sku'],
             'category' => ['nullable', 'string', 'max:64'],
+            'stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'unit' => ['required', 'string', 'max:32'],
             'quantity' => ['nullable', 'numeric', 'min:0'],
             'min_quantity' => ['nullable', 'numeric', 'min:0'],

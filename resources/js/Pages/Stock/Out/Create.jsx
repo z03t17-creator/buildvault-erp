@@ -9,10 +9,11 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const selectClass =
-    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Create({ items, projects, towers, floors, defaults }) {
     const t = useTranslations();
@@ -31,25 +32,33 @@ export default function Create({ items, projects, towers, floors, defaults }) {
     });
 
     const selected = (items || []).find((i) => String(i.id) === String(data.stock_item_id));
-    const projectTowers = (towers || []).filter((tw) => !data.project_id || String(tw.project_id) === String(data.project_id));
-    const towerFloors = (floors || []).filter((f) => !data.tower_id || String(f.tower_id) === String(data.tower_id));
+    const projectTowers = (towers || []).filter(
+        (tw) => !data.project_id || String(tw.project_id) === String(data.project_id),
+    );
+    const towerFloors = (floors || []).filter(
+        (f) => !data.tower_id || String(f.tower_id) === String(data.tower_id),
+    );
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
                     title={t('stock_out_action')}
-                    subtitle={t('stock_out_hint')}
+                    subtitle={t('stock_out_form_hint')}
+                    icon={<NavIcon name="stockOut" className="text-lg" />}
                     actions={
-                        <Link href={route('stock.dashboard')}>
-                            <SecondaryButton>{t('back')}</SecondaryButton>
+                        <Link href={route('stock.movements.index', { type: 'out' })}>
+                            <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
             <Head title={t('stock_out_action')} />
-            <PageShell narrow>
+            <PageShell narrow className="!space-y-6">
+                <p className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
+                    {t('stock_out_project_required')}
+                </p>
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
@@ -58,11 +67,11 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                         }}
                         className="space-y-5"
                     >
-                        <FormSection>
-                            <FormField>
+                        <FormSection cols={2}>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('product')} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.stock_item_id}
                                     onChange={(e) => setData('stock_item_id', e.target.value)}
                                     required
@@ -84,7 +93,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('quantity')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     type="number"
                                     step="0.001"
                                     min="0.001"
@@ -97,7 +106,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('date')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     type="date"
                                     value={data.moved_on}
                                     onChange={(e) => setData('moved_on', e.target.value)}
@@ -107,7 +116,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={`${t('project')} *`} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.project_id}
                                     onChange={(e) => {
                                         setData('project_id', e.target.value);
@@ -123,13 +132,12 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                                         </option>
                                     ))}
                                 </select>
-                                <p className="mt-1 text-xs text-slate-500">{t('stock_out_project_required')}</p>
                                 <InputError message={errors.project_id} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={`${t('tower')} (${t('optional')})`} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.tower_id}
                                     onChange={(e) => {
                                         setData('tower_id', e.target.value);
@@ -149,7 +157,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={`${t('floor')} (${t('optional')})`} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.floor_id}
                                     onChange={(e) => setData('floor_id', e.target.value)}
                                     disabled={!data.tower_id}
@@ -166,7 +174,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('receiver')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     value={data.receiver}
                                     onChange={(e) => setData('receiver', e.target.value)}
                                 />
@@ -174,7 +182,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('issuer')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     value={data.issuer}
                                     onChange={(e) => setData('issuer', e.target.value)}
                                 />
@@ -182,7 +190,7 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('purpose')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     value={data.purpose}
                                     onChange={(e) => setData('purpose', e.target.value)}
                                 />
@@ -190,15 +198,15 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             <FormField>
                                 <InputLabel value={t('reference')} />
                                 <TextInput
-                                    className="mt-1 block w-full"
+                                    className={fieldClass}
                                     value={data.reference}
                                     onChange={(e) => setData('reference', e.target.value)}
                                 />
                             </FormField>
-                            <FormField>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />
                                 <textarea
-                                    className={selectClass}
+                                    className={fieldClass + ' py-2'}
                                     rows={3}
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
@@ -206,7 +214,12 @@ export default function Create({ items, projects, towers, floors, defaults }) {
                             </FormField>
                         </FormSection>
                         <FormActions>
-                            <PrimaryButton disabled={processing}>{t('record_stock_out')}</PrimaryButton>
+                            <PrimaryButton
+                                disabled={processing}
+                                className="!bg-amber-600 hover:!bg-amber-500"
+                            >
+                                {t('record_stock_out')}
+                            </PrimaryButton>
                         </FormActions>
                     </form>
                 </DataPanel>

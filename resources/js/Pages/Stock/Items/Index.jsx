@@ -111,7 +111,7 @@ export default function Index({ items, filters, categories, overview }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const [search, setSearch] = useState(filters?.q || '');
-    const activeCategory = filters?.category || '';
+    const activeCategory = filters?.category_id ? String(filters.category_id) : '';
     const stats = overview || {
         products: list.length,
         stock_value_iqd: 0,
@@ -130,7 +130,10 @@ export default function Index({ items, filters, categories, overview }) {
 
     const categoryChips = [
         { key: '', label: t('all_categories') },
-        ...(categories || []).map((c) => ({ key: c, label: c })),
+        ...(categories || []).map((c) => ({
+            key: String(c.id),
+            label: c.name,
+        })),
     ];
 
     return (
@@ -149,6 +152,15 @@ export default function Index({ items, filters, categories, overview }) {
                                 >
                                     <NavIcon name="stock" className="text-sm" />
                                     {t('stock_dashboard')}
+                                </PrimaryButton>
+                            </Link>
+                            <Link href={route('stock.categories.index')}>
+                                <PrimaryButton
+                                    type="button"
+                                    className="!bg-slate-600 hover:!bg-slate-500 dark:!bg-slate-300 dark:!text-slate-900"
+                                >
+                                    <NavIcon name="stockCategories" className="text-sm" />
+                                    {t('stock_categories')}
                                 </PrimaryButton>
                             </Link>
                             {canManage ? (
@@ -209,7 +221,11 @@ export default function Index({ items, filters, categories, overview }) {
                                 <button
                                     key={chip.key || 'all'}
                                     type="button"
-                                    onClick={() => applyFilters({ category: chip.key })}
+                                    onClick={() =>
+                                        applyFilters({
+                                            category_id: chip.key || null,
+                                        })
+                                    }
                                     className={
                                         'inline-flex items-center rounded-lg px-2.5 py-1.5 text-xs font-semibold capitalize transition ' +
                                         (active
@@ -381,7 +397,10 @@ export default function Index({ items, filters, categories, overview }) {
                                             {item.sku || '—'}
                                         </Td>
                                         <Td muted className="capitalize">
-                                            {item.category || '—'}
+                                            {item.category_label ||
+                                                item.stock_category?.name ||
+                                                item.category ||
+                                                '—'}
                                         </Td>
                                         <Td
                                             align="end"

@@ -9,10 +9,11 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const textareaClass =
-    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 export default function Edit({ supplier }) {
     const t = useTranslations();
@@ -29,16 +30,18 @@ export default function Edit({ supplier }) {
             header={
                 <PageHeader
                     title={t('edit_supplier')}
+                    subtitle={t('suppliers_form_hint')}
+                    icon={<NavIcon name="suppliers" className="text-lg" />}
                     actions={
                         <Link href={route('stock.suppliers.index')}>
-                            <SecondaryButton>{t('back')}</SecondaryButton>
+                            <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
             <Head title={t('edit_supplier')} />
-            <PageShell narrow>
+            <PageShell narrow className="!space-y-6">
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
@@ -47,12 +50,12 @@ export default function Edit({ supplier }) {
                         }}
                         className="space-y-5"
                     >
-                        <FormSection>
+                        <FormSection cols={2}>
                             {['name', 'contact_name', 'phone', 'email'].map((field) => (
                                 <FormField key={field}>
                                     <InputLabel value={t(field)} />
                                     <TextInput
-                                        className="mt-1 block w-full"
+                                        className={fieldClass}
                                         type={field === 'email' ? 'email' : 'text'}
                                         value={data[field]}
                                         onChange={(e) => setData(field, e.target.value)}
@@ -61,10 +64,10 @@ export default function Edit({ supplier }) {
                                     <InputError message={errors[field]} className="mt-1" />
                                 </FormField>
                             ))}
-                            <FormField>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />
                                 <textarea
-                                    className={textareaClass}
+                                    className={fieldClass + ' py-2'}
                                     rows={3}
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
@@ -72,7 +75,12 @@ export default function Edit({ supplier }) {
                             </FormField>
                         </FormSection>
                         <FormActions>
-                            <PrimaryButton disabled={processing}>{t('update')}</PrimaryButton>
+                            <PrimaryButton
+                                disabled={processing}
+                                className="!bg-rose-600 hover:!bg-rose-500"
+                            >
+                                {t('update')}
+                            </PrimaryButton>
                         </FormActions>
                     </form>
                 </DataPanel>

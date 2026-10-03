@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Stock\StoreStockItemRequest;
 use App\Http\Requests\Stock\UpdateStockItemRequest;
+use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\Supplier;
 use Illuminate\Http\RedirectResponse;
@@ -18,10 +19,10 @@ class StockItemController extends Controller
         $this->authorize('viewAny', StockItem::class);
 
         $q = trim((string) $request->get('q', ''));
-        $category = trim((string) $request->get('category', ''));
+        $categoryId = $request->integer('category_id') ?: null;
 
         $query = StockItem::query()
-            ->with(['supplier:id,name'])
+            ->with(['supplier:id,name', 'stockCategory:id,name'])
             ->orderBy('name');
 
         if ($q !== '') {
@@ -31,24 +32,25 @@ class StockItemController extends Controller
                     ->orWhere('location', 'like', '%'.$q.'%');
             });
         }
-        if ($category !== '') {
-            $query->where('category', $category);
+        if ($categoryId) {
+            $query->where('stock_category_id', $categoryId);
         }
 
         $items = $query->get()->map(function (StockItem $item) {
             $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
             $item->setAttribute('is_low_stock', $item->isLowStock());
             $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+            $item->setAttribute(
+                'category_label',
+                $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
+            );
 
             return $item;
         });
 
-        $categories = StockItem::query()
-            ->whereNotNull('category')
-            ->where('category', '!=', '')
-            ->distinct()
-            ->orderBy('category')
-            ->pluck('category');
+        $categories = StockCategory::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
 
         $overview = [
             'products' => $items->count(),
@@ -62,7 +64,7 @@ class StockItemController extends Controller
             'items' => $items,
             'filters' => [
                 'q' => $q,
-                'category' => $category,
+                'category_id' => $categoryId,
             ],
             'categories' => $categories,
             'overview' => $overview,
@@ -75,6 +77,7 @@ class StockItemController extends Controller
 
         return Inertia::render('Stock/Items/Create', [
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
+            'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
             'defaults' => [
                 'unit' => 'pcs',
                 'quantity' => 0,
@@ -88,14 +91,7 @@ class StockItemController extends Controller
     {
         $this->authorize('create', StockItem::class);
 
-        $data = $request->validated();
-        $data['quantity'] = round((float) ($data['quantity'] ?? 0), 3);
-        $data['min_quantity'] = round((float) ($data['min_quantity'] ?? 0), 3);
-        $data['purchase_price_iqd'] = round((float) ($data['purchase_price_iqd'] ?? 0), 2);
-        if (($data['sku'] ?? '') === '') {
-            $data['sku'] = null;
-        }
-
+        $data = $this->normalizeItemPayload($request->validated());
         $item = StockItem::query()->create($data);
 
         return redirect()
@@ -107,16 +103,24 @@ class StockItemController extends Controller
     {
         $this->authorize('view', $item);
 
-        $item->load(['supplier', 'movements' => function ($q) {
-            $q->with(['user:id,name', 'project:id,name'])
-                ->orderByDesc('moved_on')
-                ->orderByDesc('id')
-                ->limit(30);
-        }]);
+        $item->load([
+            'supplier',
+            'stockCategory:id,name',
+            'movements' => function ($q) {
+                $q->with(['user:id,name', 'project:id,name'])
+                    ->orderByDesc('moved_on')
+                    ->orderByDesc('id')
+                    ->limit(30);
+            },
+        ]);
 
         $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
         $item->setAttribute('is_low_stock', $item->isLowStock());
         $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+        $item->setAttribute(
+            'category_label',
+            $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
+        );
 
         return Inertia::render('Stock/Items/Show', [
             'item' => $item,
@@ -128,8 +132,9 @@ class StockItemController extends Controller
         $this->authorize('update', $item);
 
         return Inertia::render('Stock/Items/Edit', [
-            'item' => $item->load('supplier:id,name'),
+            'item' => $item->load(['supplier:id,name', 'stockCategory:id,name']),
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
+            'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -137,12 +142,7 @@ class StockItemController extends Controller
     {
         $this->authorize('update', $item);
 
-        $data = $request->validated();
-        $data['min_quantity'] = round((float) ($data['min_quantity'] ?? 0), 3);
-        $data['purchase_price_iqd'] = round((float) ($data['purchase_price_iqd'] ?? 0), 2);
-        if (($data['sku'] ?? '') === '') {
-            $data['sku'] = null;
-        }
+        $data = $this->normalizeItemPayload($request->validated(), includeQuantity: false);
         // Quantity is adjusted only via stock in/out movements.
         unset($data['quantity']);
 
@@ -162,5 +162,33 @@ class StockItemController extends Controller
         return redirect()
             ->route('stock.items.index')
             ->with('success', __('Product deleted.'));
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function normalizeItemPayload(array $data, bool $includeQuantity = true): array
+    {
+        if ($includeQuantity) {
+            $data['quantity'] = round((float) ($data['quantity'] ?? 0), 3);
+        }
+        $data['min_quantity'] = round((float) ($data['min_quantity'] ?? 0), 3);
+        $data['purchase_price_iqd'] = round((float) ($data['purchase_price_iqd'] ?? 0), 2);
+        if (($data['sku'] ?? '') === '') {
+            $data['sku'] = null;
+        }
+
+        $categoryId = $data['stock_category_id'] ?? null;
+        if ($categoryId) {
+            $name = StockCategory::query()->whereKey($categoryId)->value('name');
+            $data['category'] = $name;
+            $data['stock_category_id'] = (int) $categoryId;
+        } else {
+            $data['stock_category_id'] = null;
+            $data['category'] = null;
+        }
+
+        return $data;
     }
 }

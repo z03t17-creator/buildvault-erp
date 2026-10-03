@@ -10,18 +10,22 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const selectClass =
-    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Edit({ item, suppliers }) {
+const moneyFieldClass =
+    'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+
+export default function Edit({ item, suppliers, categories }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const { data, setData, put, processing, errors } = useForm({
         name: item.name || '',
         sku: item.sku || '',
-        category: item.category || '',
+        stock_category_id: item.stock_category_id || '',
         unit: item.unit || 'pcs',
         min_quantity: item.min_quantity ?? 0,
         purchase_price_iqd: item.purchase_price_iqd ?? 0,
@@ -35,16 +39,25 @@ export default function Edit({ item, suppliers }) {
             header={
                 <PageHeader
                     title={t('edit_product')}
+                    subtitle={t('stock_product_form_hint')}
+                    icon={<NavIcon name="edit" className="text-lg" />}
                     actions={
                         <Link href={route('stock.items.show', item.id)}>
-                            <SecondaryButton>{t('back')}</SecondaryButton>
+                            <SecondaryButton type="button">{t('back')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
             <Head title={t('edit_product')} />
-            <PageShell narrow>
+            <PageShell narrow className="!space-y-6">
+                <p className="rounded-xl border border-rose-200/70 bg-rose-50/70 px-4 py-3 text-sm text-rose-950 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-100">
+                    {t('quantity')}:{' '}
+                    <span className="font-sans font-semibold tabular-nums" dir="ltr">
+                        {item.quantity} {item.unit}
+                    </span>{' '}
+                    — {t('qty_via_movements')}
+                </p>
                 <DataPanel>
                     <form
                         onSubmit={(e) => {
@@ -53,36 +66,67 @@ export default function Edit({ item, suppliers }) {
                         }}
                         className="space-y-5"
                     >
-                        <p className="text-sm text-slate-500">
-                            {t('quantity')}: <span className="tabular-nums font-medium text-slate-800 dark:text-slate-100">{item.quantity}</span>{' '}
-                            {item.unit} — {t('qty_via_movements')}
-                        </p>
-                        <FormSection>
-                            {[
-                                ['name', 'name', true],
-                                ['sku', 'sku', false],
-                                ['category', 'category', false],
-                                ['unit', 'unit', true],
-                                ['min_quantity', 'min_quantity', false],
-                                ['location', 'location', false],
-                            ].map(([field, labelKey, required]) => (
-                                <FormField key={field}>
-                                    <InputLabel value={t(labelKey)} />
-                                    <TextInput
-                                        className="mt-1 block w-full"
-                                        type={field === 'min_quantity' ? 'number' : 'text'}
-                                        step="0.001"
-                                        value={data[field]}
-                                        onChange={(e) => setData(field, e.target.value)}
-                                        required={required}
-                                    />
-                                    <InputError message={errors[field]} className="mt-1" />
-                                </FormField>
-                            ))}
+                        <FormSection cols={2}>
+                            <FormField>
+                                <InputLabel value={t('name')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.name}
+                                    onChange={(e) => setData('name', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.name} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('sku')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.sku}
+                                    onChange={(e) => setData('sku', e.target.value)}
+                                />
+                                <InputError message={errors.sku} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('category')} />
+                                <select
+                                    className={fieldClass}
+                                    value={data.stock_category_id}
+                                    onChange={(e) => setData('stock_category_id', e.target.value)}
+                                >
+                                    <option value="">{t('uncategorized')}</option>
+                                    {(categories || []).map((c) => (
+                                        <option key={c.id} value={c.id}>
+                                            {c.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.stock_category_id} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('unit')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.unit}
+                                    onChange={(e) => setData('unit', e.target.value)}
+                                    required
+                                />
+                                <InputError message={errors.unit} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('min_quantity')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    type="number"
+                                    step="0.001"
+                                    value={data.min_quantity}
+                                    onChange={(e) => setData('min_quantity', e.target.value)}
+                                />
+                                <InputError message={errors.min_quantity} className="mt-1" />
+                            </FormField>
                             <FormField>
                                 <InputLabel value={`${t('purchase_price_iqd')} (${iqd})`} />
                                 <MoneyInput
-                                    className="mt-1 block w-full"
+                                    className={moneyFieldClass}
                                     value={data.purchase_price_iqd}
                                     onValueChange={(raw) => setData('purchase_price_iqd', raw)}
                                 />
@@ -91,7 +135,7 @@ export default function Edit({ item, suppliers }) {
                             <FormField>
                                 <InputLabel value={t('supplier')} />
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={data.supplier_id}
                                     onChange={(e) => setData('supplier_id', e.target.value)}
                                 >
@@ -104,9 +148,17 @@ export default function Edit({ item, suppliers }) {
                                 </select>
                             </FormField>
                             <FormField>
+                                <InputLabel value={t('location')} />
+                                <TextInput
+                                    className={fieldClass}
+                                    value={data.location}
+                                    onChange={(e) => setData('location', e.target.value)}
+                                />
+                            </FormField>
+                            <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />
                                 <textarea
-                                    className={selectClass}
+                                    className={fieldClass + ' py-2'}
                                     rows={3}
                                     value={data.notes}
                                     onChange={(e) => setData('notes', e.target.value)}
@@ -114,7 +166,12 @@ export default function Edit({ item, suppliers }) {
                             </FormField>
                         </FormSection>
                         <FormActions>
-                            <PrimaryButton disabled={processing}>{t('update')}</PrimaryButton>
+                            <PrimaryButton
+                                disabled={processing}
+                                className="!bg-rose-600 hover:!bg-rose-500"
+                            >
+                                {t('update')}
+                            </PrimaryButton>
                         </FormActions>
                     </form>
                 </DataPanel>

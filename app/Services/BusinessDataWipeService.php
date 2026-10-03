@@ -41,6 +41,7 @@ class BusinessDataWipeService
         'production_records',
         'stock_movements',
         'stock_items',
+        'stock_categories',
         'suppliers',
         'employee_advances',
         'penalties',

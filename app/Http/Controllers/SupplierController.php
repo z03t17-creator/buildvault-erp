@@ -15,8 +15,21 @@ class SupplierController extends Controller
     {
         $this->authorize('viewAny', Supplier::class);
 
+        $suppliers = Supplier::query()
+            ->withCount('stockItems')
+            ->orderBy('name')
+            ->get();
+
+        $overview = [
+            'suppliers' => $suppliers->count(),
+            'with_phone' => $suppliers->filter(fn (Supplier $s) => filled($s->phone))->count(),
+            'with_email' => $suppliers->filter(fn (Supplier $s) => filled($s->email))->count(),
+            'products_linked' => (int) $suppliers->sum('stock_items_count'),
+        ];
+
         return Inertia::render('Stock/Suppliers/Index', [
-            'suppliers' => Supplier::query()->orderBy('name')->get(),
+            'suppliers' => $suppliers,
+            'overview' => $overview,
         ]);
     }
 

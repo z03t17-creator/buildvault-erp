@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Support\Roles;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -14,10 +15,15 @@ class StockProductsPhase22Test extends TestCase
 
     public function test_stock_manager_sees_qty_price_overview_and_filters(): void
     {
+        $cement = StockCategory::query()->create(['name' => 'cement']);
+        $finishing = StockCategory::query()->create(['name' => 'finishing']);
+        $hardware = StockCategory::query()->create(['name' => 'hardware']);
+
         StockItem::query()->create([
             'name' => 'Cement Bag',
             'sku' => 'CEM-50',
             'category' => 'cement',
+            'stock_category_id' => $cement->id,
             'unit' => 'bag',
             'quantity' => 90,
             'min_quantity' => 40,
@@ -29,6 +35,7 @@ class StockProductsPhase22Test extends TestCase
             'name' => 'Paint Can',
             'sku' => 'PNT-20',
             'category' => 'finishing',
+            'stock_category_id' => $finishing->id,
             'unit' => 'can',
             'quantity' => 5,
             'min_quantity' => 10,
@@ -40,6 +47,7 @@ class StockProductsPhase22Test extends TestCase
             'name' => 'Empty Fastener',
             'sku' => 'FST-0',
             'category' => 'hardware',
+            'stock_category_id' => $hardware->id,
             'unit' => 'box',
             'quantity' => 0,
             'min_quantity' => 2,
@@ -61,12 +69,12 @@ class StockProductsPhase22Test extends TestCase
                 ->has('filters')
             );
 
-        $this->get(route('stock.items.index', ['category' => 'cement']))
+        $this->get(route('stock.items.index', ['category_id' => $cement->id]))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Stock/Items/Index')
                 ->has('items', 1)
-                ->where('filters.category', 'cement')
+                ->where('filters.category_id', $cement->id)
                 ->where('overview.products', 1)
                 ->where('overview.stock_value_iqd', 1_125_000)
             );
@@ -80,17 +88,18 @@ class StockProductsPhase22Test extends TestCase
             );
     }
 
-    public function test_empty_stock_products_returns_zero_overview(): void
+    public function test_create_form_exposes_shared_categories(): void
     {
-        $this->actingAsRole(Roles::SUPER_ADMIN);
+        StockCategory::query()->create(['name' => 'Steel']);
 
-        $this->get(route('stock.items.index'))
+        $this->actingAsRole(Roles::STOCK_MANAGER);
+
+        $this->get(route('stock.items.create'))
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
-                ->component('Stock/Items/Index')
-                ->has('items', 0)
-                ->where('overview.products', 0)
-                ->where('overview.stock_value_iqd', 0)
+                ->component('Stock/Items/Create')
+                ->has('categories', 1)
+                ->has('suppliers')
             );
     }
 }

@@ -24,6 +24,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\RetentionHoldController;
 use App\Http\Controllers\SpatialGridController;
+use App\Http\Controllers\StockCategoryController;
 use App\Http\Controllers\StockDashboardController;
 use App\Http\Controllers\StockItemController;
 use App\Http\Controllers\StockMovementController;
@@ -196,10 +197,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stock/items', [StockItemController::class, 'index'])->name('stock.items.index');
         Route::get('/stock/movements', [StockMovementController::class, 'index'])->name('stock.movements.index');
         Route::get('/stock/suppliers', [SupplierController::class, 'index'])->name('stock.suppliers.index');
+        Route::get('/stock/categories', [StockCategoryController::class, 'index'])->name('stock.categories.index');
     });
     Route::middleware('can:create,'.StockItem::class)->group(function () {
         Route::get('/stock/items/create', [StockItemController::class, 'create'])->name('stock.items.create');
         Route::post('/stock/items', [StockItemController::class, 'store'])->name('stock.items.store');
+        Route::get('/stock/categories/create', [StockCategoryController::class, 'create'])->name('stock.categories.create');
+        Route::post('/stock/categories', [StockCategoryController::class, 'store'])->name('stock.categories.store');
+        Route::get('/stock/categories/{stockCategory}/edit', [StockCategoryController::class, 'edit'])->name('stock.categories.edit');
+        Route::put('/stock/categories/{stockCategory}', [StockCategoryController::class, 'update'])->name('stock.categories.update');
+        Route::delete('/stock/categories/{stockCategory}', [StockCategoryController::class, 'destroy'])->name('stock.categories.destroy');
     });
     Route::middleware('can:viewAny,'.StockItem::class)->group(function () {
         Route::get('/stock/items/{item}', [StockItemController::class, 'show'])->name('stock.items.show');

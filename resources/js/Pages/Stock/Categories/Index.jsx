@@ -5,11 +5,16 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
+
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
 function CountStat({ label, value, hint, active = false }) {
     return (
@@ -25,42 +30,50 @@ function CountStat({ label, value, hint, active = false }) {
     );
 }
 
-export default function Index({ suppliers, overview }) {
-    const list = suppliers || [];
-    const canManage = useCan('stock.manageSuppliers');
+export default function Index({ categories, filters, overview }) {
+    const list = categories || [];
+    const canManage = useCan('stock.manageItems');
     const t = useTranslations();
+    const [search, setSearch] = useState(filters?.q || '');
     const stats = overview || {
-        suppliers: list.length,
-        with_phone: 0,
-        with_email: 0,
+        categories: list.length,
         products_linked: 0,
+        empty_categories: 0,
+    };
+
+    const applyFilters = (next) => {
+        router.get(route('stock.categories.index'), { ...filters, ...next }, {
+            preserveState: true,
+            replace: true,
+        });
     };
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('suppliers')}
-                    subtitle={t('suppliers_page_hint')}
-                    icon={<NavIcon name="suppliers" className="text-lg" />}
+                    title={t('stock_categories')}
+                    subtitle={t('stock_categories_page_hint')}
+                    icon={<NavIcon name="stockCategories" className="text-lg" />}
                     actions={
                         <div className="flex flex-wrap gap-2">
-                            <Link href={route('stock.dashboard')}>
+                            <Link href={route('stock.items.index')}>
                                 <PrimaryButton
                                     type="button"
                                     className="!bg-slate-700 hover:!bg-slate-600"
                                 >
-                                    {t('stock_dashboard')}
+                                    <NavIcon name="stock" className="text-sm" />
+                                    {t('stock_products')}
                                 </PrimaryButton>
                             </Link>
                             {canManage ? (
-                                <Link href={route('stock.suppliers.create')}>
+                                <Link href={route('stock.categories.create')}>
                                     <PrimaryButton
                                         type="button"
                                         className="!bg-rose-600 hover:!bg-rose-500 dark:!bg-rose-400 dark:!text-rose-950"
                                     >
-                                        <NavIcon name="suppliers" className="text-sm" />
-                                        {t('new_supplier')}
+                                        <NavIcon name="stockCategories" className="text-sm" />
+                                        {t('new_stock_category')}
                                     </PrimaryButton>
                                 </Link>
                             ) : null}
@@ -69,60 +82,87 @@ export default function Index({ suppliers, overview }) {
                 />
             }
         >
-            <Head title={t('suppliers')} />
+            <Head title={t('stock_categories')} />
             <PageShell className="!space-y-6">
-                <section>
+                <section className="bv-card p-4 sm:p-5">
                     <div className="mb-3 flex items-start gap-3">
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-900 dark:bg-rose-400/15 dark:text-rose-200">
-                            <NavIcon name="suppliers" className="text-base" />
+                            <NavIcon name="filter" className="text-base" />
                         </span>
                         <div>
-                            <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
-                                {t('suppliers_overview_title')}
-                            </h2>
-                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
-                                {t('suppliers_overview_hint', { count: stats.suppliers })}
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {t('stock_categories_filters_title')}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t('stock_categories_filters_hint')}
                             </p>
                         </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <div>
+                        <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                            {t('search')}
+                        </label>
+                        <TextInput
+                            className={fieldClass}
+                            placeholder={t('stock_categories_search_placeholder')}
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            onBlur={() => applyFilters({ q: search })}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') applyFilters({ q: search });
+                            }}
+                        />
+                    </div>
+                </section>
+
+                <section>
+                    <div className="mb-3 flex items-start gap-3">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-900 dark:bg-rose-400/15 dark:text-rose-200">
+                            <NavIcon name="stockCategories" className="text-base" />
+                        </span>
+                        <div>
+                            <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                {t('stock_categories_overview_title')}
+                            </h2>
+                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                {t('stock_categories_overview_hint', { count: stats.categories })}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
                         <CountStat
-                            label={t('suppliers')}
-                            value={stats.suppliers}
-                            hint={t('suppliers_stat_total_hint')}
+                            label={t('stock_categories')}
+                            value={stats.categories}
+                            hint={t('stock_categories_stat_total_hint')}
                             active
-                        />
-                        <CountStat
-                            label={t('phone')}
-                            value={stats.with_phone}
-                            hint={t('suppliers_stat_phone_hint')}
-                        />
-                        <CountStat
-                            label={t('email')}
-                            value={stats.with_email}
-                            hint={t('suppliers_stat_email_hint')}
                         />
                         <CountStat
                             label={t('stock_products')}
                             value={stats.products_linked}
-                            hint={t('suppliers_stat_linked_hint')}
+                            hint={t('stock_categories_stat_linked_hint')}
+                        />
+                        <CountStat
+                            label={t('stock_categories_empty')}
+                            value={stats.empty_categories}
+                            hint={t('stock_categories_stat_empty_hint')}
+                            active={stats.empty_categories > 0}
                         />
                     </div>
                 </section>
 
                 {list.length === 0 ? (
                     <EmptyState
-                        icon="suppliers"
-                        title={t('suppliers_empty_title')}
-                        description={t('suppliers_empty_hint')}
+                        icon="stockCategories"
+                        title={t('stock_categories_empty_title')}
+                        description={t('stock_categories_empty_hint')}
                         action={
                             canManage ? (
-                                <Link href={route('stock.suppliers.create')}>
+                                <Link href={route('stock.categories.create')}>
                                     <PrimaryButton
                                         type="button"
                                         className="!bg-rose-600 hover:!bg-rose-500"
                                     >
-                                        {t('new_supplier')}
+                                        {t('new_stock_category')}
                                     </PrimaryButton>
                                 </Link>
                             ) : null
@@ -132,76 +172,68 @@ export default function Index({ suppliers, overview }) {
                     <DataPanel padded={false}>
                         <div className="flex items-center gap-3 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
                             <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15 text-rose-900 dark:bg-rose-400/15 dark:text-rose-200">
-                                <NavIcon name="suppliers" className="text-base" />
+                                <NavIcon name="stockCategories" className="text-base" />
                             </span>
                             <div>
                                 <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                                    {t('suppliers_table_title')}
+                                    {t('stock_categories_table_title')}
                                 </p>
                                 <p className="text-xs text-slate-500 dark:text-slate-400">
-                                    {t('suppliers_table_hint')}
+                                    {t('stock_categories_table_hint')}
                                 </p>
                             </div>
                         </div>
-                        <DataTable minWidth="48rem" caption={t('suppliers')} stickyFirstColumn>
+                        <DataTable minWidth="40rem" caption={t('stock_categories')} stickyFirstColumn>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
-                                    <Th>{t('contact_name')}</Th>
-                                    <Th>{t('phone')}</Th>
-                                    <Th>{t('email')}</Th>
                                     <Th align="end">{t('stock_products')}</Th>
                                     <Th>{t('notes')}</Th>
                                     {canManage && <Th>{t('actions')}</Th>}
                                 </tr>
                             </thead>
                             <tbody>
-                                {list.map((s) => (
-                                    <tr key={s.id}>
+                                {list.map((c) => (
+                                    <tr key={c.id}>
                                         <Td>
                                             <span className="inline-flex items-center gap-2.5">
                                                 <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-rose-500/15 text-rose-900 dark:bg-rose-400/15 dark:text-rose-200">
-                                                    <NavIcon name="suppliers" className="text-sm" />
+                                                    <NavIcon name="stockCategories" className="text-sm" />
                                                 </span>
                                                 <span className="font-medium text-rose-950 dark:text-rose-100">
-                                                    {s.name}
+                                                    {c.name}
                                                 </span>
                                             </span>
                                         </Td>
-                                        <Td muted>{s.contact_name || '—'}</Td>
-                                        <Td muted dir="ltr" className="font-sans tabular-nums">
-                                            {s.phone || '—'}
-                                        </Td>
-                                        <Td muted dir="ltr">
-                                            {s.email || '—'}
-                                        </Td>
                                         <Td
                                             align="end"
-                                            className="font-sans font-semibold tabular-nums text-rose-900 dark:text-rose-100"
+                                            className="font-sans text-base font-semibold tabular-nums text-rose-900 dark:text-rose-100"
                                         >
-                                            {s.stock_items_count ?? 0}
+                                            {c.stock_items_count ?? 0}
                                         </Td>
                                         <Td muted className="max-w-xs truncate">
-                                            {s.notes || '—'}
+                                            {c.notes || '—'}
                                         </Td>
                                         {canManage && (
                                             <Td>
                                                 <div className="flex flex-wrap gap-2">
-                                                    <Link href={route('stock.suppliers.edit', s.id)}>
+                                                    <Link href={route('stock.categories.edit', c.id)}>
                                                         <SecondaryButton type="button">
+                                                            <NavIcon name="edit" className="text-sm" />
                                                             {t('edit')}
                                                         </SecondaryButton>
                                                     </Link>
                                                     <SecondaryButton
                                                         type="button"
                                                         onClick={() => {
-                                                            if (confirm(t('confirm_delete'))) {
+                                                            if (confirm(t('stock_categories_delete_confirm'))) {
                                                                 router.delete(
-                                                                    route('stock.suppliers.destroy', s.id),
+                                                                    route('stock.categories.destroy', c.id),
                                                                 );
                                                             }
                                                         }}
                                                     >
+                                                        <NavIcon name="trash" className="text-sm" />
                                                         {t('delete')}
                                                     </SecondaryButton>
                                                 </div>
