@@ -106,6 +106,12 @@ function typeLabel(type, t) {
     return translated !== key ? translated : type?.replace(/_/g, ' ');
 }
 
+function formatDate(value) {
+    if (!value) return '—';
+    const s = String(value);
+    return s.length >= 10 ? s.slice(0, 10) : s;
+}
+
 export default function Index({
     penalties,
     types,
@@ -469,7 +475,7 @@ export default function Index({
                                             muted
                                             className="font-sans tabular-nums"
                                         >
-                                            {p.occurred_on || '—'}
+                                            {formatDate(p.occurred_on)}
                                         </Td>
                                         <Td align="end" money>
                                             <MoneyAmount
