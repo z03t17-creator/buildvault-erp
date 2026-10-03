@@ -1,22 +1,91 @@
 import DataPanel from '@/Components/DataPanel';
+import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import StatusBadge from '@/Components/StatusBadge';
+import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
-import { Head, router, useForm } from '@inertiajs/react';
+import { NavIcon } from '@/lib/navIcons';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
-const selectClass =
-    'rounded-md border-slate-300 text-sm shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass =
+    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/25 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+
+function isValidIsoDate(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) {
+        return false;
+    }
+    const d = new Date(`${value}T00:00:00`);
+    return !Number.isNaN(d.getTime()) && d.toISOString().slice(0, 10) === value;
+}
 
 function formatTime(value) {
     if (!value) return '—';
     return String(value).slice(0, 5);
+}
+
+function CountStat({ label, value, hint, active = false }) {
+    return (
+        <div
+            className={
+                'bv-card px-4 py-3.5 ' +
+                (active ? 'ring-2 ring-indigo-500/40 dark:ring-indigo-400/40' : '')
+            }
+        >
+            <div className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                {label}
+            </div>
+            <div className="mt-1.5 font-sans text-2xl font-semibold tabular-nums text-slate-900 dark:text-white sm:text-3xl">
+                {value ?? 0}
+            </div>
+            {hint ? (
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{hint}</p>
+            ) : null}
+        </div>
+    );
+}
+
+function StatusChip({ status, t }) {
+    if (!status) {
+        return <span className="text-xs text-slate-400">—</span>;
+    }
+    const key = `status_${status}`;
+    const label = t(key) !== key ? t(key) : status.replace(/_/g, ' ');
+    const tones = {
+        present: 'bg-emerald-500/15 text-emerald-900 dark:text-emerald-300',
+        late: 'bg-amber-500/15 text-amber-950 dark:text-amber-200',
+        absent_unexcused: 'bg-rose-500/15 text-rose-900 dark:text-rose-300',
+        leave_paid: 'bg-sky-500/15 text-sky-900 dark:text-sky-300',
+        leave_sick: 'bg-slate-500/15 text-slate-700 dark:text-slate-300',
+        forfeit_day: 'bg-rose-500/15 text-rose-900 dark:text-rose-300',
+    };
+
+    return (
+        <span
+            className={
+                'inline-flex items-center rounded-lg px-2 py-1 text-xs font-semibold capitalize ' +
+                (tones[status] || tones.present)
+            }
+        >
+            {label}
+        </span>
+    );
+}
+
+function RoleChip({ role, t }) {
+    const key = `worker_role_${role}`;
+    const label = t(key) !== key ? t(key) : role?.replace(/_/g, ' ') || '—';
+
+    return (
+        <span className="inline-flex items-center rounded-lg bg-indigo-500/10 px-2 py-0.5 text-[11px] font-semibold text-indigo-900 dark:text-indigo-200">
+            {label}
+        </span>
+    );
 }
 
 export default function Matrix({
@@ -25,13 +94,26 @@ export default function Matrix({
     projects,
     floors,
     grid,
+    daySummary,
     shiftStart,
     lateForfeitMinutes,
 }) {
     const t = useTranslations();
     const canManage = useCan('attendance.manage');
+    const canWorkers = useCan('workers.viewAny');
     const rows = grid || [];
     const [selected, setSelected] = useState([]);
+    const [dateInput, setDateInput] = useState(date || '');
+    const summary = daySummary || {
+        workers: rows.length,
+        recorded: 0,
+        present: 0,
+        late: 0,
+        absent: 0,
+        leave: 0,
+        forfeit_days: 0,
+        unchecked: rows.length,
+    };
 
     const allIds = useMemo(() => rows.map((r) => r.worker.id), [rows]);
     const allSelected = allIds.length > 0 && selected.length === allIds.length;
@@ -59,13 +141,27 @@ export default function Matrix({
     const toggleAll = () => setSelected(allSelected ? [] : allIds);
 
     const filter = (next) => {
-        router.get(route('attendance.index'), next, { preserveState: true, replace: true });
+        router.get(route('attendance.index'), next, {
+            preserveState: true,
+            replace: true,
+        });
+    };
+
+    const applyDate = () => {
+        if (!isValidIsoDate(dateInput)) {
+            return;
+        }
+        filter({
+            date: dateInput,
+            project_id: projectId || undefined,
+        });
     };
 
     const submitCheckIn = () => {
         checkIn
             .transform((data) => ({
                 ...data,
+                date: dateInput || date,
                 worker_ids: selected,
                 floor_id: data.floor_id || null,
                 project_id: data.project_id || null,
@@ -78,7 +174,11 @@ export default function Matrix({
 
     const submitCheckOut = () => {
         checkOut
-            .transform((data) => ({ ...data, worker_ids: selected }))
+            .transform((data) => ({
+                ...data,
+                date: dateInput || date,
+                worker_ids: selected,
+            }))
             .post(route('attendance.check-out'), {
                 preserveScroll: true,
                 onSuccess: () => setSelected([]),
@@ -90,42 +190,85 @@ export default function Matrix({
             header={
                 <PageHeader
                     title={t('attendance')}
-                    subtitle={t('attendance_subtitle', {
-                        minutes: lateForfeitMinutes || 30,
-                    })}
+                    subtitle={t('attendance_page_hint')}
+                    icon={<NavIcon name="attendance" className="text-lg" />}
+                    actions={
+                        <div className="flex flex-wrap gap-2">
+                            {canWorkers ? (
+                                <Link
+                                    href={route('workers.index', {
+                                        labor_kind: 'worker',
+                                    })}
+                                >
+                                    <SecondaryButton type="button">
+                                        <NavIcon name="payroll" className="text-sm" />
+                                        {t('worker_directory')}
+                                    </SecondaryButton>
+                                </Link>
+                            ) : null}
+                            <Link href={route('dashboards.payroll')}>
+                                <SecondaryButton type="button">
+                                    <NavIcon name="payroll" className="text-sm" />
+                                    {t('payroll')}
+                                </SecondaryButton>
+                            </Link>
+                        </div>
+                    }
                 />
             }
         >
-            <Head title={t('attendance')} />
-            <PageShell>
-                <DataPanel>
-                    <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+            <Head title={`${t('attendance')} · ${date}`} />
+            <PageShell className="!space-y-6">
+                <section className="bv-card p-4 sm:p-5">
+                    <div className="mb-3 flex items-start gap-3">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                            <NavIcon name="filter" className="text-base" />
+                        </span>
                         <div>
-                            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                {t('attendance_filters_title')}
+                            </p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                                {t('attendance_filters_hint')}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 lg:items-end">
+                        <div>
+                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                 {t('date')}
                             </label>
-                            <input
-                                type="date"
-                                className={selectClass}
-                                value={date}
-                                onChange={(e) =>
-                                    filter({
-                                        date: e.target.value,
-                                        project_id: projectId || undefined,
-                                    })
-                                }
-                            />
+                            <div className="relative">
+                                <span className="pointer-events-none absolute inset-y-0 start-3 flex items-center text-slate-400">
+                                    <NavIcon name="calendar" className="text-sm" />
+                                </span>
+                                <TextInput
+                                    type="text"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    placeholder={t('date_placeholder')}
+                                    className={`${fieldClass} ps-9 font-sans tabular-nums`}
+                                    value={dateInput}
+                                    onChange={(e) => setDateInput(e.target.value)}
+                                    onBlur={applyDate}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') applyDate();
+                                    }}
+                                />
+                            </div>
                         </div>
                         <div>
-                            <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                            <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                 {t('project')}
                             </label>
                             <select
-                                className={selectClass}
+                                className={fieldClass}
                                 value={projectId || ''}
                                 onChange={(e) =>
                                     filter({
-                                        date,
+                                        date: isValidIsoDate(dateInput)
+                                            ? dateInput
+                                            : date,
                                         project_id: e.target.value || undefined,
                                     })
                                 }
@@ -138,22 +281,107 @@ export default function Matrix({
                                 ))}
                             </select>
                         </div>
-                        <p className="text-xs text-slate-500 lg:ml-auto">
+                        <p className="text-xs text-slate-500 dark:text-slate-400 sm:col-span-2 lg:col-span-1">
                             {t('attendance_employees_only')}
+                            {lateForfeitMinutes
+                                ? ` · ${t('attendance_late_note', {
+                                      minutes: lateForfeitMinutes,
+                                  })}`
+                                : ''}
                         </p>
                     </div>
-                </DataPanel>
+                </section>
+
+                <section>
+                    <div className="mb-3 flex items-start gap-3">
+                        <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                            <NavIcon name="attendance" className="text-base" />
+                        </span>
+                        <div>
+                            <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                {t('attendance_overview_title')}
+                            </h2>
+                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                {t('attendance_overview_hint', { date })}
+                            </p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4 xl:grid-cols-7">
+                        <CountStat
+                            label={t('workers')}
+                            value={summary.workers}
+                            hint={t('attendance_stat_workers_hint')}
+                        />
+                        <CountStat
+                            label={t('status_present')}
+                            value={summary.present}
+                            hint={t('worker_att_present_hint')}
+                            active={summary.present > 0}
+                        />
+                        <CountStat
+                            label={t('status_late')}
+                            value={summary.late}
+                            hint={t('worker_att_late_hint')}
+                            active={summary.late > 0}
+                        />
+                        <CountStat
+                            label={t('status_absent_unexcused')}
+                            value={summary.absent}
+                            hint={t('worker_att_absent_hint')}
+                            active={summary.absent > 0}
+                        />
+                        <CountStat
+                            label={t('worker_att_leave')}
+                            value={summary.leave}
+                            hint={t('worker_att_leave_hint')}
+                        />
+                        <CountStat
+                            label={t('worker_att_forfeit')}
+                            value={summary.forfeit_days}
+                            hint={t('worker_att_forfeit_hint')}
+                            active={summary.forfeit_days > 0}
+                        />
+                        <CountStat
+                            label={t('attendance_unchecked')}
+                            value={summary.unchecked}
+                            hint={t('attendance_stat_unchecked_hint')}
+                            active={summary.unchecked > 0}
+                        />
+                    </div>
+                </section>
 
                 {canManage && (
-                    <DataPanel title={t('attendance_actions')}>
-                        <div className="flex flex-col gap-4 lg:flex-row lg:flex-wrap lg:items-end">
+                    <section className="bv-card p-4 sm:p-5">
+                        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+                            <div className="flex items-start gap-3">
+                                <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                                    <NavIcon name="attendance" className="text-base" />
+                                </span>
+                                <div>
+                                    <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
+                                        {t('attendance_actions')}
+                                    </h2>
+                                    <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                                        {t('attendance_actions_hint', {
+                                            count: selected.length,
+                                        })}
+                                    </p>
+                                </div>
+                            </div>
+                            <span className="rounded-lg bg-indigo-500/10 px-2.5 py-1 text-xs font-semibold text-indigo-900 dark:text-indigo-200">
+                                {t('attendance_selected', {
+                                    count: selected.length,
+                                })}
+                            </span>
+                        </div>
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
                             <div>
-                                <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('shift_start')}
                                 </label>
                                 <input
                                     type="time"
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={checkIn.data.shift_start}
                                     onChange={(e) =>
                                         checkIn.setData('shift_start', e.target.value)
@@ -161,24 +389,28 @@ export default function Matrix({
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('check_in')}
                                 </label>
                                 <input
                                     type="time"
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={checkIn.data.check_in}
-                                    onChange={(e) => checkIn.setData('check_in', e.target.value)}
+                                    onChange={(e) =>
+                                        checkIn.setData('check_in', e.target.value)
+                                    }
                                 />
                             </div>
                             <div>
-                                <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('floor')}
                                 </label>
                                 <select
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={checkIn.data.floor_id}
-                                    onChange={(e) => checkIn.setData('floor_id', e.target.value)}
+                                    onChange={(e) =>
+                                        checkIn.setData('floor_id', e.target.value)
+                                    }
                                 >
                                     <option value="">—</option>
                                     {(floors || []).map((f) => (
@@ -191,20 +423,24 @@ export default function Matrix({
                             </div>
                             <PrimaryButton
                                 type="button"
+                                className="!bg-indigo-600 hover:!bg-indigo-500 dark:!bg-indigo-400 dark:!text-indigo-950"
                                 disabled={!selected.length || checkIn.processing}
                                 onClick={submitCheckIn}
                             >
+                                <NavIcon name="attendance" className="text-sm" />
                                 {t('check_in_selected')}
                             </PrimaryButton>
                             <div>
-                                <label className="mb-1 block text-xs uppercase tracking-wide text-slate-500">
+                                <label className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                     {t('check_out')}
                                 </label>
                                 <input
                                     type="time"
-                                    className={selectClass}
+                                    className={fieldClass}
                                     value={checkOut.data.check_out}
-                                    onChange={(e) => checkOut.setData('check_out', e.target.value)}
+                                    onChange={(e) =>
+                                        checkOut.setData('check_out', e.target.value)
+                                    }
                                 />
                             </div>
                             <SecondaryButton
@@ -217,112 +453,180 @@ export default function Matrix({
                             <SecondaryButton
                                 type="button"
                                 onClick={() =>
-                                    router.post(route('attendance.mark-absences'), { date })
+                                    router.post(route('attendance.mark-absences'), {
+                                        date: isValidIsoDate(dateInput)
+                                            ? dateInput
+                                            : date,
+                                    })
                                 }
                             >
                                 {t('mark_absences')}
                             </SecondaryButton>
                         </div>
-                        {checkIn.errors.check_in && (
-                            <p className="mt-2 text-sm text-rose-600">{checkIn.errors.check_in}</p>
-                        )}
-                    </DataPanel>
+                        {checkIn.errors.check_in ? (
+                            <p className="mt-2 text-sm text-rose-600">
+                                {checkIn.errors.check_in}
+                            </p>
+                        ) : null}
+                    </section>
                 )}
 
                 {rows.length === 0 ? (
                     <EmptyState
+                        icon="attendance"
                         title={t('attendance_empty')}
                         description={t('attendance_empty_hint')}
+                        action={
+                            canWorkers ? (
+                                <Link
+                                    href={route('workers.index', {
+                                        labor_kind: 'worker',
+                                    })}
+                                >
+                                    <PrimaryButton
+                                        type="button"
+                                        className="!bg-indigo-600 hover:!bg-indigo-500"
+                                    >
+                                        <NavIcon name="payroll" className="text-sm" />
+                                        {t('worker_directory')}
+                                    </PrimaryButton>
+                                </Link>
+                            ) : null
+                        }
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <div className="overflow-x-auto">
-                            <table className="min-w-full text-sm">
-                                <thead className="bg-slate-50 dark:bg-slate-900/80">
-                                    <tr>
-                                        {canManage && (
-                                            <th className="px-3 py-2 text-left">
+                        <div className="flex items-center gap-3 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+                            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                                <NavIcon name="attendance" className="text-base" />
+                            </span>
+                            <div>
+                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                    {t('attendance_table_title')}
+                                </p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">
+                                    {t('attendance_table_hint')}
+                                </p>
+                            </div>
+                        </div>
+                        <DataTable
+                            minWidth="52rem"
+                            caption={t('attendance')}
+                            stickyFirstColumn
+                        >
+                            <thead>
+                                <tr>
+                                    <Th>
+                                        <span className="inline-flex items-center gap-2">
+                                            {canManage ? (
                                                 <input
                                                     type="checkbox"
                                                     checked={allSelected}
                                                     onChange={toggleAll}
-                                                    className="rounded border-slate-300 text-emerald-600"
+                                                    className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                    aria-label={t('attendance_select_all')}
                                                 />
-                                            </th>
-                                        )}
-                                        <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
+                                            ) : null}
                                             {t('worker_name')}
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('project')}
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('check_in')}
-                                        </th>
-                                        <th className="px-3 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('check_out')}
-                                        </th>
-                                        <th className="px-3 py-2 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('late_minutes')}
-                                        </th>
-                                        <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('status')}
-                                        </th>
-                                        <th className="px-3 py-2 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">
-                                            {t('forfeit_day')}
-                                        </th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {rows.map(({ worker, attendance }) => (
-                                        <tr
-                                            key={worker.id}
-                                            className="border-t border-slate-100 dark:border-slate-800"
-                                        >
-                                            {canManage && (
-                                                <td className="px-3 py-2">
+                                        </span>
+                                    </Th>
+                                    <Th>{t('project')}</Th>
+                                    <Th>{t('check_in')}</Th>
+                                    <Th>{t('check_out')}</Th>
+                                    <Th align="end">{t('late_minutes')}</Th>
+                                    <Th>{t('status')}</Th>
+                                    <Th>{t('forfeit_day')}</Th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {rows.map(({ worker, attendance }) => (
+                                    <tr
+                                        key={worker.id}
+                                        className={
+                                            attendance?.forfeit_day
+                                                ? 'bg-rose-50/50 dark:bg-rose-950/20'
+                                                : attendance?.status === 'late'
+                                                  ? 'bg-amber-50/40 dark:bg-amber-950/10'
+                                                  : ''
+                                        }
+                                    >
+                                        <Td>
+                                            <div className="flex items-start gap-2.5">
+                                                {canManage ? (
                                                     <input
                                                         type="checkbox"
-                                                        checked={selected.includes(worker.id)}
-                                                        onChange={() => toggle(worker.id)}
-                                                        className="rounded border-slate-300 text-emerald-600"
+                                                        checked={selected.includes(
+                                                            worker.id,
+                                                        )}
+                                                        onChange={() =>
+                                                            toggle(worker.id)
+                                                        }
+                                                        className="mt-2 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                                                        aria-label={worker.name}
                                                     />
-                                                </td>
+                                                ) : null}
+                                                <span className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-indigo-500/15 text-indigo-900 dark:bg-indigo-400/15 dark:text-indigo-200">
+                                                    <NavIcon
+                                                        name="payroll"
+                                                        className="text-sm"
+                                                    />
+                                                </span>
+                                                <span>
+                                                    <Link
+                                                        href={route(
+                                                            'workers.show',
+                                                            worker.id,
+                                                        )}
+                                                        className="font-medium text-indigo-950 underline-offset-2 hover:underline dark:text-indigo-100"
+                                                    >
+                                                        {worker.name}
+                                                    </Link>
+                                                    {worker.role ? (
+                                                        <span className="mt-1 block">
+                                                            <RoleChip
+                                                                role={worker.role}
+                                                                t={t}
+                                                            />
+                                                        </span>
+                                                    ) : null}
+                                                </span>
+                                            </div>
+                                        </Td>
+                                        <Td muted>
+                                            {worker.project?.name || '—'}
+                                        </Td>
+                                        <Td className="font-sans tabular-nums">
+                                            {formatTime(attendance?.check_in)}
+                                        </Td>
+                                        <Td className="font-sans tabular-nums">
+                                            {formatTime(attendance?.check_out)}
+                                        </Td>
+                                        <Td
+                                            align="end"
+                                            className="font-sans tabular-nums"
+                                        >
+                                            {attendance?.late_minutes ?? 0}
+                                        </Td>
+                                        <Td>
+                                            <StatusChip
+                                                status={attendance?.status}
+                                                t={t}
+                                            />
+                                        </Td>
+                                        <Td>
+                                            {attendance?.forfeit_day ? (
+                                                <StatusChip
+                                                    status="forfeit_day"
+                                                    t={t}
+                                                />
+                                            ) : (
+                                                <span className="text-slate-300">—</span>
                                             )}
-                                            <td className="px-3 py-2 font-medium text-slate-800 dark:text-slate-100">
-                                                {worker.name}
-                                            </td>
-                                            <td className="px-3 py-2 text-slate-500">
-                                                {worker.project?.name || '—'}
-                                            </td>
-                                            <td className="px-3 py-2 font-mono tabular-nums">
-                                                {formatTime(attendance?.check_in)}
-                                            </td>
-                                            <td className="px-3 py-2 font-mono tabular-nums">
-                                                {formatTime(attendance?.check_out)}
-                                            </td>
-                                            <td className="px-3 py-2 text-right font-mono tabular-nums">
-                                                {attendance?.late_minutes ?? 0}
-                                            </td>
-                                            <td className="px-3 py-2 text-center">
-                                                {attendance ? (
-                                                    <StatusBadge status={attendance.status} />
-                                                ) : (
-                                                    <span className="text-slate-400">—</span>
-                                                )}
-                                            </td>
-                                            <td className="px-3 py-2 text-center">
-                                                {attendance?.forfeit_day ? (
-                                                    <StatusBadge status="forfeit_day" label={t('forfeit_day')} />
-                                                ) : (
-                                                    '—'
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                        </Td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </DataTable>
                     </DataPanel>
                 )}
             </PageShell>

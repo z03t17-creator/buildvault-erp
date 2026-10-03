@@ -51,7 +51,22 @@ class AttendanceController extends Controller
                 'worker' => $worker,
                 'attendance' => $attendances->get($worker->id),
             ];
-        });
+        })->values();
+
+        $dayRows = $attendances->values();
+        $daySummary = [
+            'workers' => $workers->count(),
+            'recorded' => $dayRows->count(),
+            'present' => $dayRows->where('status', Attendance::STATUS_PRESENT)->count(),
+            'late' => $dayRows->where('status', Attendance::STATUS_LATE)->count(),
+            'absent' => $dayRows->where('status', Attendance::STATUS_ABSENT_UNEXCUSED)->count(),
+            'leave' => $dayRows->whereIn('status', [
+                Attendance::STATUS_LEAVE_PAID,
+                Attendance::STATUS_LEAVE_SICK,
+            ])->count(),
+            'forfeit_days' => $dayRows->where('forfeit_day', true)->count(),
+            'unchecked' => max(0, $workers->count() - $dayRows->count()),
+        ];
 
         return Inertia::render('Attendance/Matrix', [
             'date' => $date,
@@ -59,6 +74,7 @@ class AttendanceController extends Controller
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'floors' => Floor::query()->with('tower:id,name,project_id')->orderBy('name')->get(),
             'grid' => $grid,
+            'daySummary' => $daySummary,
             'statuses' => Attendance::STATUSES,
             'shiftStart' => (string) config('attendance.shift_start', '08:00'),
             'lateForfeitMinutes' => Attendance::LATE_FORFEIT_MINUTES,
