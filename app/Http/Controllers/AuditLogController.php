@@ -63,6 +63,10 @@ class AuditLogController extends Controller
 
         return Inertia::render('Audit/Log', [
             'entries' => $entries,
+            'overview' => [
+                'count' => $entries->count(),
+                'limit' => 200,
+            ],
             'filters' => [
                 'action' => $action && in_array($action, AuditActions::ALL, true) ? $action : null,
                 'user_id' => $userId,

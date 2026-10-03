@@ -30,6 +30,16 @@ class ImportController extends Controller
 
         $bundledWorkbook = MayorcaWorkbookImportService::bundledSampleAbsolutePath();
 
+        $recent = Import::query()
+            ->with('creator:id,name')
+            ->orderByDesc('id')
+            ->limit(20)
+            ->get([
+                'id', 'type', 'mode', 'status', 'original_filename',
+                'total_rows', 'success_rows', 'failed_rows',
+                'created_by', 'created_at', 'finished_at', 'notes',
+            ]);
+
         return Inertia::render('Imports/Index', [
             'types' => collect($this->imports->definitions())->map(fn ($def, $type) => [
                 'type' => $type,
@@ -40,15 +50,12 @@ class ImportController extends Controller
                 'xlsx_url' => route('imports.templates.download', ['type' => $type, 'format' => 'xlsx']),
             ])->values(),
             'modes' => Import::MODES,
-            'recent' => Import::query()
-                ->with('creator:id,name')
-                ->orderByDesc('id')
-                ->limit(20)
-                ->get([
-                    'id', 'type', 'mode', 'status', 'original_filename',
-                    'total_rows', 'success_rows', 'failed_rows',
-                    'created_by', 'created_at', 'finished_at', 'notes',
-                ]),
+            'recent' => $recent,
+            'overview' => [
+                'count' => $recent->count(),
+                'completed' => $recent->where('status', Import::STATUS_COMPLETED)->count(),
+                'failed' => $recent->where('status', Import::STATUS_FAILED)->count(),
+            ],
             'canImportMayorca' => $request->user()?->hasRole(Roles::SUPER_ADMIN) ?? false,
             'workbookBundled' => is_file($bundledWorkbook),
         ]);

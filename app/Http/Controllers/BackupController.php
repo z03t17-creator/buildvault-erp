@@ -24,33 +24,43 @@ class BackupController extends Controller
     {
         $this->authorize('manageBackups', Vault::class);
 
+        $backups = Backup::query()
+            ->with('creator:id,name')
+            ->orderByDesc('id')
+            ->limit(50)
+            ->get();
+
         return Inertia::render('Backups/Index', [
             'types' => Backup::TYPES,
             'schedule' => [
-                'command' => 'php artisan backup:run',
+                'command' => 'php artisan backup:run-logged',
                 'cron' => '* * * * * cd '.base_path().' && php artisan schedule:run >> /dev/null 2>&1',
-                'direct' => '0 2 * * * cd '.base_path().' && php artisan backup:run >> /dev/null 2>&1',
-                'note' => 'Laravel scheduler runs `backup:run-logged` daily at 02:00 (logs to DB). Prefer minute cron for `schedule:run` on SiteBunker; or call `backup:run` / `backup:run-logged` directly.',
+                'direct' => '0 2 * * * cd '.base_path().' && php artisan backup:run-logged >> /dev/null 2>&1',
+                'note' => 'Daily at 02:00 via schedule:run (or call backup:run-logged directly).',
             ],
-            'backups' => Backup::query()
-                ->with('creator:id,name')
-                ->orderByDesc('id')
-                ->limit(50)
-                ->get()
-                ->map(fn (Backup $b) => [
-                    'id' => $b->id,
-                    'type' => $b->type,
-                    'filename' => $b->filename,
-                    'location' => $b->location,
-                    'size_bytes' => $b->size_bytes,
-                    'status' => $b->status,
-                    'message' => $b->message,
-                    'created_by' => $b->creator?->name,
-                    'started_at' => $b->started_at,
-                    'finished_at' => $b->finished_at,
-                    'created_at' => $b->created_at,
-                    'downloadable' => $b->isDownloadable(),
-                ]),
+            'overview' => [
+                'count' => $backups->count(),
+                'completed' => $backups->where('status', Backup::STATUS_COMPLETED)->count(),
+                'failed' => $backups->where('status', Backup::STATUS_FAILED)->count(),
+                'running' => $backups->whereIn('status', [
+                    Backup::STATUS_PENDING,
+                    Backup::STATUS_RUNNING,
+                ])->count(),
+            ],
+            'backups' => $backups->map(fn (Backup $b) => [
+                'id' => $b->id,
+                'type' => $b->type,
+                'filename' => $b->filename,
+                'location' => $b->location,
+                'size_bytes' => $b->size_bytes,
+                'status' => $b->status,
+                'message' => $b->message,
+                'created_by' => $b->creator?->name,
+                'started_at' => $b->started_at?->toIso8601String(),
+                'finished_at' => $b->finished_at?->toIso8601String(),
+                'created_at' => $b->created_at?->toIso8601String(),
+                'downloadable' => $b->isDownloadable(),
+            ]),
         ]);
     }
 
