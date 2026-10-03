@@ -11,6 +11,7 @@ use App\Services\AuditLogger;
 use App\Support\AuditActions;
 use App\Support\Roles;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -22,18 +23,61 @@ class UserController extends Controller
     {
     }
 
-    public function index(): Response
+    public function index(Request $request): Response
     {
         $this->authorize('viewAny', User::class);
 
-        $users = User::query()
+        $role = $request->string('role')->toString();
+        $status = $request->string('status')->toString();
+
+        $query = User::query()
             ->with('roles:id,name')
-            ->orderBy('name')
-            ->get()
-            ->map(fn (User $user) => $this->serializeUser($user));
+            ->orderBy('name');
+
+        if ($status !== '' && in_array($status, User::STATUSES, true)) {
+            $query->where('status', $status);
+        }
+
+        if ($role !== '' && in_array($role, Roles::ALL, true)) {
+            $query->role($role);
+        }
+
+        $users = $query->get()->map(fn (User $user) => $this->serializeUser($user));
+
+        $all = User::query()->with('roles:id,name')->get();
+
+        $statusCounts = [
+            'all' => $all->count(),
+            User::STATUS_ACTIVE => $all->filter(
+                fn (User $u) => ($u->status ?? User::STATUS_ACTIVE) === User::STATUS_ACTIVE
+            )->count(),
+            User::STATUS_DISABLED => $all->where('status', User::STATUS_DISABLED)->count(),
+        ];
+
+        $roleCounts = ['all' => $all->count()];
+        foreach (Roles::ALL as $roleName) {
+            $roleCounts[$roleName] = $all->filter(fn (User $u) => $u->hasRole($roleName))->count();
+        }
 
         return Inertia::render('Users/Index', [
             'users' => $users,
+            'filters' => [
+                'role' => in_array($role, Roles::ALL, true) ? $role : '',
+                'status' => in_array($status, User::STATUSES, true) ? $status : '',
+            ],
+            'roles' => Roles::ALL,
+            'statuses' => User::STATUSES,
+            'roleCounts' => $roleCounts,
+            'statusCounts' => $statusCounts,
+            'overview' => [
+                'count' => $users->count(),
+                'active' => $users->filter(
+                    fn (array $u) => ($u['status'] ?? User::STATUS_ACTIVE) === User::STATUS_ACTIVE
+                )->count(),
+                'disabled' => $users->filter(
+                    fn (array $u) => ($u['status'] ?? '') === User::STATUS_DISABLED
+                )->count(),
+            ],
         ]);
     }
 
