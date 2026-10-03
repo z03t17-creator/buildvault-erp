@@ -156,10 +156,7 @@ export default function ProjectForm({ mode = 'create', project }) {
             project?.contract_value_iqd != null && Number(project.contract_value_iqd) > 0
                 ? String(Math.round(Number(project.contract_value_iqd)))
                 : '',
-        budget_iqd:
-            project?.budget_iqd != null && Number(project.budget_iqd) > 0
-                ? String(Math.round(Number(project.budget_iqd)))
-                : '',
+        // Budget IQD is not collected on the form; column stays nullable/defaulted.
     });
 
     const mergedErrors = useMemo(
@@ -200,9 +197,6 @@ export default function ProjectForm({ mode = 'create', project }) {
         }
         if (data.contract_value_iqd !== '' && Number(data.contract_value_iqd) < 0) {
             next.contract_value_iqd = t('validation_amount_required');
-        }
-        if (data.budget_iqd !== '' && Number(data.budget_iqd) < 0) {
-            next.budget_iqd = t('validation_amount_required');
         }
         setLocalErrors(next);
         return Object.keys(next).length === 0;
@@ -373,25 +367,6 @@ export default function ProjectForm({ mode = 'create', project }) {
                             />
                             <p className="mt-1 text-xs text-slate-400">{t('date_format_hint')}</p>
                             <InputError message={mergedErrors.end_date} className="mt-1" />
-                        </FormField>
-
-                        <FormField>
-                            <InputLabel
-                                value={t('projects_budget_iqd')}
-                                htmlFor="budget_iqd"
-                            />
-                            <MoneyInput
-                                id="budget_iqd"
-                                className={moneyFieldClass}
-                                value={data.budget_iqd}
-                                onValueChange={(raw) => setData('budget_iqd', raw)}
-                                allowDecimals={false}
-                                placeholder="0"
-                            />
-                            <p className="mt-1 text-xs text-slate-400">
-                                {t('project_form_budget_iqd_hint')}
-                            </p>
-                            <InputError message={mergedErrors.budget_iqd} className="mt-1" />
                         </FormField>
 
                         <FormField className="sm:col-span-2 lg:col-span-2">
