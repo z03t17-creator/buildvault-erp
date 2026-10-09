@@ -60,6 +60,7 @@ function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showH
             <DataTable minWidth={showHold ? '52rem' : '40rem'} caption={title} stickyFirstColumn>
                 <thead>
                     <tr>
+                        {canManage ? <Th>{t('actions')}</Th> : null}
                         <Th>{t('date')}</Th>
                         <Th align="end">{t('amount')}</Th>
                         <Th>{t('currency')}</Th>
@@ -72,12 +73,25 @@ function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showH
                                 <Th>{t('job_pay_payout_date')}</Th>
                             </>
                         ) : null}
-                        {canManage ? <Th>{t('actions')}</Th> : null}
                     </tr>
                 </thead>
                 <tbody>
                     {rows.map((row) => (
                         <tr key={row.id}>
+                            {canManage ? (
+                                <Td>
+                                    <DeskRowActions
+                                        editHref={route('vault.lines.staff-pay.edit', row.id)}
+                                        onDelete={() => {
+                                            if (!window.confirm(t('confirm_delete'))) return;
+                                            router.delete(route('vault.lines.staff-pay.destroy', row.id), {
+                                                preserveScroll: true,
+                                            });
+                                        }}
+                                        t={t}
+                                    />
+                                </Td>
+                            ) : null}
                             <Td>
                                 <span dir="ltr" className="font-sans tabular-nums">
                                     {row.occurred_on || '—'}
@@ -111,20 +125,6 @@ function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showH
                                         </span>
                                     </Td>
                                 </>
-                            ) : null}
-                            {canManage ? (
-                                <Td>
-                                    <DeskRowActions
-                                        editHref={route('vault.lines.staff-pay.edit', row.id)}
-                                        onDelete={() => {
-                                            if (!window.confirm(t('confirm_delete'))) return;
-                                            router.delete(route('vault.lines.staff-pay.destroy', row.id), {
-                                                preserveScroll: true,
-                                            });
-                                        }}
-                                        t={t}
-                                    />
-                                </Td>
                             ) : null}
                         </tr>
                     ))}

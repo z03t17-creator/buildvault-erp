@@ -35,6 +35,7 @@ class StaffController extends Controller
         return Inertia::render('Staff/Index', [
             'staff' => $staff,
             'canCreate' => Gate::allows('manageLedger', Vault::class),
+            'canEditRows' => Gate::allows('manageStaffPay', Vault::class),
         ]);
     }
 
@@ -59,6 +60,7 @@ class StaffController extends Controller
             ->map(fn (VaultLine $line) => $this->mapPayLine($line));
 
         $canManage = Gate::allows('manageLedger', Vault::class);
+        $canEditRows = Gate::allows('manageStaffPay', Vault::class);
 
         return Inertia::render('Staff/Show', [
             'staff' => $this->mapStaff($staff, true),
@@ -75,7 +77,7 @@ class StaffController extends Controller
             'canCreateDailyPay' => $canManage && $staff->isDaily(),
             'canCreateSalary' => $canManage && $staff->isMonthly(),
             'canPay' => $canManage,
-            'canEdit' => $canManage,
+            'canEdit' => $canEditRows,
         ]);
     }
 
@@ -139,7 +141,7 @@ class StaffController extends Controller
 
     public function edit(Staff $staff): Response
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
 
         $staff->load('rates');
 
@@ -156,7 +158,7 @@ class StaffController extends Controller
 
     public function update(Request $request, Staff $staff): RedirectResponse
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
 
         $payModel = $request->input('pay_model', $request->input('kind'));
         $payModel = Staff::payModelFromKind(is_string($payModel) ? $payModel : null);
@@ -193,7 +195,7 @@ class StaffController extends Controller
 
     public function destroy(Staff $staff): RedirectResponse
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
 
         $staff->delete();
 

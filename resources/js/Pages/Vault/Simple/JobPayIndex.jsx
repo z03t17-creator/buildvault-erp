@@ -1,6 +1,7 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -16,9 +17,11 @@ import { useState } from 'react';
 export default function JobPayIndex({
     lines = [],
     canCreate = false,
+    canEditRows = false,
     canConfirmHold = false,
 }) {
     const t = useTranslations();
+    const canChange = canCreate || canEditRows;
     const list = Array.isArray(lines) ? lines : [];
     const [confirmingId, setConfirmingId] = useState(null);
 
@@ -102,13 +105,47 @@ export default function JobPayIndex({
                                 </p>
                             </div>
                         </div>
+                        <MobileCardList>
+                            {list.map((row) => (
+                                <MobileCard
+                                    key={row.id}
+                                    title={row.staff?.name || '—'}
+                                    subtitle={row.purpose || row.occurred_on || ''}
+                                    badge={
+                                        <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                            {row.amount} {row.currency}
+                                        </span>
+                                    }
+                                    rows={[
+                                        { label: t('date'), value: row.occurred_on || '—' },
+                                        { label: t('project'), value: row.project?.name || '—' },
+                                        {
+                                            label: t('job_pay_hold_10'),
+                                            value: `${row.hold_amount ?? 0} ${row.currency || ''}`,
+                                        },
+                                        { label: t('job_pay_payout_date'), value: row.unlock_date || '—' },
+                                    ]}
+                                    footer={
+                                        canChange ? (
+                                            <DeskRowActions
+                                                editHref={route('vault.lines.staff-pay.edit', row.id)}
+                                                onDelete={() => removeLine(row.id)}
+                                                t={t}
+                                            />
+                                        ) : null
+                                    }
+                                />
+                            ))}
+                        </MobileCardList>
                         <DataTable
                             minWidth="64rem"
                             caption={t('vault_form_job_pay')}
                             stickyFirstColumn
+                            hideOnMobile
                         >
                             <thead>
                                 <tr>
+                                    {canChange ? <Th>{t('actions')}</Th> : null}
                                     <Th>{t('date')}</Th>
                                     <Th align="end">{t('amount')}</Th>
                                     <Th>{t('currency')}</Th>
@@ -118,12 +155,20 @@ export default function JobPayIndex({
                                     <Th align="end">{t('job_pay_hold_10')}</Th>
                                     <Th>{t('job_pay_payout_date')}</Th>
                                     <Th>{t('job_pay_hold_status')}</Th>
-                                    {canCreate ? <Th>{t('actions')}</Th> : null}
                                 </tr>
                             </thead>
                             <tbody>
                                 {list.map((row) => (
                                     <tr key={row.id}>
+                                        {canChange ? (
+                                            <Td>
+                                                <DeskRowActions
+                                                    editHref={route('vault.lines.staff-pay.edit', row.id)}
+                                                    onDelete={() => removeLine(row.id)}
+                                                    t={t}
+                                                />
+                                            </Td>
+                                        ) : null}
                                         <Td>
                                             <span dir="ltr" className="font-sans tabular-nums">
                                                 {row.occurred_on || '—'}
@@ -189,15 +234,6 @@ export default function JobPayIndex({
                                                 '—'
                                             )}
                                         </Td>
-                                        {canCreate ? (
-                                            <Td>
-                                                <DeskRowActions
-                                                    editHref={route('vault.lines.staff-pay.edit', row.id)}
-                                                    onDelete={() => removeLine(row.id)}
-                                                    t={t}
-                                                />
-                                            </Td>
-                                        ) : null}
                                     </tr>
                                 ))}
                             </tbody>

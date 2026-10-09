@@ -102,4 +102,17 @@ class VaultPolicy
     {
         return $user->hasAnyRole([Roles::SUPER_ADMIN, Roles::ACCOUNTANT]);
     }
+
+    /**
+     * Edit and delete staff rows and staff payments.
+     * The boss can correct these lists; other money forms stay with the accountant.
+     */
+    public function manageStaffPay(User $user): bool
+    {
+        return $user->hasAnyRole([
+            Roles::SUPER_ADMIN,
+            Roles::ACCOUNTANT,
+            Roles::BOSS_CONTRACTOR,
+        ]);
+    }
 }

@@ -883,6 +883,18 @@ class StaffPayRedesignTest extends TestCase
             ->delete(route('vault.lines.staff-pay.destroy', $line))
             ->assertForbidden();
 
+        $boss = $this->userWithRole(Roles::BOSS_CONTRACTOR);
+        $this->actingAs($boss)
+            ->get(route('vault.job-pay.index'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('canEditRows', true)
+                ->where('canCreate', false)
+            );
+        $this->actingAs($boss)
+            ->get(route('vault.lines.staff-pay.edit', $line))
+            ->assertOk();
+
         $this->actingAs($this->accountant)
             ->get(route('vault.lines.staff-pay.edit', $line))
             ->assertOk()

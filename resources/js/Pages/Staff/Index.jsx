@@ -12,8 +12,9 @@ import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, router } from '@inertiajs/react';
 
-export default function Index({ staff = [], canCreate = false }) {
+export default function Index({ staff = [], canCreate = false, canEditRows = false }) {
     const t = useTranslations();
+    const canChange = canCreate || canEditRows;
     const list = Array.isArray(staff) ? staff : [];
     const counts = {
         monthly: list.filter((person) => payModelOf(person) === 'monthly').length,
@@ -137,7 +138,7 @@ export default function Index({ staff = [], canCreate = false }) {
                                             >
                                                 {t('view')}
                                             </Link>
-                                            {canCreate ? (
+                                            {canChange ? (
                                                 <DeskRowActions
                                                     editHref={route('staff.edit', person.id)}
                                                     onDelete={() => removeStaff(person.id)}
@@ -152,18 +153,27 @@ export default function Index({ staff = [], canCreate = false }) {
                         <DataTable minWidth="40rem" caption={t('staff_roster_title')} stickyFirstColumn hideOnMobile>
                             <thead>
                                 <tr>
+                                    {canChange ? <Th>{t('actions')}</Th> : null}
                                     <Th>{t('name')}</Th>
                                     <Th>{t('phone')}</Th>
                                     <Th>{t('staff_pay_model')}</Th>
                                     <Th>{t('staff_role')}</Th>
                                     <Th align="end">{t('monthly_salary')}</Th>
                                     <Th align="end">{t('staff_rates_title')}</Th>
-                                    {canCreate ? <Th>{t('actions')}</Th> : null}
                                 </tr>
                             </thead>
                             <tbody>
                                 {list.map((person) => (
                                     <tr key={person.id}>
+                                        {canChange ? (
+                                            <Td>
+                                                <DeskRowActions
+                                                    editHref={route('staff.edit', person.id)}
+                                                    onDelete={() => removeStaff(person.id)}
+                                                    t={t}
+                                                />
+                                            </Td>
+                                        ) : null}
                                         <Td>
                                             <Link
                                                 href={route('staff.show', person.id)}
@@ -227,15 +237,6 @@ export default function Index({ staff = [], canCreate = false }) {
                                                       : '—'
                                                 : '—'}
                                         </Td>
-                                        {canCreate ? (
-                                            <Td>
-                                                <DeskRowActions
-                                                    editHref={route('staff.edit', person.id)}
-                                                    onDelete={() => removeStaff(person.id)}
-                                                    t={t}
-                                                />
-                                            </Td>
-                                        ) : null}
                                     </tr>
                                 ))}
                             </tbody>

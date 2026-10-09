@@ -112,15 +112,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('vault.lines.staff-pay.create');
         Route::post('/vault/lines/staff-pay', [SimpleVaultLineController::class, 'storeStaffPay'])
             ->name('vault.lines.staff-pay.store');
-        Route::get('/vault/lines/staff-pay/{line}/edit', [SimpleVaultLineController::class, 'editStaffPay'])
-            ->whereNumber('line')
-            ->name('vault.lines.staff-pay.edit');
-        Route::put('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'updateStaffPay'])
-            ->whereNumber('line')
-            ->name('vault.lines.staff-pay.update');
-        Route::delete('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'destroyStaffPay'])
-            ->whereNumber('line')
-            ->name('vault.lines.staff-pay.destroy');
         Route::get('/vault/lines/job-pay', [SimpleVaultLineController::class, 'createJobPay'])
             ->name('vault.lines.job-pay.create');
         Route::post('/vault/lines/job-pay', [SimpleVaultLineController::class, 'storeJobPay'])
@@ -136,6 +127,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/staff/create', [StaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+    });
+    Route::middleware('can:manageStaffPay,'.Vault::class)->group(function () {
+        Route::get('/vault/lines/staff-pay/{line}/edit', [SimpleVaultLineController::class, 'editStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.edit');
+        Route::put('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'updateStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.update');
+        Route::delete('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'destroyStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.destroy');
         Route::get('/staff/{staff}/edit', [StaffController::class, 'edit'])
             ->whereNumber('staff')
             ->name('staff.edit');

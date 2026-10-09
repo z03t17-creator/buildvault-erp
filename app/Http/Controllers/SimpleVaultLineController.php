@@ -52,6 +52,7 @@ class SimpleVaultLineController extends Controller
         return Inertia::render('Vault/Simple/JobPayIndex', [
             'lines' => $lines,
             'canCreate' => Gate::allows('manageLedger', Vault::class),
+            'canEditRows' => Gate::allows('manageStaffPay', Vault::class),
             'canConfirmHold' => Gate::allows('manageLedger', Vault::class),
         ]);
     }
@@ -175,7 +176,7 @@ class SimpleVaultLineController extends Controller
 
     public function editStaffPay(VaultLine $line): Response
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
         $this->assertStaffPayLine($line);
         $line->load(['items', 'staff']);
 
@@ -187,7 +188,7 @@ class SimpleVaultLineController extends Controller
 
     public function updateStaffPay(Request $request, VaultLine $line): RedirectResponse
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
         $this->assertStaffPayLine($line);
 
         $data = $request->validate($this->staffPayRules());
@@ -215,7 +216,7 @@ class SimpleVaultLineController extends Controller
 
     public function destroyStaffPay(VaultLine $line): RedirectResponse
     {
-        $this->authorize('manageLedger', Vault::class);
+        $this->authorize('manageStaffPay', Vault::class);
         $this->assertStaffPayLine($line);
         $this->vault->voidStaffPay($line);
 

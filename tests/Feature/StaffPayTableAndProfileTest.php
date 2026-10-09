@@ -99,6 +99,7 @@ class StaffPayTableAndProfileTest extends TestCase
                 ->where('lines.0.hold_amount', 20)
                 ->where('lines.0.unlock_date', '2027-03-30')
                 ->where('canCreate', false)
+                ->where('canEditRows', true)
             );
 
         $this->actingAs($this->accountant)
@@ -170,6 +171,7 @@ class StaffPayTableAndProfileTest extends TestCase
                 ->component('Staff/Index')
                 ->has('staff', 2)
                 ->where('canCreate', false)
+                ->where('canEditRows', true)
             );
 
         $this->actingAs($this->accountant)
