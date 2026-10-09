@@ -21,7 +21,8 @@ export default function JobPayIndex({
     canConfirmHold = false,
 }) {
     const t = useTranslations();
-    const canChange = canCreate || canEditRows;
+    // Anyone who can open the yellow record button, or the boss, can edit/delete rows.
+    const canChange = Boolean(canCreate || canEditRows);
     const list = Array.isArray(lines) ? lines : [];
     const [confirmingId, setConfirmingId] = useState(null);
 
@@ -44,6 +45,15 @@ export default function JobPayIndex({
             },
         );
     };
+
+    const rowActions = (row) =>
+        canChange ? (
+            <DeskRowActions
+                editHref={route('vault.lines.staff-pay.edit', row.id)}
+                onDelete={() => removeLine(row.id)}
+                t={t}
+            />
+        ) : null;
 
     return (
         <AuthenticatedLayout
@@ -125,15 +135,7 @@ export default function JobPayIndex({
                                         },
                                         { label: t('job_pay_payout_date'), value: row.unlock_date || '—' },
                                     ]}
-                                    footer={
-                                        canChange ? (
-                                            <DeskRowActions
-                                                editHref={route('vault.lines.staff-pay.edit', row.id)}
-                                                onDelete={() => removeLine(row.id)}
-                                                t={t}
-                                            />
-                                        ) : null
-                                    }
+                                    footer={rowActions(row)}
                                 />
                             ))}
                         </MobileCardList>
@@ -145,7 +147,6 @@ export default function JobPayIndex({
                         >
                             <thead>
                                 <tr>
-                                    {canChange ? <Th>{t('actions')}</Th> : null}
                                     <Th>{t('date')}</Th>
                                     <Th align="end">{t('amount')}</Th>
                                     <Th>{t('currency')}</Th>
@@ -155,20 +156,12 @@ export default function JobPayIndex({
                                     <Th align="end">{t('job_pay_hold_10')}</Th>
                                     <Th>{t('job_pay_payout_date')}</Th>
                                     <Th>{t('job_pay_hold_status')}</Th>
+                                    {canChange ? <Th>{t('actions')}</Th> : null}
                                 </tr>
                             </thead>
                             <tbody>
                                 {list.map((row) => (
                                     <tr key={row.id}>
-                                        {canChange ? (
-                                            <Td>
-                                                <DeskRowActions
-                                                    editHref={route('vault.lines.staff-pay.edit', row.id)}
-                                                    onDelete={() => removeLine(row.id)}
-                                                    t={t}
-                                                />
-                                            </Td>
-                                        ) : null}
                                         <Td>
                                             <span dir="ltr" className="font-sans tabular-nums">
                                                 {row.occurred_on || '—'}
@@ -184,16 +177,19 @@ export default function JobPayIndex({
                                         </Td>
                                         <Td muted>{row.currency}</Td>
                                         <Td>
-                                            {row.staff ? (
-                                                <Link
-                                                    href={route('staff.show', row.staff.id)}
-                                                    className="font-semibold text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
-                                                >
-                                                    {row.staff.name}
-                                                </Link>
-                                            ) : (
-                                                '—'
-                                            )}
+                                            <div className="space-y-2">
+                                                {row.staff ? (
+                                                    <Link
+                                                        href={route('staff.show', row.staff.id)}
+                                                        className="font-semibold text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
+                                                    >
+                                                        {row.staff.name}
+                                                    </Link>
+                                                ) : (
+                                                    '—'
+                                                )}
+                                                {rowActions(row)}
+                                            </div>
                                         </Td>
                                         <Td>{row.purpose || '—'}</Td>
                                         <Td muted>{row.project?.name || '—'}</Td>
@@ -234,6 +230,7 @@ export default function JobPayIndex({
                                                 '—'
                                             )}
                                         </Td>
+                                        {canChange ? <Td>{rowActions(row)}</Td> : null}
                                     </tr>
                                 ))}
                             </tbody>

@@ -33,11 +33,11 @@ export function DeskRowActions({ editHref, onDelete, t }) {
     if (!editHref && !onDelete) return null;
 
     return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
             {editHref ? (
                 <Link
                     href={editHref}
-                    className="inline-flex min-h-9 items-center rounded-lg border border-slate-300 px-2.5 text-xs font-semibold text-slate-800 hover:bg-slate-100 dark:border-slate-600 dark:text-slate-100 dark:hover:bg-slate-800"
+                    className="inline-flex min-h-10 items-center rounded-xl bg-teal-500/20 px-3 text-sm font-semibold text-teal-100 ring-1 ring-teal-400/40 hover:bg-teal-500/30"
                 >
                     {t('edit')}
                 </Link>
@@ -46,7 +46,7 @@ export function DeskRowActions({ editHref, onDelete, t }) {
                 <button
                     type="button"
                     onClick={onDelete}
-                    className="inline-flex min-h-9 items-center rounded-lg border border-rose-300 px-2.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 dark:border-rose-500/40 dark:text-rose-200 dark:hover:bg-rose-500/10"
+                    className="inline-flex min-h-10 items-center rounded-xl bg-rose-500/20 px-3 text-sm font-semibold text-rose-100 ring-1 ring-rose-400/40 hover:bg-rose-500/30"
                 >
                     {t('delete')}
                 </button>

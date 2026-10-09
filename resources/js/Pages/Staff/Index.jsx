@@ -175,12 +175,21 @@ export default function Index({ staff = [], canCreate = false, canEditRows = fal
                                             </Td>
                                         ) : null}
                                         <Td>
-                                            <Link
-                                                href={route('staff.show', person.id)}
-                                                className="font-semibold text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
-                                            >
-                                                {person.name}
-                                            </Link>
+                                            <div className="space-y-2">
+                                                <Link
+                                                    href={route('staff.show', person.id)}
+                                                    className="font-semibold text-teal-700 underline-offset-2 hover:underline dark:text-teal-300"
+                                                >
+                                                    {person.name}
+                                                </Link>
+                                                {canChange ? (
+                                                    <DeskRowActions
+                                                        editHref={route('staff.edit', person.id)}
+                                                        onDelete={() => removeStaff(person.id)}
+                                                        t={t}
+                                                    />
+                                                ) : null}
+                                            </div>
                                         </Td>
                                         <Td muted>
                                             <span dir="ltr">{person.phone || '—'}</span>
