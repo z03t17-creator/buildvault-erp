@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { deskFieldClass, deskMoneyClass, segmentClass } from '@/Components/StaffDesk';
 import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -14,11 +15,8 @@ import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
-const fieldClass =
-    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
-
-const moneyFieldClass =
-    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-base font-semibold tabular-nums shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass = deskFieldClass;
+const moneyFieldClass = deskMoneyClass;
 
 function emptyRate() {
     return { item_name: '', unit: 'دانە', rate: '', currency: 'IQD' };
@@ -138,6 +136,7 @@ export default function Create({
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={pageTitle}
@@ -148,7 +147,7 @@ export default function Create({
         >
             <Head title={pageTitle} />
 
-            <PageShell className="!max-w-3xl !space-y-4">
+            <PageShell className="!max-w-5xl !space-y-4">
                 <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
                     <FormSection cols={2}>
                         <FormField>
@@ -193,12 +192,7 @@ export default function Create({
                                         key={model}
                                         type="button"
                                         onClick={() => setData('pay_model', model)}
-                                        className={
-                                            'min-h-[2.5rem] min-w-[5.5rem] flex-1 rounded-xl border px-2 text-sm font-semibold transition ' +
-                                            (data.pay_model === model
-                                                ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/25 dark:border-teal-400 dark:bg-teal-950/40 dark:text-teal-100'
-                                                : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300')
-                                        }
+                                        className={segmentClass(data.pay_model === model)}
                                         aria-pressed={data.pay_model === model}
                                     >
                                         {t(`staff_pay_${model}`)}
@@ -230,12 +224,7 @@ export default function Create({
                                                 key={code}
                                                 type="button"
                                                 onClick={() => setData('currency', code)}
-                                                className={
-                                                    'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold transition ' +
-                                                    (data.currency === code
-                                                        ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/25 dark:border-teal-400 dark:bg-teal-950/40 dark:text-teal-100'
-                                                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300')
-                                                }
+                                                className={segmentClass(data.currency === code)}
                                             >
                                                 {code}
                                             </button>
@@ -267,12 +256,7 @@ export default function Create({
                                                 key={code}
                                                 type="button"
                                                 onClick={() => setData('currency', code)}
-                                                className={
-                                                    'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold transition ' +
-                                                    (data.currency === code
-                                                        ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/25 dark:border-teal-400 dark:bg-teal-950/40 dark:text-teal-100'
-                                                        : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300')
-                                                }
+                                                className={segmentClass(data.currency === code)}
                                             >
                                                 {code}
                                             </button>
@@ -284,9 +268,9 @@ export default function Create({
                     </FormSection>
 
                     {isUnit ? (
-                        <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                <p className="text-sm font-semibold text-slate-100">
                                     {t('staff_rates_title')}
                                 </p>
                                 <SecondaryButton type="button" onClick={addRate}>
@@ -294,68 +278,129 @@ export default function Create({
                                 </SecondaryButton>
                             </div>
                             <InputError message={mergedErrors.rates} />
-                            {data.rates.map((row, index) => (
-                                <div
-                                    key={index}
-                                    className="grid gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60 sm:grid-cols-12"
-                                >
-                                    <div className="sm:col-span-4">
+                            <div className="hidden md:block">
+                                <table className="w-full border-collapse text-sm">
+                                    <thead>
+                                        <tr className="text-start text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                            <th className="px-2 py-2 text-start">{t('staff_rate_item')}</th>
+                                            <th className="px-2 py-2 text-start">{t('rate_unit')}</th>
+                                            <th className="px-2 py-2 text-start">{t('unit_rate')}</th>
+                                            <th className="px-2 py-2 text-start">{t('currency')}</th>
+                                            <th className="px-2 py-2" />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.rates.map((row, index) => (
+                                            <tr key={index} className="border-t border-slate-800">
+                                                <td className="px-2 py-2 align-top">
+                                                    <SuggestionCombobox
+                                                        id={`item_${index}`}
+                                                        className={fieldClass}
+                                                        value={row.item_name}
+                                                        onChange={(next) => setRate(index, 'item_name', next)}
+                                                        suggestions={itemSuggestions}
+                                                        placeholder={t('staff_rate_item')}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <SuggestionCombobox
+                                                        id={`unit_${index}`}
+                                                        className={fieldClass}
+                                                        value={row.unit}
+                                                        onChange={(next) => setRate(index, 'unit', next)}
+                                                        suggestions={rateUnitSuggestions}
+                                                        placeholder={t('rate_unit')}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <MoneyInput
+                                                        id={`rate_${index}`}
+                                                        className={moneyFieldClass}
+                                                        value={row.rate}
+                                                        onValueChange={(next) => setRate(index, 'rate', next)}
+                                                        allowDecimals
+                                                        placeholder="0"
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <div className="flex gap-1">
+                                                        {currencies.map((code) => (
+                                                            <button
+                                                                key={code}
+                                                                type="button"
+                                                                onClick={() => setRate(index, 'currency', code)}
+                                                                className={segmentClass(row.currency === code)}
+                                                            >
+                                                                {code}
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeRate(index)}
+                                                        className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                        aria-label={t('remove')}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="space-y-3 md:hidden">
+                                {data.rates.map((row, index) => (
+                                    <div key={index} className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
                                         <SuggestionCombobox
-                                            id={`item_${index}`}
+                                            id={`item_m_${index}`}
                                             className={fieldClass}
                                             value={row.item_name}
                                             onChange={(next) => setRate(index, 'item_name', next)}
                                             suggestions={itemSuggestions}
                                             placeholder={t('staff_rate_item')}
                                         />
-                                    </div>
-                                    <div className="sm:col-span-2">
                                         <SuggestionCombobox
-                                            id={`unit_${index}`}
+                                            id={`unit_m_${index}`}
                                             className={fieldClass}
                                             value={row.unit}
                                             onChange={(next) => setRate(index, 'unit', next)}
                                             suggestions={rateUnitSuggestions}
                                             placeholder={t('rate_unit')}
                                         />
-                                    </div>
-                                    <div className="sm:col-span-3">
                                         <MoneyInput
-                                            id={`rate_${index}`}
+                                            id={`rate_m_${index}`}
                                             className={moneyFieldClass}
                                             value={row.rate}
                                             onValueChange={(next) => setRate(index, 'rate', next)}
                                             allowDecimals
                                             placeholder="0"
                                         />
-                                    </div>
-                                    <div className="flex gap-1 sm:col-span-3">
-                                        {currencies.map((code) => (
+                                        <div className="flex gap-1">
+                                            {currencies.map((code) => (
+                                                <button
+                                                    key={code}
+                                                    type="button"
+                                                    onClick={() => setRate(index, 'currency', code)}
+                                                    className={segmentClass(row.currency === code)}
+                                                >
+                                                    {code}
+                                                </button>
+                                            ))}
                                             <button
-                                                key={code}
                                                 type="button"
-                                                onClick={() => setRate(index, 'currency', code)}
-                                                className={
-                                                    'min-h-[2.5rem] flex-1 rounded-xl border text-xs font-semibold ' +
-                                                    (row.currency === code
-                                                        ? 'border-teal-500 bg-teal-50 text-teal-900 dark:border-teal-400 dark:bg-teal-950/40 dark:text-teal-100'
-                                                        : 'border-slate-200 dark:border-slate-700')
-                                                }
+                                                onClick={() => removeRate(index)}
+                                                className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                aria-label={t('remove')}
                                             >
-                                                {code}
+                                                ×
                                             </button>
-                                        ))}
-                                        <button
-                                            type="button"
-                                            onClick={() => removeRate(index)}
-                                            className="min-h-[2.5rem] rounded-xl border border-slate-200 px-2 text-xs dark:border-slate-700"
-                                            aria-label={t('remove')}
-                                        >
-                                            ×
-                                        </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
                     ) : null}
 

@@ -1,40 +1,45 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
+import MobileCardList, { MobileCard } from '@/Components/MobileCardList';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
+import { PayModelChip, payModelOf } from '@/Components/StaffDesk';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link } from '@inertiajs/react';
 
-function KindChip({ payModel, kind, t }) {
-    const model =
-        payModel ||
-        (kind === 'salary' ? 'monthly' : kind === 'unit' ? 'unit' : 'daily');
-    const label = t(`staff_pay_${model}`);
-    const tone =
-        model === 'monthly'
-            ? 'bg-teal-500/15 text-teal-900 dark:text-teal-200'
-            : model === 'unit'
-              ? 'bg-sky-500/15 text-sky-900 dark:text-sky-200'
-              : 'bg-amber-500/15 text-amber-950 dark:text-amber-200';
-
-    return (
-        <span className={`inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${tone}`}>
-            {label}
-        </span>
-    );
-}
-
 export default function Index({ staff = [], canCreate = false }) {
     const t = useTranslations();
     const list = Array.isArray(staff) ? staff : [];
+    const counts = {
+        monthly: list.filter((person) => payModelOf(person) === 'monthly').length,
+        daily: list.filter((person) => payModelOf(person) === 'daily').length,
+        unit: list.filter((person) => payModelOf(person) === 'unit').length,
+    };
+
+    const paySummary = (person) => {
+        const model = payModelOf(person);
+        if (model === 'monthly' && person.monthly_salary != null) {
+            return `${person.monthly_salary} ${person.currency || ''}`;
+        }
+        if (model === 'daily' && person.day_rate != null) {
+            return `${person.day_rate} ${person.currency || ''}/${t('staff_pay_day_short')}`;
+        }
+        if (model === 'unit') {
+            return person.rates_count > 0
+                ? t('staff_rates_count', { count: person.rates_count })
+                : '—';
+        }
+        return '—';
+    };
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={t('staff_roster_title')}
@@ -55,6 +60,22 @@ export default function Index({ staff = [], canCreate = false }) {
         >
             <Head title={t('staff_roster_title')} />
             <PageShell className="!space-y-6">
+                <div className="grid gap-3 sm:grid-cols-3">
+                    {[
+                        ['monthly', counts.monthly, 'bg-teal-400/15 text-teal-100'],
+                        ['daily', counts.daily, 'bg-amber-400/15 text-amber-100'],
+                        ['unit', counts.unit, 'bg-sky-400/15 text-sky-100'],
+                    ].map(([model, count, tone]) => (
+                        <div key={model} className="bv-card px-4 py-3">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                {t(`staff_pay_${model}`)}
+                            </p>
+                            <p className={`mt-2 inline-flex rounded-lg px-2 py-1 text-lg font-semibold tabular-nums ${tone}`}>
+                                {count}
+                            </p>
+                        </div>
+                    ))}
+                </div>
                 {list.length === 0 ? (
                     <EmptyState
                         icon="workers"
@@ -86,7 +107,45 @@ export default function Index({ staff = [], canCreate = false }) {
                                 </p>
                             </div>
                         </div>
-                        <DataTable minWidth="40rem" caption={t('staff_roster_title')} stickyFirstColumn>
+                        <MobileCardList>
+                            {list.map((person) => (
+                                <MobileCard
+                                    key={person.id}
+                                    title={person.name}
+                                    subtitle={person.phone || person.role || person.trade || ''}
+                                    badge={
+                                        <PayModelChip
+                                            payModel={person.pay_model}
+                                            kind={person.kind}
+                                            t={t}
+                                        />
+                                    }
+                                    rows={[
+                                        { label: t('staff_role'), value: person.role || person.trade || '—' },
+                                        { label: t('staff_rates_title'), value: paySummary(person) },
+                                    ]}
+                                    footer={
+                                        <div className="flex gap-3">
+                                            <Link
+                                                href={route('staff.show', person.id)}
+                                                className="text-xs font-semibold text-teal-200"
+                                            >
+                                                {t('view')}
+                                            </Link>
+                                            {canCreate ? (
+                                                <Link
+                                                    href={route('staff.edit', person.id)}
+                                                    className="text-xs font-semibold text-slate-300"
+                                                >
+                                                    {t('edit')}
+                                                </Link>
+                                            ) : null}
+                                        </div>
+                                    }
+                                />
+                            ))}
+                        </MobileCardList>
+                        <DataTable minWidth="40rem" caption={t('staff_roster_title')} stickyFirstColumn hideOnMobile>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
@@ -120,7 +179,7 @@ export default function Index({ staff = [], canCreate = false }) {
                                             <span dir="ltr">{person.phone || '—'}</span>
                                         </Td>
                                         <Td>
-                                            <KindChip
+                                            <PayModelChip
                                                 payModel={person.pay_model}
                                                 kind={person.kind}
                                                 t={t}

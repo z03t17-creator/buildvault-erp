@@ -394,6 +394,20 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringContainsString('staff_rates_title', $source);
     }
 
+    public function test_staff_screens_use_the_dark_desk(): void
+    {
+        foreach ([
+            'js/Pages/Staff/Index.jsx',
+            'js/Pages/Staff/Show.jsx',
+            'js/Pages/Staff/Create.jsx',
+            'js/Pages/Vault/Simple/StaffPayForm.jsx',
+        ] as $path) {
+            $source = file_get_contents(resource_path($path));
+            $this->assertStringContainsString('desk', $source);
+            $this->assertStringContainsString('AuthenticatedLayout', $source);
+        }
+    }
+
     public function test_default_catalog_includes_shaft_door_and_square_meters(): void
     {
         $items = Staff::suggestedItemNames();

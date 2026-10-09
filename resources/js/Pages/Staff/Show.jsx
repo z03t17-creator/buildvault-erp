@@ -6,27 +6,11 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { PayModelChip } from '@/Components/StaffDesk';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link } from '@inertiajs/react';
-
-function PayModelChip({ payModel, kind, t }) {
-    const model = payModel || (kind === 'salary' ? 'monthly' : kind === 'unit' ? 'unit' : 'daily');
-    const label = t(`staff_pay_${model}`);
-    const tone =
-        model === 'monthly'
-            ? 'bg-teal-500/15 text-teal-900 dark:text-teal-200'
-            : model === 'unit'
-              ? 'bg-sky-500/15 text-sky-900 dark:text-sky-200'
-              : 'bg-amber-500/15 text-amber-950 dark:text-amber-200';
-
-    return (
-        <span className={`inline-flex rounded-lg px-2 py-1 text-xs font-semibold ${tone}`}>
-            {label}
-        </span>
-    );
-}
 
 function placeLabel(row, t) {
     if (!row?.site_kind) return '—';
@@ -158,6 +142,7 @@ export default function Show({
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={staff?.name || t('staff')}
@@ -205,20 +190,20 @@ export default function Show({
             <Head title={staff?.name || t('staff')} />
             <PageShell className="!space-y-6">
                 <section className="bv-card p-4 sm:p-5">
-                    <div className="mb-4 flex items-start gap-3">
-                        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-500/15 text-teal-900 dark:bg-teal-400/15 dark:text-teal-200">
+                    <div className="mb-4 flex items-start gap-3 border-b border-slate-800 pb-4">
+                        <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-400/15 text-teal-100">
                             <NavIcon name="workers" className="text-lg" />
                         </span>
                         <div className="min-w-0">
-                            <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">
+                            <h2 className="font-display text-lg font-semibold text-white">
                                 {staff?.name}
                             </h2>
-                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                            <p className="mt-0.5 text-sm text-slate-400">
                                 {t('staff_profile_card_simple')}
                             </p>
                         </div>
                     </div>
-                    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    <dl className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
                         <div>
                             <dt className="text-xs font-semibold uppercase tracking-wide text-slate-500">
                                 {t('phone')}

@@ -9,6 +9,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { deskFieldClass, deskMoneyClass, segmentClass } from '@/Components/StaffDesk';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -17,11 +18,8 @@ import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { useEffect, useMemo, useState } from 'react';
 
-const fieldClass =
-    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
-
-const moneyFieldClass =
-    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-base font-semibold tabular-nums shadow-sm focus:border-amber-500 focus:outline-none focus:ring-2 focus:ring-amber-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
+const fieldClass = deskFieldClass;
+const moneyFieldClass = deskMoneyClass;
 
 function emptyItem(rate = null) {
     return {
@@ -260,10 +258,27 @@ export default function StaffPayForm({
         post(route('vault.lines.staff-pay.store'));
     };
 
+    const itemSelect = (row, index, id) => (
+        <select
+            id={id}
+            className={fieldClass}
+            value={row.staff_rate_id}
+            onChange={(e) => pickRate(index, e.target.value)}
+        >
+            <option value="">{t('staff_rate_item')}</option>
+            {rates.map((rate) => (
+                <option key={rate.id} value={rate.id}>
+                    {rate.item_name} ({rate.unit})
+                </option>
+            ))}
+        </select>
+    );
+
     const title = t('vault_form_job_pay');
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={title}
@@ -278,7 +293,7 @@ export default function StaffPayForm({
             }
         >
             <Head title={title} />
-            <PageShell className="!max-w-3xl !space-y-4">
+            <PageShell className="!max-w-6xl !space-y-4">
                 <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
                     <FormSection cols={2}>
                         <FormField className="sm:col-span-2">
@@ -334,8 +349,8 @@ export default function StaffPayForm({
 
                     {/* Place block */}
                     {selected ? (
-                        <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                            <p className="text-sm font-semibold text-slate-100">
                                 {t('staff_pay_place')}
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -344,12 +359,7 @@ export default function StaffPayForm({
                                         key={kind}
                                         type="button"
                                         onClick={() => setData('site_kind', kind)}
-                                        className={
-                                            'min-h-[2.5rem] min-w-[5.5rem] flex-1 rounded-xl border px-2 text-sm font-semibold transition ' +
-                                            (data.site_kind === kind
-                                                ? 'border-amber-500 bg-amber-50 text-amber-950 ring-2 ring-amber-500/25 dark:border-amber-400 dark:bg-amber-950/40 dark:text-amber-100'
-                                                : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300')
-                                        }
+                                        className={segmentClass(data.site_kind === kind, 'amber')}
                                         aria-pressed={data.site_kind === kind}
                                     >
                                         {t(`staff_pay_site_${kind}`)}
@@ -479,12 +489,7 @@ export default function StaffPayForm({
                                             key={code}
                                             type="button"
                                             onClick={() => setData('currency', code)}
-                                            className={
-                                                'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold ' +
-                                                (data.currency === code
-                                                    ? 'border-teal-500 bg-teal-50 text-teal-900 ring-2 ring-teal-500/25 dark:border-teal-400 dark:bg-teal-950/40 dark:text-teal-100'
-                                                    : 'border-slate-200 dark:border-slate-700')
-                                            }
+                                            className={segmentClass(data.currency === code)}
                                         >
                                             {code}
                                         </button>
@@ -540,9 +545,9 @@ export default function StaffPayForm({
 
                     {/* Unit rows */}
                     {isUnit ? (
-                        <div className="space-y-3 rounded-xl border border-slate-200 p-3 dark:border-slate-700">
+                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                <p className="text-sm font-semibold text-slate-100">
                                     {t('staff_pay_items_title')}
                                 </p>
                                 <SecondaryButton type="button" onClick={addItem}>
@@ -551,79 +556,103 @@ export default function StaffPayForm({
                             </div>
                             <InputError message={mergedErrors.items} />
                             {rates.length === 0 ? (
-                                <p className="text-sm text-rose-600 dark:text-rose-300">
+                                <p className="text-sm text-rose-300">
                                     {t('staff_pay_no_rates')}
                                 </p>
                             ) : null}
-                            {unitRows.map((row, index) => (
-                                <div
-                                    key={index}
-                                    className="grid gap-2 rounded-lg bg-slate-50 p-2 dark:bg-slate-900/60 sm:grid-cols-12"
-                                >
-                                    <div className="sm:col-span-4">
-                                        <select
-                                            className={fieldClass}
-                                            value={row.staff_rate_id}
-                                            onChange={(e) => pickRate(index, e.target.value)}
-                                        >
-                                            <option value="">{t('staff_rate_item')}</option>
-                                            {rates.map((rate) => (
-                                                <option key={rate.id} value={rate.id}>
-                                                    {rate.item_name} ({rate.unit})
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div className="sm:col-span-2">
-                                        <TextInput
-                                            className={fieldClass}
-                                            value={row.unit}
-                                            readOnly
-                                        />
-                                    </div>
-                                    <div className="sm:col-span-2">
+                            <div className="hidden overflow-x-auto md:block">
+                                <table className="w-full min-w-[46rem] border-collapse text-sm">
+                                    <thead>
+                                        <tr className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                            <th className="px-2 py-2 text-start">{t('staff_rate_item')}</th>
+                                            <th className="px-2 py-2 text-start">{t('rate_unit')}</th>
+                                            <th className="px-2 py-2 text-start">{t('quantity')}</th>
+                                            <th className="px-2 py-2 text-start">{t('unit_rate')}</th>
+                                            <th className="px-2 py-2 text-end">{t('staff_pay_subtotal')}</th>
+                                            <th className="px-2 py-2" />
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {unitRows.map((row, index) => (
+                                            <tr key={index} className="border-t border-slate-800">
+                                                <td className="px-2 py-2 align-top">{itemSelect(row, index)}</td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <TextInput className={fieldClass} value={row.unit} readOnly />
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <MoneyInput
+                                                        className={moneyFieldClass}
+                                                        value={row.quantity}
+                                                        onValueChange={(next) => setItem(index, 'quantity', next)}
+                                                        allowDecimals
+                                                        placeholder={t('vault_form_quantity_label', { unit: row.unit || '' })}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <MoneyInput
+                                                        className={moneyFieldClass}
+                                                        value={row.unit_rate}
+                                                        onValueChange={(next) => setItem(index, 'unit_rate', next)}
+                                                        allowDecimals
+                                                        disabled={!canEditRate}
+                                                    />
+                                                </td>
+                                                <td className="px-2 py-2 text-end align-middle">
+                                                    <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                                        {row.subtotal || 0}
+                                                    </span>
+                                                </td>
+                                                <td className="px-2 py-2 align-top">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => removeItem(index)}
+                                                        className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                        aria-label={t('remove')}
+                                                    >
+                                                        ×
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div className="space-y-3 md:hidden">
+                                {unitRows.map((row, index) => (
+                                    <div key={index} className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+                                        {itemSelect(row, index, `item_m_${index}`)}
+                                        <TextInput className={fieldClass} value={row.unit} readOnly />
                                         <MoneyInput
                                             className={moneyFieldClass}
                                             value={row.quantity}
-                                            onValueChange={(next) =>
-                                                setItem(index, 'quantity', next)
-                                            }
+                                            onValueChange={(next) => setItem(index, 'quantity', next)}
                                             allowDecimals
-                                            placeholder={t('vault_form_quantity_label', {
-                                                unit: row.unit || '',
-                                            })}
+                                            placeholder={t('vault_form_quantity_label', { unit: row.unit || '' })}
                                         />
-                                    </div>
-                                    <div className="sm:col-span-2">
                                         <MoneyInput
                                             className={moneyFieldClass}
                                             value={row.unit_rate}
-                                            onValueChange={(next) =>
-                                                setItem(index, 'unit_rate', next)
-                                            }
+                                            onValueChange={(next) => setItem(index, 'unit_rate', next)}
                                             allowDecimals
                                             disabled={!canEditRate}
                                         />
+                                        <div className="flex items-center justify-between">
+                                            <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                                {row.subtotal || 0} {row.currency}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                onClick={() => removeItem(index)}
+                                                className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                aria-label={t('remove')}
+                                            >
+                                                ×
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div className="flex items-center justify-between gap-1 sm:col-span-2">
-                                        <span
-                                            dir="ltr"
-                                            className="text-sm font-semibold tabular-nums text-slate-800 dark:text-slate-100"
-                                        >
-                                            {row.subtotal || 0}
-                                        </span>
-                                        <button
-                                            type="button"
-                                            onClick={() => removeItem(index)}
-                                            className="min-h-[2.5rem] rounded-xl border border-slate-200 px-2 text-xs dark:border-slate-700"
-                                            aria-label={t('remove')}
-                                        >
-                                            ×
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                            <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
+                                ))}
+                            </div>
+                            <p className="text-sm font-semibold text-slate-100">
                                 {t('staff_pay_subtotal')}:{' '}
                                 <span dir="ltr" className="tabular-nums">
                                     {unitTotal} {previewCurrency}
@@ -646,7 +675,7 @@ export default function StaffPayForm({
                     ) : null}
 
                     {preview && selected ? (
-                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                        <p className="rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
                             {data.apply_insurance
                                 ? t('vault_form_job_pay_split', {
                                       hold: preview.hold,

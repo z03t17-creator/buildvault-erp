@@ -76,6 +76,34 @@
             linear-gradient(180deg, rgb(15 23 42 / 0.4) 0%, transparent 24rem);
     }
 
+    /* Staff and payment screens stay a dark desk even when the rest of the app is light. */
+    .bv-desk {
+        color-scheme: dark;
+        min-height: 100dvh;
+        background-color: rgb(11 18 32);
+        background-image:
+            radial-gradient(ellipse 90% 50% at 0% -10%, rgb(45 212 191 / 0.14), transparent 55%),
+            radial-gradient(ellipse 55% 40% at 100% 0%, rgb(245 158 11 / 0.08), transparent 48%);
+    }
+
+    .bv-desk .bv-sidebar {
+        background: linear-gradient(180deg, rgb(15 23 42 / 0.96) 0%, rgb(11 18 32 / 0.98) 100%);
+    }
+
+    .bv-desk .bv-surface {
+        border-color: rgb(51 65 85 / 0.85);
+        box-shadow: none;
+    }
+
+    .bv-desk .bv-icon-chip {
+        background: rgb(45 212 191 / 0.12);
+        color: rgb(94 234 212);
+    }
+
+    .bv-desk .bv-date-input {
+        color-scheme: dark;
+    }
+
     /* Flaticon Uicons baseline */
     i[class^='fi-'],
     i[class*=' fi-'] {
