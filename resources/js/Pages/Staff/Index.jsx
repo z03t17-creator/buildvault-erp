@@ -107,6 +107,14 @@ export default function Index({ staff = [], canCreate = false }) {
                                             >
                                                 {person.name}
                                             </Link>
+                                            {canCreate ? (
+                                                <Link
+                                                    href={route('staff.edit', person.id)}
+                                                    className="ms-2 text-xs font-semibold text-slate-500 underline-offset-2 hover:underline dark:text-slate-400"
+                                                >
+                                                    {t('edit')}
+                                                </Link>
+                                            ) : null}
                                         </Td>
                                         <Td muted>
                                             <span dir="ltr">{person.phone || '—'}</span>

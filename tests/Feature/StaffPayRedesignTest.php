@@ -385,11 +385,120 @@ class StaffPayRedesignTest extends TestCase
                 ->has('rates', 1)
                 ->where('canCreateUnitPay', true)
                 ->where('canPay', true)
+                ->where('canEdit', true)
             );
 
         $source = file_get_contents(resource_path('js/Pages/Staff/Show.jsx'));
         $this->assertStringContainsString("route('vault.lines.staff-pay.create'", $source);
+        $this->assertStringContainsString("route('staff.edit'", $source);
         $this->assertStringContainsString('staff_rates_title', $source);
+    }
+
+    public function test_staff_edit_replaces_name_role_pay_model_and_rates(): void
+    {
+        $staff = Staff::query()->create([
+            'name' => 'Hunar',
+            'phone' => '0750',
+            'role' => 'دەرگاچیی',
+            'pay_model' => Staff::PAY_UNIT,
+            'kind' => Staff::KIND_UNIT,
+            'currency' => DualCurrency::IQD,
+        ]);
+        $old = StaffRate::query()->create([
+            'staff_id' => $staff->id,
+            'item_name' => 'دەرگای چوونەژوورەوە',
+            'unit' => 'دانە',
+            'rate' => 25000,
+            'currency' => DualCurrency::IQD,
+            'sort_order' => 0,
+        ]);
+        StaffRate::query()->create([
+            'staff_id' => $staff->id,
+            'item_name' => 'دەرگای ناوەوە',
+            'unit' => 'دانە',
+            'rate' => 18000,
+            'currency' => DualCurrency::IQD,
+            'sort_order' => 1,
+        ]);
+
+        $this->actingAs($this->accountant)
+            ->get(route('staff.edit', $staff))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Staff/Create')
+                ->where('staff.id', $staff->id)
+                ->where('staff.name', 'Hunar')
+                ->has('staff.rates', 2)
+            );
+
+        $this->actingAs($this->stock)
+            ->get(route('staff.edit', $staff))
+            ->assertForbidden();
+
+        $this->actingAs($this->stock)
+            ->put(route('staff.update', $staff), [
+                'name' => 'Nope',
+                'pay_model' => Staff::PAY_DAILY,
+                'day_rate' => 1,
+                'currency' => DualCurrency::IQD,
+            ])
+            ->assertForbidden();
+
+        $this->actingAs($this->accountant)
+            ->put(route('staff.update', $staff), [
+                'name' => 'Wasta Hunar',
+                'phone' => '07501112233',
+                'role' => 'Door carpenter',
+                'pay_model' => Staff::PAY_UNIT,
+                'rates' => [
+                    ['item_name' => 'دەرگای MDF', 'unit' => 'دانە', 'rate' => 20000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای چوونەژوورەوە', 'unit' => 'دانە', 'rate' => 25000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای شافت', 'unit' => 'دانە', 'rate' => 8000, 'currency' => DualCurrency::IQD],
+                ],
+            ])
+            ->assertRedirect(route('staff.show', $staff));
+
+        $staff->refresh();
+        $this->assertSame('Wasta Hunar', $staff->name);
+        $this->assertSame('07501112233', $staff->phone);
+        $this->assertSame('Door carpenter', $staff->role);
+        $this->assertTrue($staff->isUnit());
+        $this->assertNull(StaffRate::query()->find($old->id));
+        $this->assertCount(3, $staff->rates);
+        $this->assertSame(8000.0, (float) $staff->rates->firstWhere('item_name', 'دەرگای شافت')->rate);
+
+        $this->actingAs($this->accountant)
+            ->put(route('staff.update', $staff), [
+                'name' => 'Wasta Hunar',
+                'phone' => '07501112233',
+                'role' => 'Painter',
+                'pay_model' => Staff::PAY_DAILY,
+                'day_rate' => 45000,
+                'currency' => DualCurrency::IQD,
+            ])
+            ->assertRedirect(route('staff.show', $staff));
+
+        $staff->refresh();
+        $this->assertTrue($staff->isDaily());
+        $this->assertSame(45000.0, (float) $staff->day_rate);
+        $this->assertSame(0, $staff->rates()->count());
+        $this->assertNull($staff->monthly_salary);
+
+        $this->actingAs($this->accountant)
+            ->put(route('staff.update', $staff), [
+                'name' => 'Wasta Hunar',
+                'role' => 'Office',
+                'pay_model' => Staff::PAY_MONTHLY,
+                'monthly_salary' => 700,
+                'currency' => DualCurrency::USD,
+            ])
+            ->assertRedirect(route('staff.show', $staff));
+
+        $staff->refresh();
+        $this->assertTrue($staff->isMonthly());
+        $this->assertSame(700.0, (float) $staff->monthly_salary);
+        $this->assertSame(DualCurrency::USD, $staff->currency);
+        $this->assertNull($staff->day_rate);
     }
 
     public function test_vault_home_has_no_fifth_unit_card(): void

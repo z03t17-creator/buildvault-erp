@@ -127,6 +127,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/staff/create', [StaffController::class, 'create'])->name('staff.create');
         Route::post('/staff', [StaffController::class, 'store'])->name('staff.store');
+        Route::get('/staff/{staff}/edit', [StaffController::class, 'edit'])
+            ->whereNumber('staff')
+            ->name('staff.edit');
+        Route::put('/staff/{staff}', [StaffController::class, 'update'])
+            ->whereNumber('staff')
+            ->name('staff.update');
     });
 
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])

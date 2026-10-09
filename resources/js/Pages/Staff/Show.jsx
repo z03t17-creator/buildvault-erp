@@ -140,6 +140,7 @@ export default function Show({
     jobPays = [],
     salaries = [],
     canPay = false,
+    canEdit = false,
     canCreateJobPay = false,
     canCreateUnitPay = false,
     canCreateSalary = false,
@@ -167,6 +168,11 @@ export default function Show({
                             <Link href={route('staff.index')}>
                                 <SecondaryButton type="button">{t('staff_roster_title')}</SecondaryButton>
                             </Link>
+                            {canEdit ? (
+                                <Link href={route('staff.edit', staff?.id)}>
+                                    <SecondaryButton type="button">{t('staff_edit_title')}</SecondaryButton>
+                                </Link>
+                            ) : null}
                             {canCreatePay ? (
                                 <Link href={payHref}>
                                     <PrimaryButton

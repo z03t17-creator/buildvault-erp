@@ -18,7 +18,7 @@ use Inertia\Response;
 use InvalidArgumentException;
 
 /**
- * Staff roster + profile + create with pay models and unit rates.
+ * Staff roster, profile, create, and edit with pay models and unit rates.
  */
 class StaffController extends Controller
 {
@@ -75,6 +75,7 @@ class StaffController extends Controller
             'canCreateDailyPay' => $canManage && $staff->isDaily(),
             'canCreateSalary' => $canManage && $staff->isMonthly(),
             'canPay' => $canManage,
+            'canEdit' => $canManage,
         ]);
     }
 
@@ -120,100 +121,8 @@ class StaffController extends Controller
             'return_to' => ['nullable', 'string', 'max:255'],
         ]);
 
-        $role = trim((string) ($data['role'] ?? $data['trade'] ?? ''));
-
         try {
-            $person = DB::transaction(function () use ($data, $payModel, $role) {
-                $attrs = [
-                    'name' => $data['name'],
-                    'phone' => $data['phone'] ?? null,
-                    'role' => $role !== '' ? $role : null,
-                    'pay_model' => $payModel,
-                    'kind' => Staff::kindFromPayModel($payModel),
-                    'monthly_salary' => null,
-                    'day_rate' => null,
-                    'currency' => null,
-                    'unit_rate' => null,
-                    'rate_unit' => null,
-                ];
-
-                if ($payModel === Staff::PAY_MONTHLY) {
-                    $salary = (float) ($data['monthly_salary'] ?? 0);
-                    if ($salary <= 0) {
-                        throw new InvalidArgumentException('Monthly salary is required.');
-                    }
-                    $attrs['monthly_salary'] = $salary;
-                    $attrs['currency'] = $data['currency'] ?? null;
-                } elseif ($payModel === Staff::PAY_DAILY) {
-                    $dayRate = (float) ($data['day_rate'] ?? 0);
-                    // UI requires day_rate; legacy kind=time may omit it.
-                    $attrs['day_rate'] = $dayRate > 0 ? $dayRate : null;
-                    $attrs['currency'] = $data['currency'] ?? null;
-                }
-
-                $person = Staff::query()->create($attrs);
-
-                if ($payModel === Staff::PAY_UNIT) {
-                    $rates = is_array($data['rates'] ?? null) ? $data['rates'] : [];
-                    $saved = 0;
-                    foreach (array_values($rates) as $i => $row) {
-                        if (! is_array($row)) {
-                            continue;
-                        }
-                        $item = trim((string) ($row['item_name'] ?? ''));
-                        $unit = trim((string) ($row['unit'] ?? ''));
-                        $rate = round((float) ($row['rate'] ?? 0), 4);
-                        $currency = strtoupper((string) ($row['currency'] ?? ''));
-                        if ($item === '' || $unit === '' || $rate <= 0) {
-                            continue;
-                        }
-                        if (! in_array($currency, DualCurrency::CURRENCIES, true)) {
-                            throw new InvalidArgumentException('Each rate needs USD or IQD.');
-                        }
-                        StaffRate::query()->create([
-                            'staff_id' => $person->id,
-                            'item_name' => $item,
-                            'unit' => $unit,
-                            'rate' => $rate,
-                            'currency' => $currency,
-                            'sort_order' => $i,
-                        ]);
-                        $saved++;
-                        if ($person->currency === null) {
-                            $person->currency = $currency;
-                            $person->save();
-                        }
-                    }
-
-                    // Legacy single unit_rate + rate_unit → one staff_rates row.
-                    if ($saved === 0) {
-                        $legacyRate = round((float) ($data['unit_rate'] ?? 0), 4);
-                        $legacyUnit = trim((string) ($data['rate_unit'] ?? ''));
-                        $legacyCurrency = strtoupper((string) ($data['currency'] ?? ''));
-                        if ($legacyRate > 0 && $legacyUnit !== '' && in_array($legacyCurrency, DualCurrency::CURRENCIES, true)) {
-                            StaffRate::query()->create([
-                                'staff_id' => $person->id,
-                                'item_name' => 'کار',
-                                'unit' => $legacyUnit,
-                                'rate' => $legacyRate,
-                                'currency' => $legacyCurrency,
-                                'sort_order' => 0,
-                            ]);
-                            $person->unit_rate = $legacyRate;
-                            $person->rate_unit = $legacyUnit;
-                            $person->currency = $legacyCurrency;
-                            $person->save();
-                            $saved = 1;
-                        }
-                    }
-
-                    if ($saved === 0) {
-                        throw new InvalidArgumentException('Unit staff need at least one rate row.');
-                    }
-                }
-
-                return $person;
-            });
+            $person = $this->persistStaff($data, $payModel);
         } catch (InvalidArgumentException $e) {
             return back()->withErrors(['pay_model' => $e->getMessage()])->withInput();
         }
@@ -226,6 +135,173 @@ class StaffController extends Controller
         return redirect()
             ->route('staff.show', $person)
             ->with('success', __('staff_created'));
+    }
+
+    public function edit(Staff $staff): Response
+    {
+        $this->authorize('manageLedger', Vault::class);
+
+        $staff->load('rates');
+
+        return Inertia::render('Staff/Create', [
+            'staff' => $this->mapStaff($staff, true),
+            'payModels' => Staff::PAY_MODELS,
+            'kinds' => Staff::PAY_MODELS,
+            'currencies' => DualCurrency::CURRENCIES,
+            'roleSuggestions' => Staff::suggestedRoles(),
+            'rateUnitSuggestions' => Staff::suggestedRateUnits(),
+            'itemSuggestions' => Staff::suggestedItemNames(),
+        ]);
+    }
+
+    public function update(Request $request, Staff $staff): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+
+        $payModel = $request->input('pay_model', $request->input('kind'));
+        $payModel = Staff::payModelFromKind(is_string($payModel) ? $payModel : null);
+
+        $data = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:64'],
+            'role' => ['nullable', 'string', 'max:120'],
+            'trade' => ['nullable', 'string', 'max:120'],
+            'pay_model' => ['nullable', 'string'],
+            'kind' => ['nullable', 'string'],
+            'monthly_salary' => ['nullable', 'numeric', 'min:0'],
+            'day_rate' => ['nullable', 'numeric', 'min:0'],
+            'unit_rate' => ['nullable', 'numeric', 'min:0'],
+            'rate_unit' => ['nullable', 'string', 'max:32'],
+            'currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
+            'rates' => ['nullable', 'array'],
+            'rates.*.item_name' => ['nullable', 'string', 'max:160'],
+            'rates.*.unit' => ['nullable', 'string', 'max:32'],
+            'rates.*.rate' => ['nullable', 'numeric', 'min:0'],
+            'rates.*.currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
+        ]);
+
+        try {
+            $person = $this->persistStaff($data, $payModel, $staff);
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['pay_model' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()
+            ->route('staff.show', $person)
+            ->with('success', __('staff_updated'));
+    }
+
+    /**
+     * Create or replace a staff record and, for unit pay, their whole price list.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    private function persistStaff(array $data, string $payModel, ?Staff $existing = null): Staff
+    {
+        $role = trim((string) ($data['role'] ?? $data['trade'] ?? ''));
+
+        return DB::transaction(function () use ($data, $payModel, $role, $existing) {
+            $attrs = [
+                'name' => $data['name'],
+                'phone' => $data['phone'] ?? null,
+                'role' => $role !== '' ? $role : null,
+                'pay_model' => $payModel,
+                'kind' => Staff::kindFromPayModel($payModel),
+                'monthly_salary' => null,
+                'day_rate' => null,
+                'currency' => null,
+                'unit_rate' => null,
+                'rate_unit' => null,
+            ];
+
+            if ($payModel === Staff::PAY_MONTHLY) {
+                $salary = (float) ($data['monthly_salary'] ?? 0);
+                if ($salary <= 0) {
+                    throw new InvalidArgumentException('Monthly salary is required.');
+                }
+                $attrs['monthly_salary'] = $salary;
+                $attrs['currency'] = $data['currency'] ?? null;
+            } elseif ($payModel === Staff::PAY_DAILY) {
+                $dayRate = (float) ($data['day_rate'] ?? 0);
+                // UI requires day_rate; legacy kind=time may omit it.
+                $attrs['day_rate'] = $dayRate > 0 ? $dayRate : null;
+                $attrs['currency'] = $data['currency'] ?? null;
+            }
+
+            if ($existing) {
+                $existing->fill($attrs);
+                $existing->save();
+                $person = $existing;
+            } else {
+                $person = Staff::query()->create($attrs);
+            }
+
+            // Price lists belong only to unit staff. Replacing them keeps one current catalog.
+            $person->rates()->delete();
+
+            if ($payModel !== Staff::PAY_UNIT) {
+                return $person->fresh();
+            }
+
+            $rates = is_array($data['rates'] ?? null) ? $data['rates'] : [];
+            $saved = 0;
+            foreach (array_values($rates) as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $item = trim((string) ($row['item_name'] ?? ''));
+                $unit = trim((string) ($row['unit'] ?? ''));
+                $rate = round((float) ($row['rate'] ?? 0), 4);
+                $currency = strtoupper((string) ($row['currency'] ?? ''));
+                if ($item === '' || $unit === '' || $rate <= 0) {
+                    continue;
+                }
+                if (! in_array($currency, DualCurrency::CURRENCIES, true)) {
+                    throw new InvalidArgumentException('Each rate needs USD or IQD.');
+                }
+                StaffRate::query()->create([
+                    'staff_id' => $person->id,
+                    'item_name' => $item,
+                    'unit' => $unit,
+                    'rate' => $rate,
+                    'currency' => $currency,
+                    'sort_order' => $saved,
+                ]);
+                $saved++;
+                if ($person->currency === null) {
+                    $person->currency = $currency;
+                    $person->save();
+                }
+            }
+
+            // Legacy single unit_rate + rate_unit → one staff_rates row.
+            if ($saved === 0) {
+                $legacyRate = round((float) ($data['unit_rate'] ?? 0), 4);
+                $legacyUnit = trim((string) ($data['rate_unit'] ?? ''));
+                $legacyCurrency = strtoupper((string) ($data['currency'] ?? ''));
+                if ($legacyRate > 0 && $legacyUnit !== '' && in_array($legacyCurrency, DualCurrency::CURRENCIES, true)) {
+                    StaffRate::query()->create([
+                        'staff_id' => $person->id,
+                        'item_name' => 'کار',
+                        'unit' => $legacyUnit,
+                        'rate' => $legacyRate,
+                        'currency' => $legacyCurrency,
+                        'sort_order' => 0,
+                    ]);
+                    $person->unit_rate = $legacyRate;
+                    $person->rate_unit = $legacyUnit;
+                    $person->currency = $legacyCurrency;
+                    $person->save();
+                    $saved = 1;
+                }
+            }
+
+            if ($saved === 0) {
+                throw new InvalidArgumentException('Unit staff need at least one rate row.');
+            }
+
+            return $person->fresh();
+        });
     }
 
     /**

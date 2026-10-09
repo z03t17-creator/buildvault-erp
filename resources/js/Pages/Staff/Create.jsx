@@ -24,7 +24,19 @@ function emptyRate() {
     return { item_name: '', unit: 'دانە', rate: '', currency: 'IQD' };
 }
 
+function ratesFromStaff(staff) {
+    const rows = Array.isArray(staff?.rates) ? staff.rates : [];
+    if (rows.length === 0) return [emptyRate()];
+    return rows.map((row) => ({
+        item_name: row.item_name || '',
+        unit: row.unit || 'دانە',
+        rate: row.rate != null && row.rate !== '' ? String(row.rate) : '',
+        currency: row.currency || staff?.currency || 'IQD',
+    }));
+}
+
 export default function Create({
+    staff = null,
     payModels = ['monthly', 'daily', 'unit'],
     currencies = ['USD', 'IQD'],
     roleSuggestions = [],
@@ -33,16 +45,17 @@ export default function Create({
     returnTo,
 }) {
     const t = useTranslations();
+    const editing = Boolean(staff?.id);
     const [localErrors, setLocalErrors] = useState({});
-    const { data, setData, post, processing, errors } = useForm({
-        name: '',
-        phone: '',
-        role: '',
-        pay_model: 'monthly',
-        monthly_salary: '',
-        day_rate: '',
-        currency: 'IQD',
-        rates: [emptyRate()],
+    const { data, setData, post, put, processing, errors } = useForm({
+        name: staff?.name || '',
+        phone: staff?.phone || '',
+        role: staff?.role || staff?.trade || '',
+        pay_model: staff?.pay_model || 'monthly',
+        monthly_salary: staff?.monthly_salary != null ? String(staff.monthly_salary) : '',
+        day_rate: staff?.day_rate != null ? String(staff.day_rate) : '',
+        currency: staff?.currency || 'IQD',
+        rates: ratesFromStaff(staff),
         return_to: returnTo || '',
     });
 
@@ -112,22 +125,28 @@ export default function Create({
     const submit = (e) => {
         e.preventDefault();
         if (!validate()) return;
+        if (editing) {
+            put(route('staff.update', staff.id));
+            return;
+        }
         post(route('staff.store'));
     };
 
-    const cancelHref = returnTo || route('staff.index');
+    const cancelHref = returnTo || (editing ? route('staff.show', staff.id) : route('staff.index'));
+    const pageTitle = editing ? t('staff_edit_title') : t('staff_create_title');
+    const pageHint = editing ? t('staff_edit_hint') : t('staff_create_hint');
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('staff_create_title')}
-                    subtitle={t('staff_create_hint')}
+                    title={pageTitle}
+                    subtitle={pageHint}
                     icon={<NavIcon name="workers" className="text-lg text-teal-600 dark:text-teal-300" />}
                 />
             }
         >
-            <Head title={t('staff_create_title')} />
+            <Head title={pageTitle} />
 
             <PageShell className="!max-w-3xl !space-y-4">
                 <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
@@ -341,7 +360,9 @@ export default function Create({
                     ) : null}
 
                     <FormActions>
-                        <PrimaryButton disabled={processing}>{t('staff_create_save')}</PrimaryButton>
+                        <PrimaryButton disabled={processing}>
+                            {editing ? t('staff_edit_save') : t('staff_create_save')}
+                        </PrimaryButton>
                         <Link href={cancelHref}>
                             <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
                         </Link>
