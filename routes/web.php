@@ -224,6 +224,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/stock', StockDashboardController::class)->name('stock.dashboard');
         Route::get('/stock/items', [StockItemController::class, 'index'])->name('stock.items.index');
         Route::get('/stock/movements', [StockMovementController::class, 'index'])->name('stock.movements.index');
+        Route::get('/stock/consumption', [StockMovementController::class, 'consumption'])
+            ->name('stock.consumption');
         Route::get('/stock/suppliers', [SupplierController::class, 'index'])->name('stock.suppliers.index');
         Route::get('/stock/categories', [StockCategoryController::class, 'index'])->name('stock.categories.index');
     });

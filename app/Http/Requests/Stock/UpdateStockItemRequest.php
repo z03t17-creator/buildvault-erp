@@ -27,6 +27,12 @@ class UpdateStockItemRequest extends FormRequest
                 'max:64',
                 Rule::unique('stock_items', 'sku')->ignore($itemId),
             ],
+            'barcode' => [
+                'nullable',
+                'string',
+                'max:64',
+                Rule::unique('stock_items', 'barcode')->ignore($itemId),
+            ],
             'category' => ['nullable', 'string', 'max:64'],
             'stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'unit' => ['required', 'string', 'max:32'],

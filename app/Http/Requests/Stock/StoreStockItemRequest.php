@@ -19,6 +19,7 @@ class StoreStockItemRequest extends FormRequest
         return [
             'name' => ['required', 'string', 'max:255'],
             'sku' => ['nullable', 'string', 'max:64', 'unique:stock_items,sku'],
+            'barcode' => ['nullable', 'string', 'max:64', 'unique:stock_items,barcode'],
             'category' => ['nullable', 'string', 'max:64'],
             'stock_category_id' => ['nullable', 'integer', 'exists:stock_categories,id'],
             'unit' => ['required', 'string', 'max:32'],
@@ -28,6 +29,7 @@ class StoreStockItemRequest extends FormRequest
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
             'location' => ['nullable', 'string', 'max:255'],
             'notes' => ['nullable', 'string', 'max:2000'],
+            'auto_sku' => ['sometimes', 'boolean'],
         ];
     }
 }

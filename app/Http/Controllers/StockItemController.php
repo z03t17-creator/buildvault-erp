@@ -20,6 +20,7 @@ class StockItemController extends Controller
 
         $q = trim((string) $request->get('q', ''));
         $categoryId = $request->integer('category_id') ?: null;
+        $status = (string) $request->get('status', '');
 
         $query = StockItem::query()
             ->with(['supplier:id,name', 'stockCategory:id,name'])
@@ -29,6 +30,7 @@ class StockItemController extends Controller
             $query->where(function ($builder) use ($q) {
                 $builder->where('name', 'like', '%'.$q.'%')
                     ->orWhere('sku', 'like', '%'.$q.'%')
+                    ->orWhere('barcode', 'like', '%'.$q.'%')
                     ->orWhere('location', 'like', '%'.$q.'%');
             });
         }
@@ -38,8 +40,10 @@ class StockItemController extends Controller
 
         $items = $query->get()->map(function (StockItem $item) {
             $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
+            $item->setAttribute('average_unit_cost', $item->averageUnitCost());
             $item->setAttribute('is_low_stock', $item->isLowStock());
             $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+            $item->setAttribute('stock_status', $item->stockStatus());
             $item->setAttribute(
                 'category_label',
                 $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
@@ -47,6 +51,10 @@ class StockItemController extends Controller
 
             return $item;
         });
+
+        if (in_array($status, ['ok', 'low', 'out'], true)) {
+            $items = $items->filter(fn (StockItem $item) => $item->stock_status === $status)->values();
+        }
 
         $categories = StockCategory::query()
             ->orderBy('name')
@@ -65,9 +73,11 @@ class StockItemController extends Controller
             'filters' => [
                 'q' => $q,
                 'category_id' => $categoryId,
+                'status' => in_array($status, ['ok', 'low', 'out'], true) ? $status : '',
             ],
             'categories' => $categories,
             'overview' => $overview,
+            'units' => StockItem::UNITS,
         ]);
     }
 
@@ -78,11 +88,13 @@ class StockItemController extends Controller
         return Inertia::render('Stock/Items/Create', [
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
+            'units' => StockItem::UNITS,
             'defaults' => [
-                'unit' => 'pcs',
+                'unit' => 'Pcs',
                 'quantity' => 0,
                 'min_quantity' => 0,
                 'purchase_price_iqd' => 0,
+                'auto_sku' => true,
             ],
         ]);
     }
@@ -107,7 +119,7 @@ class StockItemController extends Controller
             'supplier',
             'stockCategory:id,name',
             'movements' => function ($q) {
-                $q->with(['user:id,name', 'project:id,name'])
+                $q->with(['user:id,name', 'project:id,name', 'staff:id,name'])
                     ->orderByDesc('moved_on')
                     ->orderByDesc('id')
                     ->limit(30);
@@ -115,8 +127,10 @@ class StockItemController extends Controller
         ]);
 
         $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
+        $item->setAttribute('average_unit_cost', $item->averageUnitCost());
         $item->setAttribute('is_low_stock', $item->isLowStock());
         $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+        $item->setAttribute('stock_status', $item->stockStatus());
         $item->setAttribute(
             'category_label',
             $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
@@ -135,6 +149,7 @@ class StockItemController extends Controller
             'item' => $item->load(['supplier:id,name', 'stockCategory:id,name']),
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
+            'units' => StockItem::UNITS,
         ]);
     }
 
@@ -143,8 +158,7 @@ class StockItemController extends Controller
         $this->authorize('update', $item);
 
         $data = $this->normalizeItemPayload($request->validated(), includeQuantity: false);
-        // Quantity is adjusted only via stock in/out movements.
-        unset($data['quantity']);
+        unset($data['quantity'], $data['auto_sku']);
 
         $item->update($data);
 
@@ -175,18 +189,30 @@ class StockItemController extends Controller
         }
         $data['min_quantity'] = round((float) ($data['min_quantity'] ?? 0), 3);
         $data['purchase_price_iqd'] = round((float) ($data['purchase_price_iqd'] ?? 0), 2);
-        if (($data['sku'] ?? '') === '') {
-            $data['sku'] = null;
-        }
 
         $categoryId = $data['stock_category_id'] ?? null;
+        $categoryName = null;
         if ($categoryId) {
-            $name = StockCategory::query()->whereKey($categoryId)->value('name');
-            $data['category'] = $name;
+            $categoryName = StockCategory::query()->whereKey($categoryId)->value('name');
+            $data['category'] = $categoryName;
             $data['stock_category_id'] = (int) $categoryId;
         } else {
             $data['stock_category_id'] = null;
             $data['category'] = null;
+        }
+
+        $autoSku = ! empty($data['auto_sku']);
+        unset($data['auto_sku']);
+
+        if (($data['sku'] ?? '') === '' && $autoSku) {
+            $data['sku'] = StockItem::generateSku(is_string($categoryName) ? $categoryName : null);
+        }
+        if (($data['sku'] ?? '') === '') {
+            $data['sku'] = null;
+        }
+
+        if (($data['barcode'] ?? '') === '') {
+            $data['barcode'] = $data['sku'] ? StockItem::generateBarcode($data['sku']) : null;
         }
 
         return $data;

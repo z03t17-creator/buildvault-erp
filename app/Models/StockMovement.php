@@ -17,6 +17,16 @@ class StockMovement extends Model
         self::TYPE_OUT,
     ];
 
+    public const SITE_VILLA = 'villa';
+
+    public const SITE_BUILDING = 'building';
+
+    /** @var list<string> */
+    public const SITE_KINDS = [
+        self::SITE_VILLA,
+        self::SITE_BUILDING,
+    ];
+
     /**
      * @var list<string>
      */
@@ -27,11 +37,20 @@ class StockMovement extends Model
         'moved_on',
         'supplier_id',
         'purchase_price_iqd',
+        'total_cost_iqd',
         'project_id',
         'tower_id',
         'floor_id',
+        'site_kind',
+        'block',
+        'zone',
+        'floor_label',
+        'apartment_number',
+        'villa_number',
         'invoice_ref',
+        'shelf_zone',
         'receiver',
+        'staff_id',
         'issuer',
         'purpose',
         'reference',
@@ -49,6 +68,7 @@ class StockMovement extends Model
         return [
             'quantity' => 'decimal:3',
             'purchase_price_iqd' => 'decimal:2',
+            'total_cost_iqd' => 'decimal:2',
             'previous_qty' => 'decimal:3',
             'new_qty' => 'decimal:3',
             'moved_on' => 'date',
@@ -80,6 +100,11 @@ class StockMovement extends Model
         return $this->belongsTo(Floor::class);
     }
 
+    public function staff(): BelongsTo
+    {
+        return $this->belongsTo(Staff::class)->withTrashed();
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -95,13 +120,35 @@ class StockMovement extends Model
         return $this->type === self::TYPE_OUT;
     }
 
-    /**
-     * Line value for material cost (OUT) or purchase value (IN).
-     */
     public function lineValueIqd(): float
     {
+        if ($this->total_cost_iqd !== null) {
+            return round((float) $this->total_cost_iqd, 2);
+        }
+
         $unit = (float) ($this->purchase_price_iqd ?? 0);
 
         return round((float) $this->quantity * $unit, 2);
+    }
+
+    public function placeLabel(): string
+    {
+        if ($this->site_kind === self::SITE_VILLA) {
+            return collect(['Villa', $this->villa_number, $this->zone])
+                ->filter()
+                ->implode(' · ');
+        }
+
+        if ($this->site_kind === self::SITE_BUILDING) {
+            return collect([
+                'Building',
+                $this->block,
+                $this->zone,
+                $this->floor_label ?: $this->floor?->name,
+                $this->apartment_number,
+            ])->filter()->implode(' · ');
+        }
+
+        return collect([$this->tower?->name, $this->floor?->name])->filter()->implode(' · ');
     }
 }

@@ -3,8 +3,10 @@
 namespace App\Http\Requests\Stock;
 
 use App\Models\Floor;
+use App\Models\StockMovement;
 use App\Models\Tower;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreStockOutRequest extends FormRequest
@@ -23,10 +25,16 @@ class StoreStockOutRequest extends FormRequest
             'stock_item_id' => ['required', 'integer', 'exists:stock_items,id'],
             'quantity' => ['required', 'numeric', 'gt:0'],
             'moved_on' => ['required', 'date'],
-            // Required for construction — drives project material cost rollup.
             'project_id' => ['required', 'integer', 'exists:projects,id'],
             'tower_id' => ['nullable', 'integer', 'exists:towers,id'],
             'floor_id' => ['nullable', 'integer', 'exists:floors,id'],
+            'site_kind' => ['nullable', Rule::in(StockMovement::SITE_KINDS)],
+            'block' => ['nullable', 'string', 'max:64'],
+            'zone' => ['nullable', 'string', 'max:64'],
+            'floor_label' => ['nullable', 'string', 'max:64'],
+            'apartment_number' => ['nullable', 'string', 'max:64'],
+            'villa_number' => ['nullable', 'string', 'max:64'],
+            'staff_id' => ['nullable', 'integer', 'exists:staff,id'],
             'receiver' => ['nullable', 'string', 'max:255'],
             'issuer' => ['nullable', 'string', 'max:255'],
             'purpose' => ['nullable', 'string', 'max:255'],

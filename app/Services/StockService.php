@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Models\ApartmentUnit;
+use App\Models\BuildingBlock;
+use App\Models\Staff;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
@@ -29,17 +33,20 @@ class StockService
      *     today_out_qty: float,
      *     today_in_count: int,
      *     today_out_count: int,
-     *     recent_movements: \Illuminate\Support\Collection<int, StockMovement>,
+     *     recent_movements: Collection<int, StockMovement>,
+     *     low_stock_items: Collection<int, StockItem>,
      * }
      */
     public function dashboardSummary(?string $today = null): array
     {
         $today ??= now()->toDateString();
 
-        $items = StockItem::query()->get(['id', 'quantity', 'min_quantity', 'purchase_price_iqd']);
+        $items = StockItem::query()
+            ->with('stockCategory:id,name')
+            ->get();
 
         $stockValue = round($items->sum(fn (StockItem $i) => $i->stockValueIqd()), 2);
-        $lowStock = $items->filter(fn (StockItem $i) => $i->isLowStock())->count();
+        $lowStockItems = $items->filter(fn (StockItem $i) => $i->isLowStock())->values();
         $outOfStock = $items->filter(fn (StockItem $i) => $i->isOutOfStock())->count();
 
         $todayIn = StockMovement::query()
@@ -50,7 +57,12 @@ class StockService
             ->whereDate('moved_on', $today);
 
         $recent = StockMovement::query()
-            ->with(['item:id,name,sku,unit', 'user:id,name', 'project:id,name'])
+            ->with([
+                'item:id,name,sku,barcode,unit',
+                'user:id,name',
+                'project:id,name',
+                'staff:id,name',
+            ])
             ->orderByDesc('moved_on')
             ->orderByDesc('id')
             ->limit(12)
@@ -59,34 +71,30 @@ class StockService
         return [
             'total_items' => $items->count(),
             'stock_value_iqd' => $stockValue,
-            'low_stock' => $lowStock,
+            'low_stock' => $lowStockItems->count(),
             'out_of_stock' => $outOfStock,
             'today_in_qty' => round((float) (clone $todayIn)->sum('quantity'), 3),
             'today_out_qty' => round((float) (clone $todayOut)->sum('quantity'), 3),
             'today_in_count' => (clone $todayIn)->count(),
             'today_out_count' => (clone $todayOut)->count(),
             'recent_movements' => $recent,
+            'low_stock_items' => $lowStockItems->take(8)->values(),
         ];
     }
 
-    /**
-     * Material cost for a project = DB rollup of OUT line values (qty × unit purchase price).
-     */
     public function materialCostForProject(int $projectId): float
     {
         $total = StockMovement::query()
             ->where('project_id', $projectId)
             ->where('type', StockMovement::TYPE_OUT)
-            ->selectRaw('COALESCE(SUM(quantity * COALESCE(purchase_price_iqd, 0)), 0) as total')
+            ->selectRaw('COALESCE(SUM(COALESCE(total_cost_iqd, quantity * COALESCE(purchase_price_iqd, 0))), 0) as total')
             ->value('total');
 
         return round((float) $total, 2);
     }
 
     /**
-     * Recent stock-OUT materials attributed to a project (for Project Show).
-     *
-     * @return \Illuminate\Support\Collection<int, array<string, mixed>>
+     * @return Collection<int, array<string, mixed>>
      */
     public function recentMaterialsForProject(int $projectId, int $limit = 12)
     {
@@ -97,6 +105,7 @@ class StockService
                 'item:id,name,sku,unit',
                 'tower:id,name',
                 'floor:id,name',
+                'staff:id,name',
             ])
             ->orderByDesc('moved_on')
             ->orderByDesc('id')
@@ -115,10 +124,136 @@ class StockService
                 'new_qty' => round((float) $m->new_qty, 3),
                 'tower' => $m->tower?->name,
                 'floor' => $m->floor?->name,
+                'place' => $m->placeLabel(),
                 'purpose' => $m->purpose,
-                'receiver' => $m->receiver,
+                'receiver' => $m->receiver ?: $m->staff?->name,
             ])
             ->values();
+    }
+
+    /**
+     * Material used per villa / apartment unit for the consumption report.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function consumptionByPlace(?int $projectId = null): array
+    {
+        $query = StockMovement::query()
+            ->where('type', StockMovement::TYPE_OUT)
+            ->with(['item:id,name,sku,unit,stock_category_id', 'item.stockCategory:id,name', 'project:id,name', 'staff:id,name'])
+            ->orderByDesc('moved_on')
+            ->orderByDesc('id');
+
+        if ($projectId) {
+            $query->where('project_id', $projectId);
+        }
+
+        $groups = [];
+        foreach ($query->get() as $movement) {
+            $placeKey = $this->placeKey($movement);
+            if (! isset($groups[$placeKey])) {
+                $groups[$placeKey] = [
+                    'key' => $placeKey,
+                    'project_id' => $movement->project_id,
+                    'project_name' => $movement->project?->name,
+                    'site_kind' => $movement->site_kind,
+                    'place_label' => $movement->placeLabel() ?: ($movement->project?->name ?: '—'),
+                    'block' => $movement->block,
+                    'zone' => $movement->zone,
+                    'floor_label' => $movement->floor_label,
+                    'apartment_number' => $movement->apartment_number,
+                    'villa_number' => $movement->villa_number,
+                    'lines' => [],
+                    'total_qty' => 0.0,
+                    'total_cost_iqd' => 0.0,
+                ];
+            }
+
+            $qty = round((float) $movement->quantity, 3);
+            $cost = $movement->lineValueIqd();
+            $groups[$placeKey]['lines'][] = [
+                'id' => $movement->id,
+                'moved_on' => $movement->moved_on?->toDateString(),
+                'item_name' => $movement->item?->name,
+                'sku' => $movement->item?->sku,
+                'category' => $movement->item?->stockCategory?->name ?: $movement->item?->category,
+                'unit' => $movement->item?->unit,
+                'quantity' => $qty,
+                'unit_cost_iqd' => round((float) ($movement->purchase_price_iqd ?? 0), 2),
+                'line_cost_iqd' => $cost,
+                'receiver' => $movement->receiver ?: $movement->staff?->name,
+            ];
+            $groups[$placeKey]['total_qty'] = round($groups[$placeKey]['total_qty'] + $qty, 3);
+            $groups[$placeKey]['total_cost_iqd'] = round($groups[$placeKey]['total_cost_iqd'] + $cost, 2);
+        }
+
+        return array_values($groups);
+    }
+
+    /**
+     * Cascading place suggestions for dispatch forms.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function placeSuggestions(?int $projectId = null): array
+    {
+        $rows = [];
+
+        $movements = StockMovement::query()
+            ->where('type', StockMovement::TYPE_OUT)
+            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
+            ->whereNotNull('site_kind')
+            ->orderByDesc('id')
+            ->limit(200)
+            ->get([
+                'project_id', 'site_kind', 'block', 'zone', 'floor_label',
+                'apartment_number', 'villa_number',
+            ]);
+
+        foreach ($movements as $row) {
+            $rows[] = [
+                'project_id' => $row->project_id,
+                'site_kind' => $row->site_kind,
+                'block' => $row->block,
+                'zone' => $row->zone,
+                'floor' => $row->floor_label,
+                'apartment_number' => $row->apartment_number,
+                'villa_number' => $row->villa_number,
+            ];
+        }
+
+        $blocks = BuildingBlock::query()
+            ->when($projectId, fn ($q) => $q->where('project_id', $projectId))
+            ->with(['apartmentUnits:id,building_block_id,unit_label,floor_number,category'])
+            ->get();
+
+        foreach ($blocks as $block) {
+            $blockLabel = $block->code ?: $block->name;
+            foreach ($block->apartmentUnits as $unit) {
+                $rows[] = [
+                    'project_id' => $block->project_id,
+                    'site_kind' => StockMovement::SITE_BUILDING,
+                    'block' => $blockLabel,
+                    'zone' => null,
+                    'floor' => $unit->floor_number !== null ? (string) $unit->floor_number : null,
+                    'apartment_number' => $unit->unit_label,
+                    'villa_number' => null,
+                ];
+            }
+            if ($block->apartmentUnits->isEmpty()) {
+                $rows[] = [
+                    'project_id' => $block->project_id,
+                    'site_kind' => StockMovement::SITE_BUILDING,
+                    'block' => $blockLabel,
+                    'zone' => null,
+                    'floor' => null,
+                    'apartment_number' => null,
+                    'villa_number' => null,
+                ];
+            }
+        }
+
+        return $rows;
     }
 
     /**
@@ -145,13 +280,23 @@ class StockService
 
             $previous = round((float) $item->quantity, 3);
             $newQty = round($previous + $qty, 3);
+            $totalCost = round($qty * $unitPrice, 2);
 
-            $item->quantity = $newQty;
-            if ($unitPrice > 0) {
+            // Weighted average unit cost for the warehouse desk.
+            if ($newQty > 0) {
+                $prevValue = round($previous * (float) $item->purchase_price_iqd, 2);
+                $item->purchase_price_iqd = round(($prevValue + $totalCost) / $newQty, 2);
+            } elseif ($unitPrice > 0) {
                 $item->purchase_price_iqd = $unitPrice;
             }
+
+            $item->quantity = $newQty;
             if (! empty($data['supplier_id'])) {
                 $item->supplier_id = (int) $data['supplier_id'];
+            }
+            $shelf = $this->nullableString($data['shelf_zone'] ?? ($data['location'] ?? null));
+            if ($shelf) {
+                $item->location = $shelf;
             }
             $item->save();
 
@@ -164,11 +309,14 @@ class StockService
                     ? (int) $data['supplier_id']
                     : $item->supplier_id,
                 'purchase_price_iqd' => $unitPrice,
+                'total_cost_iqd' => $totalCost,
                 'project_id' => $this->nullableId($data['project_id'] ?? null),
                 'tower_id' => null,
                 'floor_id' => null,
                 'invoice_ref' => $this->nullableString($data['invoice_ref'] ?? null),
+                'shelf_zone' => $shelf,
                 'receiver' => null,
+                'staff_id' => null,
                 'issuer' => null,
                 'purpose' => null,
                 'reference' => $this->nullableString($data['reference'] ?? ($data['invoice_ref'] ?? null)),
@@ -209,11 +357,17 @@ class StockService
             }
 
             $newQty = round($previous - $qty, 3);
-            // Snapshot unit purchase price at issue time for stable project material cost.
             $unitPrice = (float) $item->purchase_price_iqd;
+            $totalCost = round($qty * $unitPrice, 2);
 
             $item->quantity = $newQty;
             $item->save();
+
+            $staffId = $this->nullableId($data['staff_id'] ?? null);
+            $receiver = $this->nullableString($data['receiver'] ?? null);
+            if ($staffId && ! $receiver) {
+                $receiver = Staff::query()->whereKey($staffId)->value('name');
+            }
 
             return StockMovement::query()->create([
                 'type' => StockMovement::TYPE_OUT,
@@ -222,11 +376,20 @@ class StockService
                 'moved_on' => $this->date($data['moved_on'] ?? now()->toDateString()),
                 'supplier_id' => null,
                 'purchase_price_iqd' => $unitPrice,
+                'total_cost_iqd' => $totalCost,
                 'project_id' => $projectId,
                 'tower_id' => $this->nullableId($data['tower_id'] ?? null),
                 'floor_id' => $this->nullableId($data['floor_id'] ?? null),
+                'site_kind' => $this->nullableString($data['site_kind'] ?? null),
+                'block' => $this->nullableString($data['block'] ?? null),
+                'zone' => $this->nullableString($data['zone'] ?? null),
+                'floor_label' => $this->nullableString($data['floor_label'] ?? ($data['floor'] ?? null)),
+                'apartment_number' => $this->nullableString($data['apartment_number'] ?? null),
+                'villa_number' => $this->nullableString($data['villa_number'] ?? null),
                 'invoice_ref' => null,
-                'receiver' => $this->nullableString($data['receiver'] ?? null),
+                'shelf_zone' => null,
+                'receiver' => $receiver,
+                'staff_id' => $staffId,
                 'issuer' => $this->nullableString($data['issuer'] ?? null),
                 'purpose' => $this->nullableString($data['purpose'] ?? null),
                 'reference' => $this->nullableString($data['reference'] ?? null),
@@ -236,6 +399,21 @@ class StockService
                 'notes' => $this->nullableString($data['notes'] ?? null),
             ]);
         });
+    }
+
+    private function placeKey(StockMovement $movement): string
+    {
+        return implode('|', [
+            (string) ($movement->project_id ?? ''),
+            (string) ($movement->site_kind ?? ''),
+            (string) ($movement->villa_number ?? ''),
+            (string) ($movement->block ?? ''),
+            (string) ($movement->zone ?? ''),
+            (string) ($movement->floor_label ?? ''),
+            (string) ($movement->apartment_number ?? ''),
+            (string) ($movement->tower_id ?? ''),
+            (string) ($movement->floor_id ?? ''),
+        ]);
     }
 
     private function date(mixed $value): string

@@ -40,6 +40,7 @@ class StockMovementController extends Controller
                 'project:id,name',
                 'tower:id,name',
                 'floor:id,name',
+                'staff:id,name',
                 'user:id,name',
             ])
             ->orderByDesc('moved_on')
@@ -55,7 +56,12 @@ class StockMovementController extends Controller
             $query->where('project_id', $projectId);
         }
 
-        $movements = $query->limit(200)->get();
+        $movements = $query->limit(200)->get()->map(function (StockMovement $m) {
+            $m->setAttribute('place_label', $m->placeLabel());
+            $m->setAttribute('line_value_iqd', $m->lineValueIqd());
+
+            return $m;
+        });
 
         $overview = [
             'movements' => $movements->count(),
@@ -78,13 +84,35 @@ class StockMovementController extends Controller
         ]);
     }
 
+    public function consumption(Request $request): Response
+    {
+        $this->authorize('viewAny', StockMovement::class);
+
+        $projectId = $request->integer('project_id') ?: null;
+        $places = $this->stock->consumptionByPlace($projectId);
+
+        return Inertia::render('Stock/Consumption', [
+            'places' => $places,
+            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'filters' => [
+                'project_id' => $projectId,
+            ],
+            'overview' => [
+                'places' => count($places),
+                'lines' => collect($places)->sum(fn ($p) => count($p['lines'] ?? [])),
+                'total_qty' => round((float) collect($places)->sum('total_qty'), 3),
+                'total_cost_iqd' => round((float) collect($places)->sum('total_cost_iqd'), 2),
+            ],
+        ]);
+    }
+
     public function createIn(): Response
     {
         $this->authorize('stockIn', StockMovement::class);
 
         return Inertia::render('Stock/In/Create', [
             'items' => StockItem::query()->orderBy('name')->get([
-                'id', 'name', 'sku', 'unit', 'quantity', 'purchase_price_iqd', 'supplier_id',
+                'id', 'name', 'sku', 'barcode', 'unit', 'quantity', 'purchase_price_iqd', 'supplier_id', 'location',
             ]),
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
@@ -101,7 +129,7 @@ class StockMovementController extends Controller
         try {
             $movement = $this->stock->stockIn($request->validated(), Auth::user());
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['quantity' => $e->getMessage()]);
+            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
         }
 
         return redirect()
@@ -115,12 +143,14 @@ class StockMovementController extends Controller
 
         return Inertia::render('Stock/Out/Create', [
             'items' => StockItem::query()->orderBy('name')->get([
-                'id', 'name', 'sku', 'unit', 'quantity', 'purchase_price_iqd',
+                'id', 'name', 'sku', 'barcode', 'unit', 'quantity', 'purchase_price_iqd', 'min_quantity',
             ]),
             'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
             'towers' => Tower::query()->orderBy('name')->get(['id', 'name', 'project_id']),
             'floors' => Floor::query()->orderBy('name')->get(['id', 'name', 'tower_id']),
-            'staff' => Staff::query()->orderBy('name')->get(['id', 'name', 'kind', 'trade']),
+            'staff' => Staff::query()->orderBy('name')->get(['id', 'name', 'kind', 'pay_model', 'role', 'trade']),
+            'siteKinds' => StockMovement::SITE_KINDS,
+            'placeSuggestions' => $this->stock->placeSuggestions(),
             'defaults' => [
                 'moved_on' => now()->toDateString(),
                 'issuer' => Auth::user()?->name,
@@ -135,7 +165,7 @@ class StockMovementController extends Controller
         try {
             $movement = $this->stock->stockOut($request->validated(), Auth::user());
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['quantity' => $e->getMessage()]);
+            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
         }
 
         return redirect()

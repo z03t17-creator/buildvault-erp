@@ -20,6 +20,7 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             VaultSeeder::class,
             InsuranceSettingsSeeder::class,
+            WarehouseCategorySeeder::class,
         ]);
 
         if (! $this->shouldSeedDemo()) {

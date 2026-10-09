@@ -24,6 +24,7 @@ class StoreStockInRequest extends FormRequest
             'purchase_price_iqd' => ['nullable', 'numeric', 'min:0'],
             'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'invoice_ref' => ['nullable', 'string', 'max:255'],
+            'shelf_zone' => ['nullable', 'string', 'max:120'],
             'notes' => ['nullable', 'string', 'max:2000'],
         ];
     }

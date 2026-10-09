@@ -1,256 +1,347 @@
-import DataPanel from '@/Components/DataPanel';
 import DateInput from '@/Components/DateInput';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
+import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { stockFieldClass, stockMoneyClass, stockSegmentClass } from '@/Components/StockDesk';
+import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-const fieldClass =
-    'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-800 shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
-
-export default function Create({ items, projects, towers, floors, staff = [], defaults }) {
+export default function Create({
+    items = [],
+    projects = [],
+    staff = [],
+    siteKinds = ['villa', 'building'],
+    placeSuggestions = [],
+    defaults = {},
+}) {
     const t = useTranslations();
     const { data, setData, post, processing, errors } = useForm({
         stock_item_id: '',
         quantity: '',
-        moved_on: defaults?.moved_on || new Date().toISOString().slice(0, 10),
+        moved_on: defaults.moved_on || new Date().toISOString().slice(0, 10),
         project_id: '',
-        tower_id: '',
-        floor_id: '',
+        site_kind: '',
+        block: '',
+        zone: '',
+        floor_label: '',
+        apartment_number: '',
+        villa_number: '',
         staff_id: '',
         receiver: '',
-        issuer: defaults?.issuer || '',
+        issuer: defaults.issuer || '',
         purpose: '',
         reference: '',
         notes: '',
     });
 
-    const selected = (items || []).find((i) => String(i.id) === String(data.stock_item_id));
-    const projectTowers = (towers || []).filter(
-        (tw) => !data.project_id || String(tw.project_id) === String(data.project_id),
-    );
-    const towerFloors = (floors || []).filter(
-        (f) => !data.tower_id || String(f.tower_id) === String(data.tower_id),
-    );
+    const selected = items.find((i) => String(i.id) === String(data.stock_item_id));
 
-    const pickStaff = (id) => {
-        setData('staff_id', id);
-        const person = (staff || []).find((s) => String(s.id) === String(id));
-        if (person) {
-            setData('receiver', person.name);
+    const samePlace = (left, right) =>
+        String(left ?? '')
+            .trim()
+            .toLocaleLowerCase() ===
+        String(right ?? '')
+            .trim()
+            .toLocaleLowerCase();
+
+    const inProject = (row) => {
+        if (!data.project_id) return true;
+        if (row.project_id == null || row.project_id === '') return true;
+        return String(row.project_id) === String(data.project_id);
+    };
+
+    const placeOptions = (rows, key, predicate) => {
+        const seen = new Set();
+        const out = [];
+        for (const row of rows) {
+            if (!predicate(row)) continue;
+            const value = String(row[key] ?? '').trim();
+            if (!value) continue;
+            const id = value.toLocaleLowerCase();
+            if (seen.has(id)) continue;
+            seen.add(id);
+            out.push(value);
         }
+        return out;
+    };
+
+    const buildingRows = placeSuggestions.filter(
+        (row) => row.site_kind === 'building' && inProject(row),
+    );
+    const villaRows = placeSuggestions.filter((row) => row.site_kind === 'villa' && inProject(row));
+    const blockChosen = (row) => !data.block || samePlace(row.block, data.block);
+    const zoneChosen = (row) => !data.zone || samePlace(row.zone, data.zone);
+    const floorChosen = (row) => !data.floor_label || samePlace(row.floor, data.floor_label);
+    const villaChosen = (row) => !data.villa_number || samePlace(row.villa_number, data.villa_number);
+
+    const blockSuggestions = placeOptions(buildingRows, 'block', () => true);
+    const buildingZoneSuggestions = placeOptions(buildingRows, 'zone', blockChosen);
+    const floorSuggestions = placeOptions(
+        buildingRows,
+        'floor',
+        (row) => blockChosen(row) && zoneChosen(row),
+    );
+    const apartmentSuggestions = placeOptions(
+        buildingRows,
+        'apartment_number',
+        (row) => blockChosen(row) && zoneChosen(row) && floorChosen(row),
+    );
+    const villaSuggestions = placeOptions(villaRows, 'villa_number', () => true);
+    const villaZoneSuggestions = placeOptions(villaRows, 'zone', villaChosen);
+
+    const setPlace = (key, value) => {
+        const next = { ...data, [key]: value };
+        const clear = (keys) => keys.forEach((field) => {
+            next[field] = '';
+        });
+        if (key === 'project_id') {
+            clear(['block', 'zone', 'floor_label', 'apartment_number', 'villa_number']);
+        }
+        if (key === 'site_kind') {
+            clear(['zone']);
+            if (value === 'building') clear(['villa_number']);
+            if (value === 'villa') clear(['block', 'floor_label', 'apartment_number']);
+        }
+        if (key === 'block') clear(['zone', 'floor_label', 'apartment_number']);
+        if (key === 'zone' && data.site_kind === 'building') clear(['floor_label', 'apartment_number']);
+        if (key === 'floor_label') clear(['apartment_number']);
+        if (key === 'villa_number') clear(['zone']);
+        setData(next);
     };
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
-                    title={t('stock_out_action')}
-                    subtitle={t('stock_out_form_hint')}
-                    icon={<NavIcon name="stockOut" className="text-lg" />}
+                    title={t('warehouse_dispatch')}
+                    subtitle={t('warehouse_dispatch_hint')}
+                    icon={<NavIcon name="stockOut" className="text-lg text-amber-300" />}
                     actions={
-                        <Link href={route('stock.movements.index', { type: 'out' })}>
-                            <SecondaryButton type="button">{t('back')}</SecondaryButton>
+                        <Link href={route('stock.dashboard')}>
+                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
                         </Link>
                     }
                 />
             }
         >
-            <Head title={t('stock_out_action')} />
-            <PageShell narrow className="!space-y-6">
-                <p className="rounded-xl border border-amber-200/70 bg-amber-50/70 px-4 py-3 text-sm text-amber-950 dark:border-amber-900/40 dark:bg-amber-950/30 dark:text-amber-100">
-                    {t('stock_out_project_required')}
-                </p>
-                <DataPanel>
-                    <form noValidate
-                        onSubmit={(e) => {
-                            e.preventDefault();
-                            post(route('stock.out.store'));
-                        }}
-                        className="space-y-5"
-                    >
-                        <FormSection cols={2}>
-                            <FormField className="sm:col-span-2">
-                                <InputLabel value={t('product')} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.stock_item_id}
-                                    onChange={(e) => setData('stock_item_id', e.target.value)}
-                                    required
-                                >
-                                    <option value="">—</option>
-                                    {(items || []).map((i) => (
-                                        <option key={i.id} value={i.id}>
-                                            {i.name} ({i.quantity} {i.unit})
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.stock_item_id} className="mt-1" />
-                                {selected && (
-                                    <p className="mt-1 text-xs text-slate-500">
-                                        {t('on_hand')}: {selected.quantity} {selected.unit}
-                                    </p>
-                                )}
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('quantity')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    type="number"
-                                    step="0.001"
-                                    min="0.001"
-                                    value={data.quantity}
-                                    onChange={(e) => setData('quantity', e.target.value)}
-                                    required
-                                />
-                                <InputError message={errors.quantity} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('date')} />
-                                <DateInput
-                                    className="mt-1"
-                                    value={data.moved_on}
-                                    onValueChange={(next) => setData('moved_on', next)}
-                                    required
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={`${t('project')} *`} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.project_id}
-                                    onChange={(e) => {
-                                        setData('project_id', e.target.value);
-                                        setData('tower_id', '');
-                                        setData('floor_id', '');
-                                    }}
-                                    required
-                                >
-                                    <option value="">—</option>
-                                    {(projects || []).map((p) => (
-                                        <option key={p.id} value={p.id}>
-                                            {p.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.project_id} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={`${t('tower')} (${t('optional')})`} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.tower_id}
-                                    onChange={(e) => {
-                                        setData('tower_id', e.target.value);
-                                        setData('floor_id', '');
-                                    }}
-                                    disabled={!data.project_id}
-                                >
-                                    <option value="">—</option>
-                                    {projectTowers.map((tw) => (
-                                        <option key={tw.id} value={tw.id}>
-                                            {tw.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.tower_id} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={`${t('floor')} (${t('optional')})`} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.floor_id}
-                                    onChange={(e) => setData('floor_id', e.target.value)}
-                                    disabled={!data.tower_id}
-                                >
-                                    <option value="">—</option>
-                                    {towerFloors.map((f) => (
-                                        <option key={f.id} value={f.id}>
-                                            {f.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.floor_id} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('staff')} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.staff_id}
-                                    onChange={(e) => pickStaff(e.target.value)}
-                                >
-                                    <option value="">{t('vault_form_pick_staff')}</option>
-                                    {(staff || []).map((person) => (
-                                        <option key={person.id} value={person.id}>
-                                            {person.name}
-                                            {person.trade ? ` — ${person.trade}` : ''}
-                                        </option>
-                                    ))}
-                                </select>
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {t('stock_out_staff_hint')}
-                                </p>
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('receiver')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    value={data.receiver}
-                                    onChange={(e) => setData('receiver', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('issuer')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    value={data.issuer}
-                                    onChange={(e) => setData('issuer', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('purpose')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    value={data.purpose}
-                                    onChange={(e) => setData('purpose', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('reference')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    value={data.reference}
-                                    onChange={(e) => setData('reference', e.target.value)}
-                                />
-                            </FormField>
-                            <FormField className="sm:col-span-2">
-                                <InputLabel value={t('notes')} />
-                                <textarea
-                                    className={fieldClass + ' py-2'}
-                                    rows={3}
-                                    value={data.notes}
-                                    onChange={(e) => setData('notes', e.target.value)}
-                                />
-                            </FormField>
-                        </FormSection>
-                        <FormActions>
-                            <PrimaryButton
-                                disabled={processing}
-                                className="!bg-amber-600 hover:!bg-amber-500"
+            <Head title={t('warehouse_dispatch')} />
+            <PageShell className="!max-w-5xl !space-y-4">
+                <form
+                    noValidate
+                    onSubmit={(e) => {
+                        e.preventDefault();
+                        post(route('stock.out.store'));
+                    }}
+                    className="bv-card space-y-4 p-4 sm:p-5"
+                >
+                    <FormSection cols={2}>
+                        <FormField className="sm:col-span-2">
+                            <InputLabel value={t('product')} htmlFor="stock_item_id" />
+                            <select
+                                id="stock_item_id"
+                                className={stockFieldClass}
+                                value={data.stock_item_id}
+                                onChange={(e) => setData('stock_item_id', e.target.value)}
                             >
-                                {t('record_stock_out')}
-                            </PrimaryButton>
-                        </FormActions>
-                    </form>
-                </DataPanel>
+                                <option value="">{t('warehouse_pick_item')}</option>
+                                {items.map((item) => (
+                                    <option key={item.id} value={item.id}>
+                                        {item.name} · {item.sku || item.barcode || '—'} · {item.quantity}{' '}
+                                        {item.unit}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.stock_item_id} className="mt-1" />
+                            {selected ? (
+                                <p className="mt-1 text-xs text-slate-400">
+                                    {t('on_hand')}: {selected.quantity} {selected.unit}
+                                </p>
+                            ) : null}
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('quantity')} htmlFor="quantity" />
+                            <MoneyInput
+                                id="quantity"
+                                className={stockMoneyClass}
+                                value={data.quantity}
+                                onValueChange={(next) => setData('quantity', next)}
+                                allowDecimals
+                            />
+                            <InputError message={errors.quantity} className="mt-1" />
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('date')} htmlFor="moved_on" />
+                            <DateInput
+                                id="moved_on"
+                                className={stockFieldClass}
+                                value={data.moved_on}
+                                onChange={(e) => setData('moved_on', e.target.value)}
+                            />
+                        </FormField>
+                        <FormField className="sm:col-span-2">
+                            <InputLabel value={t('project')} htmlFor="project_id" />
+                            <select
+                                id="project_id"
+                                className={stockFieldClass}
+                                value={data.project_id}
+                                onChange={(e) => setPlace('project_id', e.target.value)}
+                            >
+                                <option value="">{t('warehouse_pick_project')}</option>
+                                {projects.map((row) => (
+                                    <option key={row.id} value={row.id}>
+                                        {row.name}
+                                    </option>
+                                ))}
+                            </select>
+                            <InputError message={errors.project_id} className="mt-1" />
+                        </FormField>
+                    </FormSection>
+
+                    <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                        <p className="text-sm font-semibold text-slate-100">{t('warehouse_place')}</p>
+                        <div className="flex flex-wrap gap-2">
+                            {siteKinds.map((kind) => (
+                                <button
+                                    key={kind}
+                                    type="button"
+                                    className={stockSegmentClass(data.site_kind === kind, 'amber')}
+                                    onClick={() => setPlace('site_kind', kind)}
+                                >
+                                    {t(`warehouse_site_${kind}`)}
+                                </button>
+                            ))}
+                        </div>
+                        {data.site_kind === 'building' ? (
+                            <FormSection cols={2}>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_block')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.block}
+                                        onChange={(next) => setPlace('block', next)}
+                                        suggestions={blockSuggestions}
+                                    />
+                                </FormField>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_zone')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.zone}
+                                        onChange={(next) => setPlace('zone', next)}
+                                        suggestions={buildingZoneSuggestions}
+                                    />
+                                </FormField>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_floor')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.floor_label}
+                                        onChange={(next) => setPlace('floor_label', next)}
+                                        suggestions={floorSuggestions}
+                                    />
+                                </FormField>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_apartment')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.apartment_number}
+                                        onChange={(next) => setPlace('apartment_number', next)}
+                                        suggestions={apartmentSuggestions}
+                                    />
+                                </FormField>
+                            </FormSection>
+                        ) : null}
+                        {data.site_kind === 'villa' ? (
+                            <FormSection cols={2}>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_villa')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.villa_number}
+                                        onChange={(next) => setPlace('villa_number', next)}
+                                        suggestions={villaSuggestions}
+                                    />
+                                </FormField>
+                                <FormField>
+                                    <InputLabel value={t('warehouse_zone')} />
+                                    <SuggestionCombobox
+                                        className={stockFieldClass}
+                                        value={data.zone}
+                                        onChange={(next) => setPlace('zone', next)}
+                                        suggestions={villaZoneSuggestions}
+                                    />
+                                </FormField>
+                            </FormSection>
+                        ) : null}
+                    </div>
+
+                    <FormSection cols={2}>
+                        <FormField className="sm:col-span-2">
+                            <InputLabel value={t('warehouse_receiver')} htmlFor="staff_id" />
+                            <select
+                                id="staff_id"
+                                className={stockFieldClass}
+                                value={data.staff_id}
+                                onChange={(e) => {
+                                    const id = e.target.value;
+                                    const person = staff.find((s) => String(s.id) === String(id));
+                                    setData({
+                                        ...data,
+                                        staff_id: id,
+                                        receiver: person?.name || '',
+                                    });
+                                }}
+                            >
+                                <option value="">{t('warehouse_pick_staff')}</option>
+                                {staff.map((person) => (
+                                    <option key={person.id} value={person.id}>
+                                        {person.name}
+                                        {person.role || person.trade
+                                            ? ` — ${person.role || person.trade}`
+                                            : ''}
+                                    </option>
+                                ))}
+                            </select>
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('purpose')} htmlFor="purpose" />
+                            <TextInput
+                                id="purpose"
+                                className={stockFieldClass}
+                                value={data.purpose}
+                                onChange={(e) => setData('purpose', e.target.value)}
+                            />
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('note')} htmlFor="notes" />
+                            <TextInput
+                                id="notes"
+                                className={stockFieldClass}
+                                value={data.notes}
+                                onChange={(e) => setData('notes', e.target.value)}
+                            />
+                        </FormField>
+                    </FormSection>
+
+                    <FormActions>
+                        <PrimaryButton disabled={processing} className="!bg-amber-600 hover:!bg-amber-500">
+                            {t('warehouse_dispatch_save')}
+                        </PrimaryButton>
+                        <Link href={route('stock.movements.index', { type: 'out' })}>
+                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
+                        </Link>
+                    </FormActions>
+                </form>
             </PageShell>
         </AuthenticatedLayout>
     );
