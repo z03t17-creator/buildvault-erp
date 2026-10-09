@@ -73,9 +73,13 @@ class Staff extends Model
     public const DEFAULT_ITEM_NAMES = [
         'دەرگای MDF',
         'دەرگای چوونەژوورەوە',
+        'دەرگای شافت',
+        'ڕووبەر',
+        'm²',
         'دەرگای ناوەوە',
         'MDF door',
         'Entrance',
+        'Shaft door',
     ];
 
     /**

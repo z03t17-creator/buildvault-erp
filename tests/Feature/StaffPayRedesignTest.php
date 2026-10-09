@@ -394,6 +394,41 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringContainsString('staff_rates_title', $source);
     }
 
+    public function test_default_catalog_includes_shaft_door_and_square_meters(): void
+    {
+        $items = Staff::suggestedItemNames();
+        $this->assertContains('دەرگای شافت', $items);
+        $this->assertContains('Shaft door', $items);
+        $this->assertContains('ڕووبەر', $items);
+        $this->assertContains('m²', $items);
+
+        $units = Staff::suggestedRateUnits();
+        $this->assertContains('m²', $units);
+        $this->assertContains('دانە', $units);
+        $this->assertSame('m²', $units[0]);
+
+        $this->actingAs($this->accountant)
+            ->get(route('staff.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Staff/Create')
+                ->where('itemSuggestions', function ($list) {
+                    $names = collect($list)->all();
+
+                    return in_array('دەرگای شافت', $names, true)
+                        && in_array('Shaft door', $names, true)
+                        && in_array('m²', $names, true);
+                })
+                ->where('rateUnitSuggestions', function ($list) {
+                    $names = collect($list)->all();
+
+                    return in_array('m²', $names, true)
+                        && in_array('دانە', $names, true)
+                        && $names[0] === 'm²';
+                })
+            );
+    }
+
     public function test_staff_edit_replaces_name_role_pay_model_and_rates(): void
     {
         $staff = Staff::query()->create([
