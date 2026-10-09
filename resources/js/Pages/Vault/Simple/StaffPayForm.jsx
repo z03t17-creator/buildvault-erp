@@ -17,7 +17,7 @@ import useTranslations from '@/hooks/useTranslations';
 import { isValidIsoDate, todayIsoDate } from '@/lib/isoDate';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 const fieldClass = deskFieldClass;
 const moneyFieldClass = deskMoneyClass;
@@ -30,6 +30,46 @@ function emptyItem(rate = null) {
         quantity: '',
         unit_rate: rate?.rate != null ? String(rate.rate) : '',
         currency: rate?.currency || 'IQD',
+    };
+}
+
+function formFromLine(line, today, preselectStaffId) {
+    const items =
+        Array.isArray(line?.items) && line.items.length
+            ? line.items.map((row) => ({
+                  staff_rate_id: row.staff_rate_id || '',
+                  item_name: row.item_name || '',
+                  unit: row.unit || 'دانە',
+                  quantity: row.quantity != null ? String(row.quantity) : '',
+                  unit_rate: row.unit_rate != null ? String(row.unit_rate) : '',
+                  currency: row.currency || line.currency || 'IQD',
+              }))
+            : [emptyItem()];
+
+    return {
+        staff_id: line?.staff_id
+            ? String(line.staff_id)
+            : preselectStaffId
+              ? String(preselectStaffId)
+              : '',
+        occurred_on: line?.occurred_on || today || todayIsoDate(),
+        project_id: line?.project_id ? String(line.project_id) : '',
+        note: line?.note || '',
+        purpose: line?.purpose || '',
+        apply_insurance: line ? !!line.apply_insurance : true,
+        amount: line?.amount != null && line.kind !== 'unit_pay' ? String(line.amount) : '',
+        currency: line?.currency || 'IQD',
+        days_count: line?.days_count != null ? String(line.days_count) : '',
+        day_rate: line?.day_rate != null ? String(line.day_rate) : '',
+        site_kind: line?.site_kind || '',
+        block: line?.block || '',
+        zone: line?.zone || '',
+        floor: line?.floor || '',
+        apartment_number: line?.apartment_number || '',
+        apartment_model: line?.apartment_model || '',
+        villa_number: line?.villa_number || '',
+        area: line?.area || '',
+        items,
     };
 }
 
@@ -54,31 +94,15 @@ export default function StaffPayForm({
     siteKinds = ['villa', 'building'],
     placeSuggestions = [],
     salaryDues = {},
+    line = null,
 }) {
     const t = useTranslations();
     const [localErrors, setLocalErrors] = useState({});
+    const previousStaffId = useRef(line?.id ? String(line.staff_id) : null);
 
-    const { data, setData, post, processing, errors } = useForm({
-        staff_id: preselectStaffId ? String(preselectStaffId) : '',
-        occurred_on: today || todayIsoDate(),
-        project_id: '',
-        note: '',
-        purpose: '',
-        apply_insurance: true,
-        amount: '',
-        currency: 'IQD',
-        days_count: '',
-        day_rate: '',
-        site_kind: '',
-        block: '',
-        zone: '',
-        floor: '',
-        apartment_number: '',
-        apartment_model: '',
-        villa_number: '',
-        area: '',
-        items: [emptyItem()],
-    });
+    const { data, setData, post, put, processing, errors } = useForm(
+        formFromLine(line, today, preselectStaffId),
+    );
 
     const mergedErrors = useMemo(
         () => ({ ...localErrors, ...errors }),
@@ -94,6 +118,10 @@ export default function StaffPayForm({
 
     useEffect(() => {
         if (!selected) return;
+        if (line?.id && previousStaffId.current === String(data.staff_id)) {
+            return;
+        }
+        previousStaffId.current = String(data.staff_id);
 
         if (isMonthly) {
             const due =
@@ -233,11 +261,13 @@ export default function StaffPayForm({
             }
         }
         if (isDaily) {
-            if (!(Number(data.days_count) > 0)) {
+            const days = Number(data.days_count) || 0;
+            const rate = Number(data.day_rate) || 0;
+            if (days > 0 || rate > 0) {
+                if (!(days > 0)) next.days_count = t('staff_pay_days_required');
+                if (!(rate > 0)) next.day_rate = t('validation_amount_required');
+            } else if (!(Number(data.amount) > 0)) {
                 next.days_count = t('staff_pay_days_required');
-            }
-            if (!(Number(data.day_rate) > 0)) {
-                next.day_rate = t('validation_amount_required');
             }
         }
         if (isUnit) {
@@ -341,6 +371,10 @@ export default function StaffPayForm({
     const submit = (e) => {
         e.preventDefault();
         if (!validate()) return;
+        if (line?.id) {
+            put(route('vault.lines.staff-pay.update', line.id));
+            return;
+        }
         post(route('vault.lines.staff-pay.store'));
     };
 
@@ -360,7 +394,8 @@ export default function StaffPayForm({
         </select>
     );
 
-    const title = t('vault_form_job_pay');
+    const editing = Boolean(line?.id);
+    const title = editing ? t('staff_pay_edit_title') : t('vault_form_job_pay');
 
     return (
         <AuthenticatedLayout
@@ -368,7 +403,7 @@ export default function StaffPayForm({
             header={
                 <PageHeader
                     title={title}
-                    subtitle={t('staff_pay_form_hint')}
+                    subtitle={editing ? t('staff_pay_edit_hint') : t('staff_pay_form_hint')}
                     icon={
                         <NavIcon
                             name="advances"
@@ -614,6 +649,19 @@ export default function StaffPayForm({
                                 />
                                 <InputError message={mergedErrors.day_rate} className="mt-1" />
                             </FormField>
+                            {line?.kind === 'job_pay' ? (
+                                <FormField className="sm:col-span-2">
+                                    <InputLabel value={t('amount')} htmlFor="amount" />
+                                    <MoneyInput
+                                        id="amount"
+                                        className={moneyFieldClass}
+                                        value={data.amount}
+                                        onValueChange={(next) => setData('amount', next)}
+                                        allowDecimals={data.currency === 'USD'}
+                                    />
+                                    <InputError message={mergedErrors.amount} className="mt-1" />
+                                </FormField>
+                            ) : null}
                             <FormField className="sm:col-span-2">
                                 <p className="text-sm text-slate-600 dark:text-slate-300">
                                     {t('staff_pay_subtotal')}:{' '}
@@ -802,9 +850,15 @@ export default function StaffPayForm({
                             disabled={processing || !selected}
                             className="!bg-amber-600 hover:!bg-amber-500"
                         >
-                            {t('vault_form_save_job_pay')}
+                            {editing ? t('staff_edit_save') : t('vault_form_save_job_pay')}
                         </PrimaryButton>
-                        <Link href={route('vault.job-pay.index')}>
+                        <Link
+                            href={
+                                editing && line?.kind === 'salary' && line?.staff_id
+                                    ? route('staff.show', line.staff_id)
+                                    : route('vault.job-pay.index')
+                            }
+                        >
                             <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
                         </Link>
                     </FormActions>

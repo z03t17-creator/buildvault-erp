@@ -191,6 +191,17 @@ class StaffController extends Controller
             ->with('success', __('staff_updated'));
     }
 
+    public function destroy(Staff $staff): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+
+        $staff->delete();
+
+        return redirect()
+            ->route('staff.index')
+            ->with('success', __('staff_deleted'));
+    }
+
     /**
      * Create or replace a staff record and, for unit pay, their whole price list.
      *

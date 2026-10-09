@@ -558,6 +558,18 @@ class SimpleVaultService
         return $line->fresh();
     }
 
+    /**
+     * Soft-delete a staff payment so it leaves the cash and hold totals.
+     */
+    public function voidStaffPay(VaultLine $line): void
+    {
+        if (! in_array($line->kind, VaultLine::STAFF_HOLD_KINDS, true)) {
+            throw new InvalidArgumentException('Only staff pay lines can be removed.');
+        }
+
+        $line->delete();
+    }
+
     public function openSalariesDue(string $currency, CarbonInterface|string|null $asOf = null): float
     {
         $currency = $this->currency($currency);

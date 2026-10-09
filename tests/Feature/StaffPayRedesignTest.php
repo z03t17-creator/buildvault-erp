@@ -841,4 +841,102 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringContainsString("setPlace('block'", $source);
         $this->assertStringContainsString("setPlace('villa_number'", $source);
     }
+
+    public function test_staff_and_staff_pay_can_be_edited_and_deleted(): void
+    {
+        $staff = Staff::query()->create([
+            'name' => 'Hunar',
+            'phone' => '0750',
+            'role' => 'دەرگاچیی',
+            'pay_model' => Staff::PAY_UNIT,
+            'kind' => Staff::KIND_UNIT,
+            'currency' => DualCurrency::IQD,
+        ]);
+        $rate = StaffRate::query()->create([
+            'staff_id' => $staff->id,
+            'item_name' => 'دەرگای شافت',
+            'unit' => 'دانە',
+            'rate' => 8000,
+            'currency' => DualCurrency::IQD,
+        ]);
+        $line = $this->service->postUnitPayWithItems([
+            'staff_id' => $staff->id,
+            'occurred_on' => '2026-10-06',
+            'currency' => DualCurrency::IQD,
+            'purpose' => 'Shaft',
+            'vault_id' => $this->vault->id,
+            'apply_insurance' => true,
+            'items' => [[
+                'staff_rate_id' => $rate->id,
+                'item_name' => 'دەرگای شافت',
+                'unit' => 'دانە',
+                'quantity' => 1,
+                'unit_rate' => 8000,
+                'currency' => DualCurrency::IQD,
+            ]],
+        ]);
+
+        $this->actingAs($this->stock)
+            ->delete(route('staff.destroy', $staff))
+            ->assertForbidden();
+        $this->actingAs($this->stock)
+            ->delete(route('vault.lines.staff-pay.destroy', $line))
+            ->assertForbidden();
+
+        $this->actingAs($this->accountant)
+            ->get(route('vault.lines.staff-pay.edit', $line))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Vault/Simple/StaffPayForm')
+                ->where('line.id', $line->id)
+                ->where('line.purpose', 'Shaft')
+                ->where('line.items.0.quantity', 1)
+            );
+
+        $this->actingAs($this->accountant)
+            ->put(route('vault.lines.staff-pay.update', $line), [
+                'staff_id' => $staff->id,
+                'occurred_on' => '2026-10-06',
+                'purpose' => 'Shaft revised',
+                'apply_insurance' => true,
+                'site_kind' => VaultLine::SITE_BUILDING,
+                'block' => 'A',
+                'floor' => '2',
+                'items' => [[
+                    'staff_rate_id' => $rate->id,
+                    'item_name' => 'دەرگای شافت',
+                    'unit' => 'دانە',
+                    'quantity' => 2,
+                    'unit_rate' => 8000,
+                    'currency' => DualCurrency::IQD,
+                ]],
+            ])
+            ->assertRedirect(route('vault.job-pay.index'));
+
+        $this->assertSoftDeleted('vault_lines', ['id' => $line->id]);
+        $fresh = VaultLine::query()->where('purpose', 'Shaft revised')->first();
+        $this->assertNotNull($fresh);
+        $this->assertSame(16000.0, (float) $fresh->amount);
+        $this->assertSame(1600.0, (float) $fresh->hold_amount);
+        $this->assertSame('A', $fresh->block);
+        $this->assertSame(2.0, (float) $fresh->items()->first()->quantity);
+
+        $this->actingAs($this->accountant)
+            ->from(route('vault.job-pay.index'))
+            ->delete(route('vault.lines.staff-pay.destroy', $fresh))
+            ->assertRedirect(route('vault.job-pay.index'));
+        $this->assertSoftDeleted('vault_lines', ['id' => $fresh->id]);
+
+        $this->actingAs($this->accountant)
+            ->delete(route('staff.destroy', $staff))
+            ->assertRedirect(route('staff.index'));
+        $this->assertSoftDeleted('staff', ['id' => $staff->id]);
+
+        $index = file_get_contents(resource_path('js/Pages/Staff/Index.jsx'));
+        $pays = file_get_contents(resource_path('js/Pages/Vault/Simple/JobPayIndex.jsx'));
+        $this->assertStringContainsString("route('staff.destroy'", $index);
+        $this->assertStringContainsString("route('staff.edit'", $index);
+        $this->assertStringContainsString("route('vault.lines.staff-pay.destroy'", $pays);
+        $this->assertStringContainsString("route('vault.lines.staff-pay.edit'", $pays);
+    }
 }

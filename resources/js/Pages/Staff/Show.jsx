@@ -6,11 +6,12 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
-import { PayModelChip } from '@/Components/StaffDesk';
+import DangerButton from '@/Components/DangerButton';
+import { DeskRowActions, PayModelChip } from '@/Components/StaffDesk';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 function placeLabel(row, t) {
     if (!row?.site_kind) return '—';
@@ -31,7 +32,7 @@ function placeLabel(row, t) {
     return bits.join(' · ');
 }
 
-function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showHold }) {
+function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showHold, canManage = false }) {
     const t = useTranslations();
 
     if (!rows.length) {
@@ -65,12 +66,13 @@ function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showH
                         <Th>{t('staff_pay_place')}</Th>
                         <Th>{t('purpose')}</Th>
                         <Th>{t('project')}</Th>
-                        {showHold ? (
+                            {showHold ? (
                             <>
                                 <Th align="end">{t('job_pay_hold_10')}</Th>
                                 <Th>{t('job_pay_payout_date')}</Th>
                             </>
                         ) : null}
+                        {canManage ? <Th>{t('actions')}</Th> : null}
                     </tr>
                 </thead>
                 <tbody>
@@ -109,6 +111,20 @@ function PayTable({ title, hint, rows, emptyTitle, emptyHint, emptyAction, showH
                                         </span>
                                     </Td>
                                 </>
+                            ) : null}
+                            {canManage ? (
+                                <Td>
+                                    <DeskRowActions
+                                        editHref={route('vault.lines.staff-pay.edit', row.id)}
+                                        onDelete={() => {
+                                            if (!window.confirm(t('confirm_delete'))) return;
+                                            router.delete(route('vault.lines.staff-pay.destroy', row.id), {
+                                                preserveScroll: true,
+                                            });
+                                        }}
+                                        t={t}
+                                    />
+                                </Td>
                             ) : null}
                         </tr>
                     ))}
@@ -157,6 +173,17 @@ export default function Show({
                                 <Link href={route('staff.edit', staff?.id)}>
                                     <SecondaryButton type="button">{t('staff_edit_title')}</SecondaryButton>
                                 </Link>
+                            ) : null}
+                            {canEdit ? (
+                                <DangerButton
+                                    type="button"
+                                    onClick={() => {
+                                        if (!window.confirm(t('confirm_delete'))) return;
+                                        router.delete(route('staff.destroy', staff?.id));
+                                    }}
+                                >
+                                    {t('delete')}
+                                </DangerButton>
                             ) : null}
                             {canCreatePay ? (
                                 <Link href={payHref}>
@@ -349,6 +376,7 @@ export default function Show({
                             ) : null
                         }
                         showHold
+                        canManage={canEdit}
                     />
                 </section>
 
@@ -371,6 +399,7 @@ export default function Show({
                                 ) : null
                             }
                             showHold
+                            canManage={canEdit}
                         />
                     </section>
                 ) : null}

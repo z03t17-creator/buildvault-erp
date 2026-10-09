@@ -6,11 +6,11 @@ import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import { PayModelChip, payModelOf } from '@/Components/StaffDesk';
+import { DeskRowActions, PayModelChip, payModelOf } from '@/Components/StaffDesk';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
 
 export default function Index({ staff = [], canCreate = false }) {
     const t = useTranslations();
@@ -19,6 +19,11 @@ export default function Index({ staff = [], canCreate = false }) {
         monthly: list.filter((person) => payModelOf(person) === 'monthly').length,
         daily: list.filter((person) => payModelOf(person) === 'daily').length,
         unit: list.filter((person) => payModelOf(person) === 'unit').length,
+    };
+
+    const removeStaff = (id) => {
+        if (!window.confirm(t('confirm_delete'))) return;
+        router.delete(route('staff.destroy', id), { preserveScroll: true });
     };
 
     const paySummary = (person) => {
@@ -125,7 +130,7 @@ export default function Index({ staff = [], canCreate = false }) {
                                         { label: t('staff_rates_title'), value: paySummary(person) },
                                     ]}
                                     footer={
-                                        <div className="flex gap-3">
+                                        <div className="flex flex-wrap items-center gap-3">
                                             <Link
                                                 href={route('staff.show', person.id)}
                                                 className="text-xs font-semibold text-teal-200"
@@ -133,12 +138,11 @@ export default function Index({ staff = [], canCreate = false }) {
                                                 {t('view')}
                                             </Link>
                                             {canCreate ? (
-                                                <Link
-                                                    href={route('staff.edit', person.id)}
-                                                    className="text-xs font-semibold text-slate-300"
-                                                >
-                                                    {t('edit')}
-                                                </Link>
+                                                <DeskRowActions
+                                                    editHref={route('staff.edit', person.id)}
+                                                    onDelete={() => removeStaff(person.id)}
+                                                    t={t}
+                                                />
                                             ) : null}
                                         </div>
                                     }
@@ -154,6 +158,7 @@ export default function Index({ staff = [], canCreate = false }) {
                                     <Th>{t('staff_role')}</Th>
                                     <Th align="end">{t('monthly_salary')}</Th>
                                     <Th align="end">{t('staff_rates_title')}</Th>
+                                    {canCreate ? <Th>{t('actions')}</Th> : null}
                                 </tr>
                             </thead>
                             <tbody>
@@ -166,14 +171,6 @@ export default function Index({ staff = [], canCreate = false }) {
                                             >
                                                 {person.name}
                                             </Link>
-                                            {canCreate ? (
-                                                <Link
-                                                    href={route('staff.edit', person.id)}
-                                                    className="ms-2 text-xs font-semibold text-slate-500 underline-offset-2 hover:underline dark:text-slate-400"
-                                                >
-                                                    {t('edit')}
-                                                </Link>
-                                            ) : null}
                                         </Td>
                                         <Td muted>
                                             <span dir="ltr">{person.phone || '—'}</span>
@@ -230,6 +227,15 @@ export default function Index({ staff = [], canCreate = false }) {
                                                       : '—'
                                                 : '—'}
                                         </Td>
+                                        {canCreate ? (
+                                            <Td>
+                                                <DeskRowActions
+                                                    editHref={route('staff.edit', person.id)}
+                                                    onDelete={() => removeStaff(person.id)}
+                                                    t={t}
+                                                />
+                                            </Td>
+                                        ) : null}
                                     </tr>
                                 ))}
                             </tbody>

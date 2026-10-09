@@ -112,6 +112,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('vault.lines.staff-pay.create');
         Route::post('/vault/lines/staff-pay', [SimpleVaultLineController::class, 'storeStaffPay'])
             ->name('vault.lines.staff-pay.store');
+        Route::get('/vault/lines/staff-pay/{line}/edit', [SimpleVaultLineController::class, 'editStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.edit');
+        Route::put('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'updateStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.update');
+        Route::delete('/vault/lines/staff-pay/{line}', [SimpleVaultLineController::class, 'destroyStaffPay'])
+            ->whereNumber('line')
+            ->name('vault.lines.staff-pay.destroy');
         Route::get('/vault/lines/job-pay', [SimpleVaultLineController::class, 'createJobPay'])
             ->name('vault.lines.job-pay.create');
         Route::post('/vault/lines/job-pay', [SimpleVaultLineController::class, 'storeJobPay'])
@@ -133,6 +142,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('/staff/{staff}', [StaffController::class, 'update'])
             ->whereNumber('staff')
             ->name('staff.update');
+        Route::delete('/staff/{staff}', [StaffController::class, 'destroy'])
+            ->whereNumber('staff')
+            ->name('staff.destroy');
     });
 
     Route::post('/dashboards/vault/refresh-fx', [VaultDashboardController::class, 'refreshFx'])

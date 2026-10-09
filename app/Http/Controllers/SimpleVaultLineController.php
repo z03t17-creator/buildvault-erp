@@ -14,6 +14,7 @@ use App\Support\DualCurrency;
 use App\Support\Roles;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
@@ -152,97 +153,13 @@ class SimpleVaultLineController extends Controller
     {
         $this->authorize('manageLedger', Vault::class);
 
-        $data = $request->validate([
-            'staff_id' => ['required', 'integer', 'exists:staff,id'],
-            'occurred_on' => ['required', 'date'],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
-            'note' => ['nullable', 'string', 'max:500'],
-            'purpose' => ['nullable', 'string', 'max:255'],
-            'apply_insurance' => ['sometimes', 'boolean'],
-            'amount' => ['nullable', 'numeric', 'min:0'],
-            'currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
-            'days_count' => ['nullable', 'numeric', 'gt:0'],
-            'day_rate' => ['nullable', 'numeric', 'gt:0'],
-            'site_kind' => ['nullable', Rule::in(VaultLine::SITE_KINDS)],
-            'block' => ['nullable', 'string', 'max:64'],
-            'zone' => ['nullable', 'string', 'max:64'],
-            'floor' => ['nullable', 'string', 'max:64'],
-            'apartment_number' => ['nullable', 'string', 'max:64'],
-            'apartment_model' => ['nullable', 'string', 'max:64'],
-            'villa_number' => ['nullable', 'string', 'max:64'],
-            'area' => ['nullable', 'string', 'max:64'],
-            'quantity' => ['nullable', 'numeric', 'min:0'],
-            'items' => ['nullable', 'array'],
-            'items.*.staff_rate_id' => ['nullable', 'integer', 'exists:staff_rates,id'],
-            'items.*.item_name' => ['nullable', 'string', 'max:160'],
-            'items.*.unit' => ['nullable', 'string', 'max:32'],
-            'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
-            'items.*.unit_rate' => ['nullable', 'numeric', 'min:0'],
-            'items.*.currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
-        ]);
-
+        $data = $request->validate($this->staffPayRules());
         $staff = Staff::query()->findOrFail($data['staff_id']);
-        $payload = [
-            ...$data,
-            'created_by' => $request->user()?->id,
-        ];
 
         try {
-            if ($staff->isMonthly()) {
-                $this->vault->postSalary([
-                    ...$payload,
-                    'apply_insurance' => $request->boolean('apply_insurance', false),
-                    'month' => $data['occurred_on'],
-                ]);
-            } elseif ($staff->isDaily()) {
-                $hasDays = isset($data['days_count']) && (float) $data['days_count'] > 0;
-                if ($hasDays) {
-                    $this->vault->postDailyPay([
-                        ...$payload,
-                        'apply_insurance' => $request->boolean('apply_insurance', true),
-                    ]);
-                } else {
-                    // Legacy job_pay: amount + currency (no days).
-                    $this->vault->postJobPay([
-                        ...$payload,
-                        'apply_insurance' => $request->boolean('apply_insurance', true),
-                    ]);
-                }
-            } else {
-                $items = $data['items'] ?? [];
-                $hasItems = is_array($items) && collect($items)->contains(function ($row) {
-                    return is_array($row)
-                        && (float) ($row['quantity'] ?? 0) > 0
-                        && trim((string) ($row['item_name'] ?? '')) !== '';
-                });
-
-                if ($hasItems) {
-                    if (! $this->userCanEditRate($request)) {
-                        $payload['items'] = $this->lockUnitRatesToStaff($staff, $items);
-                    }
-                    $this->vault->postUnitPayWithItems([
-                        ...$payload,
-                        'apply_insurance' => $request->boolean('apply_insurance', true),
-                    ]);
-                } elseif (isset($data['quantity']) && (float) $data['quantity'] > 0) {
-                    // Legacy single-quantity unit pay.
-                    $this->vault->postUnitPay([
-                        ...$payload,
-                        'quantity' => $data['quantity'],
-                        'apply_insurance' => $request->has('apply_insurance')
-                            ? $request->boolean('apply_insurance')
-                            : true,
-                    ]);
-                } else {
-                    throw new InvalidArgumentException('Unit pay needs item rows or a quantity.');
-                }
-            }
+            $this->writeStaffPay($staff, $data, $request);
         } catch (InvalidArgumentException $e) {
-            $field = $staff->isMonthly()
-                ? 'amount'
-                : ($staff->isDaily() ? 'amount' : 'quantity');
-
-            return back()->withErrors([$field => $e->getMessage()])->withInput();
+            return $this->staffPayError($staff, $e);
         }
 
         if ($staff->isMonthly()) {
@@ -254,6 +171,55 @@ class SimpleVaultLineController extends Controller
         return redirect()
             ->route('vault.job-pay.index')
             ->with('success', __('vault_staff_pay_saved'));
+    }
+
+    public function editStaffPay(VaultLine $line): Response
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertStaffPayLine($line);
+        $line->load(['items', 'staff']);
+
+        return Inertia::render('Vault/Simple/StaffPayForm', [
+            ...$this->staffPayShared($line->staff_id),
+            'line' => $this->mapEditableStaffPay($line),
+        ]);
+    }
+
+    public function updateStaffPay(Request $request, VaultLine $line): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertStaffPayLine($line);
+
+        $data = $request->validate($this->staffPayRules());
+        $staff = Staff::query()->findOrFail($data['staff_id']);
+
+        try {
+            DB::transaction(function () use ($line, $staff, $data, $request): void {
+                $this->vault->voidStaffPay($line);
+                $this->writeStaffPay($staff, $data, $request);
+            });
+        } catch (InvalidArgumentException $e) {
+            return $this->staffPayError($staff, $e);
+        }
+
+        if ($staff->isMonthly()) {
+            return redirect()
+                ->route('staff.show', $staff)
+                ->with('success', __('staff_pay_updated'));
+        }
+
+        return redirect()
+            ->route('vault.job-pay.index')
+            ->with('success', __('staff_pay_updated'));
+    }
+
+    public function destroyStaffPay(VaultLine $line): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertStaffPayLine($line);
+        $this->vault->voidStaffPay($line);
+
+        return back()->with('success', __('staff_pay_deleted'));
     }
 
     public function createJobPay(Request $request): Response
@@ -533,6 +499,165 @@ class SimpleVaultLineController extends Controller
         }
 
         return $out;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function staffPayRules(): array
+    {
+        return [
+            'staff_id' => ['required', 'integer', 'exists:staff,id'],
+            'occurred_on' => ['required', 'date'],
+            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
+            'note' => ['nullable', 'string', 'max:500'],
+            'purpose' => ['nullable', 'string', 'max:255'],
+            'apply_insurance' => ['sometimes', 'boolean'],
+            'amount' => ['nullable', 'numeric', 'min:0'],
+            'currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
+            'days_count' => ['nullable', 'numeric', 'gt:0'],
+            'day_rate' => ['nullable', 'numeric', 'gt:0'],
+            'site_kind' => ['nullable', Rule::in(VaultLine::SITE_KINDS)],
+            'block' => ['nullable', 'string', 'max:64'],
+            'zone' => ['nullable', 'string', 'max:64'],
+            'floor' => ['nullable', 'string', 'max:64'],
+            'apartment_number' => ['nullable', 'string', 'max:64'],
+            'apartment_model' => ['nullable', 'string', 'max:64'],
+            'villa_number' => ['nullable', 'string', 'max:64'],
+            'area' => ['nullable', 'string', 'max:64'],
+            'quantity' => ['nullable', 'numeric', 'min:0'],
+            'items' => ['nullable', 'array'],
+            'items.*.staff_rate_id' => ['nullable', 'integer', 'exists:staff_rates,id'],
+            'items.*.item_name' => ['nullable', 'string', 'max:160'],
+            'items.*.unit' => ['nullable', 'string', 'max:32'],
+            'items.*.quantity' => ['nullable', 'numeric', 'min:0'],
+            'items.*.unit_rate' => ['nullable', 'numeric', 'min:0'],
+            'items.*.currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function writeStaffPay(Staff $staff, array $data, Request $request): void
+    {
+        $payload = [
+            ...$data,
+            'created_by' => $request->user()?->id,
+        ];
+
+        if ($staff->isMonthly()) {
+            $this->vault->postSalary([
+                ...$payload,
+                'apply_insurance' => $request->boolean('apply_insurance', false),
+                'month' => $data['occurred_on'],
+            ]);
+
+            return;
+        }
+
+        if ($staff->isDaily()) {
+            $hasDays = isset($data['days_count']) && (float) $data['days_count'] > 0;
+            if ($hasDays) {
+                $this->vault->postDailyPay([
+                    ...$payload,
+                    'apply_insurance' => $request->boolean('apply_insurance', true),
+                ]);
+            } else {
+                $this->vault->postJobPay([
+                    ...$payload,
+                    'apply_insurance' => $request->boolean('apply_insurance', true),
+                ]);
+            }
+
+            return;
+        }
+
+        $items = $data['items'] ?? [];
+        $hasItems = is_array($items) && collect($items)->contains(function ($row) {
+            return is_array($row)
+                && (float) ($row['quantity'] ?? 0) > 0
+                && trim((string) ($row['item_name'] ?? '')) !== '';
+        });
+
+        if ($hasItems) {
+            if (! $this->userCanEditRate($request)) {
+                $payload['items'] = $this->lockUnitRatesToStaff($staff, $items);
+            }
+            $this->vault->postUnitPayWithItems([
+                ...$payload,
+                'apply_insurance' => $request->boolean('apply_insurance', true),
+            ]);
+
+            return;
+        }
+
+        if (isset($data['quantity']) && (float) $data['quantity'] > 0) {
+            $this->vault->postUnitPay([
+                ...$payload,
+                'quantity' => $data['quantity'],
+                'apply_insurance' => $request->has('apply_insurance')
+                    ? $request->boolean('apply_insurance')
+                    : true,
+            ]);
+
+            return;
+        }
+
+        throw new InvalidArgumentException('Unit pay needs item rows or a quantity.');
+    }
+
+    private function staffPayError(Staff $staff, InvalidArgumentException $e): RedirectResponse
+    {
+        $field = $staff->isMonthly()
+            ? 'amount'
+            : ($staff->isDaily() ? 'amount' : 'quantity');
+
+        return back()->withErrors([$field => $e->getMessage()])->withInput();
+    }
+
+    private function assertStaffPayLine(VaultLine $line): void
+    {
+        if (! in_array($line->kind, VaultLine::STAFF_HOLD_KINDS, true)) {
+            abort(404);
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function mapEditableStaffPay(VaultLine $line): array
+    {
+        return [
+            'id' => $line->id,
+            'kind' => $line->kind,
+            'staff_id' => $line->staff_id,
+            'occurred_on' => $line->occurred_on?->toDateString(),
+            'project_id' => $line->project_id,
+            'note' => $line->note,
+            'purpose' => $line->purpose,
+            'amount' => (float) $line->amount,
+            'currency' => $line->currency,
+            'apply_insurance' => (float) $line->hold_amount > 0,
+            'days_count' => $line->days_count !== null ? (float) $line->days_count : null,
+            'day_rate' => $line->day_rate !== null ? (float) $line->day_rate : null,
+            'site_kind' => $line->site_kind,
+            'block' => $line->block,
+            'zone' => $line->zone,
+            'floor' => $line->floor,
+            'apartment_number' => $line->apartment_number,
+            'apartment_model' => $line->apartment_model,
+            'villa_number' => $line->villa_number,
+            'area' => $line->area,
+            'items' => $line->items->map(fn ($item) => [
+                'staff_rate_id' => $item->staff_rate_id,
+                'item_name' => $item->item_name,
+                'unit' => $item->unit,
+                'quantity' => (float) $item->quantity,
+                'unit_rate' => (float) $item->unit_rate,
+                'currency' => $line->currency,
+            ])->values(),
+        ];
     }
 
     /**

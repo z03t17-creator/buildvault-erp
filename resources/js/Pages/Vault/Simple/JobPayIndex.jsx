@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import { DeskRowActions } from '@/Components/StaffDesk';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -20,6 +21,11 @@ export default function JobPayIndex({
     const t = useTranslations();
     const list = Array.isArray(lines) ? lines : [];
     const [confirmingId, setConfirmingId] = useState(null);
+
+    const removeLine = (id) => {
+        if (!window.confirm(t('confirm_delete'))) return;
+        router.delete(route('vault.lines.staff-pay.destroy', id), { preserveScroll: true });
+    };
 
     const confirmHold = (id) => {
         if (!canConfirmHold || confirmingId) {
@@ -38,6 +44,7 @@ export default function JobPayIndex({
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={t('vault_form_job_pay')}
@@ -111,6 +118,7 @@ export default function JobPayIndex({
                                     <Th align="end">{t('job_pay_hold_10')}</Th>
                                     <Th>{t('job_pay_payout_date')}</Th>
                                     <Th>{t('job_pay_hold_status')}</Th>
+                                    {canCreate ? <Th>{t('actions')}</Th> : null}
                                 </tr>
                             </thead>
                             <tbody>
@@ -181,6 +189,15 @@ export default function JobPayIndex({
                                                 '—'
                                             )}
                                         </Td>
+                                        {canCreate ? (
+                                            <Td>
+                                                <DeskRowActions
+                                                    editHref={route('vault.lines.staff-pay.edit', row.id)}
+                                                    onDelete={() => removeLine(row.id)}
+                                                    t={t}
+                                                />
+                                            </Td>
+                                        ) : null}
                                     </tr>
                                 ))}
                             </tbody>
