@@ -2,6 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\ApartmentUnit;
+use App\Models\BuildingBlock;
+use App\Models\Project;
 use App\Models\Staff;
 use App\Models\StaffRate;
 use App\Models\User;
@@ -609,5 +612,80 @@ class StaffPayRedesignTest extends TestCase
             ])
             ->assertRedirect(route('vault.lines.staff-pay.create'))
             ->assertSessionHasErrors();
+    }
+
+    public function test_staff_pay_form_offers_cascading_place_suggestions(): void
+    {
+        $project = Project::query()->create([
+            'name' => 'Block A',
+            'status' => Project::STATUS_ACTIVE,
+        ]);
+        $block = BuildingBlock::query()->create([
+            'project_id' => $project->id,
+            'code' => 'A1',
+            'name' => 'Block A1',
+        ]);
+        ApartmentUnit::query()->create([
+            'project_id' => $project->id,
+            'building_block_id' => $block->id,
+            'unit_label' => '12',
+            'floor_number' => 3,
+            'category' => ApartmentUnit::CATEGORY_MDF,
+        ]);
+
+        VaultLine::query()->create([
+            'vault_id' => $this->vault->id,
+            'kind' => VaultLine::KIND_UNIT_PAY,
+            'occurred_on' => '2026-10-04',
+            'amount' => 1000,
+            'currency' => DualCurrency::IQD,
+            'project_id' => $project->id,
+            'site_kind' => VaultLine::SITE_VILLA,
+            'villa_number' => '7',
+            'zone' => 'North',
+            'area' => '120m',
+        ]);
+        VaultLine::query()->create([
+            'vault_id' => $this->vault->id,
+            'kind' => VaultLine::KIND_UNIT_PAY,
+            'occurred_on' => '2026-10-04',
+            'amount' => 2000,
+            'currency' => DualCurrency::IQD,
+            'project_id' => $project->id,
+            'site_kind' => VaultLine::SITE_BUILDING,
+            'block' => 'A1',
+            'zone' => 'Z2',
+            'floor' => '3',
+            'apartment_number' => '12',
+            'apartment_model' => 'B',
+        ]);
+
+        $this->actingAs($this->accountant)
+            ->get(route('vault.lines.staff-pay.create'))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Vault/Simple/StaffPayForm')
+                ->where('placeSuggestions', function ($rows) use ($project) {
+                    $list = collect($rows);
+
+                    return $list->contains(fn ($row) => ($row['site_kind'] ?? null) === 'building'
+                        && ($row['block'] ?? null) === 'A1'
+                        && ($row['floor'] ?? null) === '3'
+                        && ($row['apartment_number'] ?? null) === '12'
+                        && (int) ($row['project_id'] ?? 0) === $project->id)
+                        && $list->contains(fn ($row) => ($row['site_kind'] ?? null) === 'villa'
+                            && ($row['villa_number'] ?? null) === '7'
+                            && ($row['zone'] ?? null) === 'North'
+                            && ($row['area'] ?? null) === '120m')
+                        && $list->contains(fn ($row) => ($row['apartment_model'] ?? null) === 'B'
+                            && ($row['zone'] ?? null) === 'Z2');
+                })
+            );
+
+        $source = file_get_contents(resource_path('js/Pages/Vault/Simple/StaffPayForm.jsx'));
+        $this->assertStringContainsString('placeSuggestions', $source);
+        $this->assertStringContainsString('SuggestionCombobox', $source);
+        $this->assertStringContainsString("setPlace('block'", $source);
+        $this->assertStringContainsString("setPlace('villa_number'", $source);
     }
 }

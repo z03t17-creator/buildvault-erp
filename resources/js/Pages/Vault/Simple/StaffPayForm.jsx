@@ -10,6 +10,7 @@ import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { deskFieldClass, deskMoneyClass, segmentClass } from '@/Components/StaffDesk';
+import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
@@ -51,6 +52,7 @@ export default function StaffPayForm({
     preselectStaffId = null,
     canEditRate = false,
     siteKinds = ['villa', 'building'],
+    placeSuggestions = [],
     salaryDues = {},
 }) {
     const t = useTranslations();
@@ -252,6 +254,90 @@ export default function StaffPayForm({
         return Object.keys(next).length === 0;
     };
 
+    const samePlace = (left, right) =>
+        String(left ?? '').trim().toLocaleLowerCase() === String(right ?? '').trim().toLocaleLowerCase();
+
+    const inProject = (row) => {
+        if (!data.project_id) return true;
+        if (row.project_id == null || row.project_id === '') return true;
+        return String(row.project_id) === String(data.project_id);
+    };
+
+    const placeOptions = (rows, key, predicate) => {
+        const seen = new Set();
+        const out = [];
+        for (const row of rows) {
+            if (!predicate(row)) continue;
+            const value = String(row[key] ?? '').trim();
+            if (!value) continue;
+            const id = value.toLocaleLowerCase();
+            if (seen.has(id)) continue;
+            seen.add(id);
+            out.push(value);
+        }
+        return out;
+    };
+
+    const buildingRows = (Array.isArray(placeSuggestions) ? placeSuggestions : []).filter(
+        (row) => row.site_kind === 'building' && inProject(row),
+    );
+    const villaRows = (Array.isArray(placeSuggestions) ? placeSuggestions : []).filter(
+        (row) => row.site_kind === 'villa' && inProject(row),
+    );
+    const blockChosen = (row) => !data.block || samePlace(row.block, data.block);
+    const zoneChosen = (row) => !data.zone || samePlace(row.zone, data.zone);
+    const floorChosen = (row) => !data.floor || samePlace(row.floor, data.floor);
+    const apartmentChosen = (row) =>
+        !data.apartment_number || samePlace(row.apartment_number, data.apartment_number);
+    const villaChosen = (row) => !data.villa_number || samePlace(row.villa_number, data.villa_number);
+
+    const blockSuggestions = placeOptions(buildingRows, 'block', () => true);
+    const buildingZoneSuggestions = placeOptions(buildingRows, 'zone', blockChosen);
+    const floorSuggestions = placeOptions(buildingRows, 'floor', (row) => blockChosen(row) && zoneChosen(row));
+    const apartmentSuggestions = placeOptions(
+        buildingRows,
+        'apartment_number',
+        (row) => blockChosen(row) && zoneChosen(row) && floorChosen(row),
+    );
+    const apartmentModelSuggestions = placeOptions(
+        buildingRows,
+        'apartment_model',
+        (row) => blockChosen(row) && zoneChosen(row) && floorChosen(row) && apartmentChosen(row),
+    );
+    const villaSuggestions = placeOptions(villaRows, 'villa_number', () => true);
+    const villaZoneSuggestions = placeOptions(villaRows, 'zone', villaChosen);
+    const areaSuggestions = placeOptions(
+        villaRows,
+        'area',
+        (row) => villaChosen(row) && zoneChosen(row),
+    );
+
+    const setPlace = (key, value) => {
+        const next = { ...data, [key]: value };
+        const clear = (keys) => {
+            keys.forEach((field) => {
+                next[field] = '';
+            });
+        };
+        if (key === 'project_id') {
+            clear(['block', 'zone', 'floor', 'apartment_number', 'apartment_model', 'villa_number', 'area']);
+        }
+        if (key === 'site_kind') {
+            clear(['zone']);
+            if (value === 'building') clear(['villa_number', 'area']);
+            if (value === 'villa') clear(['block', 'floor', 'apartment_number', 'apartment_model']);
+        }
+        if (key === 'block') clear(['zone', 'floor', 'apartment_number', 'apartment_model']);
+        if (key === 'zone' && data.site_kind === 'building') {
+            clear(['floor', 'apartment_number', 'apartment_model']);
+        }
+        if (key === 'zone' && data.site_kind === 'villa') clear(['area']);
+        if (key === 'floor') clear(['apartment_number', 'apartment_model']);
+        if (key === 'apartment_number') clear(['apartment_model']);
+        if (key === 'villa_number') clear(['zone', 'area']);
+        setData(next);
+    };
+
     const submit = (e) => {
         e.preventDefault();
         if (!validate()) return;
@@ -335,7 +421,7 @@ export default function StaffPayForm({
                                 id="project_id"
                                 className={fieldClass}
                                 value={data.project_id}
-                                onChange={(e) => setData('project_id', e.target.value)}
+                                onChange={(e) => setPlace('project_id', e.target.value)}
                             >
                                 <option value="">{t('vault_form_pick_project')}</option>
                                 {projects.map((p) => (
@@ -358,7 +444,7 @@ export default function StaffPayForm({
                                     <button
                                         key={kind}
                                         type="button"
-                                        onClick={() => setData('site_kind', kind)}
+                                        onClick={() => setPlace('site_kind', kind)}
                                         className={segmentClass(data.site_kind === kind, 'amber')}
                                         aria-pressed={data.site_kind === kind}
                                     >
@@ -371,30 +457,33 @@ export default function StaffPayForm({
                                 <FormSection cols={2}>
                                     <FormField>
                                         <InputLabel value={t('staff_pay_block')} htmlFor="block" />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="block"
                                             className={fieldClass}
                                             value={data.block}
-                                            onChange={(e) => setData('block', e.target.value)}
+                                            onChange={(next) => setPlace('block', next)}
+                                            suggestions={blockSuggestions}
                                             placeholder="A1"
                                         />
                                     </FormField>
                                     <FormField>
                                         <InputLabel value={t('staff_pay_zone')} htmlFor="zone" />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="zone"
                                             className={fieldClass}
                                             value={data.zone}
-                                            onChange={(e) => setData('zone', e.target.value)}
+                                            onChange={(next) => setPlace('zone', next)}
+                                            suggestions={buildingZoneSuggestions}
                                         />
                                     </FormField>
                                     <FormField>
                                         <InputLabel value={t('staff_pay_floor')} htmlFor="floor" />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="floor"
                                             className={fieldClass}
                                             value={data.floor}
-                                            onChange={(e) => setData('floor', e.target.value)}
+                                            onChange={(next) => setPlace('floor', next)}
+                                            suggestions={floorSuggestions}
                                         />
                                     </FormField>
                                     <FormField>
@@ -402,13 +491,12 @@ export default function StaffPayForm({
                                             value={t('staff_pay_apartment_number')}
                                             htmlFor="apartment_number"
                                         />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="apartment_number"
                                             className={fieldClass}
                                             value={data.apartment_number}
-                                            onChange={(e) =>
-                                                setData('apartment_number', e.target.value)
-                                            }
+                                            onChange={(next) => setPlace('apartment_number', next)}
+                                            suggestions={apartmentSuggestions}
                                         />
                                     </FormField>
                                     <FormField className="sm:col-span-2">
@@ -416,13 +504,12 @@ export default function StaffPayForm({
                                             value={t('staff_pay_apartment_model')}
                                             htmlFor="apartment_model"
                                         />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="apartment_model"
                                             className={fieldClass}
                                             value={data.apartment_model}
-                                            onChange={(e) =>
-                                                setData('apartment_model', e.target.value)
-                                            }
+                                            onChange={(next) => setPlace('apartment_model', next)}
+                                            suggestions={apartmentModelSuggestions}
                                         />
                                     </FormField>
                                 </FormSection>
@@ -435,31 +522,32 @@ export default function StaffPayForm({
                                             value={t('staff_pay_villa_number')}
                                             htmlFor="villa_number"
                                         />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="villa_number"
                                             className={fieldClass}
                                             value={data.villa_number}
-                                            onChange={(e) =>
-                                                setData('villa_number', e.target.value)
-                                            }
+                                            onChange={(next) => setPlace('villa_number', next)}
+                                            suggestions={villaSuggestions}
                                         />
                                     </FormField>
                                     <FormField>
                                         <InputLabel value={t('staff_pay_zone')} htmlFor="zone" />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="zone"
                                             className={fieldClass}
                                             value={data.zone}
-                                            onChange={(e) => setData('zone', e.target.value)}
+                                            onChange={(next) => setPlace('zone', next)}
+                                            suggestions={villaZoneSuggestions}
                                         />
                                     </FormField>
                                     <FormField className="sm:col-span-2">
                                         <InputLabel value={t('staff_pay_area')} htmlFor="area" />
-                                        <TextInput
+                                        <SuggestionCombobox
                                             id="area"
                                             className={fieldClass}
                                             value={data.area}
-                                            onChange={(e) => setData('area', e.target.value)}
+                                            onChange={(next) => setPlace('area', next)}
+                                            suggestions={areaSuggestions}
                                         />
                                     </FormField>
                                 </FormSection>

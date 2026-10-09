@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ApartmentUnit;
+use App\Models\BuildingBlock;
 use App\Models\Project;
 use App\Models\Staff;
 use App\Models\StaffRate;
@@ -337,12 +339,153 @@ class SimpleVaultLineController extends Controller
             'preselectStaffId' => $preselectStaffId,
             'canEditRate' => $this->userCanEditRate(request()),
             'siteKinds' => VaultLine::SITE_KINDS,
+            'placeSuggestions' => $this->placeSuggestions(),
             'itemSuggestions' => Staff::suggestedItemNames(),
             'rateUnitSuggestions' => Staff::suggestedRateUnits(),
             'userRole' => $user?->getRoleNames()->first(),
             'salaryDues' => $salaryDues,
             'estimates' => $snapshot['estimates'],
             'availableCash' => $snapshot['available_cash'],
+        ];
+    }
+
+    /**
+     * Prior pay locations plus the project's blocks and apartments.
+     * The form filters these into a villa or building cascade.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function placeSuggestions(): array
+    {
+        $rows = [];
+
+        $lines = VaultLine::query()
+            ->whereNotNull('site_kind')
+            ->get([
+                'project_id',
+                'site_kind',
+                'block',
+                'zone',
+                'floor',
+                'apartment_number',
+                'apartment_model',
+                'villa_number',
+                'area',
+            ]);
+
+        foreach ($lines as $line) {
+            $rows[] = $this->placeRow(
+                $line->project_id,
+                $line->site_kind,
+                $line->block,
+                $line->zone,
+                $line->floor,
+                $line->apartment_number,
+                $line->apartment_model,
+                $line->villa_number,
+                $line->area,
+            );
+        }
+
+        $blocks = BuildingBlock::query()->with('tower:id,name')->get();
+        foreach ($blocks as $block) {
+            $rows[] = $this->placeRow(
+                $block->project_id,
+                VaultLine::SITE_BUILDING,
+                $block->code,
+                $block->tower?->name,
+            );
+        }
+
+        $units = ApartmentUnit::query()
+            ->with(['buildingBlock.tower:id,name', 'tower:id,name', 'floor:id,name'])
+            ->get();
+        foreach ($units as $unit) {
+            $floor = $unit->floor?->name;
+            if ($floor === null && $unit->floor_number !== null) {
+                $floor = (string) $unit->floor_number;
+            }
+            $rows[] = $this->placeRow(
+                $unit->project_id,
+                VaultLine::SITE_BUILDING,
+                $unit->buildingBlock?->code,
+                $unit->tower?->name ?: $unit->buildingBlock?->tower?->name,
+                $floor,
+                $unit->unit_label,
+            );
+        }
+
+        $seen = [];
+        $out = [];
+        foreach ($rows as $row) {
+            $filled = array_filter([
+                $row['block'],
+                $row['zone'],
+                $row['floor'],
+                $row['apartment_number'],
+                $row['apartment_model'],
+                $row['villa_number'],
+                $row['area'],
+            ], fn ($value) => $value !== null && $value !== '');
+            if ($filled === []) {
+                continue;
+            }
+            $key = implode('|', [
+                $row['project_id'] ?? '',
+                $row['site_kind'] ?? '',
+                ...array_map(
+                    fn ($value) => mb_strtolower(trim((string) $value)),
+                    [
+                        $row['block'],
+                        $row['zone'],
+                        $row['floor'],
+                        $row['apartment_number'],
+                        $row['apartment_model'],
+                        $row['villa_number'],
+                        $row['area'],
+                    ],
+                ),
+            ]);
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+            $out[] = $row;
+        }
+
+        return $out;
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function placeRow(
+        mixed $projectId,
+        ?string $siteKind,
+        ?string $block = null,
+        ?string $zone = null,
+        ?string $floor = null,
+        ?string $apartmentNumber = null,
+        ?string $apartmentModel = null,
+        ?string $villaNumber = null,
+        ?string $area = null,
+    ): array {
+        $clean = function (mixed $value): ?string {
+            $value = trim((string) ($value ?? ''));
+
+            return $value === '' ? null : $value;
+        };
+
+        return [
+            'project_id' => $projectId ? (int) $projectId : null,
+            'site_kind' => $clean($siteKind),
+            'block' => $clean($block),
+            'zone' => $clean($zone),
+            'floor' => $clean($floor),
+            'apartment_number' => $clean($apartmentNumber),
+            'apartment_model' => $clean($apartmentModel),
+            'villa_number' => $clean($villaNumber),
+            'area' => $clean($area),
         ];
     }
 
