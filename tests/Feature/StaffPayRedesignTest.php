@@ -553,6 +553,159 @@ class StaffPayRedesignTest extends TestCase
         $this->assertNull($staff->day_rate);
     }
 
+    public function test_edited_shaft_rate_pays_on_building_and_villa(): void
+    {
+        $hunar = Staff::query()->create([
+            'name' => 'Hunar',
+            'role' => 'دەرگاچیی',
+            'pay_model' => Staff::PAY_UNIT,
+            'kind' => Staff::KIND_UNIT,
+            'currency' => DualCurrency::IQD,
+        ]);
+        StaffRate::query()->create([
+            'staff_id' => $hunar->id,
+            'item_name' => 'دەرگای چوونەژوورەوە',
+            'unit' => 'دانە',
+            'rate' => 25000,
+            'currency' => DualCurrency::IQD,
+            'sort_order' => 0,
+        ]);
+
+        $aland = Staff::query()->create([
+            'name' => 'Aland',
+            'role' => 'دەرگاچیی',
+            'pay_model' => Staff::PAY_UNIT,
+            'kind' => Staff::KIND_UNIT,
+            'currency' => DualCurrency::IQD,
+        ]);
+        StaffRate::query()->create([
+            'staff_id' => $aland->id,
+            'item_name' => 'دەرگای چوونەژوورەوە',
+            'unit' => 'دانە',
+            'rate' => 20000,
+            'currency' => DualCurrency::IQD,
+            'sort_order' => 0,
+        ]);
+
+        $daban = Staff::query()->create([
+            'name' => 'Daban',
+            'role' => 'دەرگاچیی',
+            'pay_model' => Staff::PAY_UNIT,
+            'kind' => Staff::KIND_UNIT,
+            'currency' => DualCurrency::IQD,
+        ]);
+        StaffRate::query()->create([
+            'staff_id' => $daban->id,
+            'item_name' => 'دەرگای MDF',
+            'unit' => 'دانە',
+            'rate' => 20000,
+            'currency' => DualCurrency::IQD,
+            'sort_order' => 0,
+        ]);
+
+        $this->actingAs($this->accountant)
+            ->put(route('staff.update', $hunar), [
+                'name' => 'Wasta Hunar',
+                'role' => 'دەرگاچیی',
+                'pay_model' => Staff::PAY_UNIT,
+                'rates' => [
+                    ['item_name' => 'دەرگای MDF', 'unit' => 'دانە', 'rate' => 20000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای چوونەژوورەوە', 'unit' => 'دانە', 'rate' => 25000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای شافت', 'unit' => 'دانە', 'rate' => 8000, 'currency' => DualCurrency::IQD],
+                ],
+            ])
+            ->assertRedirect(route('staff.show', $hunar));
+
+        $this->actingAs($this->accountant)
+            ->put(route('staff.update', $aland), [
+                'name' => 'Wasta Aland',
+                'role' => 'دەرگاچیی',
+                'pay_model' => Staff::PAY_UNIT,
+                'rates' => [
+                    ['item_name' => 'دەرگای MDF', 'unit' => 'دانە', 'rate' => 20000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای چوونەژوورەوە', 'unit' => 'دانە', 'rate' => 15000, 'currency' => DualCurrency::IQD],
+                    ['item_name' => 'دەرگای شافت', 'unit' => 'دانە', 'rate' => 8000, 'currency' => DualCurrency::IQD],
+                ],
+            ])
+            ->assertRedirect(route('staff.show', $aland));
+
+        $hunar->refresh();
+        $aland->refresh();
+        $daban->refresh();
+        $shaft = $hunar->rates->firstWhere('item_name', 'دەرگای شافت');
+        $this->assertNotNull($shaft);
+        $this->assertSame(8000.0, (float) $shaft->rate);
+        $this->assertSame(25000.0, (float) $hunar->rates->firstWhere('item_name', 'دەرگای چوونەژوورەوە')->rate);
+        $this->assertSame(15000.0, (float) $aland->rates->firstWhere('item_name', 'دەرگای چوونەژوورەوە')->rate);
+        $this->assertCount(1, $daban->rates);
+        $this->assertSame('دەرگای MDF', $daban->rates->first()->item_name);
+
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.staff-pay.store'), [
+                'staff_id' => $hunar->id,
+                'occurred_on' => '2026-10-11',
+                'site_kind' => VaultLine::SITE_BUILDING,
+                'block' => 'A1',
+                'zone' => 'Z2',
+                'floor' => '3',
+                'apartment_number' => '12',
+                'apartment_model' => 'B',
+                'apply_insurance' => true,
+                'items' => [[
+                    'staff_rate_id' => $shaft->id,
+                    'item_name' => $shaft->item_name,
+                    'unit' => 'دانە',
+                    'quantity' => 2,
+                    'unit_rate' => 8000,
+                    'currency' => DualCurrency::IQD,
+                ]],
+            ])
+            ->assertRedirect(route('vault.job-pay.index'));
+
+        $building = VaultLine::query()->where('site_kind', VaultLine::SITE_BUILDING)->first();
+        $this->assertNotNull($building);
+        $this->assertSame(16000.0, (float) $building->amount);
+        $this->assertSame(1600.0, (float) $building->hold_amount);
+        $this->assertSame('A1', $building->block);
+        $this->assertSame('Z2', $building->zone);
+        $this->assertSame('3', $building->floor);
+        $this->assertSame('12', $building->apartment_number);
+        $this->assertSame('B', $building->apartment_model);
+        $this->assertSame('دەرگای شافت', $building->items->first()->item_name);
+        $this->assertSame(16000.0, (float) $building->items->first()->subtotal);
+
+        $mdf = $daban->rates->first();
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.staff-pay.store'), [
+                'staff_id' => $daban->id,
+                'occurred_on' => '2026-10-12',
+                'site_kind' => VaultLine::SITE_VILLA,
+                'villa_number' => '7',
+                'zone' => 'North',
+                'area' => '120m',
+                'apply_insurance' => false,
+                'items' => [[
+                    'staff_rate_id' => $mdf->id,
+                    'item_name' => $mdf->item_name,
+                    'unit' => 'دانە',
+                    'quantity' => 3,
+                    'unit_rate' => 20000,
+                    'currency' => DualCurrency::IQD,
+                ]],
+            ])
+            ->assertRedirect(route('vault.job-pay.index'));
+
+        $villa = VaultLine::query()->where('site_kind', VaultLine::SITE_VILLA)->latest('id')->first();
+        $this->assertNotNull($villa);
+        $this->assertSame(60000.0, (float) $villa->amount);
+        $this->assertSame(0.0, (float) $villa->hold_amount);
+        $this->assertSame('7', $villa->villa_number);
+        $this->assertSame('North', $villa->zone);
+        $this->assertSame('120m', $villa->area);
+        $this->assertSame('دەرگای MDF', $villa->items->first()->item_name);
+        $this->assertCount(0, $daban->fresh()->rates->where('item_name', 'دەرگای شافت'));
+    }
+
     public function test_vault_home_has_no_fifth_unit_card(): void
     {
         $source = file_get_contents(resource_path('js/Pages/Dashboards/Vault.jsx'));
