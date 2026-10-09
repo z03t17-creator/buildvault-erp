@@ -1,0 +1,73 @@
+# BuildVault ERP — Render Blueprint
+# https://render.com/docs/blueprint-spec
+#
+# After connecting the GitHub repo, create via:
+#   Dashboard → New → Blueprint → select this repo / branch
+# Or: New Web Service → Docker → use this Dockerfile + attach a Postgres DB.
+#
+# Free Postgres plans change over time; if `plan: free` fails in the UI,
+# create a Postgres instance manually and paste DATABASE_URL into the web service.
+
+databases:
+  - name: buildvault-db
+    plan: free
+    databaseName: buildvault
+    user: buildvault
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: buildvault-erp
+    runtime: docker
+    plan: free
+    region: oregon
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /up
+    autoDeploy: true
+    envVars:
+      - key: APP_NAME
+        value: BuildVault ERP
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      # Set after first deploy if needed; entrypoint also uses RENDER_EXTERNAL_URL
+      - key: APP_URL
+        value: https://buildvault-erp.onrender.com
+      - key: APP_KEY
+        generateValue: true
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: info
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_SSLMODE
+        value: require
+      - key: DATABASE_URL
+        fromDatabase:
+          name: buildvault-db
+          property: connectionString
+      - key: DB_URL
+        fromDatabase:
+          name: buildvault-db
+          property: connectionString
+      - key: CACHE_STORE
+        value: database
+      - key: SESSION_DRIVER
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: local
+      - key: ACTIVITY_LOGGER_ENABLED
+        value: "true"
+      # Heavy Demo* seeders off by default so the web process binds before health timeout.
+      # Set to "true" once (or via shell) if you need sample projects/users on Render.
+      - key: SEED_DEMO
+        value: "false"
+      # One-shot empty books on boot. Leave "false". Set "true" only for a single
+      # redeploy wipe (no Shell), then set back to "false" immediately.
+      - key: BUSINESS_WIPE_ON_BOOT
+        value: "false"

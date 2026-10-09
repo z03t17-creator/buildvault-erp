@@ -1,0 +1,137 @@
+import DataPanel from '@/Components/DataPanel';
+import DateInput from '@/Components/DateInput';
+import FormSection, { FormActions, FormField } from '@/Components/FormSection';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PageHeader from '@/Components/PageHeader';
+import PageShell from '@/Components/PageShell';
+import PrimaryButton from '@/Components/PrimaryButton';
+import SecondaryButton from '@/Components/SecondaryButton';
+import MoneyInput from '@/Components/MoneyInput';
+import TextInput from '@/Components/TextInput';
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
+import useTranslations from '@/hooks/useTranslations';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { useEffect } from 'react';
+
+const selectClass =
+    'mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-emerald-500 focus:ring-emerald-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-100';
+
+export default function Create({ projects, staff, types, defaults }) {
+    const t = useTranslations();
+    const iqd = t('IQD');
+    const { data, setData, post, processing, errors } = useForm({
+        staff_id: '',
+        project_id: '',
+        type: defaults?.type || 'other',
+        reason: '',
+        notes: '',
+        occurred_on: defaults?.occurred_on || '',
+        amount_iqd: '',
+    });
+
+    useEffect(() => {
+        if (!data.staff_id) {
+            return;
+        }
+        const person = (staff || []).find((w) => String(w.id) === String(data.staff_id));
+        if (person?.project_id && !data.project_id) {
+            setData('project_id', String(person.project_id));
+        }
+    }, [data.staff_id]);
+
+    return (
+        <AuthenticatedLayout
+            header={
+                <PageHeader
+                    title={t('record_penalty')}
+                    subtitle={t('penalties_subtitle')}
+                    actions={
+                        <Link href={route('penalties.index')}>
+                            <SecondaryButton>{t('back')}</SecondaryButton>
+                        </Link>
+                    }
+                />
+            }
+        >
+            <Head title={t('record_penalty')} />
+            <PageShell narrow>
+                <DataPanel>
+                    <form noValidate
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            post(route('penalties.store'));
+                        }}
+                        className="space-y-5"
+                    >
+                        <FormSection>
+                            <FormField>
+                                <InputLabel value={t('staff')} />
+                                <select className={selectClass} value={data.staff_id} onChange={(e) => setData('staff_id', e.target.value)} required>
+                                    <option value="">—</option>
+                                    {(staff || []).map((w) => (
+                                        <option key={w.id} value={w.id}>{w.name}</option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.staff_id} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('project')} />
+                                <select className={selectClass} value={data.project_id} onChange={(e) => setData('project_id', e.target.value)} required>
+                                    <option value="">—</option>
+                                    {(projects || []).map((p) => (
+                                        <option key={p.id} value={p.id}>{p.name}</option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.project_id} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('penalty_type')} />
+                                <select className={selectClass} value={data.type} onChange={(e) => setData('type', e.target.value)} required>
+                                    {(types || []).map((type) => (
+                                        <option key={type} value={type}>{t(`penalty_type_${type}`) || type}</option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.type} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('date')} />
+                                <DateInput
+                                    className="mt-1"
+                                    value={data.occurred_on}
+                                    onValueChange={(next) => setData('occurred_on', next)}
+                                    required
+                                />
+                                <InputError message={errors.occurred_on} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={`${t('amount_iqd')} (${iqd})`} />
+                                <MoneyInput
+                                    className="mt-1 block w-full"
+                                    value={data.amount_iqd}
+                                    onValueChange={(raw) => setData('amount_iqd', raw)}
+                                    required
+                                />
+                                <InputError message={errors.amount_iqd} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('reason')} />
+                                <textarea className={selectClass} rows={3} value={data.reason} onChange={(e) => setData('reason', e.target.value)} required />
+                                <InputError message={errors.reason} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('notes')} />
+                                <textarea className={selectClass} rows={2} value={data.notes} onChange={(e) => setData('notes', e.target.value)} />
+                                <InputError message={errors.notes} className="mt-1" />
+                            </FormField>
+                            
+                        </FormSection>
+                        <FormActions>
+                            <PrimaryButton disabled={processing}>{t('save')}</PrimaryButton>
+                        </FormActions>
+                    </form>
+                </DataPanel>
+            </PageShell>
+        </AuthenticatedLayout>
+    );
+}
