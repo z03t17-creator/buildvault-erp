@@ -316,6 +316,63 @@
         @apply text-slate-600 hover:bg-slate-100/90 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100;
     }
 
+    .bv-nav-hub-panel {
+        display: grid;
+        grid-template-rows: 0fr;
+        opacity: 0;
+        transition:
+            grid-template-rows 220ms ease,
+            opacity 180ms ease;
+    }
+
+    .bv-nav-hub-panel-open {
+        grid-template-rows: 1fr;
+        opacity: 1;
+    }
+
+    .bv-nav-hub-panel-inner {
+        overflow: hidden;
+        border-inline-start: 1px solid rgb(226 232 240 / 0.9);
+        margin-inline-start: 1.35rem;
+    }
+
+    :is(.dark) .bv-nav-hub-panel-inner {
+        border-inline-start-color: rgb(30 41 59 / 0.95);
+    }
+
+    .bv-nav-hub-child {
+        @apply !min-h-[2.4rem] !py-1.5 !text-[13px];
+    }
+
+    .bv-nav-hub-child .inline-flex.h-9 {
+        @apply !h-8 !w-8 !rounded-md !text-[0.85rem];
+    }
+
+    .bv-data-tabs {
+        @apply w-full;
+    }
+
+    .bv-data-tabs-track {
+        @apply flex gap-1 overflow-x-auto rounded-2xl border border-slate-200/80 bg-slate-100/80 p-1 dark:border-slate-800 dark:bg-slate-900/80;
+        scrollbar-width: none;
+    }
+
+    .bv-data-tabs-track::-webkit-scrollbar {
+        display: none;
+    }
+
+    .bv-data-tab {
+        @apply inline-flex min-h-[2.5rem] min-w-0 flex-1 items-center justify-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold text-slate-500 transition sm:text-sm dark:text-slate-400;
+    }
+
+    .bv-data-tab:hover {
+        @apply bg-white/80 text-slate-800 dark:bg-slate-800/80 dark:text-slate-100;
+    }
+
+    .bv-data-tab-active {
+        @apply bg-white text-teal-800 shadow-sm ring-1 ring-slate-200/80 dark:bg-slate-800 dark:text-teal-300 dark:ring-slate-700;
+    }
+
     .bv-attribution {
         @apply text-[10px] leading-snug tracking-wide text-slate-400 dark:text-slate-500;
     }

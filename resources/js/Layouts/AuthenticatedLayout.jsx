@@ -3,12 +3,21 @@ import Dropdown from '@/Components/Dropdown';
 import FlashBanner from '@/Components/FlashBanner';
 import LocaleSwitcher from '@/Components/LocaleSwitcher';
 import MobileDock from '@/Components/MobileDock';
+import SidebarNavHub from '@/Components/SidebarNavHub';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Link, usePage } from '@inertiajs/react';
 import { useEffect, useState } from 'react';
+
+/** Data & Records hub — collapses four system links into one accordion. */
+const DATA_RECORDS_HUB = {
+    id: 'dataRecords',
+    labelKey: 'nav_hub_data_records',
+    icon: 'dataRecords',
+    children: ['docs', 'imports', 'reports', 'backups'],
+};
 
 const NAV_GROUPS = [
     {
@@ -24,7 +33,8 @@ const NAV_GROUPS = [
     {
         id: 'system',
         labelKey: 'nav_group_system',
-        keys: ['docs', 'imports', 'reports', 'backups', 'users', 'audit'],
+        hubs: [DATA_RECORDS_HUB],
+        keys: ['users', 'audit'],
     },
 ];
 
@@ -106,25 +116,29 @@ function buildNavCatalog(t, maturedCount) {
             key: 'docs',
             href: route('documents.index'),
             active: route().current('documents.*'),
-            label: t('docs'),
+            label: t('nav_docs'),
+            hint: t('nav_docs_hint'),
         },
         imports: {
             key: 'imports',
             href: route('imports.index'),
             active: route().current('imports.*'),
-            label: t('imports'),
+            label: t('nav_imports'),
+            hint: t('nav_imports_hint'),
         },
         reports: {
             key: 'reports',
             href: route('reports.index'),
             active: route().current('reports.*') || route().current('exports.*'),
-            label: t('reports'),
+            label: t('nav_reports'),
+            hint: t('nav_reports_hint'),
         },
         backups: {
             key: 'backups',
             href: route('backups.index'),
             active: route().current('backups.*'),
-            label: t('backups'),
+            label: t('nav_backups'),
+            hint: t('nav_backups_hint'),
         },
         users: {
             key: 'users',
@@ -150,18 +164,30 @@ function SidebarNav({ groups, onNavigate }) {
                         {group.label}
                     </p>
                     <div className="space-y-1">
-                        {group.items.map((item) => (
-                            <SidebarNavLink
-                                key={item.key}
-                                href={item.href}
-                                active={item.active}
-                                badge={item.badge}
-                                icon={item.key}
-                                onClick={onNavigate}
-                            >
-                                {item.label}
-                            </SidebarNavLink>
-                        ))}
+                        {group.entries.map((entry) =>
+                            entry.type === 'hub' ? (
+                                <SidebarNavHub
+                                    key={entry.id}
+                                    id={entry.id}
+                                    label={entry.label}
+                                    icon={entry.icon}
+                                    childrenItems={entry.children}
+                                    onNavigate={onNavigate}
+                                />
+                            ) : (
+                                <SidebarNavLink
+                                    key={entry.key}
+                                    href={entry.href}
+                                    active={entry.active}
+                                    badge={entry.badge}
+                                    icon={entry.key}
+                                    title={entry.hint || entry.label}
+                                    onClick={onNavigate}
+                                >
+                                    {entry.label}
+                                </SidebarNavLink>
+                            ),
+                        )}
                     </div>
                 </div>
             ))}
@@ -180,13 +206,35 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
     const [sidebarOpen, setSidebarOpen] = useState(false);
 
     const catalog = buildNavCatalog(t, maturedCount);
-    const navGroups = NAV_GROUPS.map((group) => ({
-        id: group.id,
-        label: t(group.labelKey),
-        items: group.keys
+    const navGroups = NAV_GROUPS.map((group) => {
+        const hubs = (group.hubs || [])
+            .map((hub) => {
+                const children = hub.children
+                    .filter((key) => allowedNav.has(key) && catalog[key])
+                    .map((key) => catalog[key]);
+                if (!children.length) {
+                    return null;
+                }
+                return {
+                    type: 'hub',
+                    id: hub.id,
+                    label: t(hub.labelKey),
+                    icon: hub.icon,
+                    children,
+                };
+            })
+            .filter(Boolean);
+
+        const links = (group.keys || [])
             .filter((key) => allowedNav.has(key) && catalog[key])
-            .map((key) => catalog[key]),
-    })).filter((group) => group.items.length > 0);
+            .map((key) => ({ type: 'link', ...catalog[key] }));
+
+        return {
+            id: group.id,
+            label: t(group.labelKey),
+            entries: [...hubs, ...links],
+        };
+    }).filter((group) => group.entries.length > 0);
 
     useEffect(() => {
         const onKey = (e) => {

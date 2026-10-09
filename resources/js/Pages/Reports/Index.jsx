@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DataRecordsTabs from '@/Components/DataRecordsTabs';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import InputLabel from '@/Components/InputLabel';
 import MoneyAmount from '@/Components/MoneyAmount';
@@ -9,6 +10,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import StatusBadge from '@/Components/StatusBadge';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -39,14 +41,16 @@ export default function Index({ catalog, categories, can_financial, legacy }) {
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('reports')}
+                    title={t('nav_reports')}
                     subtitle={t('reports_suite_subtitle')}
+                    icon={<NavIcon name="reports" className="text-lg" />}
                 />
             }
         >
-            <Head title={t('reports')} />
+            <Head title={t('nav_reports')} />
 
             <PageShell>
+                <DataRecordsTabs />
                 {orderedCategories.map((category) => (
                     <DataPanel
                         key={category}

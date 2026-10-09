@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DataRecordsTabs from '@/Components/DataRecordsTabs';
 import EmptyState from '@/Components/EmptyState';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -9,6 +10,8 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
+import useTranslations from '@/hooks/useTranslations';
+import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
@@ -67,13 +70,15 @@ export default function Gallery({
     };
 
     const groups = grouped || [];
+    const t = useTranslations();
 
     return (
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title="Documents"
-                    subtitle="Gallery by type · project · worker"
+                    title={t('nav_docs')}
+                    subtitle={t('nav_docs_hint')}
+                    icon={<NavIcon name="docs" className="text-lg" />}
                     actions={
                         canCreate ? (
                             <PrimaryButton type="button" onClick={() => setShowUpload((v) => !v)}>
@@ -84,9 +89,10 @@ export default function Gallery({
                 />
             }
         >
-            <Head title="Documents" />
+            <Head title={t('nav_docs')} />
 
             <PageShell>
+                <DataRecordsTabs />
                 {canCreate && showUpload && (
                     <DataPanel title="Upload">
                         <form onSubmit={submit} className="space-y-4">

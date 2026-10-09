@@ -27,6 +27,7 @@ const NAV_ICON_MAP = {
     imports: 'fi-rr-file-import',
     reports: 'fi-rr-chart-histogram',
     backups: 'fi-rr-database',
+    dataRecords: 'fi-rr-folder-open',
     users: 'fi-rr-user',
     audit: 'fi-rr-shield-check',
     more: 'fi-rr-menu-dots',

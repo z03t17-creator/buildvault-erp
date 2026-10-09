@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DataRecordsTabs from '@/Components/DataRecordsTabs';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
 import FormSection, { FormActions, FormField } from '@/Components/FormSection';
@@ -104,7 +105,7 @@ export default function Index({ backups, types, schedule, overview }) {
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('backups')}
+                    title={t('nav_backups')}
                     subtitle={t('backups_page_hint')}
                     icon={<NavIcon name="backups" className="text-lg" />}
                     actions={
@@ -120,8 +121,9 @@ export default function Index({ backups, types, schedule, overview }) {
                 />
             }
         >
-            <Head title={t('backups')} />
+            <Head title={t('nav_backups')} />
             <PageShell className="!space-y-6">
+                <DataRecordsTabs />
                 <section>
                     <div className="mb-3">
                         <h2 className="font-display text-lg font-semibold text-slate-900 dark:text-white">

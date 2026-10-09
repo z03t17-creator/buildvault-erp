@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import DataRecordsTabs from '@/Components/DataRecordsTabs';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import DangerButton from '@/Components/DangerButton';
 import EmptyState from '@/Components/EmptyState';
@@ -73,7 +74,6 @@ export default function Index({
 }) {
     const t = useTranslations();
     const canAudit = useCan('vault.audit');
-    const canBackups = useCan('vault.backups');
     const list = types || [];
     const jobs = recent || [];
     const modeOptions = modes || ['partial', 'atomic'];
@@ -126,34 +126,25 @@ export default function Index({
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('imports')}
+                    title={t('nav_imports')}
                     subtitle={t('imports_page_hint')}
                     icon={<NavIcon name="imports" className="text-lg" />}
                     actions={
-                        <>
-                            {canBackups && (
-                                <Link href={route('backups.index')}>
-                                    <SecondaryButton type="button">
-                                        <NavIcon name="backups" className="text-sm" />
-                                        {t('backups')}
-                                    </SecondaryButton>
-                                </Link>
-                            )}
-                            {canAudit && (
-                                <Link href={route('audit.index')}>
-                                    <SecondaryButton type="button">
-                                        <NavIcon name="audit" className="text-sm" />
-                                        {t('audit')}
-                                    </SecondaryButton>
-                                </Link>
-                            )}
-                        </>
+                        canAudit ? (
+                            <Link href={route('audit.index')}>
+                                <SecondaryButton type="button">
+                                    <NavIcon name="audit" className="text-sm" />
+                                    {t('audit')}
+                                </SecondaryButton>
+                            </Link>
+                        ) : null
                     }
                 />
             }
         >
-            <Head title={t('imports')} />
+            <Head title={t('nav_imports')} />
             <PageShell className="!space-y-6">
+                <DataRecordsTabs />
                 {canImportMayorca && (
                     <>
                         <section className="bv-card overflow-hidden p-0">

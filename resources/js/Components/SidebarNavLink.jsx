@@ -5,6 +5,7 @@ export default function SidebarNavLink({
     active = false,
     badge = null,
     icon = null,
+    className = '',
     children,
     ...props
 }) {
@@ -13,7 +14,8 @@ export default function SidebarNavLink({
             {...props}
             className={
                 'bv-nav-item group ' +
-                (active ? 'bv-nav-item-active' : 'bv-nav-item-idle')
+                (active ? 'bv-nav-item-active' : 'bv-nav-item-idle') +
+                (className ? ` ${className}` : '')
             }
         >
             {icon && (
