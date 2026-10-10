@@ -237,14 +237,6 @@ function QuietRoleHome({ summary, t, modules: modulesOverride, modulesHint }) {
             hint: t('home_box_attendance_hint'),
         },
         {
-            key: 'salary',
-            href: route('vault.lines.salary.create'),
-            icon: 'payroll',
-            tone: 'salary',
-            title: t('vault_form_salary'),
-            hint: t('vault_form_salary_short'),
-        },
-        {
             key: 'expenses',
             href: route('expenses.index'),
             icon: 'expenses',

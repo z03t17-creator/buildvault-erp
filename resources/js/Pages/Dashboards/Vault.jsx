@@ -367,7 +367,7 @@ export default function Vault({
                                 {t('vault_money_forms_hint')}
                             </p>
                         </div>
-                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                             <MoneyAction
                                 href={route('vault.lines.advance.create')}
                                 icon="vault"
@@ -388,13 +388,6 @@ export default function Vault({
                                 title={t('vault_form_job_pay')}
                                 hint={t('vault_form_job_pay_short')}
                                 tone="amber"
-                            />
-                            <MoneyAction
-                                href={route('vault.lines.salary.create')}
-                                icon="payroll"
-                                title={t('vault_form_salary')}
-                                hint={t('vault_form_salary_short')}
-                                tone="slate"
                             />
                         </div>
                         <div className="mt-3">
