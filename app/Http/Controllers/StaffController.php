@@ -236,7 +236,7 @@ class StaffController extends Controller
                 $attrs['currency'] = $data['currency'] ?? null;
             } elseif ($payModel === Staff::PAY_DAILY) {
                 $dayRate = (float) ($data['day_rate'] ?? 0);
-                // UI requires day_rate; legacy kind=time may omit it.
+                // Optional default; day + transport are recorded on each project job.
                 $attrs['day_rate'] = $dayRate > 0 ? $dayRate : null;
                 $attrs['currency'] = $data['currency'] ?? null;
             }
@@ -249,7 +249,7 @@ class StaffController extends Controller
                 $person = Staff::query()->create($attrs);
             }
 
-            // Price lists belong only to unit staff. Replacing them keeps one current catalog.
+            // Optional catalog for unit staff. Piece prices can also be entered on each job.
             $person->rates()->delete();
 
             if ($payModel !== Staff::PAY_UNIT) {
@@ -305,12 +305,7 @@ class StaffController extends Controller
                     $person->rate_unit = $legacyUnit;
                     $person->currency = $legacyCurrency;
                     $person->save();
-                    $saved = 1;
                 }
-            }
-
-            if ($saved === 0) {
-                throw new InvalidArgumentException('Unit staff need at least one rate row.');
             }
 
             return $person->fresh();

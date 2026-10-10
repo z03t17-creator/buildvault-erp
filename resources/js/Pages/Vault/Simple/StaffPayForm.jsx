@@ -61,6 +61,8 @@ function formFromLine(line, today, preselectStaffId, defaultUnit = '') {
         currency: line?.currency || 'IQD',
         days_count: line?.days_count != null ? String(line.days_count) : '',
         day_rate: line?.day_rate != null ? String(line.day_rate) : '',
+        transport_amount:
+            line?.transport_amount != null ? String(line.transport_amount) : '',
         site_kind: line?.site_kind || '',
         block: line?.block || '',
         zone: line?.zone || '',
@@ -73,12 +75,14 @@ function formFromLine(line, today, preselectStaffId, defaultUnit = '') {
     };
 }
 
-function holdPreview(amount, applyInsurance) {
+function holdPreview(amount, applyInsurance, holdBase = null) {
     if (!(amount > 0)) return null;
+    const base = holdBase != null ? holdBase : amount;
     if (applyInsurance) {
+        const hold = Math.round(base * 0.1 * 100) / 100;
         return {
-            hold: Math.round(amount * 0.1 * 100) / 100,
-            leaves: Math.round(amount * 0.9 * 100) / 100,
+            hold,
+            leaves: Math.round((amount - hold) * 100) / 100,
         };
     }
     return { hold: 0, leaves: amount };
@@ -93,6 +97,8 @@ export default function StaffPayForm({
     canEditRate = false,
     siteKinds = ['villa', 'building'],
     placeSuggestions = [],
+    itemSuggestions = [],
+    rateUnitSuggestions = [],
     salaryDues = {},
     line = null,
 }) {
@@ -139,6 +145,7 @@ export default function StaffPayForm({
                 apply_insurance: false,
                 day_rate: '',
                 days_count: '',
+                transport_amount: '',
                 items: [emptyItem(null, defaultUnit)],
             });
             return;
@@ -150,6 +157,7 @@ export default function StaffPayForm({
                 staff_id: String(selected.id),
                 day_rate:
                     selected.day_rate != null ? String(selected.day_rate) : '',
+                transport_amount: '',
                 currency: selected.currency || data.currency || 'IQD',
                 apply_insurance: true,
                 amount: '',
@@ -168,18 +176,29 @@ export default function StaffPayForm({
                 amount: '',
                 day_rate: '',
                 days_count: '',
+                transport_amount: '',
                 items: [emptyItem(first, defaultUnit)],
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [data.staff_id]);
 
-    const dailySubtotal = useMemo(() => {
+    const dailyLabor = useMemo(() => {
         const days = Number(data.days_count) || 0;
         const rate = Number(data.day_rate) || 0;
         if (days <= 0 || rate <= 0) return 0;
         return Math.round(days * rate * 100) / 100;
     }, [data.days_count, data.day_rate]);
+
+    const dailyTransport = useMemo(() => {
+        const transport = Number(data.transport_amount) || 0;
+        return transport > 0 ? Math.round(transport * 100) / 100 : 0;
+    }, [data.transport_amount]);
+
+    const dailySubtotal = useMemo(
+        () => Math.round((dailyLabor + dailyTransport) * 100) / 100,
+        [dailyLabor, dailyTransport],
+    );
 
     const unitRows = useMemo(() => {
         return (data.items || []).map((row) => {
@@ -205,7 +224,11 @@ export default function StaffPayForm({
         : isDaily
           ? dailySubtotal
           : unitTotal;
-    const preview = holdPreview(previewAmount, data.apply_insurance);
+    const preview = holdPreview(
+        previewAmount,
+        data.apply_insurance,
+        isDaily ? dailyLabor : null,
+    );
     const previewCurrency = isUnit
         ? unitRows.find((r) => r.currency)?.currency || data.currency
         : data.currency;
@@ -217,10 +240,25 @@ export default function StaffPayForm({
         setData('items', next);
     };
 
+    const patchItem = (index, patch) => {
+        const next = data.items.map((row, i) =>
+            i === index ? { ...row, ...patch } : row,
+        );
+        setData('items', next);
+    };
+
     const pickRate = (index, rateId) => {
         const rate = rates.find((r) => String(r.id) === String(rateId));
         if (!rate) {
-            setItem(index, 'staff_rate_id', '');
+            const next = data.items.map((row, i) =>
+                i === index
+                    ? {
+                          ...row,
+                          staff_rate_id: '',
+                      }
+                    : row,
+            );
+            setData('items', next);
             return;
         }
         const next = data.items.map((row, i) =>
@@ -239,7 +277,7 @@ export default function StaffPayForm({
         setData('currency', rate.currency);
     };
 
-    const addItem = () => setData('items', [...data.items, emptyItem(rates[0], defaultUnit)]);
+    const addItem = () => setData('items', [...data.items, emptyItem(null, defaultUnit)]);
     const removeItem = (index) => {
         if (data.items.length <= 1) return;
         setData(
@@ -247,6 +285,8 @@ export default function StaffPayForm({
             data.items.filter((_, i) => i !== index),
         );
     };
+
+    const rateEditable = (row) => canEditRate || !row.staff_rate_id;
 
     const validate = () => {
         const next = {};
@@ -379,20 +419,37 @@ export default function StaffPayForm({
         post(route('vault.lines.staff-pay.store'));
     };
 
-    const itemSelect = (row, index, id) => (
-        <select
-            id={id}
-            className={fieldClass}
-            value={row.staff_rate_id}
-            onChange={(e) => pickRate(index, e.target.value)}
-        >
-            <option value="">{t('staff_rate_item')}</option>
-            {rates.map((rate) => (
-                <option key={rate.id} value={rate.id}>
-                    {rate.item_name} ({rate.unit})
-                </option>
-            ))}
-        </select>
+    const itemFields = (row, index, suffix = '') => (
+        <div className="space-y-2">
+            {rates.length > 0 ? (
+                <select
+                    id={`rate_pick_${index}${suffix}`}
+                    className={fieldClass}
+                    value={row.staff_rate_id}
+                    onChange={(e) => pickRate(index, e.target.value)}
+                >
+                    <option value="">{t('staff_pay_free_piece')}</option>
+                    {rates.map((rate) => (
+                        <option key={rate.id} value={rate.id}>
+                            {rate.item_name} ({rate.unit})
+                        </option>
+                    ))}
+                </select>
+            ) : null}
+            <SuggestionCombobox
+                id={`item_${index}${suffix}`}
+                className={fieldClass}
+                value={row.item_name}
+                onChange={(next) =>
+                    patchItem(index, {
+                        item_name: next,
+                        ...(row.staff_rate_id ? { staff_rate_id: '' } : {}),
+                    })
+                }
+                suggestions={itemSuggestions}
+                placeholder={t('staff_rate_item')}
+            />
+        </div>
     );
 
     const editing = Boolean(line?.id);
@@ -650,6 +707,33 @@ export default function StaffPayForm({
                                 />
                                 <InputError message={mergedErrors.day_rate} className="mt-1" />
                             </FormField>
+                            <FormField>
+                                <InputLabel value={t('staff_pay_transport')} htmlFor="transport_amount" />
+                                <MoneyInput
+                                    id="transport_amount"
+                                    className={moneyFieldClass}
+                                    value={data.transport_amount}
+                                    onValueChange={(next) => setData('transport_amount', next)}
+                                    allowDecimals={data.currency === 'USD'}
+                                    placeholder="0"
+                                />
+                                <InputError message={mergedErrors.transport_amount} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={t('currency')} htmlFor="currency" />
+                                <div className="mt-1 flex gap-2">
+                                    {currencies.map((code) => (
+                                        <button
+                                            key={code}
+                                            type="button"
+                                            onClick={() => setData('currency', code)}
+                                            className={segmentClass(data.currency === code)}
+                                        >
+                                            {code}
+                                        </button>
+                                    ))}
+                                </div>
+                            </FormField>
                             {line?.kind === 'job_pay' ? (
                                 <FormField className="sm:col-span-2">
                                     <InputLabel value={t('amount')} htmlFor="amount" />
@@ -675,6 +759,12 @@ export default function StaffPayForm({
                                         />{' '}
                                         {data.currency}
                                     </span>
+                                    {dailyTransport > 0 ? (
+                                        <span className="ms-2 text-xs text-slate-500">
+                                            ({t('staff_pay_days')} {dailyLabor} + {t('staff_pay_transport')}{' '}
+                                            {dailyTransport})
+                                        </span>
+                                    ) : null}
                                 </p>
                             </FormField>
                         </FormSection>
@@ -684,19 +774,19 @@ export default function StaffPayForm({
                     {isUnit ? (
                         <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    {t('staff_pay_items_title')}
-                                </p>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                        {t('staff_pay_items_title')}
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+                                        {t('staff_pay_piece_on_job_hint')}
+                                    </p>
+                                </div>
                                 <SecondaryButton type="button" onClick={addItem}>
                                     {t('staff_rates_add')}
                                 </SecondaryButton>
                             </div>
                             <InputError message={mergedErrors.items} />
-                            {rates.length === 0 ? (
-                                <p className="text-sm text-rose-300">
-                                    {t('staff_pay_no_rates')}
-                                </p>
-                            ) : null}
                             <div className="hidden overflow-x-auto md:block">
                                 <table className="w-full min-w-[46rem] border-collapse text-sm">
                                     <thead>
@@ -712,9 +802,23 @@ export default function StaffPayForm({
                                     <tbody>
                                         {unitRows.map((row, index) => (
                                             <tr key={index} className="border-t border-slate-200 dark:border-slate-800">
-                                                <td className="px-2 py-2 align-top">{itemSelect(row, index)}</td>
+                                                <td className="px-2 py-2 align-top">{itemFields(row, index)}</td>
                                                 <td className="px-2 py-2 align-top">
-                                                    <TextInput className={fieldClass} value={row.unit} readOnly />
+                                                    <SuggestionCombobox
+                                                        id={`unit_${index}`}
+                                                        className={fieldClass}
+                                                        value={row.unit}
+                                                        onChange={(next) =>
+                                                            patchItem(index, {
+                                                                unit: next,
+                                                                ...(row.staff_rate_id
+                                                                    ? { staff_rate_id: '' }
+                                                                    : {}),
+                                                            })
+                                                        }
+                                                        suggestions={rateUnitSuggestions}
+                                                        placeholder={t('rate_unit')}
+                                                    />
                                                 </td>
                                                 <td className="px-2 py-2 align-top">
                                                     <MoneyInput
@@ -731,7 +835,7 @@ export default function StaffPayForm({
                                                         value={row.unit_rate}
                                                         onValueChange={(next) => setItem(index, 'unit_rate', next)}
                                                         allowDecimals
-                                                        disabled={!canEditRate}
+                                                        disabled={!rateEditable(row)}
                                                     />
                                                 </td>
                                                 <td className="px-2 py-2 text-end align-middle">
@@ -757,8 +861,22 @@ export default function StaffPayForm({
                             <div className="space-y-3 md:hidden">
                                 {unitRows.map((row, index) => (
                                     <div key={index} className="space-y-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/70">
-                                        {itemSelect(row, index, `item_m_${index}`)}
-                                        <TextInput className={fieldClass} value={row.unit} readOnly />
+                                        {itemFields(row, index, '_m')}
+                                        <SuggestionCombobox
+                                            id={`unit_m_${index}`}
+                                            className={fieldClass}
+                                            value={row.unit}
+                                            onChange={(next) =>
+                                                patchItem(index, {
+                                                    unit: next,
+                                                    ...(row.staff_rate_id
+                                                        ? { staff_rate_id: '' }
+                                                        : {}),
+                                                })
+                                            }
+                                            suggestions={rateUnitSuggestions}
+                                            placeholder={t('rate_unit')}
+                                        />
                                         <MoneyInput
                                             className={moneyFieldClass}
                                             value={row.quantity}
@@ -771,7 +889,7 @@ export default function StaffPayForm({
                                             value={row.unit_rate}
                                             onValueChange={(next) => setItem(index, 'unit_rate', next)}
                                             allowDecimals
-                                            disabled={!canEditRate}
+                                            disabled={!rateEditable(row)}
                                         />
                                         <div className="flex items-center justify-between">
                                             <span dir="ltr" className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">

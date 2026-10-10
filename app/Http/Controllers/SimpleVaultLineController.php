@@ -450,16 +450,38 @@ class SimpleVaultLineController extends Controller
             }
             $rateId = isset($row['staff_rate_id']) ? (int) $row['staff_rate_id'] : 0;
             $rate = $rateId ? $byId->get($rateId) : null;
-            if (! $rate) {
+            if ($rate) {
+                $out[] = [
+                    'staff_rate_id' => $rate->id,
+                    'item_name' => $rate->item_name,
+                    'unit' => $rate->unit,
+                    'quantity' => $row['quantity'] ?? 0,
+                    'unit_rate' => (float) $rate->rate,
+                    'currency' => $rate->currency,
+                ];
+
+                continue;
+            }
+
+            // Free piece row entered on the project job (no catalog rate).
+            $itemName = trim((string) ($row['item_name'] ?? ''));
+            $unit = trim((string) ($row['unit'] ?? ''));
+            $qty = (float) ($row['quantity'] ?? 0);
+            $unitRate = (float) ($row['unit_rate'] ?? 0);
+            $currency = strtoupper((string) ($row['currency'] ?? ''));
+            if ($itemName === '' || $unit === '' || $qty <= 0 || $unitRate <= 0) {
+                continue;
+            }
+            if (! in_array($currency, DualCurrency::CURRENCIES, true)) {
                 continue;
             }
             $out[] = [
-                'staff_rate_id' => $rate->id,
-                'item_name' => $rate->item_name,
-                'unit' => $rate->unit,
-                'quantity' => $row['quantity'] ?? 0,
-                'unit_rate' => (float) $rate->rate,
-                'currency' => $rate->currency,
+                'staff_rate_id' => null,
+                'item_name' => $itemName,
+                'unit' => $unit,
+                'quantity' => $qty,
+                'unit_rate' => $unitRate,
+                'currency' => $currency,
             ];
         }
 
@@ -482,6 +504,7 @@ class SimpleVaultLineController extends Controller
             'currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
             'days_count' => ['nullable', 'numeric', 'gt:0'],
             'day_rate' => ['nullable', 'numeric', 'gt:0'],
+            'transport_amount' => ['nullable', 'numeric', 'min:0'],
             'site_kind' => ['nullable', Rule::in(VaultLine::SITE_KINDS)],
             'block' => ['nullable', 'string', 'max:64'],
             'zone' => ['nullable', 'string', 'max:64'],
@@ -606,6 +629,9 @@ class SimpleVaultLineController extends Controller
             'apply_insurance' => (float) $line->hold_amount > 0,
             'days_count' => $line->days_count !== null ? (float) $line->days_count : null,
             'day_rate' => $line->day_rate !== null ? (float) $line->day_rate : null,
+            'transport_amount' => $line->transport_amount !== null
+                ? (float) $line->transport_amount
+                : null,
             'site_kind' => $line->site_kind,
             'block' => $line->block,
             'zone' => $line->zone,

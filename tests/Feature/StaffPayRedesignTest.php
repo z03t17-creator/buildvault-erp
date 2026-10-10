@@ -124,6 +124,35 @@ class StaffPayRedesignTest extends TestCase
         $this->assertSame(600.0, (float) $monthly->monthly_salary);
     }
 
+    public function test_staff_create_without_required_rates(): void
+    {
+        $this->actingAs($this->accountant)
+            ->post(route('staff.store'), [
+                'name' => 'Daily No Rate',
+                'pay_model' => Staff::PAY_DAILY,
+                'role' => 'Painter',
+            ])
+            ->assertRedirect();
+
+        $daily = Staff::query()->where('name', 'Daily No Rate')->first();
+        $this->assertNotNull($daily);
+        $this->assertTrue($daily->isDaily());
+        $this->assertNull($daily->day_rate);
+
+        $this->actingAs($this->accountant)
+            ->post(route('staff.store'), [
+                'name' => 'Unit No Rates',
+                'pay_model' => Staff::PAY_UNIT,
+                'role' => 'دەرگاچیی',
+            ])
+            ->assertRedirect();
+
+        $unit = Staff::query()->where('name', 'Unit No Rates')->first();
+        $this->assertNotNull($unit);
+        $this->assertTrue($unit->isUnit());
+        $this->assertSame(0, $unit->rates()->count());
+    }
+
     public function test_unit_pay_line_math_location_and_items(): void
     {
         $staff = Staff::query()->create([
@@ -289,6 +318,85 @@ class StaffPayRedesignTest extends TestCase
         $this->assertSame(2.0, (float) $line->days_count);
         $this->assertSame(50000.0, (float) $line->day_rate);
         $this->assertSame(VaultLine::HOLD_POOL_STAFF_OWED, $line->hold_pool);
+    }
+
+    public function test_daily_pay_records_day_rate_and_transport_on_job(): void
+    {
+        $staff = Staff::query()->create([
+            'name' => 'Transport Dana',
+            'kind' => Staff::KIND_TIME,
+            'pay_model' => Staff::PAY_DAILY,
+            'currency' => DualCurrency::IQD,
+        ]);
+        $project = Project::query()->create([
+            'name' => 'Villa North',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.staff-pay.store'), [
+                'staff_id' => $staff->id,
+                'occurred_on' => '2026-10-08',
+                'project_id' => $project->id,
+                'days_count' => 3,
+                'day_rate' => 40000,
+                'transport_amount' => 15000,
+                'currency' => DualCurrency::IQD,
+                'site_kind' => VaultLine::SITE_VILLA,
+                'villa_number' => '12',
+            ])
+            ->assertRedirect(route('vault.job-pay.index'));
+
+        $line = VaultLine::query()->where('kind', VaultLine::KIND_DAILY_PAY)->latest('id')->first();
+        $this->assertNotNull($line);
+        $this->assertSame(135000.0, (float) $line->amount);
+        $this->assertSame(12000.0, (float) $line->hold_amount);
+        $this->assertSame(3.0, (float) $line->days_count);
+        $this->assertSame(40000.0, (float) $line->day_rate);
+        $this->assertSame(15000.0, (float) $line->transport_amount);
+        $this->assertNull($staff->fresh()->day_rate);
+    }
+
+    public function test_unit_pay_accepts_free_piece_prices_on_job(): void
+    {
+        $staff = Staff::query()->create([
+            'name' => 'Piece Worker',
+            'kind' => Staff::KIND_UNIT,
+            'pay_model' => Staff::PAY_UNIT,
+        ]);
+
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.staff-pay.store'), [
+                'staff_id' => $staff->id,
+                'occurred_on' => '2026-10-08',
+                'apply_insurance' => true,
+                'items' => [
+                    [
+                        'item_name' => 'دەرگای MDF',
+                        'unit' => 'دانە',
+                        'quantity' => 2,
+                        'unit_rate' => 20000,
+                        'currency' => DualCurrency::IQD,
+                    ],
+                    [
+                        'item_name' => 'لامێنێت',
+                        'unit' => 'm²',
+                        'quantity' => 10,
+                        'unit_rate' => 5000,
+                        'currency' => DualCurrency::IQD,
+                    ],
+                ],
+            ])
+            ->assertRedirect(route('vault.job-pay.index'));
+
+        $line = VaultLine::query()->where('kind', VaultLine::KIND_UNIT_PAY)->latest('id')->first();
+        $this->assertNotNull($line);
+        $this->assertSame(90000.0, (float) $line->amount);
+        $this->assertSame(9000.0, (float) $line->hold_amount);
+        $this->assertCount(2, $line->items);
+        $this->assertNull($line->items->first()->staff_rate_id);
+        $this->assertSame('دەرگای MDF', $line->items->first()->item_name);
+        $this->assertSame(0, $staff->rates()->count());
     }
 
     public function test_monthly_pay_defaults_insurance_off(): void

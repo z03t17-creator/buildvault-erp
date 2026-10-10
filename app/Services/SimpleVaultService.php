@@ -184,7 +184,7 @@ class SimpleVaultService
     }
 
     /**
-     * Daily pay: days × day_rate. 10% default on.
+     * Daily pay: days × day_rate + optional transport. 10% default on labor only.
      *
      * @param  array<string, mixed>  $data
      */
@@ -204,11 +204,25 @@ class SimpleVaultService
             ? $this->positiveAmount($data['day_rate'])
             : $this->positiveAmount($staff->day_rate);
 
-        $amount = round($days * $dayRate, 2);
+        $transport = 0.0;
+        if (array_key_exists('transport_amount', $data) && $data['transport_amount'] !== null && $data['transport_amount'] !== '') {
+            $transport = $this->nonNegativeAmount($data['transport_amount']);
+        }
+
+        $labor = round($days * $dayRate, 2);
+        $amount = round($labor + $transport, 2);
         $currency = $this->currency($data['currency'] ?? $staff->currency);
         $occurredOn = $this->date($data['occurred_on'] ?? null);
         $applyInsurance = $this->boolDefault($data['apply_insurance'] ?? null, true);
-        $hold = $applyInsurance ? round($amount * self::HOLD_RATIO, 2) : 0.0;
+        $hold = $applyInsurance ? round($labor * self::HOLD_RATIO, 2) : 0.0;
+
+        $purpose = $data['purpose'] ?? null;
+        if ($purpose === null || $purpose === '') {
+            $purpose = trim($days.' ڕۆژ × '.$dayRate.' '.$currency);
+            if ($transport > 0) {
+                $purpose .= ' + '.$transport.' '.$currency.' گواستنەوە';
+            }
+        }
 
         return $this->storeLine([
             'vault_id' => $data['vault_id'] ?? $this->zhakoVault()->id,
@@ -219,10 +233,11 @@ class SimpleVaultService
             'project_id' => $data['project_id'] ?? null,
             'staff_id' => $staff->id,
             'note' => $data['note'] ?? null,
-            'purpose' => $data['purpose'] ?? trim($days.' ڕۆژ × '.$dayRate.' '.$currency),
+            'purpose' => $purpose,
             ...$this->locationAttrs($data),
             'days_count' => $days,
             'day_rate' => $dayRate,
+            'transport_amount' => $transport > 0 ? $transport : null,
             'hold_amount' => $hold,
             'hold_pool' => $applyInsurance ? VaultLine::HOLD_POOL_STAFF_OWED : null,
             'unlock_date' => $applyInsurance

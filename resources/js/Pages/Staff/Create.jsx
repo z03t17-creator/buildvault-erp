@@ -99,23 +99,29 @@ export default function Create({
                 next.currency = t('validation_currency_required');
             }
         }
-        if (isDaily) {
-            if (!data.day_rate || Number(data.day_rate) <= 0) {
-                next.day_rate = t('validation_amount_required');
-            }
+        // Daily day-rate and unit piece rates are optional at hire — set on each project job.
+        if (isDaily && data.day_rate && Number(data.day_rate) > 0) {
             if (!currencies.includes(data.currency)) {
                 next.currency = t('validation_currency_required');
             }
         }
         if (isUnit) {
-            const ok = (data.rates || []).some(
+            const partial = (data.rates || []).some(
+                (r) =>
+                    String(r.item_name || '').trim() ||
+                    (String(r.unit || '').trim() && r.unit !== defaultUnit) ||
+                    Number(r.rate) > 0,
+            );
+            const complete = (data.rates || []).filter(
                 (r) =>
                     String(r.item_name || '').trim() &&
                     String(r.unit || '').trim() &&
                     Number(r.rate) > 0 &&
                     currencies.includes(r.currency),
             );
-            if (!ok) next.rates = t('staff_rates_required');
+            if (partial && complete.length === 0) {
+                next.rates = t('staff_rates_incomplete');
+            }
         }
         setLocalErrors(next);
         return Object.keys(next).length === 0;
@@ -237,8 +243,16 @@ export default function Create({
 
                         {isDaily ? (
                             <>
+                                <FormField className="sm:col-span-2">
+                                    <p className="text-sm text-slate-600 dark:text-slate-300">
+                                        {t('staff_rates_on_job_hint')}
+                                    </p>
+                                </FormField>
                                 <FormField>
-                                    <InputLabel value={t('staff_day_rate')} htmlFor="day_rate" />
+                                    <InputLabel
+                                        value={`${t('staff_day_rate')} (${t('optional')})`}
+                                        htmlFor="day_rate"
+                                    />
                                     <MoneyInput
                                         id="day_rate"
                                         className={moneyFieldClass}
@@ -271,9 +285,17 @@ export default function Create({
                     {isUnit ? (
                         <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                                    {t('staff_rates_title')}
-                                </p>
+                                <div>
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                                        {t('staff_rates_title')}{' '}
+                                        <span className="font-normal text-slate-500">
+                                            ({t('optional')})
+                                        </span>
+                                    </p>
+                                    <p className="mt-0.5 text-xs text-slate-600 dark:text-slate-400">
+                                        {t('staff_rates_on_job_hint')}
+                                    </p>
+                                </div>
                                 <SecondaryButton type="button" onClick={addRate}>
                                     {t('staff_rates_add')}
                                 </SecondaryButton>

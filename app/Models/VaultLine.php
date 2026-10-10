@@ -92,6 +92,7 @@ class VaultLine extends Model
         'area',
         'days_count',
         'day_rate',
+        'transport_amount',
         'hold_amount',
         'hold_pool',
         'unlock_date',
@@ -110,6 +111,7 @@ class VaultLine extends Model
             'hold_amount' => 'decimal:2',
             'days_count' => 'decimal:2',
             'day_rate' => 'decimal:2',
+            'transport_amount' => 'decimal:2',
             'unlock_date' => 'date',
             'hold_released_at' => 'datetime',
         ];
