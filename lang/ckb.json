@@ -1272,7 +1272,7 @@
     "client_show_hold_dates": "قفڵ :start → بەسەرچوون :end",
     "projects_page_hint": "شوێن و تاوەر و کاری شوێنی — نە قاسە و نە مووچە.",
     "projects_overview": "سەیری شوێنەکان",
-    "projects_overview_hint": ":count شوێن — بودجەی دۆلار و دینار جیا دەمێننەوە.",
+    "projects_overview_hint": ":count شوێن — پارەی وەرگیراوی کڕیار بە دۆلار و دینار جیا دەمێننەوە.",
     "projects_stat_active_hint": "شوێنی بیناکاری چالاک",
     "projects_stat_planning_hint": "هێشتا دەستی پێنەکراوە",
     "projects_stat_towers_hint": ":people کەس لەسەر شوێنەکان",
@@ -1282,7 +1282,7 @@
     "projects_empty_title": "هێشتا پڕۆژە نییە",
     "projects_empty_hint": "شوێنێک دروست بکە بۆ تاوەر و نهۆم و تۆڕی شوێنی.",
     "projects_table_title": "هەموو شوێنەکان",
-    "projects_table_hint": "شوێنێک بکەرەوە بۆ تاوەر و خەڵک و پێشکەوتنی شوێنی.",
+    "projects_table_hint": "هەر شوێنێک پارەی وەرگیراوی کڕیار بە دۆلار و دینار پیشان دەدات.",
     "project_form_hint": "وردەکاری پڕۆژە و بەروار وەک YYYY-MM-DD. دۆلار و دینار جیا لە شوێنی تر.",
     "project_form_edit_title": "دەستکاری :name",
     "project_form_agreement_title": "کۆی ڕێککەوتن",
@@ -1667,5 +1667,9 @@
     "staff_pay_transport": "گواستنەوە",
     "staff_pay_free_piece": "دانەی ئازاد (لە خوارەوە بنووسە)",
     "staff_pay_piece_on_job_hint": "نرخی دانە بۆ ئەم کارە بنووسە — دەرگا، لامێنێت، تەختە، یان نرخێکی پاشەکەوتکراو هەڵبژێرە.",
-    "warehouse_tab_overview": "سەرەکی"
+    "warehouse_tab_overview": "سەرەکی",
+    "projects_received_usd": "پارەی وەرگیراو (دۆلار)",
+    "projects_received_iqd": "پارەی وەرگیراو (دینار)",
+    "projects_col_received_usd": "دۆلار",
+    "projects_col_received_iqd": "دینار"
 }

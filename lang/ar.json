@@ -1272,7 +1272,7 @@
     "client_show_hold_dates": "الحجز :start → الاستحقاق :end",
     "projects_page_hint": "مواقع وأبراج والعمل المكاني — ليست القاصة أو الرواتب.",
     "projects_overview": "نظرة على المواقع",
-    "projects_overview_hint": ":count مواقع — ميزانيات الدولار والدينار منفصلة.",
+    "projects_overview_hint": ":count مواقع — أموال العميل المستلمة تبقى منفصلة بالدولار والدينار.",
     "projects_stat_active_hint": "مواقع قيد التنفيذ",
     "projects_stat_planning_hint": "لم تبدأ بعد",
     "projects_stat_towers_hint": ":people أشخاص مرتبطون عبر المواقع",
@@ -1282,7 +1282,7 @@
     "projects_empty_title": "لا مشاريع بعد",
     "projects_empty_hint": "أنشئ موقعاً لفتح الأبراج والطوابق والشبكة المكانية.",
     "projects_table_title": "كل المواقع",
-    "projects_table_hint": "افتح موقعاً للأبراج والأشخاص والتقدم المكاني.",
+    "projects_table_hint": "كل موقع يعرض أموال العميل المستلمة بالدولار والدينار.",
     "project_form_hint": "تفاصيل المشروع والتواريخ بصيغة YYYY-MM-DD. الدولار والدينار منفصلان في أماكن أخرى.",
     "project_form_edit_title": "تعديل :name",
     "project_form_agreement_title": "إجماليات الاتفاقية",
@@ -1667,5 +1667,9 @@
     "staff_pay_transport": "نقل",
     "staff_pay_free_piece": "قطعة حرة (اكتب أدناه)",
     "staff_pay_piece_on_job_hint": "أدخل أسعار القطعة لهذه المهمة — أبواب، لامينيت، ألواح، أو اختر سعراً محفوظاً.",
-    "warehouse_tab_overview": "نظرة عامة"
+    "warehouse_tab_overview": "نظرة عامة",
+    "projects_received_usd": "المستلم بالدولار",
+    "projects_received_iqd": "المستلم بالدينار",
+    "projects_col_received_usd": "دولار",
+    "projects_col_received_iqd": "دينار"
 }

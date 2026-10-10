@@ -52,6 +52,7 @@ export default function Show({ project, financialSummary, recentMaterials, canVi
     const canCreateTower = useCan('towers.create');
     const canDocs = useCan('documents.viewAny');
     const iqd = t('IQD');
+    const usd = t('USD');
     const towers = project.towers || [];
     const workers = project.workers || [];
     const receipts = project.receipts || [];
@@ -122,7 +123,18 @@ export default function Show({ project, financialSummary, recentMaterials, canVi
                 {canViewFinancials && summary && (
                     <DataPanel title={t('financial_summary')} subtitle={t('financial_summary_hint')}>
                         <FinancialRow label={t('contract_value')} value={summary.contract_value_iqd} iqd={iqd} />
-                        <FinancialRow label={t('money_received')} value={summary.money_received_iqd} iqd={iqd} />
+                        <FinancialRow
+                            label={t('projects_received_usd')}
+                            value={summary.money_received_usd ?? 0}
+                            iqd={usd}
+                            hint={t('money_received_hint')}
+                        />
+                        <FinancialRow
+                            label={t('projects_received_iqd')}
+                            value={summary.money_received_iqd}
+                            iqd={iqd}
+                            hint={t('money_received_hint')}
+                        />
                         <FinancialRow
                             label={t('project_expenses')}
                             value={summary.project_expenses_iqd}

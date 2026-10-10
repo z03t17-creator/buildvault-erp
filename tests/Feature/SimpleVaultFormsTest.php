@@ -92,7 +92,7 @@ class SimpleVaultFormsTest extends TestCase
                 'project_id' => $this->project->id,
                 'note' => 'Client deposit',
             ])
-            ->assertRedirect(route('dashboards.vault'));
+            ->assertRedirect(route('projects.show', $this->project));
 
         $line = VaultLine::query()->where('kind', VaultLine::KIND_ADVANCE)->first();
         $this->assertNotNull($line);
@@ -102,6 +102,30 @@ class SimpleVaultFormsTest extends TestCase
         $this->assertSame('2027-04-03', $line->unlock_date->toDateString());
         $this->assertSame(DualCurrency::USD, $line->currency);
         $this->assertSame($this->project->id, $line->project_id);
+    }
+
+    public function test_advance_requires_project_and_rolls_into_project_money_received(): void
+    {
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.advance.store'), [
+                'occurred_on' => '2026-10-05',
+                'amount' => 500,
+                'currency' => DualCurrency::USD,
+            ])
+            ->assertSessionHasErrors('project_id');
+
+        $this->actingAs($this->accountant)
+            ->post(route('vault.lines.advance.store'), [
+                'occurred_on' => '2026-10-05',
+                'amount' => 2500,
+                'currency' => DualCurrency::IQD,
+                'project_id' => $this->project->id,
+            ])
+            ->assertRedirect(route('projects.show', $this->project));
+
+        $summary = app(\App\Services\ProjectFinancialService::class)->summary($this->project->fresh());
+        $this->assertSame(0.0, $summary['money_received_usd']);
+        $this->assertSame(2500.0, $summary['money_received_iqd']);
     }
 
     public function test_vault_expense_routes_redirect_to_project_expenses(): void

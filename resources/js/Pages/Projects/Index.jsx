@@ -91,7 +91,14 @@ export default function Index({ projects, canViewFinancials }) {
     const towersTotal = list.reduce((sum, p) => sum + (Number(p.towers_count) || 0), 0);
     const workersTotal = list.reduce((sum, p) => sum + (Number(p.workers_count) || 0), 0);
 
-    const budgetUsd = list.reduce((sum, p) => sum + (Number(p.total_budget_usd) || 0), 0);
+    const receivedUsd = list.reduce(
+        (sum, p) => sum + (Number(p.financial_summary?.money_received_usd) || 0),
+        0,
+    );
+    const receivedIqd = list.reduce(
+        (sum, p) => sum + (Number(p.financial_summary?.money_received_iqd) || 0),
+        0,
+    );
 
     return (
         <AuthenticatedLayout
@@ -152,13 +159,20 @@ export default function Index({ projects, canViewFinancials }) {
                                 hint={t('projects_stat_people_hint')}
                             />
                         </div>
-                        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                            <MoneyStat
-                                label={t('projects_budget_usd')}
-                                value={budgetUsd > 0 ? budgetUsd : null}
-                                currency={usd}
-                            />
-                        </div>
+                        {showFinance && (
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                                <MoneyStat
+                                    label={t('projects_received_usd')}
+                                    value={receivedUsd > 0 ? receivedUsd : null}
+                                    currency={usd}
+                                />
+                                <MoneyStat
+                                    label={t('projects_received_iqd')}
+                                    value={receivedIqd > 0 ? receivedIqd : null}
+                                    currency={iqd}
+                                />
+                            </div>
+                        )}
                     </section>
                 )}
 
@@ -204,8 +218,8 @@ export default function Index({ projects, canViewFinancials }) {
                                     <Th>{t('location')}</Th>
                                     {showFinance && (
                                         <>
-                                            <Th align="end">{usd}</Th>
-                                            <Th align="end">{t('money_received')}</Th>
+                                            <Th align="end">{t('projects_col_received_usd')}</Th>
+                                            <Th align="end">{t('projects_col_received_iqd')}</Th>
                                         </>
                                     )}
                                     <Th align="end">{t('towers_count')}</Th>
@@ -215,8 +229,9 @@ export default function Index({ projects, canViewFinancials }) {
                             <tbody>
                                 {list.map((project) => {
                                     const fin = project.financial_summary;
-                                    const budgetUsdRow = Number(project.total_budget_usd) || 0;
-                                    const receivedIqd =
+                                    const rowReceivedUsd =
+                                        Number(fin?.money_received_usd) || 0;
+                                    const rowReceivedIqd =
                                         Number(fin?.money_received_iqd) || 0;
 
                                     return (
@@ -251,9 +266,9 @@ export default function Index({ projects, canViewFinancials }) {
                                             {showFinance && (
                                                 <>
                                                     <Td align="end" money>
-                                                        {budgetUsdRow > 0 ? (
+                                                        {rowReceivedUsd > 0 ? (
                                                             <MoneyAmount
-                                                                value={budgetUsdRow}
+                                                                value={rowReceivedUsd}
                                                                 label={usd}
                                                                 size="sm"
                                                                 showLabel={false}
@@ -263,9 +278,9 @@ export default function Index({ projects, canViewFinancials }) {
                                                         )}
                                                     </Td>
                                                     <Td align="end" money>
-                                                        {receivedIqd > 0 ? (
+                                                        {rowReceivedIqd > 0 ? (
                                                             <MoneyAmount
-                                                                value={receivedIqd}
+                                                                value={rowReceivedIqd}
                                                                 label={iqd}
                                                                 size="sm"
                                                                 showLabel={false}

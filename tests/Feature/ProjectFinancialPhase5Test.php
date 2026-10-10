@@ -169,6 +169,8 @@ class ProjectFinancialPhase5Test extends TestCase
                 ->component('Projects/Index')
                 ->where('canViewFinancials', true)
                 ->has('projects.0.financial_summary.contract_value_iqd')
+                ->has('projects.0.financial_summary.money_received_usd')
+                ->has('projects.0.financial_summary.money_received_iqd')
             );
     }
 }

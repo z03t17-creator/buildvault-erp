@@ -85,7 +85,7 @@ class SimpleVaultLineController extends Controller
             'occurred_on' => ['required', 'date'],
             'amount' => ['required', 'numeric', 'gt:0'],
             'currency' => ['required', Rule::in(DualCurrency::CURRENCIES)],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
             'purpose' => ['nullable', 'string', 'max:255'],
             'note' => ['nullable', 'string', 'max:500'],
         ]);
@@ -100,7 +100,7 @@ class SimpleVaultLineController extends Controller
         }
 
         return redirect()
-            ->route('dashboards.vault')
+            ->route('projects.show', $data['project_id'])
             ->with('success', __('vault_advance_saved'));
     }
 

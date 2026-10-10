@@ -8,13 +8,18 @@ use App\Models\Project;
 use App\Models\ProjectReceipt;
 use App\Models\Transaction;
 use App\Models\Vault;
+use App\Models\VaultLine;
 use App\Support\AuditActions;
 use App\Support\DualCurrency;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Project-level IQD financial summary and money-received recording.
+ * Project-level dual-currency financial summary and money-received recording.
+ *
+ * Money received per currency = ledger deposits/receipts (transactions) plus
+ * simple-vault client advances (vault_lines.kind=advance). USD and IQD never
+ * convert into each other here.
  *
  * material_cost_iqd = real DB rollup of stock-OUT movements for the project
  * (quantity × purchase_price_iqd snapshot at issue). Stock IN never adds to
@@ -33,6 +38,7 @@ class ProjectFinancialService
     /**
      * @return array{
      *     contract_value_iqd: float,
+     *     money_received_usd: float,
      *     money_received_iqd: float,
      *     project_expenses_iqd: float,
      *     material_cost_iqd: float,
@@ -47,6 +53,7 @@ class ProjectFinancialService
     public function summary(Project $project): array
     {
         $contractValue = round((float) $project->contract_value_iqd, 2);
+        $moneyReceivedUsd = $this->moneyReceivedUsd($project);
         $moneyReceived = $this->moneyReceivedIqd($project);
         $projectExpenses = $this->projectExpensesIqd($project);
         $materialCost = $this->materialCostIqd($project);
@@ -61,6 +68,7 @@ class ProjectFinancialService
 
         return [
             'contract_value_iqd' => $contractValue,
+            'money_received_usd' => $moneyReceivedUsd,
             'money_received_iqd' => $moneyReceived,
             'project_expenses_iqd' => $projectExpenses,
             'material_cost_iqd' => $materialCost,
@@ -106,17 +114,42 @@ class ProjectFinancialService
     }
 
     /**
-     * Money received = sum of vault deposit ledger IQD for this project
-     * (receipts call VaultService::deposit; legacy deposits also count).
+     * Money received in USD for this project (transactions + vault advances).
+     */
+    public function moneyReceivedUsd(Project $project): float
+    {
+        $ledger = (float) Transaction::query()
+            ->where('project_id', $project->id)
+            ->whereIn('type', Transaction::MONEY_RECEIVED_TYPES)
+            ->sum('amount_usd');
+
+        $advances = (float) VaultLine::query()
+            ->where('project_id', $project->id)
+            ->where('kind', VaultLine::KIND_ADVANCE)
+            ->where('currency', DualCurrency::USD)
+            ->sum('amount');
+
+        return round($ledger + $advances, 2);
+    }
+
+    /**
+     * Money received in IQD for this project (transactions + vault advances).
+     * Receipts call VaultService::deposit; simple-vault سلفە lines also count.
      */
     public function moneyReceivedIqd(Project $project): float
     {
-        $total = (float) Transaction::query()
+        $ledger = (float) Transaction::query()
             ->where('project_id', $project->id)
             ->whereIn('type', Transaction::MONEY_RECEIVED_TYPES)
             ->sum('amount_iqd');
 
-        return round($total, 2);
+        $advances = (float) VaultLine::query()
+            ->where('project_id', $project->id)
+            ->where('kind', VaultLine::KIND_ADVANCE)
+            ->where('currency', DualCurrency::IQD)
+            ->sum('amount');
+
+        return round($ledger + $advances, 2);
     }
 
     /**

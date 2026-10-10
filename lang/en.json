@@ -1272,7 +1272,7 @@
     "client_show_hold_dates": "Hold :start → matures :end",
     "projects_page_hint": "Sites, towers, and spatial work — not vault or payroll.",
     "projects_overview": "Sites overview",
-    "projects_overview_hint": ":count sites — USD and IQD budgets stay separate.",
+    "projects_overview_hint": ":count sites — client money received stays separate in USD and IQD.",
     "projects_stat_active_hint": "Live construction sites",
     "projects_stat_planning_hint": "Not started yet",
     "projects_stat_towers_hint": ":people people linked across sites",
@@ -1282,7 +1282,7 @@
     "projects_empty_title": "No projects yet",
     "projects_empty_hint": "Create a site to open towers, floors, and the spatial grid.",
     "projects_table_title": "All sites",
-    "projects_table_hint": "Open a site for towers, people, and spatial progress.",
+    "projects_table_hint": "Each site shows client money received in dollar and dinar.",
     "project_form_hint": "Project details and dates as YYYY-MM-DD. USD and IQD stay separate elsewhere.",
     "project_form_edit_title": "Edit :name",
     "project_form_agreement_title": "Agreement totals",
@@ -1667,5 +1667,9 @@
     "staff_pay_transport": "Transport",
     "staff_pay_free_piece": "Free piece (type below)",
     "staff_pay_piece_on_job_hint": "Enter piece prices for this job — doors, laminate, floorboards, or pick a saved rate.",
-    "warehouse_tab_overview": "Overview"
+    "warehouse_tab_overview": "Overview",
+    "projects_received_usd": "Received USD",
+    "projects_received_iqd": "Received IQD",
+    "projects_col_received_usd": "USD",
+    "projects_col_received_iqd": "IQD"
 }

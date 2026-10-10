@@ -7,11 +7,13 @@ use App\Models\Payout;
 use App\Models\Project;
 use App\Models\Transaction;
 use App\Models\Vault;
+use App\Models\VaultLine;
 use App\Models\Worker;
 use App\Services\ExchangeRateService;
 use App\Services\ExpenseService;
 use App\Services\ProjectFinancialService;
 use App\Services\VaultService;
+use App\Support\DualCurrency;
 use Database\Seeders\VaultSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
@@ -143,6 +145,7 @@ class ProjectFinancialServiceTest extends TestCase
         $summary = $this->service->summary($this->project->fresh());
 
         $this->assertSame(100_000_000.0, $summary['contract_value_iqd']);
+        $this->assertSame(10_000.0, $summary['money_received_usd']);
         $this->assertSame(13_100_000.0, $summary['money_received_iqd']);
         $this->assertSame(500_000.0, $summary['project_expenses_iqd']);
         $this->assertSame(0.0, $summary['material_cost_iqd']);
@@ -153,6 +156,61 @@ class ProjectFinancialServiceTest extends TestCase
         $this->assertSame(12_455_900.0, $summary['net_position_iqd']);
         $this->assertSame('IQD', $summary['currency']);
         $this->assertArrayNotHasKey('project_expenses', $summary['stubs']);
+    }
+
+    public function test_money_received_includes_vault_advances_per_currency(): void
+    {
+        Transaction::query()->create([
+            'vault_id' => $this->vault->id,
+            'project_id' => $this->project->id,
+            'type' => Transaction::TYPE_MONEY_RECEIVED,
+            'amount_usd' => 100,
+            'amount_iqd' => 0,
+            'exchange_rate' => 0,
+            'description' => 'Receipt USD',
+        ]);
+
+        VaultLine::query()->create([
+            'vault_id' => $this->vault->id,
+            'kind' => VaultLine::KIND_ADVANCE,
+            'occurred_on' => now()->toDateString(),
+            'amount' => 500,
+            'currency' => DualCurrency::USD,
+            'project_id' => $this->project->id,
+            'hold_amount' => 50,
+            'hold_pool' => VaultLine::HOLD_POOL_COMPANY_INSURANCE,
+            'unlock_date' => now()->addDays(180)->toDateString(),
+        ]);
+
+        VaultLine::query()->create([
+            'vault_id' => $this->vault->id,
+            'kind' => VaultLine::KIND_ADVANCE,
+            'occurred_on' => now()->toDateString(),
+            'amount' => 2_000_000,
+            'currency' => DualCurrency::IQD,
+            'project_id' => $this->project->id,
+            'hold_amount' => 200_000,
+            'hold_pool' => VaultLine::HOLD_POOL_COMPANY_INSURANCE,
+            'unlock_date' => now()->addDays(180)->toDateString(),
+        ]);
+
+        // Wrong project must not count.
+        $other = Project::query()->create(['name' => 'Other']);
+        VaultLine::query()->create([
+            'vault_id' => $this->vault->id,
+            'kind' => VaultLine::KIND_ADVANCE,
+            'occurred_on' => now()->toDateString(),
+            'amount' => 999,
+            'currency' => DualCurrency::USD,
+            'project_id' => $other->id,
+            'hold_amount' => 99.9,
+            'hold_pool' => VaultLine::HOLD_POOL_COMPANY_INSURANCE,
+            'unlock_date' => now()->addDays(180)->toDateString(),
+        ]);
+
+        $summary = $this->service->summary($this->project->fresh());
+        $this->assertSame(600.0, $summary['money_received_usd']);
+        $this->assertSame(2_000_000.0, $summary['money_received_iqd']);
     }
 
     public function test_record_receipt_updates_vault_and_money_received(): void

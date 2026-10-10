@@ -38,6 +38,7 @@ class ProjectController extends Controller
                     $summary = $this->financials->summary($project);
                     $row['financial_summary'] = [
                         'contract_value_iqd' => $summary['contract_value_iqd'],
+                        'money_received_usd' => $summary['money_received_usd'],
                         'money_received_iqd' => $summary['money_received_iqd'],
                         'remaining_vs_contract_iqd' => $summary['remaining_vs_contract_iqd'],
                         'net_position_iqd' => $summary['net_position_iqd'],
