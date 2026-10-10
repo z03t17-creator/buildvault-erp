@@ -712,6 +712,8 @@
     "search": "بحث",
     "delete": "حذف",
     "confirm_delete": "حذف هذا السجل؟",
+    "confirm_delete_title": "حذف هذا السجل؟",
+    "confirm_delete_hint": "لا يمكن التراجع عن هذا الإجراء.",
     "all_categories": "كل الفئات",
     "all_types": "كل الأنواع",
     "all_products": "كل المنتجات",

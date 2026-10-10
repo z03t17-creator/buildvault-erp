@@ -712,6 +712,8 @@
     "search": "گەڕان",
     "delete": "سڕینەوە",
     "confirm_delete": "ئەم تۆمارە بسڕدرێتەوە؟",
+    "confirm_delete_title": "ئەم تۆمارە بسڕدرێتەوە؟",
+    "confirm_delete_hint": "ئەم کردارە ناگەڕێتەوە.",
     "all_categories": "هەموو پۆلەکان",
     "all_types": "هەموو جۆرەکان",
     "all_products": "هەموو بەرهەمەکان",

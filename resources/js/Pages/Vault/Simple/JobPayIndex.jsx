@@ -1,3 +1,4 @@
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
@@ -25,10 +26,26 @@ export default function JobPayIndex({
     const canChange = Boolean(canCreate || canEditRows);
     const list = Array.isArray(lines) ? lines : [];
     const [confirmingId, setConfirmingId] = useState(null);
+    const [deleteId, setDeleteId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
-    const removeLine = (id) => {
-        if (!window.confirm(t('confirm_delete'))) return;
-        router.delete(route('vault.lines.staff-pay.destroy', id), { preserveScroll: true });
+    const removeLine = (id) => setDeleteId(id);
+
+    const closeDeleteDialog = () => {
+        if (deleting) return;
+        setDeleteId(null);
+    };
+
+    const confirmDeleteLine = () => {
+        if (!deleteId || deleting) return;
+        setDeleting(true);
+        router.delete(route('vault.lines.staff-pay.destroy', deleteId), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteId(null);
+            },
+        });
     };
 
     const confirmHold = (id) => {
@@ -237,6 +254,17 @@ export default function JobPayIndex({
                         </DataTable>
                     </DataPanel>
                 )}
+
+                <ConfirmDialog
+                    show={Boolean(deleteId)}
+                    title={t('confirm_delete_title')}
+                    message={t('confirm_delete_hint')}
+                    confirmLabel={t('delete')}
+                    cancelLabel={t('cancel')}
+                    processing={deleting}
+                    onClose={closeDeleteDialog}
+                    onConfirm={confirmDeleteLine}
+                />
             </PageShell>
         </AuthenticatedLayout>
     );

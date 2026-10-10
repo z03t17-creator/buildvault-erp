@@ -1,3 +1,4 @@
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
 import EmptyState from '@/Components/EmptyState';
@@ -11,20 +12,37 @@ import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
 export default function Index({ staff = [], canCreate = false, canEditRows = false }) {
     const t = useTranslations();
     const canChange = canCreate || canEditRows;
     const list = Array.isArray(staff) ? staff : [];
+    const [deleteId, setDeleteId] = useState(null);
+    const [deleting, setDeleting] = useState(false);
     const counts = {
         monthly: list.filter((person) => payModelOf(person) === 'monthly').length,
         daily: list.filter((person) => payModelOf(person) === 'daily').length,
         unit: list.filter((person) => payModelOf(person) === 'unit').length,
     };
 
-    const removeStaff = (id) => {
-        if (!window.confirm(t('confirm_delete'))) return;
-        router.delete(route('staff.destroy', id), { preserveScroll: true });
+    const removeStaff = (id) => setDeleteId(id);
+
+    const closeDeleteDialog = () => {
+        if (deleting) return;
+        setDeleteId(null);
+    };
+
+    const confirmDeleteStaff = () => {
+        if (!deleteId || deleting) return;
+        setDeleting(true);
+        router.delete(route('staff.destroy', deleteId), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteId(null);
+            },
+        });
     };
 
     const paySummary = (person) => {
@@ -243,6 +261,17 @@ export default function Index({ staff = [], canCreate = false, canEditRows = fal
                         </DataTable>
                     </DataPanel>
                 )}
+
+                <ConfirmDialog
+                    show={Boolean(deleteId)}
+                    title={t('confirm_delete_title')}
+                    message={t('confirm_delete_hint')}
+                    confirmLabel={t('delete')}
+                    cancelLabel={t('cancel')}
+                    processing={deleting}
+                    onClose={closeDeleteDialog}
+                    onConfirm={confirmDeleteStaff}
+                />
             </PageShell>
         </AuthenticatedLayout>
     );

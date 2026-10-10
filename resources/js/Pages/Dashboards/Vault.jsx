@@ -1,3 +1,4 @@
+import ConfirmDialog from '@/Components/ConfirmDialog';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -82,6 +83,7 @@ function HoldTable({
     confirmingId = null,
     onConfirmHold,
     canManageAdvance = false,
+    onRequestDelete,
 }) {
     if (!rows?.length) {
         return (
@@ -164,16 +166,7 @@ function HoldTable({
                                                 <button
                                                     type="button"
                                                     className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
-                                                    onClick={() => {
-                                                        if (confirm(t('confirm_delete'))) {
-                                                            router.delete(
-                                                                route(
-                                                                    'vault.lines.advance.destroy',
-                                                                    row.id,
-                                                                ),
-                                                            );
-                                                        }
-                                                    }}
+                                                    onClick={() => onRequestDelete?.(row)}
                                                 >
                                                     {t('delete')}
                                                 </button>
@@ -300,6 +293,8 @@ export default function Vault({
     const holds = staffHolds || [];
     const est = estimates || {};
     const [confirmingId, setConfirmingId] = useState(null);
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
 
     const confirmHold = (id) => {
         if (!canManage || confirmingId) return;
@@ -312,6 +307,23 @@ export default function Vault({
                 onFinish: () => setConfirmingId(null),
             },
         );
+    };
+
+    const closeDeleteDialog = () => {
+        if (deleting) return;
+        setDeleteTarget(null);
+    };
+
+    const confirmDeleteAdvance = () => {
+        if (!deleteTarget?.id || deleting) return;
+        setDeleting(true);
+        router.delete(route('vault.lines.advance.destroy', deleteTarget.id), {
+            preserveScroll: true,
+            onFinish: () => {
+                setDeleting(false);
+                setDeleteTarget(null);
+            },
+        });
     };
 
     return (
@@ -447,6 +459,7 @@ export default function Vault({
                             usd={usd}
                             iqd={iqd}
                             canManageAdvance={canManage}
+                            onRequestDelete={setDeleteTarget}
                         />
                     </Shell>
 
@@ -490,6 +503,17 @@ export default function Vault({
                         </div>
                     </section>
                 </div>
+
+                <ConfirmDialog
+                    show={Boolean(deleteTarget)}
+                    title={t('confirm_delete_title')}
+                    message={t('confirm_delete_hint')}
+                    confirmLabel={t('delete')}
+                    cancelLabel={t('cancel')}
+                    processing={deleting}
+                    onClose={closeDeleteDialog}
+                    onConfirm={confirmDeleteAdvance}
+                />
             </PageShell>
         </AuthenticatedLayout>
     );
