@@ -25,14 +25,16 @@ export default function SalaryForm({
     estimates = {},
     availableCash = {},
     today,
+    preselectStaffId = null,
 }) {
     const t = useTranslations();
     const [localErrors, setLocalErrors] = useState({});
     const { data, setData, post, processing, errors } = useForm({
-        staff_id: '',
+        staff_id: preselectStaffId ? String(preselectStaffId) : '',
         occurred_on: today || todayIsoDate(),
         project_id: '',
         note: '',
+        apply_insurance: false,
     });
 
     const mergedErrors = useMemo(
@@ -74,6 +76,7 @@ export default function SalaryForm({
 
     return (
         <AuthenticatedLayout
+            desk
             header={
                 <PageHeader
                     title={t('vault_form_salary')}

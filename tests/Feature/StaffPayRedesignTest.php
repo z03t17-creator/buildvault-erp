@@ -1062,6 +1062,8 @@ class StaffPayRedesignTest extends TestCase
         $pays = file_get_contents(resource_path('js/Pages/Vault/Simple/JobPayIndex.jsx'));
         $this->assertStringContainsString("route('staff.destroy'", $index);
         $this->assertStringContainsString("route('staff.edit'", $index);
+        // Actions column only — not duplicated under the name cell.
+        $this->assertSame(2, substr_count($index, '<DeskRowActions'));
         $this->assertStringContainsString("route('vault.lines.staff-pay.destroy'", $pays);
         $this->assertStringContainsString("route('vault.lines.staff-pay.edit'", $pays);
     }

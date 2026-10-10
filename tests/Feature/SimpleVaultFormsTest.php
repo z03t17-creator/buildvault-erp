@@ -213,7 +213,7 @@ class SimpleVaultFormsTest extends TestCase
             ->get(route('vault.lines.salary.create'))
             ->assertOk()
             ->assertInertia(fn ($page) => $page
-                ->component('Vault/Simple/StaffPayForm')
+                ->component('Vault/Simple/SalaryForm')
                 ->has('staff', 1)
                 ->has('estimates.USD')
                 ->has('availableCash.USD')

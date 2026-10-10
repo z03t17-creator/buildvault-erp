@@ -384,16 +384,19 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
                                     <Dropdown.Link href={route('profile.edit')}>
                                         {t('profile')}
                                     </Dropdown.Link>
-                                    <Dropdown.Link
-                                        href={route('logout')}
-                                        method="post"
-                                        as="button"
-                                        className="text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"
-                                    >
-                                        {t('log_out')}
-                                    </Dropdown.Link>
                                 </Dropdown.Content>
                             </Dropdown>
+                            <Link
+                                href={route('logout')}
+                                method="post"
+                                as="button"
+                                className="inline-flex h-11 shrink-0 items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-2.5 text-sm font-semibold text-rose-700 transition hover:border-rose-300 hover:bg-rose-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 sm:px-3 dark:border-rose-800/60 dark:bg-rose-950/40 dark:text-rose-300 dark:hover:bg-rose-900/50"
+                                aria-label={t('log_out')}
+                                title={t('log_out')}
+                            >
+                                <NavIcon name="logout" className="text-base" />
+                                <span className="hidden sm:inline">{t('log_out')}</span>
+                            </Link>
                         </div>
                     </div>
 

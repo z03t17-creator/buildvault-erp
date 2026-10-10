@@ -456,13 +456,13 @@ function accountantModules(t) {
         {
             key: 'salary',
             href: route('vault.lines.salary.create'),
-            secondaryHref: route('vault.lines.job-pay.create'),
+            secondaryHref: route('penalties.index'),
             primaryLabel: t('vault_form_salary'),
-            secondaryLabel: t('vault_form_job_pay'),
+            secondaryLabel: t('penalties'),
             icon: 'payroll',
             tone: 'salary',
-            title: t('vault_money_forms'),
-            hint: t('vault_money_forms_hint'),
+            title: t('vault_form_salary'),
+            hint: t('vault_form_salary_short'),
         },
         {
             key: 'attendance',

@@ -453,7 +453,16 @@ export default function StaffPayForm({
     );
 
     const editing = Boolean(line?.id);
-    const title = editing ? t('staff_pay_edit_title') : t('vault_form_job_pay');
+    const title = editing
+        ? t('staff_pay_edit_title')
+        : isMonthly
+          ? t('vault_form_salary')
+          : t('vault_form_job_pay');
+    const subtitle = editing
+        ? t('staff_pay_edit_hint')
+        : isMonthly
+          ? t('vault_form_salary_hint')
+          : t('staff_pay_form_hint');
 
     return (
         <AuthenticatedLayout
@@ -461,11 +470,15 @@ export default function StaffPayForm({
             header={
                 <PageHeader
                     title={title}
-                    subtitle={editing ? t('staff_pay_edit_hint') : t('staff_pay_form_hint')}
+                    subtitle={subtitle}
                     icon={
                         <NavIcon
-                            name="advances"
-                            className="text-lg text-amber-600 dark:text-amber-300"
+                            name={isMonthly ? 'payroll' : 'advances'}
+                            className={
+                                isMonthly
+                                    ? 'text-lg text-teal-600 dark:text-teal-300'
+                                    : 'text-lg text-amber-600 dark:text-amber-300'
+                            }
                         />
                     }
                 />
@@ -526,8 +539,8 @@ export default function StaffPayForm({
                         </FormField>
                     </FormSection>
 
-                    {/* Place block */}
-                    {selected ? (
+                    {/* Place block — daily / piece jobs only */}
+                    {selected && !isMonthly ? (
                         <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
                             <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {t('staff_pay_place')}

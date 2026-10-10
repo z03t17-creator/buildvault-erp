@@ -209,7 +209,26 @@ class SimpleVaultLineController extends Controller
 
     public function createSalary(Request $request): Response
     {
-        return $this->createStaffPay($request);
+        $this->authorize('manageLedger', Vault::class);
+
+        $shared = $this->staffPayShared(
+            (int) $request->query('staff_id', 0) ?: null,
+        );
+
+        $monthly = collect($shared['staff'])
+            ->filter(fn (array $person) => ($person['pay_model'] ?? null) === Staff::PAY_MONTHLY)
+            ->values()
+            ->all();
+
+        return Inertia::render('Vault/Simple/SalaryForm', [
+            'projects' => $shared['projects'],
+            'staff' => $monthly,
+            'salaryDues' => $shared['salaryDues'],
+            'estimates' => $shared['estimates'],
+            'availableCash' => $shared['availableCash'],
+            'today' => $shared['today'],
+            'preselectStaffId' => $shared['preselectStaffId'],
+        ]);
     }
 
     public function storeSalary(Request $request): RedirectResponse
