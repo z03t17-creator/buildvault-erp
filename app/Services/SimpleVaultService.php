@@ -103,6 +103,54 @@ class SimpleVaultService
     }
 
     /**
+     * @param  array<string, mixed>  $data
+     */
+    public function updateAdvance(VaultLine $line, array $data): VaultLine
+    {
+        if ($line->kind !== VaultLine::KIND_ADVANCE) {
+            throw new InvalidArgumentException('Only advance lines can be updated here.');
+        }
+        if ($line->hold_released_at !== null) {
+            throw new InvalidArgumentException('Released insurance holds cannot be edited.');
+        }
+
+        $amount = $this->positiveAmount($data['amount'] ?? null);
+        $currency = $this->currency($data['currency'] ?? $line->currency);
+        $occurredOn = $this->date($data['occurred_on'] ?? $line->occurred_on?->toDateString());
+        $hold = round($amount * self::HOLD_RATIO, 2);
+        $unlockDate = ! empty($data['unlock_date'])
+            ? $this->date($data['unlock_date'])->toDateString()
+            : $occurredOn->copy()->addDays(self::HOLD_DAYS)->toDateString();
+
+        $line->fill([
+            'occurred_on' => $occurredOn->toDateString(),
+            'amount' => $amount,
+            'currency' => $currency,
+            'project_id' => $data['project_id'] ?? $line->project_id,
+            'note' => $data['note'] ?? $line->note,
+            'purpose' => $data['purpose'] ?? $line->purpose,
+            'hold_amount' => $hold,
+            'hold_pool' => VaultLine::HOLD_POOL_COMPANY_INSURANCE,
+            'unlock_date' => $unlockDate,
+        ]);
+        $line->save();
+
+        return $line->fresh();
+    }
+
+    public function voidAdvance(VaultLine $line): void
+    {
+        if ($line->kind !== VaultLine::KIND_ADVANCE) {
+            throw new InvalidArgumentException('Only advance lines can be removed here.');
+        }
+        if ($line->hold_released_at !== null) {
+            throw new InvalidArgumentException('Released insurance holds cannot be deleted.');
+        }
+
+        $line->delete();
+    }
+
+    /**
      * Monthly salary (penalties reduce). 10% toggle defaults off.
      *
      * @param  array<string, mixed>  $data

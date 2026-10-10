@@ -82,6 +82,64 @@ class VaultDashboardTest extends TestCase
             ->where('liquidity.available_iqd', 0));
     }
 
+    public function test_insurance_unlock_row_can_be_edited_and_deleted(): void
+    {
+        $user = $this->userWithRole();
+        $vault = Vault::query()->create([
+            'name' => VaultSeeder::NAME,
+            'balance_usd' => 0,
+            'balance_iqd' => 0,
+        ]);
+        $project = \App\Models\Project::query()->create([
+            'name' => 'Site A',
+            'status' => 'active',
+        ]);
+
+        $service = app(SimpleVaultService::class);
+        $line = $service->postAdvance([
+            'amount' => 500000,
+            'currency' => DualCurrency::IQD,
+            'occurred_on' => '2026-10-10',
+            'project_id' => $project->id,
+            'vault_id' => $vault->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('vault.lines.advance.edit', $line))
+            ->assertOk()
+            ->assertInertia(fn ($page) => $page
+                ->component('Vault/Simple/AdvanceForm')
+                ->where('line.id', $line->id)
+                ->where('line.amount', 500000)
+            );
+
+        $this->actingAs($user)
+            ->put(route('vault.lines.advance.update', $line), [
+                'occurred_on' => '2026-10-10',
+                'amount' => 400000,
+                'currency' => DualCurrency::IQD,
+                'project_id' => $project->id,
+                'unlock_date' => '2027-05-01',
+                'note' => 'Adjusted',
+            ])
+            ->assertRedirect(route('dashboards.vault'));
+
+        $line->refresh();
+        $this->assertSame(400000.0, (float) $line->amount);
+        $this->assertSame(40000.0, (float) $line->hold_amount);
+        $this->assertSame('2027-05-01', $line->unlock_date?->toDateString());
+
+        $dash = file_get_contents(resource_path('js/Pages/Dashboards/Vault.jsx'));
+        $this->assertStringContainsString('canManageAdvance', $dash);
+        $this->assertStringContainsString('vault.lines.advance.edit', $dash);
+
+        $this->actingAs($user)
+            ->delete(route('vault.lines.advance.destroy', $line))
+            ->assertRedirect(route('dashboards.vault'));
+
+        $this->assertSoftDeleted('vault_lines', ['id' => $line->id]);
+    }
+
     public function test_refresh_fx_endpoint(): void
     {
         Cache::flush();

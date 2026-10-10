@@ -104,6 +104,68 @@ class SimpleVaultLineController extends Controller
             ->with('success', __('vault_advance_saved'));
     }
 
+    public function editAdvance(VaultLine $line): Response
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertAdvanceLine($line);
+
+        return Inertia::render('Vault/Simple/AdvanceForm', [
+            ...$this->formShared(),
+            'line' => [
+                'id' => $line->id,
+                'occurred_on' => $line->occurred_on?->toDateString(),
+                'amount' => (float) $line->amount,
+                'currency' => $line->currency,
+                'project_id' => $line->project_id,
+                'note' => $line->note,
+                'unlock_date' => $line->unlock_date?->toDateString(),
+                'hold_amount' => (float) $line->hold_amount,
+            ],
+        ]);
+    }
+
+    public function updateAdvance(Request $request, VaultLine $line): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertAdvanceLine($line);
+
+        $data = $request->validate([
+            'occurred_on' => ['required', 'date'],
+            'amount' => ['required', 'numeric', 'gt:0'],
+            'currency' => ['required', Rule::in(DualCurrency::CURRENCIES)],
+            'project_id' => ['required', 'integer', 'exists:projects,id'],
+            'unlock_date' => ['nullable', 'date'],
+            'purpose' => ['nullable', 'string', 'max:255'],
+            'note' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        try {
+            $this->vault->updateAdvance($line, $data);
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['amount' => $e->getMessage()])->withInput();
+        }
+
+        return redirect()
+            ->route('dashboards.vault')
+            ->with('success', __('vault_advance_updated'));
+    }
+
+    public function destroyAdvance(VaultLine $line): RedirectResponse
+    {
+        $this->authorize('manageLedger', Vault::class);
+        $this->assertAdvanceLine($line);
+
+        try {
+            $this->vault->voidAdvance($line);
+        } catch (InvalidArgumentException $e) {
+            return back()->withErrors(['amount' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('dashboards.vault')
+            ->with('success', __('vault_advance_deleted'));
+    }
+
     /** Unified staff payment form (monthly / daily / unit). */
     public function createStaffPay(Request $request): Response
     {
@@ -626,6 +688,13 @@ class SimpleVaultLineController extends Controller
     private function assertStaffPayLine(VaultLine $line): void
     {
         if (! in_array($line->kind, VaultLine::STAFF_HOLD_KINDS, true)) {
+            abort(404);
+        }
+    }
+
+    private function assertAdvanceLine(VaultLine $line): void
+    {
+        if ($line->kind !== VaultLine::KIND_ADVANCE) {
             abort(404);
         }
     }

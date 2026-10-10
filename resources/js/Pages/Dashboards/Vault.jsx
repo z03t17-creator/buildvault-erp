@@ -168,6 +168,7 @@ function HoldTable({
     canConfirmHold = false,
     confirmingId = null,
     onConfirmHold,
+    canManageAdvance = false,
 }) {
     if (!rows?.length) {
         return (
@@ -179,6 +180,8 @@ function HoldTable({
         );
     }
 
+    const showActions = canManageAdvance || (showStaff && canConfirmHold);
+
     return (
         <DataTable>
             <thead>
@@ -188,7 +191,7 @@ function HoldTable({
                     <Th>{t('currency')}</Th>
                     <Th>{t('vault_unlock_date')}</Th>
                     <Th>{t('date')}</Th>
-                    {showStaff && canConfirmHold ? <Th>{t('job_pay_hold_status')}</Th> : null}
+                    {showActions ? <Th>{t('actions')}</Th> : null}
                 </tr>
             </thead>
             <tbody>
@@ -219,16 +222,45 @@ function HoldTable({
                         <Td dir="ltr" className="font-sans tabular-nums text-slate-500">
                             {row.occurred_on || '—'}
                         </Td>
-                        {showStaff && canConfirmHold ? (
+                        {showActions ? (
                             <Td>
-                                <SecondaryButton
-                                    type="button"
-                                    disabled={confirmingId === row.id}
-                                    onClick={() => onConfirmHold?.(row.id)}
-                                    className="!min-h-0 !px-2.5 !py-1.5 text-xs !bg-amber-50 !text-amber-950 hover:!bg-amber-100 dark:!bg-amber-950/40 dark:!text-amber-100"
-                                >
-                                    {t('job_pay_hold_confirm')}
-                                </SecondaryButton>
+                                <div className="flex flex-wrap items-center gap-1.5">
+                                    {canManageAdvance ? (
+                                        <>
+                                            <Link href={route('vault.lines.advance.edit', row.id)}>
+                                                <SecondaryButton
+                                                    type="button"
+                                                    className="!min-h-0 !px-2.5 !py-1.5 text-xs"
+                                                >
+                                                    {t('edit')}
+                                                </SecondaryButton>
+                                            </Link>
+                                            <SecondaryButton
+                                                type="button"
+                                                className="!min-h-0 !px-2.5 !py-1.5 text-xs !text-rose-700 dark:!text-rose-300"
+                                                onClick={() => {
+                                                    if (confirm(t('confirm_delete'))) {
+                                                        router.delete(
+                                                            route('vault.lines.advance.destroy', row.id),
+                                                        );
+                                                    }
+                                                }}
+                                            >
+                                                {t('delete')}
+                                            </SecondaryButton>
+                                        </>
+                                    ) : null}
+                                    {showStaff && canConfirmHold ? (
+                                        <SecondaryButton
+                                            type="button"
+                                            disabled={confirmingId === row.id}
+                                            onClick={() => onConfirmHold?.(row.id)}
+                                            className="!min-h-0 !px-2.5 !py-1.5 text-xs !bg-amber-50 !text-amber-950 hover:!bg-amber-100 dark:!bg-amber-950/40 dark:!text-amber-100"
+                                        >
+                                            {t('job_pay_hold_confirm')}
+                                        </SecondaryButton>
+                                    ) : null}
+                                </div>
                             </Td>
                         ) : null}
                     </tr>
@@ -420,6 +452,7 @@ export default function Vault({
                         t={t}
                         usd={usd}
                         iqd={iqd}
+                        canManageAdvance={canManage}
                     />
                 </DataPanel>
 

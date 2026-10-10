@@ -21,15 +21,22 @@ const fieldClass =
 const moneyFieldClass =
     'mt-1 block w-full min-h-[2.5rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-base font-semibold tabular-nums shadow-sm focus:border-teal-500 focus:outline-none focus:ring-2 focus:ring-teal-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD'], today }) {
+export default function AdvanceForm({
+    projects = [],
+    currencies = ['USD', 'IQD'],
+    today,
+    line = null,
+}) {
     const t = useTranslations();
+    const editing = Boolean(line?.id);
     const [localErrors, setLocalErrors] = useState({});
-    const { data, setData, post, processing, errors } = useForm({
-        occurred_on: today || todayIsoDate(),
-        amount: '',
-        currency: 'USD',
-        project_id: '',
-        note: '',
+    const { data, setData, post, put, processing, errors } = useForm({
+        occurred_on: line?.occurred_on || today || todayIsoDate(),
+        amount: line?.amount != null ? String(line.amount) : '',
+        currency: line?.currency || 'USD',
+        project_id: line?.project_id ? String(line.project_id) : '',
+        unlock_date: line?.unlock_date || '',
+        note: line?.note || '',
     });
 
     const mergedErrors = useMemo(
@@ -58,6 +65,9 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
         if (!data.project_id) {
             next.project_id = t('validation_project_required');
         }
+        if (editing && data.unlock_date && !isValidIsoDate(data.unlock_date)) {
+            next.unlock_date = t('validation_date_required');
+        }
         setLocalErrors(next);
         return Object.keys(next).length === 0;
     };
@@ -67,6 +77,10 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
         if (!validate()) {
             return;
         }
+        if (editing) {
+            put(route('vault.lines.advance.update', line.id));
+            return;
+        }
         post(route('vault.lines.advance.store'));
     };
 
@@ -74,13 +88,13 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
         <AuthenticatedLayout
             header={
                 <PageHeader
-                    title={t('vault_form_advance')}
+                    title={editing ? t('vault_form_advance_edit') : t('vault_form_advance')}
                     subtitle={t('vault_form_advance_hint')}
                     icon={<NavIcon name="vault" className="text-lg text-teal-600 dark:text-teal-300" />}
                 />
             }
         >
-            <Head title={t('vault_form_advance')} />
+            <Head title={editing ? t('vault_form_advance_edit') : t('vault_form_advance')} />
 
             <PageShell className="!max-w-3xl !space-y-4">
                 <form noValidate onSubmit={submit} className="bv-card space-y-4 p-4 sm:p-5">
@@ -130,6 +144,9 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
                                 allowDecimals={data.currency === 'USD'}
                                 placeholder="0"
                             />
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {t('vault_form_advance_amount_hint')}
+                            </p>
                             <InputError message={mergedErrors.amount} className="mt-1" />
                         </FormField>
 
@@ -152,7 +169,20 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
                             <InputError message={mergedErrors.project_id} className="mt-1" />
                         </FormField>
 
-                        <FormField className="sm:col-span-2">
+                        {editing ? (
+                            <FormField>
+                                <InputLabel value={t('vault_unlock_date')} htmlFor="unlock_date" />
+                                <DateInput
+                                    id="unlock_date"
+                                    className="mt-1"
+                                    value={data.unlock_date}
+                                    onValueChange={(next) => setData('unlock_date', next)}
+                                />
+                                <InputError message={mergedErrors.unlock_date} className="mt-1" />
+                            </FormField>
+                        ) : null}
+
+                        <FormField className={editing ? '' : 'sm:col-span-2'}>
                             <InputLabel value={t('note')} htmlFor="note" />
                             <TextInput
                                 id="note"
@@ -176,7 +206,7 @@ export default function AdvanceForm({ projects = [], currencies = ['USD', 'IQD']
 
                     <FormActions>
                         <PrimaryButton disabled={processing}>
-                            {t('vault_form_save_advance')}
+                            {editing ? t('save') : t('vault_form_save_advance')}
                         </PrimaryButton>
                         <Link href={route('dashboards.vault')}>
                             <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
