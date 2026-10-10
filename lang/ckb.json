@@ -1623,7 +1623,7 @@
     "warehouse_unit_type_hint": "یەکە بنووسە، وەک Pcs، دانە، مەتر…",
     "warehouse_category_type_hint": "پۆل بنووسە یان هەڵبژێرە، وەک Electrical…",
     "warehouse_receive": "داخڵکردنی کەرەستە + سلفە",
-    "warehouse_receive_hint": "دابینکەر، ژمارەی پسوولە، نرخی یەکە، کۆی نرخ، و ڕەفەی کۆگا.",
+    "warehouse_receive_hint": "نرخی یەکە، کۆی نرخ، سەرچاوەی پارەدان، و تێبینی.",
     "warehouse_receive_save": "پاشەکەوتی داخڵکردن",
     "warehouse_dispatch": "دەرکردن بۆ پڕۆژە",
     "warehouse_dispatch_hint": "ڤێلا یان بینا، وەستا/ستاف، و بڕ دەستبەجێ لە کۆگا کەم دەبێت.",

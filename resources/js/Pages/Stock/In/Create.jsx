@@ -22,7 +22,6 @@ const PAYMENT_SUPPLIER_CREDIT = 'supplier_credit';
 
 export default function Create({
     items = [],
-    suppliers = [],
     projects = [],
     paymentSources = [
         PAYMENT_SUPPLIER_CREDIT,
@@ -38,12 +37,10 @@ export default function Create({
         stock_item_id: '',
         quantity: '',
         moved_on: defaults.moved_on || new Date().toISOString().slice(0, 10),
-        supplier_id: '',
         currency: 'IQD',
         purchase_price: '',
         payment_source: defaults.payment_source || PAYMENT_SUPPLIER_CREDIT,
         project_id: '',
-        invoice_ref: '',
         shelf_zone: '',
         notes: '',
     });
@@ -117,9 +114,6 @@ export default function Create({
                                             unit != null && unit !== ''
                                                 ? String(unit)
                                                 : data.purchase_price,
-                                        supplier_id: item?.supplier_id
-                                            ? String(item.supplier_id)
-                                            : data.supplier_id,
                                         shelf_zone: item?.location || data.shelf_zone,
                                     });
                                 }}
@@ -248,33 +242,8 @@ export default function Create({
                         ) : null}
                     </div>
 
-                    <FormSection cols={2}>
+                    <FormSection cols={1}>
                         <FormField>
-                            <InputLabel value={t('supplier')} htmlFor="supplier_id" />
-                            <select
-                                id="supplier_id"
-                                className={stockFieldClass}
-                                value={data.supplier_id}
-                                onChange={(e) => setData('supplier_id', e.target.value)}
-                            >
-                                <option value="">—</option>
-                                {suppliers.map((row) => (
-                                    <option key={row.id} value={row.id}>
-                                        {row.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('warehouse_invoice')} htmlFor="invoice_ref" />
-                            <TextInput
-                                id="invoice_ref"
-                                className={stockFieldClass}
-                                value={data.invoice_ref}
-                                onChange={(e) => setData('invoice_ref', e.target.value)}
-                            />
-                        </FormField>
-                        <FormField className="sm:col-span-2">
                             <InputLabel value={t('note')} htmlFor="notes" />
                             <TextInput
                                 id="notes"

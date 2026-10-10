@@ -1623,7 +1623,7 @@
     "warehouse_unit_type_hint": "Type any unit, e.g. Pcs, دانە, مەتر…",
     "warehouse_category_type_hint": "Type a category or pick one, e.g. Electrical…",
     "warehouse_receive": "Receive + سلفە",
-    "warehouse_receive_hint": "Supplier, invoice, unit cost, total, and shelf/zone.",
+    "warehouse_receive_hint": "Unit cost, total, payment source, and notes.",
     "warehouse_receive_save": "Save receive",
     "warehouse_dispatch": "Dispatch to project",
     "warehouse_dispatch_hint": "Villa or building place, Wasta/staff, quantity deducted instantly.",

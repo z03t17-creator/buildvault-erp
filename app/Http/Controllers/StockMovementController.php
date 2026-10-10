@@ -123,14 +123,13 @@ class StockMovementController extends Controller
         return Inertia::render('Stock/In/Create', [
             'items' => StockItem::query()->orderBy('name')->get([
                 'id', 'name', 'sku', 'barcode', 'unit', 'quantity', 'currency',
-                'purchase_price_usd', 'purchase_price_iqd', 'supplier_id', 'location',
+                'purchase_price_usd', 'purchase_price_iqd', 'location',
             ])->map(function (StockItem $item) {
                 $item->setAttribute('cost_currency', $item->costCurrency());
                 $item->setAttribute('unit_cost', $item->unitCost());
 
                 return $item;
             }),
-            'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'projects' => $projects,
             'paymentSources' => StockMovement::PAYMENT_SOURCES,
             'defaults' => [
