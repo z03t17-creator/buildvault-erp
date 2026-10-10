@@ -824,7 +824,8 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringNotContainsString('vault.lines.unit-pay.create', $source);
         $this->assertStringContainsString('vault.lines.job-pay.create', $source);
         $this->assertStringContainsString('vault_form_job_pay', $source);
-        $this->assertStringContainsString('vault_form_salary', $source);
+        $this->assertStringNotContainsString('vault_form_salary', $source);
+        $this->assertStringNotContainsString('vault.lines.salary.create', $source);
         $this->assertStringContainsString('vault_form_advance', $source);
         $this->assertStringContainsString('vault_form_expense', $source);
         $this->assertStringContainsString('expenses.create', $source);

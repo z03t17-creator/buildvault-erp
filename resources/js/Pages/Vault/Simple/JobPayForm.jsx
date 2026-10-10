@@ -184,18 +184,6 @@ export default function JobPayForm({
                         </FormField>
 
                         <FormField>
-                            <InputLabel value={t('purpose')} htmlFor="purpose" />
-                            <TextInput
-                                id="purpose"
-                                className={fieldClass}
-                                value={data.purpose}
-                                onChange={(e) => setData('purpose', e.target.value)}
-                                placeholder={t('vault_form_purpose_placeholder')}
-                            />
-                            <InputError message={mergedErrors.purpose} className="mt-1" />
-                        </FormField>
-
-                        <FormField>
                             <InputLabel value={t('project')} htmlFor="project_id" />
                             <select
                                 id="project_id"
