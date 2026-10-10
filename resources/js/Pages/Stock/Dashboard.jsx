@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { StockStatCard, StockStatusBadge, stockFieldClass } from '@/Components/StockDesk';
+import StockItemRowActions from '@/Components/StockItemRowActions';
 import StockTabs from '@/Components/StockTabs';
 import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -189,7 +190,7 @@ export default function Dashboard({
                                 {t('warehouse_balance_table_hint', { count: list.length })}
                             </p>
                         </div>
-                        <DataTable minWidth="40rem" caption={t('warehouse_tab_balance')}>
+                        <DataTable minWidth="48rem" caption={t('warehouse_tab_balance')}>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
@@ -198,6 +199,7 @@ export default function Dashboard({
                                     <Th align="end">{t('quantity')}</Th>
                                     <Th align="end">{t('warehouse_avg_cost')}</Th>
                                     <Th>{t('stock_status')}</Th>
+                                    <Th>{t('actions')}</Th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -241,6 +243,12 @@ export default function Dashboard({
                                             </Td>
                                             <Td>
                                                 <StockStatusBadge item={item} t={t} />
+                                            </Td>
+                                            <Td>
+                                                <StockItemRowActions
+                                                    itemId={item.id}
+                                                    canManage={canManage}
+                                                />
                                             </Td>
                                         </tr>
                                     );

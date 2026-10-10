@@ -238,6 +238,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('/stock/categories/{stockCategory}', [StockCategoryController::class, 'destroy'])->name('stock.categories.destroy');
     });
     Route::middleware('can:viewAny,'.StockItem::class)->group(function () {
+        Route::get('/stock/items/{item}/print', [StockItemController::class, 'print'])->name('stock.items.print');
         Route::get('/stock/items/{item}', [StockItemController::class, 'show'])->name('stock.items.show');
     });
     Route::middleware('can:create,'.StockItem::class)->group(function () {

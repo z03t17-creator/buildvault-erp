@@ -1624,6 +1624,8 @@
     "warehouse_category_type_hint": "اكتب تصنيفاً أو اختر واحداً، مثل Electrical…",
     "warehouse_currency_pick_hint": "اختر دولار أو دينار — يبقيان منفصلين دون مزج سعر صرف.",
     "warehouse_currency_locked_hint": "هذا الصنف له مخزون بـ :currency — أبقِ نفس العملة.",
+    "warehouse_item_details": "تفاصيل الصنف",
+    "warehouse_item_print_subtitle": "بطاقة مخزون كاملة مع الحركات",
     "warehouse_receive": "إدخال المواد + سلفة",
     "warehouse_receive_hint": "تكلفة الوحدة والإجمالي ومصدر الدفع والملاحظات.",
     "warehouse_receive_save": "حفظ الإدخال",

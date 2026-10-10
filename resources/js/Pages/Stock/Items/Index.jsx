@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import { StockStatCard, StockStatusBadge, stockFieldClass } from '@/Components/StockDesk';
+import StockItemRowActions from '@/Components/StockItemRowActions';
 import TextInput from '@/Components/TextInput';
 import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -147,7 +148,7 @@ export default function Index({
                     />
                 ) : (
                     <DataPanel padded={false}>
-                        <DataTable minWidth="56rem" caption={t('warehouse_items')} stickyFirstColumn>
+                        <DataTable minWidth="64rem" caption={t('warehouse_items')} stickyFirstColumn>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
@@ -158,6 +159,7 @@ export default function Index({
                                     <Th align="end">{t('quantity')}</Th>
                                     <Th align="end">{t('warehouse_avg_cost')}</Th>
                                     <Th>{t('stock_status')}</Th>
+                                    <Th>{t('actions')}</Th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -206,6 +208,12 @@ export default function Index({
                                         </Td>
                                         <Td>
                                             <StockStatusBadge item={item} t={t} />
+                                        </Td>
+                                        <Td>
+                                            <StockItemRowActions
+                                                itemId={item.id}
+                                                canManage={canManage}
+                                            />
                                         </Td>
                                     </tr>
                                 ))}

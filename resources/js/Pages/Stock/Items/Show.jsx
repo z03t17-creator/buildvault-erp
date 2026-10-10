@@ -75,6 +75,9 @@ export default function Show({ item }) {
                                     </PrimaryButton>
                                 </Link>
                             )}
+                            <Link href={route('stock.items.print', item.id)}>
+                                <SecondaryButton type="button">{t('print')}</SecondaryButton>
+                            </Link>
                             {canManage && (
                                 <>
                                     <Link href={route('stock.items.edit', item.id)}>

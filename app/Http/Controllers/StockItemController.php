@@ -151,6 +151,40 @@ class StockItemController extends Controller
         ]);
     }
 
+    public function print(StockItem $item): Response
+    {
+        $this->authorize('view', $item);
+
+        $item->load([
+            'supplier',
+            'stockCategory:id,name',
+            'movements' => function ($q) {
+                $q->with(['user:id,name', 'project:id,name', 'staff:id,name'])
+                    ->orderByDesc('moved_on')
+                    ->orderByDesc('id')
+                    ->limit(100);
+            },
+        ]);
+
+        $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
+        $item->setAttribute('stock_value_usd', $item->stockValueUsd());
+        $item->setAttribute('stock_value', $item->stockValue());
+        $item->setAttribute('average_unit_cost', $item->averageUnitCost());
+        $item->setAttribute('cost_currency', $item->costCurrency());
+        $item->setAttribute('is_low_stock', $item->isLowStock());
+        $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+        $item->setAttribute('stock_status', $item->stockStatus());
+        $item->setAttribute(
+            'category_label',
+            $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
+        );
+
+        return Inertia::render('Stock/Items/Print', [
+            'item' => $item,
+            'printedAt' => now()->timezone(config('app.timezone'))->format('Y-m-d H:i'),
+        ]);
+    }
+
     public function edit(StockItem $item): Response
     {
         $this->authorize('update', $item);
@@ -185,7 +219,7 @@ class StockItemController extends Controller
         $item->delete();
 
         return redirect()
-            ->route('stock.items.index')
+            ->route('stock.dashboard')
             ->with('success', __('Product deleted.'));
     }
 

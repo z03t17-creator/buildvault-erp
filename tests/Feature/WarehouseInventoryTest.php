@@ -393,4 +393,39 @@ class WarehouseInventoryTest extends TestCase
                 ->where('items.0.stock_status', 'low')
             );
     }
+
+    public function test_item_print_sheet_and_delete_from_dashboard(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+        $item = StockItem::query()->create([
+            'name' => 'burxi',
+            'sku' => 'BV-DOO-1',
+            'barcode' => 'BV-DOO-1',
+            'unit' => 'M2',
+            'quantity' => 5,
+            'currency' => 'IQD',
+            'purchase_price_iqd' => 3000,
+            'category' => 'Doors',
+        ]);
+
+        $this->actingAs($stock)
+            ->get(route('stock.items.print', $item))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Stock/Items/Print')
+                ->where('item.name', 'burxi')
+                ->where('item.sku', 'BV-DOO-1')
+                ->has('printedAt')
+            );
+
+        $dash = file_get_contents(resource_path('js/Pages/Stock/Dashboard.jsx'));
+        $this->assertStringContainsString('StockItemRowActions', $dash);
+        $this->assertStringContainsString("t('actions')", $dash);
+
+        $this->actingAs($stock)
+            ->delete(route('stock.items.destroy', $item))
+            ->assertRedirect(route('stock.dashboard'));
+
+        $this->assertDatabaseMissing('stock_items', ['id' => $item->id]);
+    }
 }
