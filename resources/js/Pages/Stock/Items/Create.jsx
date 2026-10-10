@@ -31,9 +31,9 @@ export default function Create({
         auto_sku: true,
         category: '',
         unit: defaults.unit || 'Pcs',
-        quantity: 0,
+        quantity: defaults.quantity ?? '',
         currency: defaults.currency || 'IQD',
-        purchase_price: defaults.purchase_price ?? 0,
+        purchase_price: defaults.purchase_price ?? '',
         notes: '',
     });
     const priceLabel = data.currency === 'USD' ? t('USD') : t('IQD');
@@ -100,6 +100,20 @@ export default function Create({
                                 placeholder={t('warehouse_unit_type_hint')}
                             />
                             <InputError message={errors.unit} className="mt-1" />
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('quantity')} htmlFor="quantity" />
+                            <MoneyInput
+                                id="quantity"
+                                className={stockMoneyClass}
+                                value={String(data.quantity ?? '')}
+                                onValueChange={(next) => setData('quantity', next)}
+                                allowDecimals
+                            />
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {t('warehouse_qty_on_hand_hint')}
+                            </p>
+                            <InputError message={errors.quantity} className="mt-1" />
                         </FormField>
                         <FormField>
                             <InputLabel value={t('currency')} htmlFor="currency" />

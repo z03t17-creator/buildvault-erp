@@ -114,6 +114,33 @@ class WarehouseInventoryTest extends TestCase
         $this->assertSame(800.0, $available);
     }
 
+    public function test_create_item_saves_on_hand_quantity(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+
+        $this->actingAs($stock)
+            ->post(route('stock.items.store'), [
+                'name' => 'Cement Bag',
+                'auto_sku' => true,
+                'category' => 'Raw Materials',
+                'unit' => 'Bag',
+                'quantity' => 40,
+                'currency' => 'IQD',
+                'purchase_price' => 9000,
+            ])
+            ->assertRedirect();
+
+        $item = StockItem::query()->where('name', 'Cement Bag')->first();
+        $this->assertNotNull($item);
+        $this->assertSame(40.0, (float) $item->quantity);
+        $this->assertSame('IQD', $item->currency);
+        $this->assertSame(9000.0, (float) $item->purchase_price_iqd);
+
+        $create = file_get_contents(resource_path('js/Pages/Stock/Items/Create.jsx'));
+        $this->assertStringContainsString('htmlFor="quantity"', $create);
+        $this->assertStringContainsString('warehouse_qty_on_hand_hint', $create);
+    }
+
     public function test_item_accepts_typed_category_and_custom_unit(): void
     {
         $stock = $this->userWithRole(Roles::STOCK_MANAGER);
