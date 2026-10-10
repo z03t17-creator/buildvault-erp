@@ -1625,7 +1625,7 @@
     "warehouse_currency_pick_hint": "دۆلار یان دینار هەڵبژێرە — تێکەڵ ناکرێن.",
     "warehouse_currency_locked_hint": "ئەم کەرەستەیە پێشتر بە :currency هەیە — هەمان دراو بهێڵەرەوە.",
     "warehouse_item_details": "زانیاری کەرەستە",
-    "warehouse_item_print_subtitle": "کارتی تەواوی کۆگا لەگەڵ جوڵەکان",
+    "warehouse_item_print_subtitle": "تەنها زانیاری پڕکراو — بەتاڵەکان نانووسرێن",
     "warehouse_receive": "داخڵکردنی کەرەستە + سلفە",
     "warehouse_receive_hint": "نرخی یەکە، کۆی نرخ، سەرچاوەی پارەدان، و تێبینی.",
     "warehouse_receive_save": "پاشەکەوتی داخڵکردن",

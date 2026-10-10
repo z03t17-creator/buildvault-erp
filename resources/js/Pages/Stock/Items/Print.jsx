@@ -4,7 +4,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import { stockStatusOf } from '@/Components/StockDesk';
 import useTranslations from '@/hooks/useTranslations';
 import { Head, Link } from '@inertiajs/react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 
 function Row({ label, children }) {
     return (
@@ -17,26 +17,127 @@ function Row({ label, children }) {
     );
 }
 
+function hasText(value) {
+    return String(value ?? '').trim() !== '';
+}
+
 export default function Print({ item, printedAt }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const usd = t('USD');
     const movements = item.movements || [];
     const categoryLabel =
-        item.category_label || item.stock_category?.name || item.category || '—';
+        item.category_label || item.stock_category?.name || item.category || '';
     const costCurrency = item.cost_currency || item.currency || 'IQD';
     const costLabel = costCurrency === 'USD' ? usd : iqd;
-    const unitCost = item.average_unit_cost ?? 0;
-    const stockValue =
+    const unitCost = Number(item.average_unit_cost ?? 0);
+    const stockValue = Number(
         item.stock_value ??
-        (costCurrency === 'USD' ? item.stock_value_usd : item.stock_value_iqd) ??
-        0;
+            (costCurrency === 'USD' ? item.stock_value_usd : item.stock_value_iqd) ??
+            0,
+    );
+    const qty = Number(item.quantity ?? 0);
+
+    const statusLabel = useMemo(() => {
+        const status = stockStatusOf(item);
+        if (status === 'out') return t('stock_out');
+        if (status === 'low') return t('stock_low');
+        return t('stock_ok');
+    }, [item, t]);
 
     const typeLabel = (type) => {
         if (type === 'in') return t('warehouse_tab_receive');
         if (type === 'out') return t('warehouse_tab_dispatch');
-        return type || '—';
+        return type || '';
     };
+
+    // Only real data — skip empty fields the user cleared from the forms.
+    const detailRows = [
+        { key: 'name', label: t('name'), value: item.name, node: item.name },
+        hasText(item.sku)
+            ? {
+                  key: 'sku',
+                  label: t('sku'),
+                  value: item.sku,
+                  node: <span dir="ltr">{item.sku}</span>,
+              }
+            : null,
+        hasText(item.barcode) && item.barcode !== item.sku
+            ? {
+                  key: 'barcode',
+                  label: t('barcode'),
+                  value: item.barcode,
+                  node: <span dir="ltr">{item.barcode}</span>,
+              }
+            : null,
+        hasText(categoryLabel)
+            ? { key: 'category', label: t('category'), value: categoryLabel, node: categoryLabel }
+            : null,
+        hasText(item.unit)
+            ? { key: 'unit', label: t('unit'), value: item.unit, node: item.unit }
+            : null,
+        {
+            key: 'quantity',
+            label: t('quantity'),
+            value: qty,
+            node: (
+                <span dir="ltr">
+                    {item.quantity} {item.unit || ''}
+                </span>
+            ),
+        },
+        {
+            key: 'currency',
+            label: t('currency'),
+            value: costLabel,
+            node: costLabel,
+        },
+        unitCost > 0
+            ? {
+                  key: 'avg',
+                  label: t('warehouse_avg_cost'),
+                  value: unitCost,
+                  node: (
+                      <span dir="ltr" className="inline-flex items-baseline gap-1">
+                          <MoneyAmount
+                              value={unitCost}
+                              label={costLabel}
+                              size="sm"
+                              showLabel={false}
+                          />
+                          {costLabel}
+                      </span>
+                  ),
+              }
+            : null,
+        qty > 0 && stockValue > 0
+            ? {
+                  key: 'value',
+                  label: t('stock_value'),
+                  value: stockValue,
+                  node: (
+                      <span dir="ltr" className="inline-flex items-baseline gap-1">
+                          <MoneyAmount
+                              value={stockValue}
+                              label={costLabel}
+                              size="sm"
+                              showLabel={false}
+                          />
+                          {costLabel}
+                      </span>
+                  ),
+              }
+            : null,
+        {
+            key: 'status',
+            label: t('stock_status'),
+            value: statusLabel,
+            node: statusLabel,
+        },
+        hasText(item.notes)
+            ? { key: 'notes', label: t('notes'), value: item.notes, node: item.notes }
+            : null,
+    ].filter(Boolean);
 
     useEffect(() => {
         const timer = window.setTimeout(() => window.print(), 350);
@@ -74,71 +175,26 @@ export default function Print({ item, printedAt }) {
                         </p>
                     </header>
 
-                    <section className="mb-6">
+                    <section className={movements.length > 0 ? 'mb-6' : ''}>
                         <h2 className="mb-2 text-sm font-bold text-slate-800">
                             {t('warehouse_item_details')}
                         </h2>
                         <table className="w-full">
                             <tbody>
-                                <Row label={t('name')}>{item.name}</Row>
-                                <Row label={t('sku')}>
-                                    <span dir="ltr">{item.sku || '—'}</span>
-                                </Row>
-                                <Row label={t('barcode')}>
-                                    <span dir="ltr">{item.barcode || '—'}</span>
-                                </Row>
-                                <Row label={t('category')}>{categoryLabel}</Row>
-                                <Row label={t('unit')}>{item.unit || '—'}</Row>
-                                <Row label={t('quantity')}>
-                                    <span dir="ltr">
-                                        {item.quantity} {item.unit}
-                                    </span>
-                                </Row>
-                                <Row label={t('currency')}>{costLabel}</Row>
-                                <Row label={t('warehouse_avg_cost')}>
-                                    <span dir="ltr" className="inline-flex items-baseline gap-1">
-                                        <MoneyAmount
-                                            value={unitCost}
-                                            label={costLabel}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                        {costLabel}
-                                    </span>
-                                </Row>
-                                <Row label={t('stock_value')}>
-                                    <span dir="ltr" className="inline-flex items-baseline gap-1">
-                                        <MoneyAmount
-                                            value={stockValue}
-                                            label={costLabel}
-                                            size="sm"
-                                            showLabel={false}
-                                        />
-                                        {costLabel}
-                                    </span>
-                                </Row>
-                                <Row label={t('stock_status')}>
-                                    {(() => {
-                                        const status = stockStatusOf(item);
-                                        if (status === 'out') return t('stock_out');
-                                        if (status === 'low') return t('stock_low');
-                                        return t('stock_ok');
-                                    })()}
-                                </Row>
-                                <Row label={t('location')}>{item.location || '—'}</Row>
-                                <Row label={t('supplier')}>{item.supplier?.name || '—'}</Row>
-                                <Row label={t('notes')}>{item.notes || '—'}</Row>
+                                {detailRows.map((row) => (
+                                    <Row key={row.key} label={row.label}>
+                                        {row.node}
+                                    </Row>
+                                ))}
                             </tbody>
                         </table>
                     </section>
 
-                    <section>
-                        <h2 className="mb-2 text-sm font-bold text-slate-800">
-                            {t('stock_movements')}
-                        </h2>
-                        {movements.length === 0 ? (
-                            <p className="text-sm text-slate-500">{t('no_stock_movements')}</p>
-                        ) : (
+                    {movements.length > 0 ? (
+                        <section>
+                            <h2 className="mb-2 text-sm font-bold text-slate-800">
+                                {t('stock_movements')}
+                            </h2>
                             <table className="w-full border-collapse text-sm">
                                 <thead>
                                     <tr className="border-b-2 border-slate-300 text-start text-xs uppercase tracking-wide text-slate-500">
@@ -162,34 +218,39 @@ export default function Print({ item, printedAt }) {
                                                 : m.purchase_price_iqd;
                                         const total =
                                             mCurrency === usd ? m.total_cost_usd : m.total_cost_iqd;
+                                        const place = [
+                                            m.project?.name,
+                                            m.receiver || m.staff?.name,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(' · ');
                                         return (
                                             <tr key={m.id} className="border-b border-slate-200">
                                                 <td className="py-1.5 pe-2" dir="ltr">
-                                                    {m.moved_on || '—'}
+                                                    {m.moved_on || ''}
                                                 </td>
                                                 <td className="py-1.5 pe-2">{typeLabel(m.type)}</td>
                                                 <td className="py-1.5 pe-2" dir="ltr">
-                                                    {m.quantity} {item.unit}
+                                                    {m.quantity} {item.unit || ''}
                                                 </td>
-                                                <td className="py-1.5 pe-2">
-                                                    {m.project?.name || '—'}
-                                                    {m.receiver || m.staff?.name
-                                                        ? ` · ${m.receiver || m.staff?.name}`
+                                                <td className="py-1.5 pe-2">{place}</td>
+                                                <td className="py-1.5 pe-2" dir="ltr">
+                                                    {Number(unit || 0) > 0
+                                                        ? `${Number(unit || 0).toLocaleString()} ${mCurrency}`
                                                         : ''}
                                                 </td>
-                                                <td className="py-1.5 pe-2" dir="ltr">
-                                                    {Number(unit || 0).toLocaleString()} {mCurrency}
-                                                </td>
                                                 <td className="py-1.5" dir="ltr">
-                                                    {Number(total || 0).toLocaleString()} {mCurrency}
+                                                    {Number(total || 0) > 0
+                                                        ? `${Number(total || 0).toLocaleString()} ${mCurrency}`
+                                                        : ''}
                                                 </td>
                                             </tr>
                                         );
                                     })}
                                 </tbody>
                             </table>
-                        )}
-                    </section>
+                        </section>
+                    ) : null}
                 </article>
             </div>
         </div>
