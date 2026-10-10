@@ -6,19 +6,22 @@ use App\Models\Project;
 use App\Models\StockItem;
 use App\Models\Transaction;
 use App\Models\Vault;
+use App\Models\VaultLine;
+use App\Models\Worker;
+use App\Support\DualCurrency;
 use App\Support\Roles;
+use Carbon\Carbon;
 use Database\Seeders\VaultSeeder;
 
 /**
- * Phase 14 — role-specific home dashboard payloads (real DB numbers, IQD).
- *
- * Each role only receives its slice; callers must gate by Spatie role.
+ * Role-specific home dashboard payloads (real DB numbers; USD/IQD never blended).
  */
 class RoleHomeDashboardService
 {
     public function __construct(
         private readonly StockService $stock,
         private readonly VaultLedgerService $ledger,
+        private readonly SimpleVaultService $simpleVault,
     ) {}
 
     /**
@@ -36,8 +39,7 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Quiet home shared by Super Admin + Boss + Accountant:
-     * available cash, module charts, classify stripe.
+     * Shared finance home for Super Admin + Boss + Accountant.
      *
      * @return array<string, mixed>
      */
@@ -46,49 +48,126 @@ class RoleHomeDashboardService
         $vault = $this->zhakoVault();
         $balances = $vault ? $this->ledger->balances($vault) : null;
         $spend = $this->spendMixByCurrency($vault?->id);
+        $simpleSpend = $this->vaultLineSpendMix($vault?->id);
+        $snap = $vault ? $this->simpleVault->dashboardSnapshot($vault) : null;
+        $stockSummary = $this->stock->dashboardSummary();
 
-        $unclassifiedPeople = \App\Models\Worker::query()
+        $availableUsd = (float) ($snap['available_cash']['USD'] ?? $balances['available_usd'] ?? 0);
+        $availableIqd = (float) ($snap['available_cash']['IQD'] ?? $balances['available_iqd'] ?? 0);
+        $staffLockedUsd = (float) ($snap['estimates']['USD']['staff_owed_held'] ?? 0);
+        $staffLockedIqd = (float) ($snap['estimates']['IQD']['staff_owed_held'] ?? 0);
+        $insuranceUsd = (float) ($snap['estimates']['USD']['company_insurance_held'] ?? 0);
+        $insuranceIqd = (float) ($snap['estimates']['IQD']['company_insurance_held'] ?? 0);
+
+        $expenseUsd = round(
+            ($simpleSpend['usd']['staff'] ?? 0)
+            + ($simpleSpend['usd']['materials'] ?? 0)
+            + ($simpleSpend['usd']['salary'] ?? 0),
+            2
+        );
+        $expenseIqd = round(
+            ($simpleSpend['iqd']['staff'] ?? 0)
+            + ($simpleSpend['iqd']['materials'] ?? 0)
+            + ($simpleSpend['iqd']['salary'] ?? 0),
+            2
+        );
+
+        $cashTrend = $this->cashTrendPercent($vault?->id);
+
+        $unclassifiedPeople = Worker::query()
             ->where(function ($q) {
-                $q->where('labor_kind', \App\Models\Worker::LABOR_KIND_UNCLASSIFIED)
+                $q->where('labor_kind', Worker::LABOR_KIND_UNCLASSIFIED)
                     ->orWhereNull('labor_kind');
             })
             ->count();
 
         return [
             'year_month' => now()->format('Y-m'),
-            'available_iqd' => $balances['available_iqd'] ?? 0.0,
-            'available_usd' => $balances['available_usd'] ?? 0.0,
+            'available_iqd' => $availableIqd,
+            'available_usd' => $availableUsd,
             'reserved_iqd' => $balances['reserved_iqd'] ?? 0.0,
             'reserved_usd' => $balances['reserved_usd'] ?? 0.0,
             'pending_iqd' => $balances['pending_iqd'] ?? 0.0,
             'pending_usd' => $balances['pending_usd'] ?? 0.0,
+            'finance' => [
+                'available' => [
+                    'usd' => $availableUsd,
+                    'iqd' => $availableIqd,
+                    'trend_pct' => $cashTrend,
+                ],
+                'locked' => [
+                    'staff_usd' => $staffLockedUsd,
+                    'staff_iqd' => $staffLockedIqd,
+                    'insurance_usd' => $insuranceUsd,
+                    'insurance_iqd' => $insuranceIqd,
+                    'total_usd' => round($staffLockedUsd + $insuranceUsd, 2),
+                    'total_iqd' => round($staffLockedIqd + $insuranceIqd, 2),
+                ],
+                'expenses' => [
+                    'usd' => $expenseUsd,
+                    'iqd' => $expenseIqd,
+                    'staff_usd' => $simpleSpend['usd']['staff'],
+                    'staff_iqd' => $simpleSpend['iqd']['staff'],
+                    'materials_usd' => $simpleSpend['usd']['materials'],
+                    'materials_iqd' => $simpleSpend['iqd']['materials'],
+                    'salary_usd' => $simpleSpend['usd']['salary'],
+                    'salary_iqd' => $simpleSpend['iqd']['salary'],
+                ],
+                'inventory' => [
+                    'usd' => (float) ($stockSummary['stock_value_usd'] ?? 0),
+                    'iqd' => (float) ($stockSummary['stock_value_iqd'] ?? 0),
+                    'items' => (int) ($stockSummary['total_items'] ?? 0),
+                ],
+                'cashflow' => $this->cashflowSeries($vault?->id, 30),
+                'expense_donut' => [
+                    'staff' => round(
+                        ($simpleSpend['usd']['staff'] ?? 0) + ($simpleSpend['iqd']['staff'] ?? 0),
+                        2
+                    ),
+                    'materials' => round(
+                        ($simpleSpend['usd']['materials'] ?? 0) + ($simpleSpend['iqd']['materials'] ?? 0),
+                        2
+                    ),
+                    'salary' => round(
+                        ($simpleSpend['usd']['salary'] ?? 0) + ($simpleSpend['iqd']['salary'] ?? 0),
+                        2
+                    ),
+                    // Native legs kept for dual-currency display in tooltips
+                    'legs' => $simpleSpend,
+                ],
+                'activity' => $this->recentActivity($vault?->id, 12),
+            ],
             'charts' => [
                 'available' => [
-                    'usd' => (float) ($balances['available_usd'] ?? 0),
-                    'iqd' => (float) ($balances['available_iqd'] ?? 0),
+                    'usd' => $availableUsd,
+                    'iqd' => $availableIqd,
                 ],
-                'spend_usd' => $spend['usd'],
-                'spend_iqd' => $spend['iqd'],
+                'spend_usd' => [
+                    'expenses' => $simpleSpend['usd']['materials'],
+                    'staff' => $simpleSpend['usd']['staff'],
+                    'salary' => $simpleSpend['usd']['salary'],
+                ],
+                'spend_iqd' => [
+                    'expenses' => $simpleSpend['iqd']['materials'],
+                    'staff' => $simpleSpend['iqd']['staff'],
+                    'salary' => $simpleSpend['iqd']['salary'],
+                ],
                 'locked_free' => [
                     'usd' => [
-                        'locked' => round(
-                            (float) ($balances['reserved_usd'] ?? 0) + (float) ($balances['pending_usd'] ?? 0),
-                            2
-                        ),
-                        'free' => (float) ($balances['available_usd'] ?? 0),
+                        'locked' => round($staffLockedUsd + $insuranceUsd, 2),
+                        'free' => $availableUsd,
                     ],
                     'iqd' => [
-                        'locked' => round(
-                            (float) ($balances['reserved_iqd'] ?? 0) + (float) ($balances['pending_iqd'] ?? 0),
-                            2
-                        ),
-                        'free' => (float) ($balances['available_iqd'] ?? 0),
+                        'locked' => round($staffLockedIqd + $insuranceIqd, 2),
+                        'free' => $availableIqd,
                     ],
                 ],
             ],
             'unclassified_people' => $unclassifiedPeople,
-            'people' => \App\Models\Worker::query()->count(),
+            'people' => Worker::query()->count(),
             'projects' => Project::query()->count(),
+            // Legacy transaction spend kept for debugging / older consumers
+            'legacy_spend' => $spend,
         ];
     }
 
@@ -107,8 +186,6 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Native-currency spend buckets — never FX-blended across USD/IQD.
-     *
      * @return array{usd: array{expenses: float, staff: float, salary: float}, iqd: array{expenses: float, staff: float, salary: float}}
      */
     private function spendMixByCurrency(?int $vaultId): array
@@ -142,9 +219,192 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Boss / Contractor home — same quiet Available Cash + boxes + charts as Super Admin.
-     * No Super-Admin-only workbook / Users / Mayorca / backups / audit payload.
+     * Spend from vault_lines (simple vault source of truth).
      *
+     * @return array{usd: array{staff: float, materials: float, salary: float}, iqd: array{staff: float, materials: float, salary: float}}
+     */
+    private function vaultLineSpendMix(?int $vaultId): array
+    {
+        $empty = ['staff' => 0.0, 'materials' => 0.0, 'salary' => 0.0];
+        if (! $vaultId) {
+            return ['usd' => $empty, 'iqd' => $empty];
+        }
+
+        $rows = VaultLine::query()
+            ->where('vault_id', $vaultId)
+            ->whereIn('kind', [
+                VaultLine::KIND_JOB_PAY,
+                VaultLine::KIND_DAILY_PAY,
+                VaultLine::KIND_UNIT_PAY,
+                VaultLine::KIND_SALARY,
+                VaultLine::KIND_EXPENSE,
+            ])
+            ->selectRaw('kind, currency, COALESCE(SUM(amount), 0) as total')
+            ->groupBy('kind', 'currency')
+            ->get();
+
+        $out = ['usd' => $empty, 'iqd' => $empty];
+        foreach ($rows as $row) {
+            $currency = strtoupper((string) $row->currency) === DualCurrency::USD ? 'usd' : 'iqd';
+            $total = round((float) $row->total, 2);
+            $bucket = match ($row->kind) {
+                VaultLine::KIND_SALARY => 'salary',
+                VaultLine::KIND_EXPENSE => 'materials',
+                default => 'staff',
+            };
+            $out[$currency][$bucket] = round($out[$currency][$bucket] + $total, 2);
+        }
+
+        return $out;
+    }
+
+    /**
+     * Month-over-month net cashflow change (advances − outflows) as percent.
+     */
+    private function cashTrendPercent(?int $vaultId): ?float
+    {
+        if (! $vaultId) {
+            return null;
+        }
+
+        $thisMonthStart = now()->startOfMonth()->toDateString();
+        $lastMonthStart = now()->subMonthNoOverflow()->startOfMonth()->toDateString();
+        $lastMonthEnd = now()->subMonthNoOverflow()->endOfMonth()->toDateString();
+
+        $netFor = function (string $from, string $to) use ($vaultId): float {
+            $in = (float) VaultLine::query()
+                ->where('vault_id', $vaultId)
+                ->where('kind', VaultLine::KIND_ADVANCE)
+                ->whereDate('occurred_on', '>=', $from)
+                ->whereDate('occurred_on', '<=', $to)
+                ->sum('amount');
+            $out = (float) VaultLine::query()
+                ->where('vault_id', $vaultId)
+                ->whereIn('kind', [
+                    VaultLine::KIND_JOB_PAY,
+                    VaultLine::KIND_DAILY_PAY,
+                    VaultLine::KIND_UNIT_PAY,
+                    VaultLine::KIND_SALARY,
+                    VaultLine::KIND_EXPENSE,
+                ])
+                ->whereDate('occurred_on', '>=', $from)
+                ->whereDate('occurred_on', '<=', $to)
+                ->sum('amount');
+
+            return round($in - $out, 2);
+        };
+
+        $current = $netFor($thisMonthStart, now()->toDateString());
+        $previous = $netFor($lastMonthStart, $lastMonthEnd);
+
+        if (abs($previous) < 0.01) {
+            return $current > 0 ? 100.0 : ($current < 0 ? -100.0 : 0.0);
+        }
+
+        return round((($current - $previous) / abs($previous)) * 100, 1);
+    }
+
+    /**
+     * @return list<array{date: string, advances: float, expenses: float}>
+     */
+    private function cashflowSeries(?int $vaultId, int $days = 30): array
+    {
+        if (! $vaultId) {
+            return [];
+        }
+
+        $start = now()->subDays($days - 1)->startOfDay();
+        $end = now()->endOfDay();
+
+        $advances = VaultLine::query()
+            ->where('vault_id', $vaultId)
+            ->where('kind', VaultLine::KIND_ADVANCE)
+            ->whereDate('occurred_on', '>=', $start->toDateString())
+            ->whereDate('occurred_on', '<=', $end->toDateString())
+            ->selectRaw('DATE(occurred_on) as d, COALESCE(SUM(amount), 0) as total')
+            ->groupBy('d')
+            ->pluck('total', 'd');
+
+        $expenses = VaultLine::query()
+            ->where('vault_id', $vaultId)
+            ->whereIn('kind', [
+                VaultLine::KIND_JOB_PAY,
+                VaultLine::KIND_DAILY_PAY,
+                VaultLine::KIND_UNIT_PAY,
+                VaultLine::KIND_SALARY,
+                VaultLine::KIND_EXPENSE,
+            ])
+            ->whereDate('occurred_on', '>=', $start->toDateString())
+            ->whereDate('occurred_on', '<=', $end->toDateString())
+            ->selectRaw('DATE(occurred_on) as d, COALESCE(SUM(amount), 0) as total')
+            ->groupBy('d')
+            ->pluck('total', 'd');
+
+        $series = [];
+        for ($i = 0; $i < $days; $i++) {
+            $day = $start->copy()->addDays($i)->toDateString();
+            $series[] = [
+                'date' => $day,
+                'label' => Carbon::parse($day)->format('m-d'),
+                'advances' => round((float) ($advances[$day] ?? 0), 2),
+                'expenses' => round((float) ($expenses[$day] ?? 0), 2),
+            ];
+        }
+
+        return $series;
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function recentActivity(?int $vaultId, int $limit = 12): array
+    {
+        if (! $vaultId) {
+            return [];
+        }
+
+        return VaultLine::query()
+            ->with(['staff:id,name', 'project:id,name'])
+            ->where('vault_id', $vaultId)
+            ->orderByDesc('occurred_on')
+            ->orderByDesc('id')
+            ->limit($limit)
+            ->get()
+            ->map(function (VaultLine $line) {
+                $kind = (string) $line->kind;
+                $title = match ($kind) {
+                    VaultLine::KIND_ADVANCE => 'advance',
+                    VaultLine::KIND_EXPENSE => 'expense',
+                    VaultLine::KIND_SALARY => 'salary',
+                    VaultLine::KIND_JOB_PAY, VaultLine::KIND_DAILY_PAY, VaultLine::KIND_UNIT_PAY => 'staff_pay',
+                    default => $kind,
+                };
+                $recipient = $line->staff?->name
+                    ?: ($line->purpose ?: ($line->note ?: null));
+
+                $status = 'posted';
+                if ((float) $line->hold_amount > 0 && $line->hold_released_at === null) {
+                    $status = 'held';
+                }
+
+                return [
+                    'id' => $line->id,
+                    'date' => $line->occurred_on?->toDateString(),
+                    'kind' => $kind,
+                    'title_key' => $title,
+                    'recipient' => $recipient,
+                    'project' => $line->project?->name,
+                    'apartment' => $line->apartment_number ?: $line->villa_number,
+                    'amount' => round((float) $line->amount, 2),
+                    'currency' => strtoupper((string) $line->currency),
+                    'status' => $status,
+                ];
+            })
+            ->values()
+            ->all();
+    }
+
+    /**
      * @return array<string, mixed>
      */
     private function boss(): array
@@ -153,9 +413,6 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Accountant home — quiet Available Cash + money-ops boxes + charts.
-     * No KPI lecture dump, recent-tx table, Users, Mayorca, or backups payload.
-     *
      * @return array<string, mixed>
      */
     private function accountant(): array
@@ -164,16 +421,13 @@ class RoleHomeDashboardService
     }
 
     /**
-     * Stock Manager home — quiet stock snapshot + ops boxes + charts.
-     * No vault/cash KPIs (role has no vault access). No lecture panels or movement dumps.
-     *
      * @return array<string, mixed>
      */
     private function stockManager(): array
     {
         $summary = $this->stock->dashboardSummary();
 
-        $items = StockItem::query()->get(['id', 'category', 'quantity', 'min_quantity', 'purchase_price_iqd']);
+        $items = StockItem::query()->get(['id', 'category', 'quantity', 'min_quantity', 'purchase_price_iqd', 'purchase_price_usd', 'currency']);
 
         $byCategory = $items
             ->groupBy(function (StockItem $item) {
@@ -227,6 +481,7 @@ class RoleHomeDashboardService
         return [
             'total_items' => $summary['total_items'],
             'stock_value_iqd' => $summary['stock_value_iqd'],
+            'stock_value_usd' => $summary['stock_value_usd'],
             'low_stock' => $summary['low_stock'],
             'out_of_stock' => $summary['out_of_stock'],
             'today_in_qty' => $summary['today_in_qty'],

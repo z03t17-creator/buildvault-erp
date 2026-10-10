@@ -1,4 +1,5 @@
 import DataPanel from '@/Components/DataPanel';
+import FinanceDesk from '@/Components/FinanceDesk';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
@@ -194,13 +195,6 @@ function DualBarChart({ title, subtitle, bars, ariaLabel, format = 'money' }) {
 }
 
 function QuietRoleHome({ summary, t, modules: modulesOverride, modulesHint }) {
-    const usd = t('USD');
-    const iqd = t('IQD');
-    const charts = summary?.charts || {};
-    const available = charts.available || {};
-    const spendUsd = charts.spend_usd || {};
-    const spendIqd = charts.spend_iqd || {};
-    const lockedFree = charts.locked_free || {};
     const unclassified = summary?.unclassified_people ?? 0;
 
     const modules = modulesOverride || [
@@ -244,26 +238,25 @@ function QuietRoleHome({ summary, t, modules: modulesOverride, modulesHint }) {
             title: t('home_box_expenses'),
             hint: t('home_box_expenses_hint'),
         },
+        {
+            key: 'stock',
+            href: route('stock.dashboard'),
+            icon: 'stock',
+            tone: 'stock',
+            title: t('warehouse_title'),
+            hint: t('warehouse_hub_hint'),
+        },
     ];
 
     return (
         <div className="space-y-6">
-            {null}
+            <FinanceDesk finance={summary?.finance} />
 
-            <div className="grid gap-3 sm:grid-cols-2">
-                <MoneyStat
-                    label={`${t('available_cash')} ${usd}`}
-                    value={summary?.available_usd}
-                    iqd={usd}
-                    accent
-                />
-                <MoneyStat
-                    label={`${t('available_cash')} ${iqd}`}
-                    value={summary?.available_iqd}
-                    iqd={iqd}
-                    accent
-                />
-            </div>
+            {unclassified > 0 ? (
+                <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-100">
+                    {t('home_unclassified_people', { count: unclassified })}
+                </p>
+            ) : null}
 
             <section>
                 <div className="mb-3">
@@ -280,124 +273,6 @@ function QuietRoleHome({ summary, t, modules: modulesOverride, modulesHint }) {
                     ))}
                 </div>
             </section>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-                <DualBarChart
-                    title={t('home_chart_available')}
-                    subtitle={t('home_chart_available_hint')}
-                    ariaLabel={t('home_chart_available')}
-                    bars={[
-                        {
-                            key: 'usd',
-                            label: usd,
-                            value: available.usd ?? 0,
-                            currency: usd,
-                            color: 'bg-teal-500',
-                        },
-                        {
-                            key: 'iqd',
-                            label: iqd,
-                            value: available.iqd ?? 0,
-                            currency: iqd,
-                            color: 'bg-emerald-500',
-                        },
-                    ]}
-                />
-                <DualBarChart
-                    title={t('home_chart_locked')}
-                    subtitle={t('home_chart_locked_hint')}
-                    ariaLabel={t('home_chart_locked')}
-                    bars={[
-                        {
-                            key: 'locked-usd',
-                            label: `${t('home_locked')} ${usd}`,
-                            value: lockedFree.usd?.locked ?? 0,
-                            currency: usd,
-                            color: 'bg-amber-500',
-                        },
-                        {
-                            key: 'free-usd',
-                            label: `${t('home_free')} ${usd}`,
-                            value: lockedFree.usd?.free ?? 0,
-                            currency: usd,
-                            color: 'bg-teal-500',
-                        },
-                        {
-                            key: 'locked-iqd',
-                            label: `${t('home_locked')} ${iqd}`,
-                            value: lockedFree.iqd?.locked ?? 0,
-                            currency: iqd,
-                            color: 'bg-amber-400',
-                        },
-                        {
-                            key: 'free-iqd',
-                            label: `${t('home_free')} ${iqd}`,
-                            value: lockedFree.iqd?.free ?? 0,
-                            currency: iqd,
-                            color: 'bg-emerald-500',
-                        },
-                    ]}
-                />
-            </div>
-
-            <div className="grid gap-6 lg:grid-cols-2">
-                <DualBarChart
-                    title={t('home_chart_spend_usd')}
-                    subtitle={t('home_chart_spend_hint')}
-                    ariaLabel={t('home_chart_spend_usd')}
-                    bars={[
-                        {
-                            key: 'exp-usd',
-                            label: t('home_spend_expenses'),
-                            value: spendUsd.expenses ?? 0,
-                            currency: usd,
-                            color: 'bg-rose-500',
-                        },
-                        {
-                            key: 'staff-usd',
-                            label: t('home_spend_staff'),
-                            value: spendUsd.staff ?? 0,
-                            currency: usd,
-                            color: 'bg-amber-500',
-                        },
-                        {
-                            key: 'sal-usd',
-                            label: t('home_spend_salary'),
-                            value: spendUsd.salary ?? 0,
-                            currency: usd,
-                            color: 'bg-indigo-500',
-                        },
-                    ]}
-                />
-                <DualBarChart
-                    title={t('home_chart_spend_iqd')}
-                    subtitle={t('home_chart_spend_hint')}
-                    ariaLabel={t('home_chart_spend_iqd')}
-                    bars={[
-                        {
-                            key: 'exp-iqd',
-                            label: t('home_spend_expenses'),
-                            value: spendIqd.expenses ?? 0,
-                            currency: iqd,
-                            color: 'bg-rose-500',
-                        },
-                        {
-                            key: 'staff-iqd',
-                            label: t('home_spend_staff'),
-                            value: spendIqd.staff ?? 0,
-                            currency: iqd,
-                            color: 'bg-amber-500',
-                        },
-                        {
-                            key: 'sal-iqd',
-                            label: t('home_spend_salary'),
-                            value: spendIqd.salary ?? 0,
-                            currency: iqd,
-                            color: 'bg-indigo-500',
-                        },
-                    ]}
-                />
-            </div>
         </div>
     );
 }
@@ -444,17 +319,6 @@ function accountantModules(t) {
             tone: 'clients',
             title: t('vault_money_forms'),
             hint: t('vault_money_forms_hint'),
-        },
-        {
-            key: 'salary',
-            href: route('vault.lines.salary.create'),
-            secondaryHref: route('penalties.index'),
-            primaryLabel: t('vault_form_salary'),
-            secondaryLabel: t('penalties'),
-            icon: 'payroll',
-            tone: 'salary',
-            title: t('vault_form_salary'),
-            hint: t('vault_form_salary_short'),
         },
         {
             key: 'attendance',
