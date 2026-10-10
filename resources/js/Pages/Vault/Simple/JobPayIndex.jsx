@@ -122,7 +122,7 @@ export default function JobPayIndex({
                                     title={row.staff?.name || '—'}
                                     subtitle={row.purpose || row.occurred_on || ''}
                                     badge={
-                                        <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                        <span dir="ltr" className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                                             {row.amount} {row.currency}
                                         </span>
                                     }

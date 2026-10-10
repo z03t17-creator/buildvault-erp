@@ -125,7 +125,7 @@ export default function Create({
                 <PageHeader
                     title={t('warehouse_dispatch')}
                     subtitle={t('warehouse_dispatch_hint')}
-                    icon={<NavIcon name="stockOut" className="text-lg text-amber-300" />}
+                    icon={<NavIcon name="stockOut" className="text-lg text-amber-700 dark:text-amber-300" />}
                     actions={
                         <Link href={route('stock.dashboard')}>
                             <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
@@ -163,7 +163,7 @@ export default function Create({
                             </select>
                             <InputError message={errors.stock_item_id} className="mt-1" />
                             {selected ? (
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t('on_hand')}: {selected.quantity} {selected.unit}
                                 </p>
                             ) : null}
@@ -208,7 +208,7 @@ export default function Create({
                     </FormSection>
 
                     <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
-                        <p className="text-sm font-semibold text-slate-100">{t('warehouse_place')}</p>
+                        <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('warehouse_place')}</p>
                         <div className="flex flex-wrap gap-2">
                             {siteKinds.map((kind) => (
                                 <button

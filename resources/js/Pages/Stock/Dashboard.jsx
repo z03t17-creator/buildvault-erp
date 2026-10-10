@@ -28,7 +28,7 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                 <PageHeader
                     title={t('warehouse_title')}
                     subtitle={t('warehouse_dashboard_hint')}
-                    icon={<NavIcon name="stock" className="text-lg text-emerald-300" />}
+                    icon={<NavIcon name="stock" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
                         <div className="flex flex-wrap gap-2">
                             <Link href={route('stock.consumption')}>
@@ -124,10 +124,10 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
 
                 {lowStockItems.length > 0 ? (
                     <DataPanel padded={false}>
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+                        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
                             <div>
-                                <p className="text-sm font-semibold text-slate-100">{t('warehouse_low_list')}</p>
-                                <p className="text-xs text-slate-400">{t('warehouse_low_list_hint')}</p>
+                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('warehouse_low_list')}</p>
+                                <p className="text-xs text-slate-500 dark:text-slate-400">{t('warehouse_low_list_hint')}</p>
                             </div>
                             <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-slate-950">
                                 {lowCount}
@@ -149,7 +149,7 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                                         <Td>
                                             <Link
                                                 href={route('stock.items.show', item.id)}
-                                                className="font-semibold text-emerald-300 underline-offset-2 hover:underline"
+                                                className="font-semibold text-emerald-700 underline-offset-2 dark:text-emerald-300 hover:underline"
                                             >
                                                 {item.name}
                                             </Link>
@@ -175,8 +175,8 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
 
                 <div className="grid gap-4 lg:grid-cols-2">
                     <DataPanel padded={false}>
-                        <div className="border-b border-slate-800 px-4 py-3">
-                            <p className="text-sm font-semibold text-slate-100">{t('warehouse_by_category')}</p>
+                        <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('warehouse_by_category')}</p>
                         </div>
                         <DataTable minWidth="28rem" caption={t('warehouse_by_category')}>
                             <thead>
@@ -208,8 +208,8 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                     </DataPanel>
 
                     <DataPanel padded={false}>
-                        <div className="border-b border-slate-800 px-4 py-3">
-                            <p className="text-sm font-semibold text-slate-100">{t('stock_recent_movements')}</p>
+                        <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('stock_recent_movements')}</p>
                         </div>
                         <DataTable minWidth="28rem" caption={t('stock_recent_movements')}>
                             <thead>
@@ -230,7 +230,7 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                                             <span
                                                 className={
                                                     row.type === 'in'
-                                                        ? 'text-emerald-300'
+                                                        ? 'text-emerald-700 dark:text-emerald-300'
                                                         : 'text-amber-200'
                                                 }
                                             >

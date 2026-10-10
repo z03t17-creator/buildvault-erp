@@ -206,14 +206,14 @@ export default function SalaryForm({
                                     <dt className="text-xs text-slate-500">{t('available_cash')}</dt>
                                     <dd dir="ltr" className="font-sans text-sm font-semibold tabular-nums">
                                         <MoneyAmount value={cash} label={currency} size="sm" showLabel={false} />
-                                        <span className="ms-1 text-xs text-slate-400">{currency}</span>
+                                        <span className="ms-1 text-xs text-slate-500 dark:text-slate-400">{currency}</span>
                                     </dd>
                                 </div>
                                 <div>
                                     <dt className="text-xs text-slate-500">{t('vault_expenses_to_pay')}</dt>
                                     <dd dir="ltr" className="font-sans text-sm font-semibold tabular-nums">
                                         <MoneyAmount value={expensesOpen} label={currency} size="sm" showLabel={false} />
-                                        <span className="ms-1 text-xs text-slate-400">{currency}</span>
+                                        <span className="ms-1 text-xs text-slate-500 dark:text-slate-400">{currency}</span>
                                     </dd>
                                 </div>
                                 <div>
@@ -228,7 +228,7 @@ export default function SalaryForm({
                                         }
                                     >
                                         <MoneyAmount value={afterPay} label={currency} size="sm" showLabel={false} />
-                                        <span className="ms-1 text-xs text-slate-400">{currency}</span>
+                                        <span className="ms-1 text-xs text-slate-500 dark:text-slate-400">{currency}</span>
                                     </dd>
                                 </div>
                             </dl>

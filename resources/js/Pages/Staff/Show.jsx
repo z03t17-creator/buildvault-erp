@@ -217,7 +217,7 @@ export default function Show({
             <Head title={staff?.name || t('staff')} />
             <PageShell className="!space-y-6">
                 <section className="bv-card p-4 sm:p-5">
-                    <div className="mb-4 flex items-start gap-3 border-b border-slate-800 pb-4">
+                    <div className="mb-4 flex items-start gap-3 border-b border-slate-200/80 pb-4 dark:border-slate-800">
                         <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-teal-400/15 text-teal-100">
                             <NavIcon name="workers" className="text-lg" />
                         </span>
@@ -225,7 +225,7 @@ export default function Show({
                             <h2 className="font-display text-lg font-semibold text-white">
                                 {staff?.name}
                             </h2>
-                            <p className="mt-0.5 text-sm text-slate-400">
+                            <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
                                 {t('staff_profile_card_simple')}
                             </p>
                         </div>

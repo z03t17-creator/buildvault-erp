@@ -43,7 +43,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                 <PageHeader
                     title={t('warehouse_receive')}
                     subtitle={t('warehouse_receive_hint')}
-                    icon={<NavIcon name="stockIn" className="text-lg text-emerald-300" />}
+                    icon={<NavIcon name="stockIn" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
                         <Link href={route('stock.dashboard')}>
                             <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
@@ -96,7 +96,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                             </select>
                             <InputError message={errors.stock_item_id} className="mt-1" />
                             {selected ? (
-                                <p className="mt-1 text-xs text-slate-400">
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                                     {t('on_hand')}: {selected.quantity} {selected.unit}
                                 </p>
                             ) : null}
@@ -160,7 +160,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                         </FormField>
                         <FormField>
                             <InputLabel value={t('warehouse_total_cost')} />
-                            <p dir="ltr" className="mt-2 text-lg font-semibold tabular-nums text-emerald-200">
+                            <p dir="ltr" className="mt-2 text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-200">
                                 <MoneyAmount value={total} label={iqd} size="lg" showLabel={false} /> {iqd}
                             </p>
                         </FormField>
@@ -189,7 +189,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                                     </option>
                                 ))}
                             </select>
-                            <p className="mt-1 text-xs text-slate-400">{t('stock_in_project_optional_hint')}</p>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('stock_in_project_optional_hint')}</p>
                         </FormField>
                         <FormField>
                             <InputLabel value={t('note')} htmlFor="notes" />

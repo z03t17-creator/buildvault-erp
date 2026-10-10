@@ -28,7 +28,7 @@ export default function Consumption({
                 <PageHeader
                     title={t('warehouse_consumption')}
                     subtitle={t('warehouse_consumption_hint')}
-                    icon={<NavIcon name="stock" className="text-lg text-sky-300" />}
+                    icon={<NavIcon name="stock" className="text-lg text-sky-700 dark:text-sky-300" />}
                     actions={
                         <Link href={route('stock.dashboard')}>
                             <SecondaryButton type="button">{t('warehouse_title')}</SecondaryButton>
@@ -86,19 +86,19 @@ export default function Consumption({
                 ) : (
                     list.map((place) => (
                         <DataPanel key={place.key} padded={false}>
-                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 px-4 py-3">
+                            <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
                                 <div>
-                                    <p className="text-sm font-semibold text-slate-100">
+                                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                         {place.place_label || '—'}
                                     </p>
-                                    <p className="text-xs text-slate-400">
+                                    <p className="text-xs text-slate-500 dark:text-slate-400">
                                         {place.project_name || '—'}
                                         {place.site_kind
                                             ? ` · ${t(`warehouse_site_${place.site_kind}`)}`
                                             : ''}
                                     </p>
                                 </div>
-                                <div className="text-end text-xs text-slate-300">
+                                <div className="text-end text-xs text-slate-600 dark:text-slate-300">
                                     <p dir="ltr" className="font-semibold tabular-nums">
                                         {place.total_qty}
                                     </p>
@@ -132,8 +132,8 @@ export default function Consumption({
                                                 <span dir="ltr">{line.moved_on || '—'}</span>
                                             </Td>
                                             <Td>
-                                                <p className="font-semibold text-slate-100">{line.item_name}</p>
-                                                <p className="text-xs text-slate-400" dir="ltr">
+                                                <p className="font-semibold text-slate-900 dark:text-slate-100">{line.item_name}</p>
+                                                <p className="text-xs text-slate-500 dark:text-slate-400" dir="ltr">
                                                     {line.sku || '—'}
                                                 </p>
                                             </Td>

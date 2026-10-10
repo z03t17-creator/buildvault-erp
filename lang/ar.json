@@ -1592,6 +1592,8 @@
     "staff_rates_empty_title": "لا أسعار",
     "staff_rates_empty_hint": "أضف قائمة أسعار لهذا الشخص.",
     "staff_rate_item": "البند",
+    "staff_rate_unit_default": "قطعة",
+    "staff_pay_block_placeholder": "A1",
     "staff_pay_place": "المكان",
     "staff_pay_site_villa": "فيلا",
     "staff_pay_site_building": "عمارة",

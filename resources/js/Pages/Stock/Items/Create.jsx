@@ -39,7 +39,7 @@ export default function Create({ suppliers = [], categories = [], units = [], de
                 <PageHeader
                     title={t('warehouse_add_item')}
                     subtitle={t('warehouse_item_form_hint')}
-                    icon={<NavIcon name="stock" className="text-lg text-emerald-300" />}
+                    icon={<NavIcon name="stock" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
                         <Link href={route('stock.items.index')}>
                             <SecondaryButton type="button">{t('back')}</SecondaryButton>
@@ -104,7 +104,7 @@ export default function Create({ suppliers = [], categories = [], units = [], de
                         <FormField>
                             <div className="flex items-center justify-between gap-2">
                                 <InputLabel value={t('sku')} htmlFor="sku" />
-                                <label className="inline-flex items-center gap-2 text-xs text-slate-300">
+                                <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
                                     <input
                                         type="checkbox"
                                         checked={!!data.auto_sku}

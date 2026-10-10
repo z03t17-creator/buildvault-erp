@@ -1592,6 +1592,8 @@
     "staff_rates_empty_title": "نرخ نییە",
     "staff_rates_empty_hint": "بۆ ئەم کەسە لیستی نرخ زیاد بکە.",
     "staff_rate_item": "بابەت",
+    "staff_rate_unit_default": "دانە",
+    "staff_pay_block_placeholder": "A1",
     "staff_pay_place": "شوێن",
     "staff_pay_site_villa": "ڤێلا",
     "staff_pay_site_building": "عیمارە",

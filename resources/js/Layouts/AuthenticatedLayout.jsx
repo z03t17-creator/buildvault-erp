@@ -310,7 +310,7 @@ export default function AuthenticatedLayout({ header, children, showFlash = true
     );
 
     return (
-        <div className={(desk ? 'dark bv-desk ' : '') + 'min-h-screen lg:flex'}>
+        <div className={(desk ? 'bv-desk ' : '') + 'min-h-screen lg:flex'}>
             <aside className="bv-sidebar sticky top-0 z-30 hidden h-screen w-[17rem] shrink-0 flex-col border-e border-slate-200/80 xl:w-72 lg:flex dark:border-slate-800">
                 {sidebarBody}
             </aside>

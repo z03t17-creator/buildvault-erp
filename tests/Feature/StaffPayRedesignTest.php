@@ -397,7 +397,7 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringContainsString('staff_rates_title', $source);
     }
 
-    public function test_staff_screens_use_the_dark_desk(): void
+    public function test_staff_screens_use_the_desk_layout(): void
     {
         foreach ([
             'js/Pages/Staff/Index.jsx',
@@ -409,6 +409,10 @@ class StaffPayRedesignTest extends TestCase
             $this->assertStringContainsString('desk', $source);
             $this->assertStringContainsString('AuthenticatedLayout', $source);
         }
+
+        $layout = file_get_contents(resource_path('js/Layouts/AuthenticatedLayout.jsx'));
+        $this->assertStringContainsString("desk ? 'bv-desk '", $layout);
+        $this->assertStringNotContainsString("desk ? 'dark bv-desk '", $layout);
     }
 
     public function test_default_catalog_includes_shaft_door_and_square_meters(): void

@@ -22,29 +22,29 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 const fieldClass = deskFieldClass;
 const moneyFieldClass = deskMoneyClass;
 
-function emptyItem(rate = null) {
+function emptyItem(rate = null, defaultUnit = '') {
     return {
         staff_rate_id: rate?.id || '',
         item_name: rate?.item_name || '',
-        unit: rate?.unit || 'دانە',
+        unit: rate?.unit || defaultUnit,
         quantity: '',
         unit_rate: rate?.rate != null ? String(rate.rate) : '',
         currency: rate?.currency || 'IQD',
     };
 }
 
-function formFromLine(line, today, preselectStaffId) {
+function formFromLine(line, today, preselectStaffId, defaultUnit = '') {
     const items =
         Array.isArray(line?.items) && line.items.length
             ? line.items.map((row) => ({
                   staff_rate_id: row.staff_rate_id || '',
                   item_name: row.item_name || '',
-                  unit: row.unit || 'دانە',
+                  unit: row.unit || defaultUnit,
                   quantity: row.quantity != null ? String(row.quantity) : '',
                   unit_rate: row.unit_rate != null ? String(row.unit_rate) : '',
                   currency: row.currency || line.currency || 'IQD',
               }))
-            : [emptyItem()];
+            : [emptyItem(null, defaultUnit)];
 
     return {
         staff_id: line?.staff_id
@@ -97,11 +97,12 @@ export default function StaffPayForm({
     line = null,
 }) {
     const t = useTranslations();
+    const defaultUnit = t('staff_rate_unit_default');
     const [localErrors, setLocalErrors] = useState({});
     const previousStaffId = useRef(line?.id ? String(line.staff_id) : null);
 
     const { data, setData, post, put, processing, errors } = useForm(
-        formFromLine(line, today, preselectStaffId),
+        formFromLine(line, today, preselectStaffId, defaultUnit),
     );
 
     const mergedErrors = useMemo(
@@ -138,7 +139,7 @@ export default function StaffPayForm({
                 apply_insurance: false,
                 day_rate: '',
                 days_count: '',
-                items: [emptyItem()],
+                items: [emptyItem(null, defaultUnit)],
             });
             return;
         }
@@ -152,7 +153,7 @@ export default function StaffPayForm({
                 currency: selected.currency || data.currency || 'IQD',
                 apply_insurance: true,
                 amount: '',
-                items: [emptyItem()],
+                items: [emptyItem(null, defaultUnit)],
             });
             return;
         }
@@ -167,7 +168,7 @@ export default function StaffPayForm({
                 amount: '',
                 day_rate: '',
                 days_count: '',
-                items: [emptyItem(first)],
+                items: [emptyItem(first, defaultUnit)],
             });
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -238,7 +239,7 @@ export default function StaffPayForm({
         setData('currency', rate.currency);
     };
 
-    const addItem = () => setData('items', [...data.items, emptyItem(rates[0])]);
+    const addItem = () => setData('items', [...data.items, emptyItem(rates[0], defaultUnit)]);
     const removeItem = (index) => {
         if (data.items.length <= 1) return;
         setData(
@@ -470,8 +471,8 @@ export default function StaffPayForm({
 
                     {/* Place block */}
                     {selected ? (
-                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
-                            <p className="text-sm font-semibold text-slate-100">
+                        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {t('staff_pay_place')}
                             </p>
                             <div className="flex flex-wrap gap-2">
@@ -498,7 +499,7 @@ export default function StaffPayForm({
                                             value={data.block}
                                             onChange={(next) => setPlace('block', next)}
                                             suggestions={blockSuggestions}
-                                            placeholder="A1"
+                                            placeholder={t('staff_pay_block_placeholder')}
                                         />
                                     </FormField>
                                     <FormField>
@@ -681,9 +682,9 @@ export default function StaffPayForm({
 
                     {/* Unit rows */}
                     {isUnit ? (
-                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-100">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     {t('staff_pay_items_title')}
                                 </p>
                                 <SecondaryButton type="button" onClick={addItem}>
@@ -699,7 +700,7 @@ export default function StaffPayForm({
                             <div className="hidden overflow-x-auto md:block">
                                 <table className="w-full min-w-[46rem] border-collapse text-sm">
                                     <thead>
-                                        <tr className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                        <tr className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             <th className="px-2 py-2 text-start">{t('staff_rate_item')}</th>
                                             <th className="px-2 py-2 text-start">{t('rate_unit')}</th>
                                             <th className="px-2 py-2 text-start">{t('quantity')}</th>
@@ -710,7 +711,7 @@ export default function StaffPayForm({
                                     </thead>
                                     <tbody>
                                         {unitRows.map((row, index) => (
-                                            <tr key={index} className="border-t border-slate-800">
+                                            <tr key={index} className="border-t border-slate-200 dark:border-slate-800">
                                                 <td className="px-2 py-2 align-top">{itemSelect(row, index)}</td>
                                                 <td className="px-2 py-2 align-top">
                                                     <TextInput className={fieldClass} value={row.unit} readOnly />
@@ -734,7 +735,7 @@ export default function StaffPayForm({
                                                     />
                                                 </td>
                                                 <td className="px-2 py-2 text-end align-middle">
-                                                    <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                                    <span dir="ltr" className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                                                         {row.subtotal || 0}
                                                     </span>
                                                 </td>
@@ -742,7 +743,7 @@ export default function StaffPayForm({
                                                     <button
                                                         type="button"
                                                         onClick={() => removeItem(index)}
-                                                        className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                        className="min-h-[2.75rem] rounded-xl border border-slate-200 px-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                         aria-label={t('remove')}
                                                     >
                                                         ×
@@ -755,7 +756,7 @@ export default function StaffPayForm({
                             </div>
                             <div className="space-y-3 md:hidden">
                                 {unitRows.map((row, index) => (
-                                    <div key={index} className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+                                    <div key={index} className="space-y-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/70">
                                         {itemSelect(row, index, `item_m_${index}`)}
                                         <TextInput className={fieldClass} value={row.unit} readOnly />
                                         <MoneyInput
@@ -773,13 +774,13 @@ export default function StaffPayForm({
                                             disabled={!canEditRate}
                                         />
                                         <div className="flex items-center justify-between">
-                                            <span dir="ltr" className="font-semibold tabular-nums text-slate-100">
+                                            <span dir="ltr" className="font-semibold tabular-nums text-slate-900 dark:text-slate-100">
                                                 {row.subtotal || 0} {row.currency}
                                             </span>
                                             <button
                                                 type="button"
                                                 onClick={() => removeItem(index)}
-                                                className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                className="min-h-[2.75rem] rounded-xl border border-slate-200 px-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                 aria-label={t('remove')}
                                             >
                                                 ×
@@ -788,7 +789,7 @@ export default function StaffPayForm({
                                     </div>
                                 ))}
                             </div>
-                            <p className="text-sm font-semibold text-slate-100">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {t('staff_pay_subtotal')}:{' '}
                                 <span dir="ltr" className="tabular-nums">
                                     {unitTotal} {previewCurrency}
@@ -811,7 +812,7 @@ export default function StaffPayForm({
                     ) : null}
 
                     {preview && selected ? (
-                        <p className="rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-xs text-slate-300">
+                        <p className="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-700 dark:bg-slate-950/60 dark:text-slate-300">
                             {data.apply_insurance
                                 ? t('vault_form_job_pay_split', {
                                       hold: preview.hold,

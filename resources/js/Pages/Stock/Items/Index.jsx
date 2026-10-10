@@ -46,7 +46,7 @@ export default function Index({
                 <PageHeader
                     title={t('warehouse_items')}
                     subtitle={t('warehouse_items_page_hint')}
-                    icon={<NavIcon name="stock" className="text-lg text-emerald-300" />}
+                    icon={<NavIcon name="stock" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
                         <div className="flex flex-wrap gap-2">
                             <Link href={route('stock.dashboard')}>
@@ -170,12 +170,12 @@ export default function Index({
                                         <Td>
                                             <Link
                                                 href={route('stock.items.show', item.id)}
-                                                className="font-semibold text-emerald-300 underline-offset-2 hover:underline"
+                                                className="font-semibold text-emerald-700 underline-offset-2 dark:text-emerald-300 hover:underline"
                                             >
                                                 {item.name}
                                             </Link>
                                             {item.location ? (
-                                                <p className="mt-1 text-xs text-slate-400">{item.location}</p>
+                                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{item.location}</p>
                                             ) : null}
                                         </Td>
                                         <Td muted>

@@ -18,16 +18,16 @@ import { useMemo, useState } from 'react';
 const fieldClass = deskFieldClass;
 const moneyFieldClass = deskMoneyClass;
 
-function emptyRate() {
-    return { item_name: '', unit: 'دانە', rate: '', currency: 'IQD' };
+function emptyRate(defaultUnit = '') {
+    return { item_name: '', unit: defaultUnit, rate: '', currency: 'IQD' };
 }
 
-function ratesFromStaff(staff) {
+function ratesFromStaff(staff, defaultUnit = '') {
     const rows = Array.isArray(staff?.rates) ? staff.rates : [];
-    if (rows.length === 0) return [emptyRate()];
+    if (rows.length === 0) return [emptyRate(defaultUnit)];
     return rows.map((row) => ({
         item_name: row.item_name || '',
-        unit: row.unit || 'دانە',
+        unit: row.unit || defaultUnit,
         rate: row.rate != null && row.rate !== '' ? String(row.rate) : '',
         currency: row.currency || staff?.currency || 'IQD',
     }));
@@ -44,6 +44,7 @@ export default function Create({
 }) {
     const t = useTranslations();
     const editing = Boolean(staff?.id);
+    const defaultUnit = t('staff_rate_unit_default');
     const [localErrors, setLocalErrors] = useState({});
     const { data, setData, post, put, processing, errors } = useForm({
         name: staff?.name || '',
@@ -53,7 +54,7 @@ export default function Create({
         monthly_salary: staff?.monthly_salary != null ? String(staff.monthly_salary) : '',
         day_rate: staff?.day_rate != null ? String(staff.day_rate) : '',
         currency: staff?.currency || 'IQD',
-        rates: ratesFromStaff(staff),
+        rates: ratesFromStaff(staff, defaultUnit),
         return_to: returnTo || '',
     });
 
@@ -73,7 +74,7 @@ export default function Create({
         setData('rates', next);
     };
 
-    const addRate = () => setData('rates', [...data.rates, emptyRate()]);
+    const addRate = () => setData('rates', [...data.rates, emptyRate(defaultUnit)]);
     const removeRate = (index) => {
         if (data.rates.length <= 1) return;
         setData(
@@ -268,9 +269,9 @@ export default function Create({
                     </FormSection>
 
                     {isUnit ? (
-                        <div className="space-y-3 rounded-xl border border-slate-700 bg-slate-950/40 p-3">
+                        <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50/80 p-3 dark:border-slate-700 dark:bg-slate-950/40">
                             <div className="flex items-center justify-between gap-2">
-                                <p className="text-sm font-semibold text-slate-100">
+                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                                     {t('staff_rates_title')}
                                 </p>
                                 <SecondaryButton type="button" onClick={addRate}>
@@ -281,7 +282,7 @@ export default function Create({
                             <div className="hidden md:block">
                                 <table className="w-full border-collapse text-sm">
                                     <thead>
-                                        <tr className="text-start text-xs font-semibold uppercase tracking-wide text-slate-400">
+                                        <tr className="text-start text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                             <th className="px-2 py-2 text-start">{t('staff_rate_item')}</th>
                                             <th className="px-2 py-2 text-start">{t('rate_unit')}</th>
                                             <th className="px-2 py-2 text-start">{t('unit_rate')}</th>
@@ -291,7 +292,7 @@ export default function Create({
                                     </thead>
                                     <tbody>
                                         {data.rates.map((row, index) => (
-                                            <tr key={index} className="border-t border-slate-800">
+                                            <tr key={index} className="border-t border-slate-200 dark:border-slate-800">
                                                 <td className="px-2 py-2 align-top">
                                                     <SuggestionCombobox
                                                         id={`item_${index}`}
@@ -340,7 +341,7 @@ export default function Create({
                                                     <button
                                                         type="button"
                                                         onClick={() => removeRate(index)}
-                                                        className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                        className="min-h-[2.75rem] rounded-xl border border-slate-200 px-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                         aria-label={t('remove')}
                                                     >
                                                         ×
@@ -353,7 +354,10 @@ export default function Create({
                             </div>
                             <div className="space-y-3 md:hidden">
                                 {data.rates.map((row, index) => (
-                                    <div key={index} className="space-y-2 rounded-xl border border-slate-800 bg-slate-900/70 p-3">
+                                    <div
+                                        key={index}
+                                        className="space-y-2 rounded-xl border border-slate-200 bg-white p-3 dark:border-slate-800 dark:bg-slate-900/70"
+                                    >
                                         <SuggestionCombobox
                                             id={`item_m_${index}`}
                                             className={fieldClass}
@@ -392,7 +396,7 @@ export default function Create({
                                             <button
                                                 type="button"
                                                 onClick={() => removeRate(index)}
-                                                className="min-h-[2.75rem] rounded-xl border border-slate-700 px-3 text-sm text-slate-300"
+                                                className="min-h-[2.75rem] rounded-xl border border-slate-200 px-3 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300"
                                                 aria-label={t('remove')}
                                             >
                                                 ×

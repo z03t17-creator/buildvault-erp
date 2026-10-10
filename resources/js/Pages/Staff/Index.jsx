@@ -73,7 +73,7 @@ export default function Index({ staff = [], canCreate = false, canEditRows = fal
                         ['unit', counts.unit, 'bg-sky-400/15 text-sky-100'],
                     ].map(([model, count, tone]) => (
                         <div key={model} className="bv-card px-4 py-3">
-                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                                 {t(`staff_pay_${model}`)}
                             </p>
                             <p className={`mt-2 inline-flex rounded-lg px-2 py-1 text-lg font-semibold tabular-nums ${tone}`}>
