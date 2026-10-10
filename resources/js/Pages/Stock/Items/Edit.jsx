@@ -20,17 +20,24 @@ const fieldClass =
 const moneyFieldClass =
     'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Edit({ item, categories }) {
+export default function Edit({ item, categories, currencies = ['USD', 'IQD'] }) {
     const t = useTranslations();
-    const iqd = t('IQD');
+    const initialCurrency = item.currency || item.cost_currency || 'IQD';
+    const initialPrice =
+        initialCurrency === 'USD'
+            ? item.purchase_price_usd ?? item.average_unit_cost ?? 0
+            : item.purchase_price_iqd ?? item.average_unit_cost ?? 0;
     const { data, setData, put, processing, errors } = useForm({
         name: item.name || '',
         sku: item.sku || '',
         stock_category_id: item.stock_category_id || '',
         unit: item.unit || 'pcs',
-        purchase_price_iqd: item.purchase_price_iqd ?? 0,
+        currency: initialCurrency,
+        purchase_price: initialPrice,
         notes: item.notes || '',
     });
+    const priceLabel = data.currency === 'USD' ? t('USD') : t('IQD');
+    const currencyLocked = Number(item.quantity) > 0;
 
     return (
         <AuthenticatedLayout
@@ -112,13 +119,38 @@ export default function Edit({ item, categories }) {
                                 <InputError message={errors.unit} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={`${t('purchase_price_iqd')} (${iqd})`} />
+                                <InputLabel value={t('currency')} />
+                                <div className="mt-1 flex gap-2">
+                                    {currencies.map((code) => (
+                                        <button
+                                            key={code}
+                                            type="button"
+                                            disabled={currencyLocked}
+                                            onClick={() => setData('currency', code)}
+                                            className={
+                                                'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold transition ' +
+                                                (data.currency === code
+                                                    ? 'border-rose-500 bg-rose-50 text-rose-900 ring-2 ring-rose-500/25 dark:border-rose-400 dark:bg-rose-950/40 dark:text-rose-100'
+                                                    : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300') +
+                                                (currencyLocked ? ' opacity-60' : '')
+                                            }
+                                            aria-pressed={data.currency === code}
+                                        >
+                                            {code}
+                                        </button>
+                                    ))}
+                                </div>
+                                <InputError message={errors.currency} className="mt-1" />
+                            </FormField>
+                            <FormField>
+                                <InputLabel value={`${t('warehouse_avg_cost')} (${priceLabel})`} />
                                 <MoneyInput
                                     className={moneyFieldClass}
-                                    value={data.purchase_price_iqd}
-                                    onValueChange={(raw) => setData('purchase_price_iqd', raw)}
+                                    value={data.purchase_price}
+                                    onValueChange={(raw) => setData('purchase_price', raw)}
+                                    allowDecimals={data.currency === 'USD'}
                                 />
-                                <InputError message={errors.purchase_price_iqd} className="mt-1" />
+                                <InputError message={errors.purchase_price} className="mt-1" />
                             </FormField>
                             <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />

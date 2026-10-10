@@ -24,6 +24,7 @@ export default function Index({
 }) {
     const t = useTranslations();
     const iqd = t('IQD');
+    const usd = t('USD');
     const canManage = useCan('stock.manageItems');
     const [q, setQ] = useState(filters.q || '');
     const list = Array.isArray(items) ? items : [];
@@ -191,12 +192,23 @@ export default function Index({
                                             {item.quantity}
                                         </Td>
                                         <Td align="end" money>
-                                            <MoneyAmount
-                                                value={item.average_unit_cost ?? item.purchase_price_iqd}
-                                                label={iqd}
-                                                size="sm"
-                                                showLabel={false}
-                                            />
+                                            <span className="inline-flex items-baseline gap-1">
+                                                <MoneyAmount
+                                                    value={item.average_unit_cost ?? 0}
+                                                    label={
+                                                        (item.cost_currency || item.currency) === 'USD'
+                                                            ? usd
+                                                            : iqd
+                                                    }
+                                                    size="sm"
+                                                    showLabel={false}
+                                                />
+                                                <span className="text-[11px] text-slate-400">
+                                                    {(item.cost_currency || item.currency) === 'USD'
+                                                        ? usd
+                                                        : iqd}
+                                                </span>
+                                            </span>
                                         </Td>
                                         <Td>
                                             <StockStatusBadge item={item} t={t} />

@@ -7,6 +7,7 @@ use App\Http\Requests\Stock\UpdateStockItemRequest;
 use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Models\Supplier;
+use App\Support\DualCurrency;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -40,7 +41,10 @@ class StockItemController extends Controller
 
         $items = $query->get()->map(function (StockItem $item) {
             $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
+            $item->setAttribute('stock_value_usd', $item->stockValueUsd());
+            $item->setAttribute('stock_value', $item->stockValue());
             $item->setAttribute('average_unit_cost', $item->averageUnitCost());
+            $item->setAttribute('cost_currency', $item->costCurrency());
             $item->setAttribute('is_low_stock', $item->isLowStock());
             $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
             $item->setAttribute('stock_status', $item->stockStatus());
@@ -63,6 +67,7 @@ class StockItemController extends Controller
         $overview = [
             'products' => $items->count(),
             'stock_value_iqd' => round((float) $items->sum(fn (StockItem $item) => (float) $item->stock_value_iqd), 2),
+            'stock_value_usd' => round((float) $items->sum(fn (StockItem $item) => (float) $item->stock_value_usd), 2),
             'low_stock' => $items->where('is_low_stock', true)->count(),
             'out_of_stock' => $items->where('is_out_of_stock', true)->count(),
             'total_quantity' => round((float) $items->sum(fn (StockItem $item) => (float) $item->quantity), 3),
@@ -89,11 +94,13 @@ class StockItemController extends Controller
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
             'units' => StockItem::UNITS,
+            'currencies' => DualCurrency::CURRENCIES,
             'defaults' => [
                 'unit' => 'Pcs',
                 'quantity' => 0,
                 'min_quantity' => 0,
-                'purchase_price_iqd' => 0,
+                'currency' => DualCurrency::IQD,
+                'purchase_price' => 0,
                 'auto_sku' => true,
             ],
         ]);
@@ -127,7 +134,10 @@ class StockItemController extends Controller
         ]);
 
         $item->setAttribute('stock_value_iqd', $item->stockValueIqd());
+        $item->setAttribute('stock_value_usd', $item->stockValueUsd());
+        $item->setAttribute('stock_value', $item->stockValue());
         $item->setAttribute('average_unit_cost', $item->averageUnitCost());
+        $item->setAttribute('cost_currency', $item->costCurrency());
         $item->setAttribute('is_low_stock', $item->isLowStock());
         $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
         $item->setAttribute('stock_status', $item->stockStatus());
@@ -150,6 +160,7 @@ class StockItemController extends Controller
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
             'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
             'units' => StockItem::UNITS,
+            'currencies' => DualCurrency::CURRENCIES,
         ]);
     }
 
@@ -188,7 +199,25 @@ class StockItemController extends Controller
             $data['quantity'] = round((float) ($data['quantity'] ?? 0), 3);
         }
         $data['min_quantity'] = round((float) ($data['min_quantity'] ?? 0), 3);
-        $data['purchase_price_iqd'] = round((float) ($data['purchase_price_iqd'] ?? 0), 2);
+
+        $currency = strtoupper((string) ($data['currency'] ?? DualCurrency::IQD));
+        if (! in_array($currency, DualCurrency::CURRENCIES, true)) {
+            $currency = DualCurrency::IQD;
+        }
+        $amount = array_key_exists('purchase_price', $data) && $data['purchase_price'] !== null && $data['purchase_price'] !== ''
+            ? round((float) $data['purchase_price'], 2)
+            : round((float) (
+                $currency === DualCurrency::USD
+                    ? ($data['purchase_price_usd'] ?? 0)
+                    : ($data['purchase_price_iqd'] ?? 0)
+            ), 2);
+        if ($amount < 0) {
+            $amount = 0.0;
+        }
+        $data['currency'] = $currency;
+        $data['purchase_price_usd'] = $currency === DualCurrency::USD ? $amount : 0.0;
+        $data['purchase_price_iqd'] = $currency === DualCurrency::IQD ? $amount : 0.0;
+        unset($data['purchase_price']);
 
         $categoryId = $data['stock_category_id'] ?? null;
         $categoryName = null;

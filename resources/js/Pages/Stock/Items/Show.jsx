@@ -28,12 +28,20 @@ function Field({ label, children }) {
 export default function Show({ item }) {
     const t = useTranslations();
     const iqd = t('IQD');
+    const usd = t('USD');
     const canManage = useCan('stock.manageItems');
     const canIn = useCan('stock.stockIn');
     const canOut = useCan('stock.stockOut');
     const movements = item.movements || [];
     const categoryLabel =
         item.category_label || item.stock_category?.name || item.category || '—';
+    const costCurrency = item.cost_currency || item.currency || 'IQD';
+    const costLabel = costCurrency === 'USD' ? usd : iqd;
+    const unitCost = item.average_unit_cost ?? 0;
+    const stockValue =
+        item.stock_value ??
+        (costCurrency === 'USD' ? item.stock_value_usd : item.stock_value_iqd) ??
+        0;
 
     return (
         <AuthenticatedLayout
@@ -104,19 +112,19 @@ export default function Show({ item }) {
                             <span className="text-sm font-medium text-slate-400">{item.unit}</span>
                         </span>
                     </Field>
-                    <Field label={`${t('purchase_price_iqd')} (${iqd})`}>
+                    <Field label={`${t('warehouse_avg_cost')} (${costLabel})`}>
                         <MoneyAmount
-                            value={item.purchase_price_iqd}
-                            label={iqd}
+                            value={unitCost}
+                            label={costLabel}
                             size="lg"
                             showLabel={false}
                             className="text-rose-800 dark:text-rose-200"
                         />
                     </Field>
-                    <Field label={`${t('stock_value_iqd')} (${iqd})`}>
+                    <Field label={`${t('stock_value')} (${costLabel})`}>
                         <MoneyAmount
-                            value={item.stock_value_iqd}
-                            label={iqd}
+                            value={stockValue}
+                            label={costLabel}
                             size="lg"
                             showLabel={false}
                             className="font-semibold text-rose-900 dark:text-rose-100"

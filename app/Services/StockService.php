@@ -8,12 +8,13 @@ use App\Models\Staff;
 use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\User;
+use App\Support\DualCurrency;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 
 /**
- * Stock inventory — IQD purchase prices; ledger movements with previous/new qty.
+ * Stock inventory — dual-currency unit costs (USD or IQD, never blended).
  * Stock OUT never allows negative on-hand quantity and requires a project
  * so material cost rolls up into ProjectFinancialService.
  *
@@ -45,7 +46,8 @@ class StockService
             ->with('stockCategory:id,name')
             ->get();
 
-        $stockValue = round($items->sum(fn (StockItem $i) => $i->stockValueIqd()), 2);
+        $stockValueIqd = round($items->sum(fn (StockItem $i) => $i->stockValueIqd()), 2);
+        $stockValueUsd = round($items->sum(fn (StockItem $i) => $i->stockValueUsd()), 2);
         $lowStockItems = $items->filter(fn (StockItem $i) => $i->isLowStock())->values();
         $outOfStock = $items->filter(fn (StockItem $i) => $i->isOutOfStock())->count();
 
@@ -70,7 +72,8 @@ class StockService
 
         return [
             'total_items' => $items->count(),
-            'stock_value_iqd' => $stockValue,
+            'stock_value_iqd' => $stockValueIqd,
+            'stock_value_usd' => $stockValueUsd,
             'low_stock' => $lowStockItems->count(),
             'out_of_stock' => $outOfStock,
             'today_in_qty' => round((float) (clone $todayIn)->sum('quantity'), 3),
@@ -111,23 +114,36 @@ class StockService
             ->orderByDesc('id')
             ->limit($limit)
             ->get()
-            ->map(fn (StockMovement $m) => [
-                'id' => $m->id,
-                'moved_on' => $m->moved_on?->toDateString(),
-                'item_name' => $m->item?->name,
-                'sku' => $m->item?->sku,
-                'unit' => $m->item?->unit,
-                'quantity' => round((float) $m->quantity, 3),
-                'unit_price_iqd' => round((float) ($m->purchase_price_iqd ?? 0), 2),
-                'line_value_iqd' => $m->lineValueIqd(),
-                'previous_qty' => round((float) $m->previous_qty, 3),
-                'new_qty' => round((float) $m->new_qty, 3),
-                'tower' => $m->tower?->name,
-                'floor' => $m->floor?->name,
-                'place' => $m->placeLabel(),
-                'purpose' => $m->purpose,
-                'receiver' => $m->receiver ?: $m->staff?->name,
-            ])
+            ->map(function (StockMovement $m) {
+                $currency = $m->costCurrency();
+                $unit = $currency === DualCurrency::USD
+                    ? round((float) ($m->purchase_price_usd ?? 0), 2)
+                    : round((float) ($m->purchase_price_iqd ?? 0), 2);
+                $line = $currency === DualCurrency::USD
+                    ? round((float) ($m->total_cost_usd ?? ($m->quantity * $unit)), 2)
+                    : $m->lineValueIqd();
+
+                return [
+                    'id' => $m->id,
+                    'moved_on' => $m->moved_on?->toDateString(),
+                    'item_name' => $m->item?->name,
+                    'sku' => $m->item?->sku,
+                    'unit' => $m->item?->unit,
+                    'quantity' => round((float) $m->quantity, 3),
+                    'currency' => $currency,
+                    'unit_price' => $unit,
+                    'unit_price_iqd' => round((float) ($m->purchase_price_iqd ?? 0), 2),
+                    'line_value' => $line,
+                    'line_value_iqd' => $m->lineValueIqd(),
+                    'previous_qty' => round((float) $m->previous_qty, 3),
+                    'new_qty' => round((float) $m->new_qty, 3),
+                    'tower' => $m->tower?->name,
+                    'floor' => $m->floor?->name,
+                    'place' => $m->placeLabel(),
+                    'purpose' => $m->purpose,
+                    'receiver' => $m->receiver ?: $m->staff?->name,
+                ];
+            })
             ->values();
     }
 
@@ -270,9 +286,17 @@ class StockService
                 throw new InvalidArgumentException('Stock-in quantity must be greater than zero.');
             }
 
-            $unitPrice = array_key_exists('purchase_price_iqd', $data) && $data['purchase_price_iqd'] !== null && $data['purchase_price_iqd'] !== ''
-                ? round((float) $data['purchase_price_iqd'], 2)
-                : (float) $item->purchase_price_iqd;
+            $currency = $item->costCurrency();
+            if (! empty($data['currency'])) {
+                $incoming = strtoupper((string) $data['currency']);
+                if (in_array($incoming, DualCurrency::CURRENCIES, true) && $incoming !== $currency) {
+                    throw new InvalidArgumentException(
+                        'Stock-in currency must match the item currency ('.$currency.').'
+                    );
+                }
+            }
+
+            $unitPrice = $this->resolveUnitPrice($data, $item);
 
             if ($unitPrice < 0) {
                 throw new InvalidArgumentException('Purchase price cannot be negative.');
@@ -282,12 +306,13 @@ class StockService
             $newQty = round($previous + $qty, 3);
             $totalCost = round($qty * $unitPrice, 2);
 
-            // Weighted average unit cost for the warehouse desk.
+            // Weighted average unit cost in the item's currency only.
             if ($newQty > 0) {
-                $prevValue = round($previous * (float) $item->purchase_price_iqd, 2);
-                $item->purchase_price_iqd = round(($prevValue + $totalCost) / $newQty, 2);
+                $prevValue = round($previous * $item->unitCost(), 2);
+                $avg = round(($prevValue + $totalCost) / $newQty, 2);
+                $this->setItemUnitCost($item, $currency, $avg);
             } elseif ($unitPrice > 0) {
-                $item->purchase_price_iqd = $unitPrice;
+                $this->setItemUnitCost($item, $currency, $unitPrice);
             }
 
             $item->quantity = $newQty;
@@ -300,6 +325,8 @@ class StockService
             }
             $item->save();
 
+            $legs = $this->costLegs($currency, $unitPrice, $totalCost);
+
             return StockMovement::query()->create([
                 'type' => StockMovement::TYPE_IN,
                 'stock_item_id' => $item->id,
@@ -308,8 +335,11 @@ class StockService
                 'supplier_id' => isset($data['supplier_id']) && $data['supplier_id'] !== ''
                     ? (int) $data['supplier_id']
                     : $item->supplier_id,
-                'purchase_price_iqd' => $unitPrice,
-                'total_cost_iqd' => $totalCost,
+                'currency' => $currency,
+                'purchase_price_usd' => $legs['unit_usd'],
+                'purchase_price_iqd' => $legs['unit_iqd'],
+                'total_cost_usd' => $legs['total_usd'],
+                'total_cost_iqd' => $legs['total_iqd'],
                 'project_id' => $this->nullableId($data['project_id'] ?? null),
                 'tower_id' => null,
                 'floor_id' => null,
@@ -357,8 +387,10 @@ class StockService
             }
 
             $newQty = round($previous - $qty, 3);
-            $unitPrice = (float) $item->purchase_price_iqd;
+            $currency = $item->costCurrency();
+            $unitPrice = $item->unitCost();
             $totalCost = round($qty * $unitPrice, 2);
+            $legs = $this->costLegs($currency, $unitPrice, $totalCost);
 
             $item->quantity = $newQty;
             $item->save();
@@ -375,8 +407,11 @@ class StockService
                 'quantity' => $qty,
                 'moved_on' => $this->date($data['moved_on'] ?? now()->toDateString()),
                 'supplier_id' => null,
-                'purchase_price_iqd' => $unitPrice,
-                'total_cost_iqd' => $totalCost,
+                'currency' => $currency,
+                'purchase_price_usd' => $legs['unit_usd'],
+                'purchase_price_iqd' => $legs['unit_iqd'],
+                'total_cost_usd' => $legs['total_usd'],
+                'total_cost_iqd' => $legs['total_iqd'],
                 'project_id' => $projectId,
                 'tower_id' => $this->nullableId($data['tower_id'] ?? null),
                 'floor_id' => $this->nullableId($data['floor_id'] ?? null),
@@ -414,6 +449,65 @@ class StockService
             (string) ($movement->tower_id ?? ''),
             (string) ($movement->floor_id ?? ''),
         ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    private function resolveUnitPrice(array $data, StockItem $item): float
+    {
+        if (array_key_exists('purchase_price', $data) && $data['purchase_price'] !== null && $data['purchase_price'] !== '') {
+            return round((float) $data['purchase_price'], 2);
+        }
+
+        $currency = $item->costCurrency();
+        if ($currency === DualCurrency::USD) {
+            if (array_key_exists('purchase_price_usd', $data) && $data['purchase_price_usd'] !== null && $data['purchase_price_usd'] !== '') {
+                return round((float) $data['purchase_price_usd'], 2);
+            }
+
+            return round((float) $item->purchase_price_usd, 2);
+        }
+
+        if (array_key_exists('purchase_price_iqd', $data) && $data['purchase_price_iqd'] !== null && $data['purchase_price_iqd'] !== '') {
+            return round((float) $data['purchase_price_iqd'], 2);
+        }
+
+        return round((float) $item->purchase_price_iqd, 2);
+    }
+
+    private function setItemUnitCost(StockItem $item, string $currency, float $unitPrice): void
+    {
+        $item->currency = $currency;
+        if ($currency === DualCurrency::USD) {
+            $item->purchase_price_usd = $unitPrice;
+            $item->purchase_price_iqd = 0;
+        } else {
+            $item->purchase_price_iqd = $unitPrice;
+            $item->purchase_price_usd = 0;
+        }
+    }
+
+    /**
+     * @return array{unit_usd: float, unit_iqd: float, total_usd: float, total_iqd: float}
+     */
+    private function costLegs(string $currency, float $unitPrice, float $totalCost): array
+    {
+        if ($currency === DualCurrency::USD) {
+            return [
+                'unit_usd' => $unitPrice,
+                'unit_iqd' => 0.0,
+                'total_usd' => $totalCost,
+                'total_iqd' => 0.0,
+            ];
+        }
+
+        return [
+            'unit_usd' => 0.0,
+            'unit_iqd' => $unitPrice,
+            'total_usd' => 0.0,
+            'total_iqd' => $totalCost,
+        ];
     }
 
     private function date(mixed $value): string

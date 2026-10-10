@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DualCurrency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -36,8 +37,11 @@ class StockMovement extends Model
         'quantity',
         'moved_on',
         'supplier_id',
+        'currency',
         'purchase_price_iqd',
+        'purchase_price_usd',
         'total_cost_iqd',
+        'total_cost_usd',
         'project_id',
         'tower_id',
         'floor_id',
@@ -68,11 +72,22 @@ class StockMovement extends Model
         return [
             'quantity' => 'decimal:3',
             'purchase_price_iqd' => 'decimal:2',
+            'purchase_price_usd' => 'decimal:2',
             'total_cost_iqd' => 'decimal:2',
+            'total_cost_usd' => 'decimal:2',
             'previous_qty' => 'decimal:3',
             'new_qty' => 'decimal:3',
             'moved_on' => 'date',
         ];
+    }
+
+    public function costCurrency(): string
+    {
+        $currency = strtoupper((string) ($this->currency ?: DualCurrency::IQD));
+
+        return in_array($currency, DualCurrency::CURRENCIES, true)
+            ? $currency
+            : DualCurrency::IQD;
     }
 
     public function item(): BelongsTo

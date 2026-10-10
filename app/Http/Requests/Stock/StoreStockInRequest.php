@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Stock;
 
+use App\Support\DualCurrency;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreStockInRequest extends FormRequest
 {
@@ -21,7 +23,10 @@ class StoreStockInRequest extends FormRequest
             'quantity' => ['required', 'numeric', 'gt:0'],
             'moved_on' => ['required', 'date'],
             'supplier_id' => ['nullable', 'integer', 'exists:suppliers,id'],
+            'currency' => ['nullable', Rule::in(DualCurrency::CURRENCIES)],
+            'purchase_price' => ['nullable', 'numeric', 'min:0'],
             'purchase_price_iqd' => ['nullable', 'numeric', 'min:0'],
+            'purchase_price_usd' => ['nullable', 'numeric', 'min:0'],
             'project_id' => ['nullable', 'integer', 'exists:projects,id'],
             'invoice_ref' => ['nullable', 'string', 'max:255'],
             'shelf_zone' => ['nullable', 'string', 'max:120'],

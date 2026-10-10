@@ -14,9 +14,13 @@ import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Create({ categories = [], units = [], defaults = {} }) {
+export default function Create({
+    categories = [],
+    units = [],
+    currencies = ['USD', 'IQD'],
+    defaults = {},
+}) {
     const t = useTranslations();
-    const iqd = t('IQD');
     const unitOptions = units.length ? units : ['Pcs', 'M2', 'Bag', 'Meter'];
     const { data, setData, post, processing, errors } = useForm({
         name: '',
@@ -26,9 +30,11 @@ export default function Create({ categories = [], units = [], defaults = {} }) {
         stock_category_id: '',
         unit: defaults.unit || 'Pcs',
         quantity: 0,
-        purchase_price_iqd: defaults.purchase_price_iqd ?? 0,
+        currency: defaults.currency || 'IQD',
+        purchase_price: defaults.purchase_price ?? 0,
         notes: '',
     });
+    const priceLabel = data.currency === 'USD' ? t('USD') : t('IQD');
 
     return (
         <AuthenticatedLayout
@@ -134,14 +140,40 @@ export default function Create({ categories = [], units = [], defaults = {} }) {
                             <InputError message={errors.barcode} className="mt-1" />
                         </FormField>
                         <FormField>
-                            <InputLabel value={`${t('warehouse_avg_cost')} (${iqd})`} htmlFor="purchase_price_iqd" />
-                            <MoneyInput
-                                id="purchase_price_iqd"
-                                className={stockMoneyClass}
-                                value={String(data.purchase_price_iqd ?? '')}
-                                onValueChange={(next) => setData('purchase_price_iqd', next)}
-                                allowDecimals={false}
+                            <InputLabel value={t('currency')} htmlFor="currency" />
+                            <div className="mt-1 flex gap-2">
+                                {currencies.map((code) => (
+                                    <button
+                                        key={code}
+                                        type="button"
+                                        onClick={() => setData('currency', code)}
+                                        className={
+                                            'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold transition ' +
+                                            (data.currency === code
+                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/25 dark:border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-100'
+                                                : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300')
+                                        }
+                                        aria-pressed={data.currency === code}
+                                    >
+                                        {code}
+                                    </button>
+                                ))}
+                            </div>
+                            <InputError message={errors.currency} className="mt-1" />
+                        </FormField>
+                        <FormField>
+                            <InputLabel
+                                value={`${t('warehouse_avg_cost')} (${priceLabel})`}
+                                htmlFor="purchase_price"
                             />
+                            <MoneyInput
+                                id="purchase_price"
+                                className={stockMoneyClass}
+                                value={String(data.purchase_price ?? '')}
+                                onValueChange={(next) => setData('purchase_price', next)}
+                                allowDecimals={data.currency === 'USD'}
+                            />
+                            <InputError message={errors.purchase_price} className="mt-1" />
                         </FormField>
                         <FormField className="sm:col-span-2">
                             <InputLabel value={t('note')} htmlFor="notes" />

@@ -20,12 +20,14 @@ import { useMemo } from 'react';
 export default function Create({ items = [], suppliers = [], projects = [], defaults = {} }) {
     const t = useTranslations();
     const iqd = t('IQD');
+    const usd = t('USD');
     const { data, setData, post, processing, errors } = useForm({
         stock_item_id: '',
         quantity: '',
         moved_on: defaults.moved_on || new Date().toISOString().slice(0, 10),
         supplier_id: '',
-        purchase_price_iqd: '',
+        currency: 'IQD',
+        purchase_price: '',
         project_id: '',
         invoice_ref: '',
         shelf_zone: '',
@@ -33,8 +35,11 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
     });
 
     const selected = items.find((i) => String(i.id) === String(data.stock_item_id));
+    const costCurrency =
+        selected?.cost_currency || selected?.currency || data.currency || 'IQD';
+    const costLabel = costCurrency === 'USD' ? usd : iqd;
     const qty = Number(data.quantity) || 0;
-    const unitCost = Number(data.purchase_price_iqd) || 0;
+    const unitCost = Number(data.purchase_price) || 0;
     const total = useMemo(() => Math.round(qty * unitCost * 100) / 100, [qty, unitCost]);
 
     return (
@@ -74,13 +79,22 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                                 onChange={(e) => {
                                     const id = e.target.value;
                                     const item = items.find((i) => String(i.id) === String(id));
+                                    const currency =
+                                        item?.cost_currency || item?.currency || 'IQD';
+                                    const unit =
+                                        item?.unit_cost != null
+                                            ? item.unit_cost
+                                            : currency === 'USD'
+                                              ? item?.purchase_price_usd
+                                              : item?.purchase_price_iqd;
                                     setData({
                                         ...data,
                                         stock_item_id: id,
-                                        purchase_price_iqd:
-                                            item?.purchase_price_iqd != null
-                                                ? String(item.purchase_price_iqd)
-                                                : data.purchase_price_iqd,
+                                        currency,
+                                        purchase_price:
+                                            unit != null && unit !== ''
+                                                ? String(unit)
+                                                : data.purchase_price,
                                         supplier_id: item?.supplier_id
                                             ? String(item.supplier_id)
                                             : data.supplier_id,
@@ -150,20 +164,32 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                             />
                         </FormField>
                         <FormField>
-                            <InputLabel value={t('warehouse_unit_cost')} htmlFor="purchase_price_iqd" />
-                            <MoneyInput
-                                id="purchase_price_iqd"
-                                className={stockMoneyClass}
-                                value={data.purchase_price_iqd}
-                                onValueChange={(next) => setData('purchase_price_iqd', next)}
-                                allowDecimals={false}
+                            <InputLabel
+                                value={`${t('warehouse_unit_cost')} (${costLabel})`}
+                                htmlFor="purchase_price"
                             />
-                            <InputError message={errors.purchase_price_iqd} className="mt-1" />
+                            <MoneyInput
+                                id="purchase_price"
+                                className={stockMoneyClass}
+                                value={data.purchase_price}
+                                onValueChange={(next) => setData('purchase_price', next)}
+                                allowDecimals={costCurrency === 'USD'}
+                            />
+                            <InputError
+                                message={errors.purchase_price || errors.purchase_price_iqd}
+                                className="mt-1"
+                            />
+                            {selected ? (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    {t('currency')}: {costCurrency}
+                                </p>
+                            ) : null}
                         </FormField>
                         <FormField>
                             <InputLabel value={t('warehouse_total_cost')} />
                             <p dir="ltr" className="mt-2 text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-200">
-                                <MoneyAmount value={total} label={iqd} size="lg" showLabel={false} /> {iqd}
+                                <MoneyAmount value={total} label={costLabel} size="lg" showLabel={false} />{' '}
+                                {costLabel}
                             </p>
                         </FormField>
                         <FormField className="sm:col-span-2">

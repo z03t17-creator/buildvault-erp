@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\DualCurrency;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -33,6 +34,8 @@ class StockItem extends Model
         'unit',
         'quantity',
         'min_quantity',
+        'currency',
+        'purchase_price_usd',
         'purchase_price_iqd',
         'supplier_id',
         'location',
@@ -47,8 +50,26 @@ class StockItem extends Model
         return [
             'quantity' => 'decimal:3',
             'min_quantity' => 'decimal:3',
+            'purchase_price_usd' => 'decimal:2',
             'purchase_price_iqd' => 'decimal:2',
         ];
+    }
+
+    public function costCurrency(): string
+    {
+        $currency = strtoupper((string) ($this->currency ?: DualCurrency::IQD));
+
+        return in_array($currency, DualCurrency::CURRENCIES, true)
+            ? $currency
+            : DualCurrency::IQD;
+    }
+
+    /** Unit cost in the item's own currency (USD and IQD never blend). */
+    public function unitCost(): float
+    {
+        return $this->costCurrency() === DualCurrency::USD
+            ? round((float) $this->purchase_price_usd, 2)
+            : round((float) $this->purchase_price_iqd, 2);
     }
 
     public function stockCategory(): BelongsTo
@@ -93,13 +114,31 @@ class StockItem extends Model
 
     public function stockValueIqd(): float
     {
+        if ($this->costCurrency() !== DualCurrency::IQD) {
+            return 0.0;
+        }
+
         return round((float) $this->quantity * (float) $this->purchase_price_iqd, 2);
     }
 
-    /** Average unit cost — stored in purchase_price_iqd after weighted receive updates. */
+    public function stockValueUsd(): float
+    {
+        if ($this->costCurrency() !== DualCurrency::USD) {
+            return 0.0;
+        }
+
+        return round((float) $this->quantity * (float) $this->purchase_price_usd, 2);
+    }
+
+    public function stockValue(): float
+    {
+        return round((float) $this->quantity * $this->unitCost(), 2);
+    }
+
+    /** Average unit cost in the item's currency after weighted receive updates. */
     public function averageUnitCost(): float
     {
-        return round((float) $this->purchase_price_iqd, 2);
+        return $this->unitCost();
     }
 
     public static function generateSku(?string $categoryName = null): string

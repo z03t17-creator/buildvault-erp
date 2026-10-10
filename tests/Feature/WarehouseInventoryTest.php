@@ -47,7 +47,8 @@ class WarehouseInventoryTest extends TestCase
                 'unit' => 'Pcs',
                 'quantity' => 0,
                 'min_quantity' => 5,
-                'purchase_price_iqd' => 25000,
+                'currency' => 'IQD',
+                'purchase_price' => 25000,
             ])
             ->assertRedirect();
 
@@ -57,6 +58,43 @@ class WarehouseInventoryTest extends TestCase
         $this->assertStringContainsString('BV-', $item->sku);
         $this->assertNotNull($item->barcode);
         $this->assertSame('Doors', $item->category);
+        $this->assertSame('IQD', $item->currency);
+        $this->assertSame(25000.0, (float) $item->purchase_price_iqd);
+        $this->assertSame(0.0, (float) $item->purchase_price_usd);
+    }
+
+    public function test_stock_item_can_be_priced_in_usd(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+
+        $this->actingAs($stock)
+            ->post(route('stock.items.store'), [
+                'name' => 'Imported Latch',
+                'auto_sku' => true,
+                'unit' => 'Pcs',
+                'currency' => 'USD',
+                'purchase_price' => 12.5,
+            ])
+            ->assertRedirect();
+
+        $item = StockItem::query()->where('name', 'Imported Latch')->first();
+        $this->assertNotNull($item);
+        $this->assertSame('USD', $item->currency);
+        $this->assertSame(12.5, (float) $item->purchase_price_usd);
+        $this->assertSame(0.0, (float) $item->purchase_price_iqd);
+
+        app(StockService::class)->stockIn([
+            'stock_item_id' => $item->id,
+            'quantity' => 4,
+            'moved_on' => '2026-10-10',
+            'purchase_price' => 10,
+            'currency' => 'USD',
+        ]);
+
+        $item->refresh();
+        $this->assertSame(4.0, (float) $item->quantity);
+        $this->assertSame(10.0, (float) $item->purchase_price_usd);
+        $this->assertSame(0.0, (float) $item->purchase_price_iqd);
     }
 
     public function test_receive_updates_weighted_average_and_shelf(): void
