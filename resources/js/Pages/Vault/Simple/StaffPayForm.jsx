@@ -956,16 +956,6 @@ export default function StaffPayForm({
 
                     <FormSection cols={1}>
                         <FormField>
-                            <InputLabel value={t('purpose')} htmlFor="purpose" />
-                            <TextInput
-                                id="purpose"
-                                className={fieldClass}
-                                value={data.purpose}
-                                onChange={(e) => setData('purpose', e.target.value)}
-                                placeholder={t('vault_form_purpose_placeholder')}
-                            />
-                        </FormField>
-                        <FormField>
                             <InputLabel value={t('note')} htmlFor="note" />
                             <TextInput
                                 id="note"

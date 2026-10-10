@@ -73,9 +73,6 @@ export default function JobPayForm({
         if (!data.staff_id) {
             next.staff_id = t('vault_form_validation_time_staff');
         }
-        if (!String(data.purpose || '').trim()) {
-            next.purpose = t('vault_form_validation_purpose');
-        }
         if (!data.project_id) {
             next.project_id = t('validation_project_required');
         }

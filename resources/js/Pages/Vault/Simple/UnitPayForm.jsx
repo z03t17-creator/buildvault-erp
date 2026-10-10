@@ -183,21 +183,6 @@ export default function UnitPayForm({
                         </FormField>
 
                         <FormField className="sm:col-span-2">
-                            <InputLabel value={`${t('purpose')} (${t('optional')})`} htmlFor="purpose" />
-                            <TextInput
-                                id="purpose"
-                                className={fieldClass}
-                                value={data.purpose}
-                                onChange={(e) => setData('purpose', e.target.value)}
-                                placeholder={
-                                    amount > 0
-                                        ? `${quantity} ${rateUnit} × ${rate} ${currency}`
-                                        : t('vault_form_unit_purpose_placeholder')
-                                }
-                            />
-                        </FormField>
-
-                        <FormField className="sm:col-span-2">
                             <InputLabel value={`${t('note')} (${t('optional')})`} htmlFor="note" />
                             <TextInput
                                 id="note"
