@@ -10,6 +10,7 @@ import SecondaryButton from '@/Components/SecondaryButton';
 import { stockFieldClass, stockMoneyClass, stockSegmentClass } from '@/Components/StockDesk';
 import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -136,6 +137,7 @@ export default function Create({
         >
             <Head title={t('warehouse_dispatch')} />
             <PageShell className="!max-w-5xl !space-y-4">
+                <StockTabs />
                 <form
                     noValidate
                     onSubmit={(e) => {

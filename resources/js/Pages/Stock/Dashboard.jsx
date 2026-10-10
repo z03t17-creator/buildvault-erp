@@ -6,6 +6,7 @@ import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { StockStatCard, StockStatusBadge } from '@/Components/StockDesk';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -17,7 +18,6 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
     const iqd = t('IQD');
     const canIn = useCan('stock.stockIn');
     const canOut = useCan('stock.stockOut');
-    const canManage = useCan('stock.manageItems');
     const categories = summary?.by_category || [];
     const lowCount = summary?.low_stock ?? 0;
 
@@ -57,6 +57,7 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
         >
             <Head title={t('warehouse_title')} />
             <PageShell className="!space-y-6">
+                <StockTabs />
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <StockStatCard
                         label={t('stock_total_items')}
@@ -106,20 +107,6 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                         hint={t('warehouse_today_out_hint')}
                         tone="amber"
                     />
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                    <Link href={route('stock.items.index')}>
-                        <SecondaryButton type="button">{t('stock_products')}</SecondaryButton>
-                    </Link>
-                    <Link href={route('stock.movements.index')}>
-                        <SecondaryButton type="button">{t('stock_movements')}</SecondaryButton>
-                    </Link>
-                    {canManage ? (
-                        <Link href={route('stock.items.create')}>
-                            <SecondaryButton type="button">{t('warehouse_add_item')}</SecondaryButton>
-                        </Link>
-                    ) : null}
                 </div>
 
                 {lowStockItems.length > 0 ? (

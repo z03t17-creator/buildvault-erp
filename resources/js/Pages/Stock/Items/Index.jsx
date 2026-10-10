@@ -8,6 +8,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { StockStatCard, StockStatusBadge, stockFieldClass } from '@/Components/StockDesk';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -67,6 +68,7 @@ export default function Index({
         >
             <Head title={t('warehouse_items')} />
             <PageShell className="!space-y-6">
+                <StockTabs />
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <StockStatCard label={t('stock_total_items')} value={overview.products ?? 0} />
                     <StockStatCard

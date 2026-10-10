@@ -5,6 +5,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -95,6 +96,7 @@ export default function Show({ item }) {
         >
             <Head title={item.name} />
             <PageShell className="!space-y-6">
+                <StockTabs />
                 <section className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                     <Field label={t('quantity')}>
                         <span className="font-sans text-2xl font-semibold tabular-nums text-rose-900 dark:text-rose-100" dir="ltr">

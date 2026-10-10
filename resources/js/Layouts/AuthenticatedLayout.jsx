@@ -28,7 +28,7 @@ const NAV_GROUPS = [
     {
         id: 'ops',
         labelKey: 'nav_group_operations',
-        keys: ['expenses', 'penalties', 'productions', 'attendance', 'insurance'],
+        keys: ['expenses', 'penalties', 'attendance', 'insurance'],
     },
     {
         id: 'system',
@@ -92,12 +92,6 @@ function buildNavCatalog(t, maturedCount) {
             href: route('penalties.index'),
             active: route().current('penalties.*'),
             label: t('penalties'),
-        },
-        productions: {
-            key: 'productions',
-            href: route('productions.index'),
-            active: route().current('productions.*'),
-            label: t('productions'),
         },
         attendance: {
             key: 'attendance',

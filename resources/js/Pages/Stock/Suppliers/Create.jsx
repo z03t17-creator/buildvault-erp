@@ -7,6 +7,7 @@ import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -42,6 +43,7 @@ export default function Create() {
         >
             <Head title={t('new_supplier')} />
             <PageShell narrow className="!space-y-6">
+                <StockTabs />
                 <DataPanel>
                     <form
                         onSubmit={(e) => {

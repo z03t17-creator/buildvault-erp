@@ -168,6 +168,15 @@ class WarehouseInventoryTest extends TestCase
         $this->assertStringContainsString('placeSuggestions', $source);
         $this->assertStringContainsString('warehouse_dispatch', $source);
         $this->assertStringContainsString('SuggestionCombobox', $source);
+        $this->assertStringContainsString('StockTabs', $source);
+
+        $tabs = file_get_contents(resource_path('js/Components/StockTabs.jsx'));
+        $this->assertStringContainsString('stock.dashboard', $tabs);
+        $this->assertStringContainsString('stock.consumption', $tabs);
+        $this->assertStringContainsString('warehouse_tab_overview', $tabs);
+
+        $layout = file_get_contents(resource_path('js/Layouts/AuthenticatedLayout.jsx'));
+        $this->assertStringNotContainsString("key: 'productions'", $layout);
     }
 
     public function test_dashboard_low_stock_badge_and_item_search_by_barcode(): void

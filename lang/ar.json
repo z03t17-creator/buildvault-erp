@@ -1666,5 +1666,6 @@
     "staff_rates_incomplete": "أكمل كل صف سعر بدأته، أو اترك كل الصفوف فارغة.",
     "staff_pay_transport": "نقل",
     "staff_pay_free_piece": "قطعة حرة (اكتب أدناه)",
-    "staff_pay_piece_on_job_hint": "أدخل أسعار القطعة لهذه المهمة — أبواب، لامينيت، ألواح، أو اختر سعراً محفوظاً."
+    "staff_pay_piece_on_job_hint": "أدخل أسعار القطعة لهذه المهمة — أبواب، لامينيت، ألواح، أو اختر سعراً محفوظاً.",
+    "warehouse_tab_overview": "نظرة عامة"
 }

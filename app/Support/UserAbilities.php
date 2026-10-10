@@ -142,7 +142,6 @@ final class UserAbilities
             'expenses' => $can['expenses.viewAny'] ?? false,
             'penalties' => $can['penalties.viewAny'] ?? false,
             'advances' => $can['advances.viewAny'] ?? false,
-            'productions' => $can['productions.viewAny'] ?? false,
             'attendance' => $can['attendance.viewAny'] ?? false,
             'docs' => $can['documents.viewAny'] ?? false,
             'imports' => $can['vault.imports'] ?? false,

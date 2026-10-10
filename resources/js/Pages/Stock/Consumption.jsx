@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { StockStatCard, stockFieldClass } from '@/Components/StockDesk';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -39,6 +40,7 @@ export default function Consumption({
         >
             <Head title={t('warehouse_consumption')} />
             <PageShell className="!space-y-6">
+                <StockTabs />
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <StockStatCard label={t('warehouse_places')} value={overview.places ?? 0} tone="sky" />
                     <StockStatCard label={t('warehouse_lines')} value={overview.lines ?? 0} />

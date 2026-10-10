@@ -13,7 +13,6 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\LocaleController;
 use App\Http\Controllers\MayorcaImportController;
 use App\Http\Controllers\PenaltyController;
-use App\Http\Controllers\ProductionRecordController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\ReportController;
@@ -32,7 +31,6 @@ use App\Models\Document;
 use App\Models\Expense;
 use App\Models\Attendance;
 use App\Models\Penalty;
-use App\Models\ProductionRecord;
 use App\Models\Project;
 use App\Models\StockItem;
 use App\Models\StockMovement;
@@ -322,21 +320,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/advances/{advance}/cancel', fn () => redirect()->route('vault.lines.job-pay.create'))
         ->name('advances.cancel');
 
-    Route::get('/productions', [ProductionRecordController::class, 'index'])
-        ->middleware('can:viewAny,'.ProductionRecord::class)
-        ->name('productions.index');
-    Route::middleware('can:create,'.ProductionRecord::class)->group(function () {
-        Route::get('/productions/create', [ProductionRecordController::class, 'create'])->name('productions.create');
-        Route::post('/productions', [ProductionRecordController::class, 'store'])->name('productions.store');
-    });
-    Route::get('/productions/{production}', [ProductionRecordController::class, 'show'])
-        ->middleware('can:view,production')
+    // Legacy productions UI removed — material use lives under warehouse consumption.
+    Route::redirect('/productions', '/stock')->name('productions.index');
+    Route::redirect('/productions/create', '/stock')->name('productions.create');
+    Route::post('/productions', fn () => redirect()->route('stock.dashboard'))
+        ->name('productions.store');
+    Route::get('/productions/{production}', fn () => redirect()->route('stock.dashboard'))
         ->name('productions.show');
-    Route::get('/productions/{production}/edit', [ProductionRecordController::class, 'edit'])
-        ->middleware('can:update,production')
+    Route::get('/productions/{production}/edit', fn () => redirect()->route('stock.dashboard'))
         ->name('productions.edit');
-    Route::put('/productions/{production}', [ProductionRecordController::class, 'update'])
-        ->middleware('can:update,production')
+    Route::put('/productions/{production}', fn () => redirect()->route('stock.dashboard'))
         ->name('productions.update');
 
 

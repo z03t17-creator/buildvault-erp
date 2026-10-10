@@ -6,6 +6,7 @@ import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
@@ -84,6 +85,7 @@ export default function Index({ categories, filters, overview }) {
         >
             <Head title={t('stock_categories')} />
             <PageShell className="!space-y-6">
+                <StockTabs />
                 <section className="bv-card p-4 sm:p-5">
                     <div className="mb-3 flex items-start gap-3">
                         <span className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-rose-500/15 text-rose-900 dark:bg-rose-400/15 dark:text-rose-200">

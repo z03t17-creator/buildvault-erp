@@ -8,6 +8,7 @@ import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -51,6 +52,7 @@ export default function Edit({ item, suppliers, categories }) {
         >
             <Head title={t('edit_product')} />
             <PageShell narrow className="!space-y-6">
+                <StockTabs />
                 <p className="rounded-xl border border-rose-200/70 bg-rose-50/70 px-4 py-3 text-sm text-rose-950 dark:border-rose-900/40 dark:bg-rose-950/30 dark:text-rose-100">
                     {t('quantity')}:{' '}
                     <span className="font-sans font-semibold tabular-nums" dir="ltr">

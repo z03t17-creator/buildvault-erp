@@ -10,6 +10,7 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
 import { stockFieldClass, stockMoneyClass } from '@/Components/StockDesk';
 import TextInput from '@/Components/TextInput';
+import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
@@ -54,6 +55,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
         >
             <Head title={t('warehouse_receive')} />
             <PageShell className="!max-w-4xl !space-y-4">
+                <StockTabs />
                 <form
                     noValidate
                     onSubmit={(e) => {

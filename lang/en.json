@@ -1666,5 +1666,6 @@
     "staff_rates_incomplete": "Finish each rate row you started, or leave all rows empty.",
     "staff_pay_transport": "Transport",
     "staff_pay_free_piece": "Free piece (type below)",
-    "staff_pay_piece_on_job_hint": "Enter piece prices for this job — doors, laminate, floorboards, or pick a saved rate."
+    "staff_pay_piece_on_job_hint": "Enter piece prices for this job — doors, laminate, floorboards, or pick a saved rate.",
+    "warehouse_tab_overview": "Overview"
 }
