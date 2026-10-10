@@ -1622,6 +1622,8 @@
     "warehouse_item_form_hint": "Category, unit, and average cost in USD or IQD. Add stock with Stock In.",
     "warehouse_unit_type_hint": "Type any unit, e.g. Pcs, دانە, مەتر…",
     "warehouse_category_type_hint": "Type a category or pick one, e.g. Electrical…",
+    "warehouse_currency_pick_hint": "Choose USD or IQD — they stay separate (no exchange mix).",
+    "warehouse_currency_locked_hint": "This item already has stock in :currency — keep the same currency.",
     "warehouse_receive": "Receive + سلفە",
     "warehouse_receive_hint": "Unit cost, total, payment source, and notes.",
     "warehouse_receive_save": "Save receive",

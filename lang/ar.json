@@ -1622,6 +1622,8 @@
     "warehouse_item_form_hint": "التصنيف والوحدة ومتوسط التكلفة بالدولار أو الدينار. أضف الكمية عبر إدخال المخزون.",
     "warehouse_unit_type_hint": "اكتب أي وحدة، مثل Pcs أو دانە أو مەتر…",
     "warehouse_category_type_hint": "اكتب تصنيفاً أو اختر واحداً، مثل Electrical…",
+    "warehouse_currency_pick_hint": "اختر دولار أو دينار — يبقيان منفصلين دون مزج سعر صرف.",
+    "warehouse_currency_locked_hint": "هذا الصنف له مخزون بـ :currency — أبقِ نفس العملة.",
     "warehouse_receive": "إدخال المواد + سلفة",
     "warehouse_receive_hint": "تكلفة الوحدة والإجمالي ومصدر الدفع والملاحظات.",
     "warehouse_receive_save": "حفظ الإدخال",

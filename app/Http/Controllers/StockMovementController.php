@@ -11,6 +11,7 @@ use App\Models\StockItem;
 use App\Models\StockMovement;
 use App\Models\Tower;
 use App\Services\StockService;
+use App\Support\DualCurrency;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -130,9 +131,11 @@ class StockMovementController extends Controller
                 return $item;
             }),
             'projects' => $projects,
+            'currencies' => DualCurrency::CURRENCIES,
             'paymentSources' => StockMovement::PAYMENT_SOURCES,
             'defaults' => [
                 'moved_on' => now()->toDateString(),
+                'currency' => DualCurrency::IQD,
                 'payment_source' => StockMovement::PAYMENT_SUPPLIER_CREDIT,
             ],
         ]);

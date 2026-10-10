@@ -156,6 +156,53 @@ class WarehouseInventoryTest extends TestCase
         $this->assertSame(1, StockCategory::query()->where('name', 'لوله')->count());
     }
 
+    public function test_receive_can_choose_usd_or_iqd_when_item_empty(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+        $item = StockItem::query()->create([
+            'name' => 'Flex Pipe',
+            'sku' => 'FLX-1',
+            'barcode' => 'FLX-1',
+            'unit' => 'Meter',
+            'quantity' => 0,
+            'currency' => 'IQD',
+            'purchase_price_iqd' => 1000,
+            'purchase_price_usd' => 0,
+        ]);
+
+        $this->actingAs($stock)
+            ->post(route('stock.in.store'), [
+                'stock_item_id' => $item->id,
+                'quantity' => 5,
+                'moved_on' => '2026-10-10',
+                'currency' => 'USD',
+                'purchase_price' => 3.5,
+                'payment_source' => 'supplier_credit',
+            ])
+            ->assertRedirect(route('stock.dashboard'));
+
+        $item->refresh();
+        $this->assertSame(5.0, (float) $item->quantity);
+        $this->assertSame('USD', $item->currency);
+        $this->assertSame(3.5, (float) $item->purchase_price_usd);
+        $this->assertSame(0.0, (float) $item->purchase_price_iqd);
+
+        $this->actingAs($stock)
+            ->post(route('stock.in.store'), [
+                'stock_item_id' => $item->id,
+                'quantity' => 1,
+                'moved_on' => '2026-10-10',
+                'currency' => 'IQD',
+                'purchase_price' => 5000,
+                'payment_source' => 'supplier_credit',
+            ])
+            ->assertSessionHasErrors();
+
+        $item->refresh();
+        $this->assertSame('USD', $item->currency);
+        $this->assertSame(5.0, (float) $item->quantity);
+    }
+
     public function test_stock_item_can_be_priced_in_usd(): void
     {
         $stock = $this->userWithRole(Roles::STOCK_MANAGER);

@@ -121,6 +121,9 @@ export default function Create({
                                     </button>
                                 ))}
                             </div>
+                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                {t('warehouse_currency_pick_hint')}
+                            </p>
                             <InputError message={errors.currency} className="mt-1" />
                         </FormField>
                         <FormField>

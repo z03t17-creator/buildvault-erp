@@ -299,32 +299,37 @@ class StockService
                 throw new InvalidArgumentException('Stock-in quantity must be greater than zero.');
             }
 
+            $previous = round((float) $item->quantity, 3);
             $currency = $item->costCurrency();
             if (! empty($data['currency'])) {
                 $incoming = strtoupper((string) $data['currency']);
-                if (in_array($incoming, DualCurrency::CURRENCIES, true) && $incoming !== $currency) {
-                    throw new InvalidArgumentException(
-                        'Stock-in currency must match the item currency ('.$currency.').'
-                    );
+                if (in_array($incoming, DualCurrency::CURRENCIES, true)) {
+                    // With stock on hand, USD and IQD must not blend — keep item currency.
+                    // Empty stock may adopt the chosen currency (USD or IQD).
+                    if ($previous > 0 && $incoming !== $currency) {
+                        throw new InvalidArgumentException(
+                            'Stock-in currency must match the item currency ('.$currency.').'
+                        );
+                    }
+                    $currency = $incoming;
                 }
             }
 
-            $unitPrice = $this->resolveUnitPrice($data, $item);
+            $unitPrice = $this->resolveUnitPrice($data, $item, $currency);
 
             if ($unitPrice < 0) {
                 throw new InvalidArgumentException('Purchase price cannot be negative.');
             }
 
-            $previous = round((float) $item->quantity, 3);
             $newQty = round($previous + $qty, 3);
             $totalCost = round($qty * $unitPrice, 2);
 
-            // Weighted average unit cost in the item's currency only.
-            if ($newQty > 0) {
+            // Weighted average unit cost in the chosen currency only (never FX-blend).
+            if ($previous > 0 && $newQty > 0) {
                 $prevValue = round($previous * $item->unitCost(), 2);
                 $avg = round(($prevValue + $totalCost) / $newQty, 2);
                 $this->setItemUnitCost($item, $currency, $avg);
-            } elseif ($unitPrice > 0) {
+            } elseif ($unitPrice > 0 || $previous <= 0) {
                 $this->setItemUnitCost($item, $currency, $unitPrice);
             }
 
@@ -545,13 +550,13 @@ class StockService
     /**
      * @param  array<string, mixed>  $data
      */
-    private function resolveUnitPrice(array $data, StockItem $item): float
+    private function resolveUnitPrice(array $data, StockItem $item, ?string $currency = null): float
     {
         if (array_key_exists('purchase_price', $data) && $data['purchase_price'] !== null && $data['purchase_price'] !== '') {
             return round((float) $data['purchase_price'], 2);
         }
 
-        $currency = $item->costCurrency();
+        $currency = $currency ?: $item->costCurrency();
         if ($currency === DualCurrency::USD) {
             if (array_key_exists('purchase_price_usd', $data) && $data['purchase_price_usd'] !== null && $data['purchase_price_usd'] !== '') {
                 return round((float) $data['purchase_price_usd'], 2);

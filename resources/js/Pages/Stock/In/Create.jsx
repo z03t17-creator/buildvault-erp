@@ -23,6 +23,7 @@ const PAYMENT_SUPPLIER_CREDIT = 'supplier_credit';
 export default function Create({
     items = [],
     projects = [],
+    currencies = ['USD', 'IQD'],
     paymentSources = [
         PAYMENT_SUPPLIER_CREDIT,
         PAYMENT_PROJECT_ADVANCE,
@@ -37,7 +38,7 @@ export default function Create({
         stock_item_id: '',
         quantity: '',
         moved_on: defaults.moved_on || new Date().toISOString().slice(0, 10),
-        currency: 'IQD',
+        currency: defaults.currency || 'IQD',
         purchase_price: '',
         payment_source: defaults.payment_source || PAYMENT_SUPPLIER_CREDIT,
         project_id: '',
@@ -46,12 +47,35 @@ export default function Create({
     });
 
     const selected = items.find((i) => String(i.id) === String(data.stock_item_id));
-    const costCurrency =
-        selected?.cost_currency || selected?.currency || data.currency || 'IQD';
+    const onHand = Number(selected?.quantity) || 0;
+    const itemCurrency = selected?.cost_currency || selected?.currency || null;
+    const currencyLocked = Boolean(selected && onHand > 0 && itemCurrency);
+    const costCurrency = currencyLocked
+        ? itemCurrency
+        : data.currency || itemCurrency || 'IQD';
     const costLabel = costCurrency === 'USD' ? usd : iqd;
     const qty = Number(data.quantity) || 0;
     const unitCost = Number(data.purchase_price) || 0;
     const total = useMemo(() => Math.round(qty * unitCost * 100) / 100, [qty, unitCost]);
+
+    const unitPriceFor = (item, currency) => {
+        if (!item) return '';
+        if (currency === 'USD') {
+            const v = item.purchase_price_usd ?? (item.cost_currency === 'USD' ? item.unit_cost : null);
+            return v != null && v !== '' ? String(v) : '';
+        }
+        const v = item.purchase_price_iqd ?? (item.cost_currency === 'IQD' ? item.unit_cost : null);
+        return v != null && v !== '' ? String(v) : '';
+    };
+
+    const pickCurrency = (code) => {
+        if (currencyLocked) return;
+        setData({
+            ...data,
+            currency: code,
+            purchase_price: unitPriceFor(selected, code) || data.purchase_price,
+        });
+    };
 
     const project = projects.find((p) => String(p.id) === String(data.project_id));
     const advanceAvailable = project
@@ -99,21 +123,13 @@ export default function Create({
                                     const id = e.target.value;
                                     const item = items.find((i) => String(i.id) === String(id));
                                     const currency =
-                                        item?.cost_currency || item?.currency || 'IQD';
-                                    const unit =
-                                        item?.unit_cost != null
-                                            ? item.unit_cost
-                                            : currency === 'USD'
-                                              ? item?.purchase_price_usd
-                                              : item?.purchase_price_iqd;
+                                        item?.cost_currency || item?.currency || data.currency || 'IQD';
                                     setData({
                                         ...data,
                                         stock_item_id: id,
                                         currency,
                                         purchase_price:
-                                            unit != null && unit !== ''
-                                                ? String(unit)
-                                                : data.purchase_price,
+                                            unitPriceFor(item, currency) || data.purchase_price,
                                         shelf_zone: item?.location || data.shelf_zone,
                                     });
                                 }}
@@ -155,6 +171,41 @@ export default function Create({
                             <InputError message={errors.moved_on} className="mt-1" />
                         </FormField>
                         <FormField>
+                            <InputLabel value={t('currency')} htmlFor="currency" />
+                            <div className="mt-1 flex gap-2">
+                                {currencies.map((code) => (
+                                    <button
+                                        key={code}
+                                        type="button"
+                                        disabled={currencyLocked && code !== costCurrency}
+                                        onClick={() => pickCurrency(code)}
+                                        className={
+                                            'min-h-[2.5rem] flex-1 rounded-xl border text-sm font-semibold transition ' +
+                                            (costCurrency === code
+                                                ? 'border-emerald-500 bg-emerald-50 text-emerald-900 ring-2 ring-emerald-500/25 dark:border-emerald-400 dark:bg-emerald-950/40 dark:text-emerald-100'
+                                                : 'border-slate-200 bg-white text-slate-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300') +
+                                            (currencyLocked && code !== costCurrency
+                                                ? ' cursor-not-allowed opacity-40'
+                                                : '')
+                                        }
+                                        aria-pressed={costCurrency === code}
+                                    >
+                                        {code}
+                                    </button>
+                                ))}
+                            </div>
+                            {currencyLocked ? (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    {t('warehouse_currency_locked_hint', { currency: costCurrency })}
+                                </p>
+                            ) : (
+                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                                    {t('warehouse_currency_pick_hint')}
+                                </p>
+                            )}
+                            <InputError message={errors.currency} className="mt-1" />
+                        </FormField>
+                        <FormField>
                             <InputLabel
                                 value={`${t('warehouse_unit_cost')} (${costLabel})`}
                                 htmlFor="purchase_price"
@@ -167,11 +218,15 @@ export default function Create({
                                 allowDecimals={costCurrency === 'USD'}
                             />
                             <InputError
-                                message={errors.purchase_price || errors.purchase_price_iqd}
+                                message={
+                                    errors.purchase_price ||
+                                    errors.purchase_price_iqd ||
+                                    errors.purchase_price_usd
+                                }
                                 className="mt-1"
                             />
                         </FormField>
-                        <FormField>
+                        <FormField className="sm:col-span-2">
                             <InputLabel value={t('warehouse_total_cost')} />
                             <p
                                 dir="ltr"
