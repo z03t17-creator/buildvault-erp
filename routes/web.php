@@ -104,9 +104,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('vault.lines.advance.create');
         Route::post('/vault/lines/advance', [SimpleVaultLineController::class, 'storeAdvance'])
             ->name('vault.lines.advance.store');
-        Route::get('/vault/lines/expense', [SimpleVaultLineController::class, 'createExpense'])
+        // Project expenses are the only expense UI — vault form redirects there.
+        Route::get('/vault/lines/expense', fn () => redirect()->route('expenses.create'))
             ->name('vault.lines.expense.create');
-        Route::post('/vault/lines/expense', [SimpleVaultLineController::class, 'storeExpense'])
+        Route::post('/vault/lines/expense', fn () => redirect()->route('expenses.create'))
             ->name('vault.lines.expense.store');
         Route::get('/vault/lines/staff-pay', [SimpleVaultLineController::class, 'createStaffPay'])
             ->name('vault.lines.staff-pay.create');

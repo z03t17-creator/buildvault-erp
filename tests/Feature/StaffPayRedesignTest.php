@@ -719,6 +719,8 @@ class StaffPayRedesignTest extends TestCase
         $this->assertStringContainsString('vault_form_salary', $source);
         $this->assertStringContainsString('vault_form_advance', $source);
         $this->assertStringContainsString('vault_form_expense', $source);
+        $this->assertStringContainsString('expenses.create', $source);
+        $this->assertStringNotContainsString('vault.lines.expense.create', $source);
     }
 
     public function test_currencies_never_blend_on_unit_rows(): void

@@ -434,9 +434,9 @@ function accountantModules(t) {
         {
             key: 'expenses',
             href: route('expenses.index'),
-            secondaryHref: route('vault.lines.expense.create'),
+            secondaryHref: route('expenses.create'),
             primaryLabel: t('home_dest_expenses'),
-            secondaryLabel: t('vault_form_expense'),
+            secondaryLabel: t('new_expense'),
             icon: 'expenses',
             tone: 'expenses',
             title: t('home_box_expenses'),

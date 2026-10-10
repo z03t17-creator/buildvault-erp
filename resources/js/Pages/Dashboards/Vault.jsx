@@ -344,7 +344,7 @@ export default function Vault({
                                 tone="teal"
                             />
                             <MoneyAction
-                                href={route('vault.lines.expense.create')}
+                                href={route('expenses.create')}
                                 icon="expenses"
                                 title={t('vault_form_expense')}
                                 hint={t('vault_form_expense_short')}

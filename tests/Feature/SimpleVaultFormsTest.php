@@ -104,41 +104,21 @@ class SimpleVaultFormsTest extends TestCase
         $this->assertSame($this->project->id, $line->project_id);
     }
 
-    public function test_expense_form_posts_no_hold(): void
+    public function test_vault_expense_routes_redirect_to_project_expenses(): void
     {
-        $staff = Staff::query()->create([
-            'name' => 'Buyer',
-            'kind' => Staff::KIND_TIME,
-            'trade' => 'purchasing',
-        ]);
-
         $this->actingAs($this->accountant)
             ->get(route('vault.lines.expense.create'))
-            ->assertOk()
-            ->assertInertia(fn ($page) => $page
-                ->component('Vault/Simple/ExpenseForm')
-                ->has('staff', 1));
+            ->assertRedirect(route('expenses.create'));
 
         $this->actingAs($this->accountant)
             ->post(route('vault.lines.expense.store'), [
                 'occurred_on' => '2026-10-05',
                 'amount' => 150,
                 'currency' => DualCurrency::IQD,
-                'expense_type' => 'materials',
-                'staff_id' => $staff->id,
-                'project_id' => $this->project->id,
-                'note' => 'Tile run',
             ])
-            ->assertRedirect(route('dashboards.vault'));
+            ->assertRedirect(route('expenses.create'));
 
-        $line = VaultLine::query()->where('kind', VaultLine::KIND_EXPENSE)->first();
-        $this->assertNotNull($line);
-        $this->assertSame(150.0, (float) $line->amount);
-        $this->assertSame(0.0, (float) $line->hold_amount);
-        $this->assertNull($line->hold_pool);
-        $this->assertSame(DualCurrency::IQD, $line->currency);
-        $this->assertSame('materials', $line->expense_type);
-        $this->assertSame($staff->id, $line->staff_id);
+        $this->assertNull(VaultLine::query()->where('kind', VaultLine::KIND_EXPENSE)->first());
     }
 
     public function test_job_pay_form_holds_ten_percent_staff_owed(): void

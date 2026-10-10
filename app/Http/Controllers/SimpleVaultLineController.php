@@ -22,7 +22,7 @@ use Inertia\Response;
 use InvalidArgumentException;
 
 /**
- * Simple-vault money forms — advance, expense, staff pay, salary.
+ * Simple-vault money forms — advance, staff pay, salary. Project expenses live at /expenses.
  */
 class SimpleVaultLineController extends Controller
 {
@@ -102,42 +102,6 @@ class SimpleVaultLineController extends Controller
         return redirect()
             ->route('dashboards.vault')
             ->with('success', __('vault_advance_saved'));
-    }
-
-    public function createExpense(): Response
-    {
-        $this->authorize('manageLedger', Vault::class);
-
-        return Inertia::render('Vault/Simple/ExpenseForm', $this->formShared());
-    }
-
-    public function storeExpense(Request $request): RedirectResponse
-    {
-        $this->authorize('manageLedger', Vault::class);
-
-        $data = $request->validate([
-            'occurred_on' => ['required', 'date'],
-            'amount' => ['required', 'numeric', 'gt:0'],
-            'currency' => ['required', Rule::in(DualCurrency::CURRENCIES)],
-            'project_id' => ['nullable', 'integer', 'exists:projects,id'],
-            'staff_id' => ['nullable', 'integer', 'exists:staff,id'],
-            'expense_type' => ['nullable', 'string', 'max:120'],
-            'purpose' => ['nullable', 'string', 'max:255'],
-            'note' => ['nullable', 'string', 'max:500'],
-        ]);
-
-        try {
-            $this->vault->postExpense([
-                ...$data,
-                'created_by' => $request->user()?->id,
-            ]);
-        } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['amount' => $e->getMessage()])->withInput();
-        }
-
-        return redirect()
-            ->route('dashboards.vault')
-            ->with('success', __('vault_expense_saved'));
     }
 
     /** Unified staff payment form (monthly / daily / unit). */
