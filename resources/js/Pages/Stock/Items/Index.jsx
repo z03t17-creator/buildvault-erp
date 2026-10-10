@@ -5,7 +5,6 @@ import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import { StockStatCard, StockStatusBadge, stockFieldClass } from '@/Components/StockDesk';
 import TextInput from '@/Components/TextInput';
 import StockTabs from '@/Components/StockTabs';
@@ -50,19 +49,14 @@ export default function Index({
                     subtitle={t('warehouse_items_page_hint')}
                     icon={<NavIcon name="stock" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
-                        <div className="flex flex-wrap gap-2">
-                            <Link href={route('stock.dashboard')}>
-                                <SecondaryButton type="button">{t('warehouse_title')}</SecondaryButton>
+                        canManage ? (
+                            <Link href={route('stock.items.create')}>
+                                <PrimaryButton type="button" className="!bg-emerald-600 hover:!bg-emerald-500">
+                                    <NavIcon name="stock" className="text-sm" />
+                                    {t('warehouse_add_item')}
+                                </PrimaryButton>
                             </Link>
-                            {canManage ? (
-                                <Link href={route('stock.items.create')}>
-                                    <PrimaryButton type="button">
-                                        <NavIcon name="stock" className="text-sm" />
-                                        {t('warehouse_add_item')}
-                                    </PrimaryButton>
-                                </Link>
-                            ) : null}
-                        </div>
+                        ) : null
                     }
                 />
             }

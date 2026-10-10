@@ -24,16 +24,28 @@ use InvalidArgumentException;
  */
 class StockService
 {
+    public const PAYMENT_PROJECT_ADVANCE = StockMovement::PAYMENT_PROJECT_ADVANCE;
+
+    public const PAYMENT_MAIN_VAULT = StockMovement::PAYMENT_MAIN_VAULT;
+
+    public const PAYMENT_SUPPLIER_CREDIT = StockMovement::PAYMENT_SUPPLIER_CREDIT;
+
+    public function __construct(
+        private readonly SimpleVaultService $vault,
+    ) {}
+
     /**
      * @return array{
      *     total_items: int,
      *     stock_value_iqd: float,
+     *     stock_value_usd: float,
      *     low_stock: int,
      *     out_of_stock: int,
      *     today_in_qty: float,
      *     today_out_qty: float,
      *     today_in_count: int,
      *     today_out_count: int,
+     *     today_movements: int,
      *     recent_movements: Collection<int, StockMovement>,
      *     low_stock_items: Collection<int, StockItem>,
      * }
@@ -78,8 +90,9 @@ class StockService
             'out_of_stock' => $outOfStock,
             'today_in_qty' => round((float) (clone $todayIn)->sum('quantity'), 3),
             'today_out_qty' => round((float) (clone $todayOut)->sum('quantity'), 3),
-            'today_in_count' => (clone $todayIn)->count(),
-            'today_out_count' => (clone $todayOut)->count(),
+            'today_in_count' => (int) (clone $todayIn)->count(),
+            'today_out_count' => (int) (clone $todayOut)->count(),
+            'today_movements' => (int) (clone $todayIn)->count() + (int) (clone $todayOut)->count(),
             'recent_movements' => $recent,
             'low_stock_items' => $lowStockItems->take(8)->values(),
         ];
@@ -326,12 +339,32 @@ class StockService
             $item->save();
 
             $legs = $this->costLegs($currency, $unitPrice, $totalCost);
+            $projectId = $this->nullableId($data['project_id'] ?? null);
+            $paymentSource = $this->normalizePaymentSource($data['payment_source'] ?? null);
+            $movedOn = $this->date($data['moved_on'] ?? now()->toDateString());
+            $invoice = $this->nullableString($data['invoice_ref'] ?? null);
+            $notes = $this->nullableString($data['notes'] ?? null);
+
+            $vaultLineId = null;
+            if ($totalCost > 0 && $paymentSource !== StockMovement::PAYMENT_SUPPLIER_CREDIT) {
+                $vaultLineId = $this->postPurchasePayment(
+                    $paymentSource,
+                    $projectId,
+                    $currency,
+                    $totalCost,
+                    $movedOn,
+                    $item->name,
+                    $invoice,
+                    $notes,
+                    $actor?->id ?? ($data['user_id'] ?? null),
+                );
+            }
 
             return StockMovement::query()->create([
                 'type' => StockMovement::TYPE_IN,
                 'stock_item_id' => $item->id,
                 'quantity' => $qty,
-                'moved_on' => $this->date($data['moved_on'] ?? now()->toDateString()),
+                'moved_on' => $movedOn,
                 'supplier_id' => isset($data['supplier_id']) && $data['supplier_id'] !== ''
                     ? (int) $data['supplier_id']
                     : $item->supplier_id,
@@ -340,20 +373,22 @@ class StockService
                 'purchase_price_iqd' => $legs['unit_iqd'],
                 'total_cost_usd' => $legs['total_usd'],
                 'total_cost_iqd' => $legs['total_iqd'],
-                'project_id' => $this->nullableId($data['project_id'] ?? null),
+                'project_id' => $projectId,
                 'tower_id' => null,
                 'floor_id' => null,
-                'invoice_ref' => $this->nullableString($data['invoice_ref'] ?? null),
+                'invoice_ref' => $invoice,
                 'shelf_zone' => $shelf,
                 'receiver' => null,
                 'staff_id' => null,
                 'issuer' => null,
                 'purpose' => null,
-                'reference' => $this->nullableString($data['reference'] ?? ($data['invoice_ref'] ?? null)),
+                'reference' => $this->nullableString($data['reference'] ?? $invoice),
                 'previous_qty' => $previous,
                 'new_qty' => $newQty,
                 'user_id' => $actor?->id ?? ($data['user_id'] ?? null),
-                'notes' => $this->nullableString($data['notes'] ?? null),
+                'notes' => $notes,
+                'payment_source' => $paymentSource,
+                'vault_line_id' => $vaultLineId,
             ]);
         });
     }
@@ -449,6 +484,62 @@ class StockService
             (string) ($movement->tower_id ?? ''),
             (string) ($movement->floor_id ?? ''),
         ]);
+    }
+
+    private function normalizePaymentSource(mixed $value): string
+    {
+        $source = is_string($value) ? trim($value) : '';
+        if ($source === '' || ! in_array($source, StockMovement::PAYMENT_SOURCES, true)) {
+            return StockMovement::PAYMENT_SUPPLIER_CREDIT;
+        }
+
+        return $source;
+    }
+
+    private function postPurchasePayment(
+        string $paymentSource,
+        ?int $projectId,
+        string $currency,
+        float $totalCost,
+        string $movedOn,
+        string $itemName,
+        ?string $invoice,
+        ?string $notes,
+        ?int $actorId,
+    ): int {
+        if ($paymentSource === StockMovement::PAYMENT_PROJECT_ADVANCE) {
+            if ($projectId === null) {
+                throw new InvalidArgumentException('Paying from سلفە requires a project.');
+            }
+            $available = $this->vault->projectAvailableCash($projectId, $currency, $movedOn);
+            if ($totalCost > $available + 0.0001) {
+                throw new InvalidArgumentException(
+                    'Project سلفە available is '.$available.' '.$currency.'; purchase needs '.$totalCost.'.'
+                );
+            }
+        }
+
+        $line = $this->vault->postExpense([
+            'occurred_on' => $movedOn,
+            'amount' => $totalCost,
+            'currency' => $currency,
+            'project_id' => $paymentSource === StockMovement::PAYMENT_PROJECT_ADVANCE
+                ? $projectId
+                : $projectId,
+            'expense_type' => 'materials',
+            'purpose' => $paymentSource === StockMovement::PAYMENT_PROJECT_ADVANCE
+                ? 'stock_purchase_sulfa'
+                : 'stock_purchase_vault',
+            'note' => trim(sprintf(
+                'Stock purchase · %s%s%s',
+                $itemName,
+                $invoice ? ' · '.$invoice : '',
+                $notes ? ' · '.$notes : '',
+            )),
+            'created_by' => $actorId,
+        ]);
+
+        return (int) $line->id;
     }
 
     /**

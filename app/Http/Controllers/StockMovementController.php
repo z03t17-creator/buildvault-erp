@@ -110,6 +110,16 @@ class StockMovementController extends Controller
     {
         $this->authorize('stockIn', StockMovement::class);
 
+        $vault = app(\App\Services\SimpleVaultService::class);
+        $projects = Project::query()->orderBy('name')->get(['id', 'name'])->map(function (Project $project) use ($vault) {
+            return [
+                'id' => $project->id,
+                'name' => $project->name,
+                'advance_usd' => $vault->projectAvailableCash($project->id, 'USD'),
+                'advance_iqd' => $vault->projectAvailableCash($project->id, 'IQD'),
+            ];
+        });
+
         return Inertia::render('Stock/In/Create', [
             'items' => StockItem::query()->orderBy('name')->get([
                 'id', 'name', 'sku', 'barcode', 'unit', 'quantity', 'currency',
@@ -121,9 +131,11 @@ class StockMovementController extends Controller
                 return $item;
             }),
             'suppliers' => Supplier::query()->orderBy('name')->get(['id', 'name']),
-            'projects' => Project::query()->orderBy('name')->get(['id', 'name']),
+            'projects' => $projects,
+            'paymentSources' => StockMovement::PAYMENT_SOURCES,
             'defaults' => [
                 'moved_on' => now()->toDateString(),
+                'payment_source' => StockMovement::PAYMENT_SUPPLIER_CREDIT,
             ],
         ]);
     }
@@ -135,11 +147,11 @@ class StockMovementController extends Controller
         try {
             $movement = $this->stock->stockIn($request->validated(), Auth::user());
         } catch (InvalidArgumentException $e) {
-            return back()->withErrors(['quantity' => $e->getMessage()])->withInput();
+            return back()->withErrors(['payment_source' => $e->getMessage()])->withInput();
         }
 
         return redirect()
-            ->route('stock.movements.index', ['type' => 'in'])
+            ->route('stock.dashboard')
             ->with('success', __('Stock in recorded.').' #'.$movement->id);
     }
 
@@ -176,7 +188,7 @@ class StockMovementController extends Controller
         }
 
         return redirect()
-            ->route('stock.movements.index', ['type' => 'out'])
+            ->route('stock.dashboard')
             ->with('success', __('Stock out recorded.').' #'.$movement->id);
     }
 }

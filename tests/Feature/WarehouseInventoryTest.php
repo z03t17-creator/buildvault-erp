@@ -63,6 +63,57 @@ class WarehouseInventoryTest extends TestCase
         $this->assertSame(0.0, (float) $item->purchase_price_usd);
     }
 
+    public function test_stock_in_from_project_sulfa_posts_vault_expense(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+        $project = Project::query()->create(['name' => 'Sulfa Site', 'status' => 'active']);
+        $vault = app(StockService::class); // ensure app boots
+        unset($vault);
+
+        $simple = app(\App\Services\SimpleVaultService::class);
+        $simple->postAdvance([
+            'occurred_on' => '2026-10-01',
+            'amount' => 1000,
+            'currency' => 'USD',
+            'project_id' => $project->id,
+            'note' => 'Client sulfa',
+        ]);
+
+        $item = StockItem::query()->create([
+            'name' => 'Paint',
+            'sku' => 'PNT-1',
+            'unit' => 'Pcs',
+            'quantity' => 0,
+            'currency' => 'USD',
+            'purchase_price_usd' => 50,
+            'purchase_price_iqd' => 0,
+        ]);
+
+        $this->actingAs($stock)
+            ->post(route('stock.in.store'), [
+                'stock_item_id' => $item->id,
+                'quantity' => 2,
+                'moved_on' => '2026-10-10',
+                'purchase_price' => 50,
+                'currency' => 'USD',
+                'payment_source' => 'project_advance',
+                'project_id' => $project->id,
+                'invoice_ref' => 'INV-S1',
+            ])
+            ->assertRedirect(route('stock.dashboard'));
+
+        $item->refresh();
+        $this->assertSame(2.0, (float) $item->quantity);
+
+        $movement = StockMovement::query()->where('type', 'in')->latest('id')->first();
+        $this->assertSame('project_advance', $movement->payment_source);
+        $this->assertNotNull($movement->vault_line_id);
+
+        $available = $simple->projectAvailableCash($project->id, 'USD');
+        // 1000 advance − 100 hold = 900 available; purchase 100 → 800 left
+        $this->assertSame(800.0, $available);
+    }
+
     public function test_stock_item_can_be_priced_in_usd(): void
     {
         $stock = $this->userWithRole(Roles::STOCK_MANAGER);
@@ -204,14 +255,17 @@ class WarehouseInventoryTest extends TestCase
 
         $source = file_get_contents(resource_path('js/Pages/Stock/Out/Create.jsx'));
         $this->assertStringContainsString('placeSuggestions', $source);
-        $this->assertStringContainsString('warehouse_dispatch', $source);
+        $this->assertStringContainsString('warehouse_tab_dispatch', $source);
         $this->assertStringContainsString('SuggestionCombobox', $source);
         $this->assertStringContainsString('StockTabs', $source);
 
         $tabs = file_get_contents(resource_path('js/Components/StockTabs.jsx'));
         $this->assertStringContainsString('stock.dashboard', $tabs);
-        $this->assertStringContainsString('stock.consumption', $tabs);
-        $this->assertStringContainsString('warehouse_tab_overview', $tabs);
+        $this->assertStringContainsString('stock.in.create', $tabs);
+        $this->assertStringContainsString('stock.out.create', $tabs);
+        $this->assertStringContainsString('warehouse_tab_balance', $tabs);
+        $this->assertStringContainsString('warehouse_tab_receive', $tabs);
+        $this->assertStringContainsString('warehouse_tab_dispatch', $tabs);
 
         $layout = file_get_contents(resource_path('js/Layouts/AuthenticatedLayout.jsx'));
         $this->assertStringNotContainsString("key: 'productions'", $layout);

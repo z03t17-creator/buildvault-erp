@@ -7,17 +7,30 @@ import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
-import { stockFieldClass, stockMoneyClass } from '@/Components/StockDesk';
-import TextInput from '@/Components/TextInput';
+import { stockFieldClass, stockMoneyClass, stockSegmentClass } from '@/Components/StockDesk';
 import StockTabs from '@/Components/StockTabs';
+import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 import { useMemo } from 'react';
 
-export default function Create({ items = [], suppliers = [], projects = [], defaults = {} }) {
+const PAYMENT_PROJECT_ADVANCE = 'project_advance';
+const PAYMENT_MAIN_VAULT = 'main_vault';
+const PAYMENT_SUPPLIER_CREDIT = 'supplier_credit';
+
+export default function Create({
+    items = [],
+    suppliers = [],
+    projects = [],
+    paymentSources = [
+        PAYMENT_SUPPLIER_CREDIT,
+        PAYMENT_PROJECT_ADVANCE,
+        PAYMENT_MAIN_VAULT,
+    ],
+    defaults = {},
+}) {
     const t = useTranslations();
     const iqd = t('IQD');
     const usd = t('USD');
@@ -28,6 +41,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
         supplier_id: '',
         currency: 'IQD',
         purchase_price: '',
+        payment_source: defaults.payment_source || PAYMENT_SUPPLIER_CREDIT,
         project_id: '',
         invoice_ref: '',
         shelf_zone: '',
@@ -42,23 +56,31 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
     const unitCost = Number(data.purchase_price) || 0;
     const total = useMemo(() => Math.round(qty * unitCost * 100) / 100, [qty, unitCost]);
 
+    const project = projects.find((p) => String(p.id) === String(data.project_id));
+    const advanceAvailable = project
+        ? costCurrency === 'USD'
+            ? Number(project.advance_usd) || 0
+            : Number(project.advance_iqd) || 0
+        : null;
+
+    const paymentLabels = {
+        [PAYMENT_PROJECT_ADVANCE]: t('warehouse_pay_sulfa'),
+        [PAYMENT_MAIN_VAULT]: t('warehouse_pay_vault'),
+        [PAYMENT_SUPPLIER_CREDIT]: t('warehouse_pay_credit'),
+    };
+
     return (
         <AuthenticatedLayout
             desk
             header={
                 <PageHeader
-                    title={t('warehouse_receive')}
-                    subtitle={t('warehouse_receive_hint')}
+                    title={t('warehouse_tab_receive')}
+                    subtitle={t('warehouse_receive_sulfa_hint')}
                     icon={<NavIcon name="stockIn" className="text-lg text-emerald-700 dark:text-emerald-300" />}
-                    actions={
-                        <Link href={route('stock.dashboard')}>
-                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
-                        </Link>
-                    }
                 />
             }
         >
-            <Head title={t('warehouse_receive')} />
+            <Head title={t('warehouse_tab_receive')} />
             <PageShell className="!max-w-4xl !space-y-4">
                 <StockTabs />
                 <form
@@ -139,6 +161,95 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                             <InputError message={errors.moved_on} className="mt-1" />
                         </FormField>
                         <FormField>
+                            <InputLabel
+                                value={`${t('warehouse_unit_cost')} (${costLabel})`}
+                                htmlFor="purchase_price"
+                            />
+                            <MoneyInput
+                                id="purchase_price"
+                                className={stockMoneyClass}
+                                value={data.purchase_price}
+                                onValueChange={(next) => setData('purchase_price', next)}
+                                allowDecimals={costCurrency === 'USD'}
+                            />
+                            <InputError
+                                message={errors.purchase_price || errors.purchase_price_iqd}
+                                className="mt-1"
+                            />
+                        </FormField>
+                        <FormField>
+                            <InputLabel value={t('warehouse_total_cost')} />
+                            <p
+                                dir="ltr"
+                                className="mt-2 text-lg font-semibold tabular-nums text-emerald-300"
+                            >
+                                <MoneyAmount value={total} label={costLabel} size="lg" showLabel={false} />{' '}
+                                {costLabel}
+                            </p>
+                        </FormField>
+                    </FormSection>
+
+                    <div className="space-y-3 rounded-2xl border border-slate-700 bg-slate-950/50 p-4">
+                        <p className="text-sm font-semibold text-slate-100">
+                            {t('warehouse_payment_source')}
+                        </p>
+                        <div className="flex flex-col gap-2 sm:flex-row">
+                            {paymentSources.map((source) => (
+                                <button
+                                    key={source}
+                                    type="button"
+                                    className={stockSegmentClass(
+                                        data.payment_source === source,
+                                        source === PAYMENT_PROJECT_ADVANCE ? 'amber' : 'emerald',
+                                    )}
+                                    onClick={() => setData('payment_source', source)}
+                                >
+                                    {paymentLabels[source] || source}
+                                </button>
+                            ))}
+                        </div>
+                        <InputError message={errors.payment_source} className="mt-1" />
+
+                        {data.payment_source === PAYMENT_PROJECT_ADVANCE ||
+                        data.payment_source === PAYMENT_MAIN_VAULT ? (
+                            <FormField>
+                                <InputLabel value={t('project')} htmlFor="project_id" />
+                                <select
+                                    id="project_id"
+                                    className={stockFieldClass}
+                                    value={data.project_id}
+                                    onChange={(e) => setData('project_id', e.target.value)}
+                                >
+                                    <option value="">{t('warehouse_pick_project')}</option>
+                                    {projects.map((row) => (
+                                        <option key={row.id} value={row.id}>
+                                            {row.name}
+                                            {data.payment_source === PAYMENT_PROJECT_ADVANCE
+                                                ? ` · ${costLabel} ${(
+                                                      costCurrency === 'USD'
+                                                          ? row.advance_usd
+                                                          : row.advance_iqd
+                                                  ).toLocaleString()}`
+                                                : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                                <InputError message={errors.project_id} className="mt-1" />
+                                {data.payment_source === PAYMENT_PROJECT_ADVANCE &&
+                                advanceAvailable != null ? (
+                                    <p className="mt-1 text-xs text-amber-200/90">
+                                        {t('warehouse_sulfa_available', {
+                                            amount: advanceAvailable.toLocaleString(),
+                                            currency: costLabel,
+                                        })}
+                                    </p>
+                                ) : null}
+                            </FormField>
+                        ) : null}
+                    </div>
+
+                    <FormSection cols={2}>
+                        <FormField>
                             <InputLabel value={t('supplier')} htmlFor="supplier_id" />
                             <select
                                 id="supplier_id"
@@ -163,63 +274,7 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                                 onChange={(e) => setData('invoice_ref', e.target.value)}
                             />
                         </FormField>
-                        <FormField>
-                            <InputLabel
-                                value={`${t('warehouse_unit_cost')} (${costLabel})`}
-                                htmlFor="purchase_price"
-                            />
-                            <MoneyInput
-                                id="purchase_price"
-                                className={stockMoneyClass}
-                                value={data.purchase_price}
-                                onValueChange={(next) => setData('purchase_price', next)}
-                                allowDecimals={costCurrency === 'USD'}
-                            />
-                            <InputError
-                                message={errors.purchase_price || errors.purchase_price_iqd}
-                                className="mt-1"
-                            />
-                            {selected ? (
-                                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                                    {t('currency')}: {costCurrency}
-                                </p>
-                            ) : null}
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('warehouse_total_cost')} />
-                            <p dir="ltr" className="mt-2 text-lg font-semibold tabular-nums text-emerald-700 dark:text-emerald-200">
-                                <MoneyAmount value={total} label={costLabel} size="lg" showLabel={false} />{' '}
-                                {costLabel}
-                            </p>
-                        </FormField>
                         <FormField className="sm:col-span-2">
-                            <InputLabel value={t('warehouse_shelf')} htmlFor="shelf_zone" />
-                            <TextInput
-                                id="shelf_zone"
-                                className={stockFieldClass}
-                                value={data.shelf_zone}
-                                onChange={(e) => setData('shelf_zone', e.target.value)}
-                                placeholder={t('warehouse_shelf_placeholder')}
-                            />
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('project')} htmlFor="project_id" />
-                            <select
-                                id="project_id"
-                                className={stockFieldClass}
-                                value={data.project_id}
-                                onChange={(e) => setData('project_id', e.target.value)}
-                            >
-                                <option value="">—</option>
-                                {projects.map((row) => (
-                                    <option key={row.id} value={row.id}>
-                                        {row.name}
-                                    </option>
-                                ))}
-                            </select>
-                            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">{t('stock_in_project_optional_hint')}</p>
-                        </FormField>
-                        <FormField>
                             <InputLabel value={t('note')} htmlFor="notes" />
                             <TextInput
                                 id="notes"
@@ -229,13 +284,14 @@ export default function Create({ items = [], suppliers = [], projects = [], defa
                             />
                         </FormField>
                     </FormSection>
+
                     <FormActions>
-                        <PrimaryButton disabled={processing} className="!bg-emerald-600 hover:!bg-emerald-500">
+                        <PrimaryButton
+                            disabled={processing}
+                            className="min-h-[3rem] min-w-[12rem] !bg-emerald-600 hover:!bg-emerald-500"
+                        >
                             {t('warehouse_receive_save')}
                         </PrimaryButton>
-                        <Link href={route('stock.movements.index', { type: 'in' })}>
-                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
-                        </Link>
                     </FormActions>
                 </form>
             </PageShell>

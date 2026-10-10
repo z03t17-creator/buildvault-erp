@@ -1,25 +1,51 @@
 import DataPanel from '@/Components/DataPanel';
 import DataTable, { Td, Th } from '@/Components/DataTable';
+import EmptyState from '@/Components/EmptyState';
 import MoneyAmount from '@/Components/MoneyAmount';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
-import { StockStatCard, StockStatusBadge } from '@/Components/StockDesk';
+import { StockStatCard, StockStatusBadge, stockFieldClass } from '@/Components/StockDesk';
 import StockTabs from '@/Components/StockTabs';
+import TextInput from '@/Components/TextInput';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useCan from '@/hooks/useCan';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link, router } from '@inertiajs/react';
+import { useState } from 'react';
 
-export default function Dashboard({ summary, recentMovements = [], lowStockItems = [] }) {
+export default function Dashboard({
+    summary = {},
+    items = [],
+    filters = {},
+    lowStockItems = [],
+    recentMovements = [],
+}) {
     const t = useTranslations();
     const iqd = t('IQD');
-    const canIn = useCan('stock.stockIn');
-    const canOut = useCan('stock.stockOut');
-    const categories = summary?.by_category || [];
-    const lowCount = summary?.low_stock ?? 0;
+    const usd = t('USD');
+    const canManage = useCan('stock.manageItems');
+    const [q, setQ] = useState(filters.q || '');
+    const list = Array.isArray(items) ? items : [];
+
+    const apply = (next = {}) => {
+        router.get(
+            route('stock.dashboard'),
+            {
+                q: next.q !== undefined ? next.q : q,
+                status: next.status !== undefined ? next.status : filters.status || '',
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const valueHint = [
+        summary.stock_value_usd > 0 ? `${usd} ${Number(summary.stock_value_usd).toLocaleString()}` : null,
+        summary.stock_value_iqd > 0 ? `${iqd} ${Number(summary.stock_value_iqd).toLocaleString()}` : null,
+    ]
+        .filter(Boolean)
+        .join(' · ');
 
     return (
         <AuthenticatedLayout
@@ -27,172 +53,221 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
             header={
                 <PageHeader
                     title={t('warehouse_title')}
-                    subtitle={t('warehouse_dashboard_hint')}
+                    subtitle={t('warehouse_hub_hint')}
                     icon={<NavIcon name="stock" className="text-lg text-emerald-700 dark:text-emerald-300" />}
                     actions={
-                        <div className="flex flex-wrap gap-2">
-                            <Link href={route('stock.consumption')}>
-                                <SecondaryButton type="button">{t('warehouse_consumption')}</SecondaryButton>
+                        canManage ? (
+                            <Link href={route('stock.items.create')}>
+                                <PrimaryButton type="button" className="!bg-emerald-600 hover:!bg-emerald-500">
+                                    <NavIcon name="stock" className="text-sm" />
+                                    {t('warehouse_add_item')}
+                                </PrimaryButton>
                             </Link>
-                            {canIn ? (
-                                <Link href={route('stock.in.create')}>
-                                    <PrimaryButton type="button" className="!bg-emerald-600 hover:!bg-emerald-500">
-                                        <NavIcon name="stockIn" className="text-sm" />
-                                        {t('warehouse_receive')}
-                                    </PrimaryButton>
-                                </Link>
-                            ) : null}
-                            {canOut ? (
-                                <Link href={route('stock.out.create')}>
-                                    <PrimaryButton type="button" className="!bg-amber-600 hover:!bg-amber-500">
-                                        <NavIcon name="stockOut" className="text-sm" />
-                                        {t('warehouse_dispatch')}
-                                    </PrimaryButton>
-                                </Link>
-                            ) : null}
-                        </div>
+                        ) : null
                     }
                 />
             }
         >
             <Head title={t('warehouse_title')} />
-            <PageShell className="!space-y-6">
+            <PageShell className="!space-y-5">
                 <StockTabs />
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+
+                <div className="grid gap-3 sm:grid-cols-3">
                     <StockStatCard
-                        label={t('stock_total_items')}
-                        value={summary?.total_items ?? 0}
-                        hint={t('warehouse_items_hint')}
-                        href={route('stock.items.index')}
-                    />
-                    <StockStatCard
-                        label={t('stock_value_iqd')}
+                        label={t('warehouse_total_capital')}
                         value={
-                            <MoneyAmount
-                                value={summary?.stock_value_iqd ?? 0}
-                                label={iqd}
-                                size="lg"
-                                showLabel={false}
-                            />
+                            <span className="flex flex-col gap-0.5">
+                                {(summary.stock_value_usd ?? 0) > 0 ? (
+                                    <span className="inline-flex items-baseline gap-1">
+                                        <MoneyAmount
+                                            value={summary.stock_value_usd}
+                                            label={usd}
+                                            size="lg"
+                                            showLabel={false}
+                                        />
+                                        <span className="text-xs font-medium text-slate-400">{usd}</span>
+                                    </span>
+                                ) : null}
+                                <span className="inline-flex items-baseline gap-1">
+                                    <MoneyAmount
+                                        value={summary.stock_value_iqd ?? 0}
+                                        label={iqd}
+                                        size={(summary.stock_value_usd ?? 0) > 0 ? 'md' : 'lg'}
+                                        showLabel={false}
+                                    />
+                                    <span className="text-xs font-medium text-slate-400">{iqd}</span>
+                                </span>
+                            </span>
                         }
-                        hint={iqd}
+                        hint={valueHint || iqd}
                         tone="sky"
                     />
                     <StockStatCard
-                        label={t('stock_low')}
-                        value={lowCount}
+                        label={t('warehouse_low_alerts')}
+                        value={summary.low_stock ?? 0}
                         hint={t('warehouse_low_badge_hint')}
                         tone="amber"
-                        badge={lowCount}
-                        href={route('stock.items.index', { status: 'low' })}
+                        badge={summary.low_stock}
+                        href={route('stock.dashboard', { status: 'low' })}
                     />
                     <StockStatCard
-                        label={t('stock_out')}
-                        value={summary?.out_of_stock ?? 0}
-                        hint={t('warehouse_out_hint')}
-                        tone="rose"
-                        href={route('stock.items.index', { status: 'out' })}
+                        label={t('warehouse_today_moves')}
+                        value={summary.today_movements ?? 0}
+                        hint={t('warehouse_today_moves_hint', {
+                            in: summary.today_in_count ?? 0,
+                            out: summary.today_out_count ?? 0,
+                        })}
                     />
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                    <StockStatCard
-                        label={t('stock_today_in')}
-                        value={`${summary?.today_in_qty ?? 0} · ${summary?.today_in_count ?? 0}`}
-                        hint={t('warehouse_today_in_hint')}
-                    />
-                    <StockStatCard
-                        label={t('stock_today_out')}
-                        value={`${summary?.today_out_qty ?? 0} · ${summary?.today_out_count ?? 0}`}
-                        hint={t('warehouse_today_out_hint')}
-                        tone="amber"
-                    />
-                </div>
-
-                {lowStockItems.length > 0 ? (
-                    <DataPanel padded={false}>
-                        <div className="flex items-center justify-between gap-3 border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
-                            <div>
-                                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('warehouse_low_list')}</p>
-                                <p className="text-xs text-slate-500 dark:text-slate-400">{t('warehouse_low_list_hint')}</p>
-                            </div>
-                            <span className="inline-flex min-w-7 items-center justify-center rounded-full bg-amber-400 px-2 py-0.5 text-xs font-bold text-slate-950">
-                                {lowCount}
-                            </span>
+                <DataPanel>
+                    <form
+                        className="flex flex-col gap-3 sm:flex-row sm:items-end"
+                        onSubmit={(e) => {
+                            e.preventDefault();
+                            apply({ q });
+                        }}
+                    >
+                        <div className="min-w-0 flex-1">
+                            <label className="text-xs font-semibold text-slate-500 dark:text-slate-400">
+                                {t('search')}
+                            </label>
+                            <TextInput
+                                className={stockFieldClass}
+                                value={q}
+                                onChange={(e) => setQ(e.target.value)}
+                                placeholder={t('warehouse_search_placeholder')}
+                            />
                         </div>
-                        <DataTable minWidth="36rem" caption={t('warehouse_low_list')}>
+                        <div className="flex flex-wrap gap-2">
+                            {['', 'low', 'out'].map((status) => (
+                                <button
+                                    key={status || 'all'}
+                                    type="button"
+                                    onClick={() => apply({ status })}
+                                    className={
+                                        'min-h-[2.75rem] rounded-xl border px-3 text-sm font-semibold transition ' +
+                                        ((filters.status || '') === status
+                                            ? 'border-emerald-400 bg-emerald-500/15 text-emerald-50'
+                                            : 'border-slate-700 bg-slate-950 text-slate-300')
+                                    }
+                                >
+                                    {status === ''
+                                        ? t('all')
+                                        : status === 'low'
+                                          ? t('stock_low')
+                                          : t('stock_out')}
+                                </button>
+                            ))}
+                            <PrimaryButton type="submit" className="!bg-emerald-600 hover:!bg-emerald-500">
+                                {t('search')}
+                            </PrimaryButton>
+                        </div>
+                    </form>
+                </DataPanel>
+
+                {list.length === 0 ? (
+                    <EmptyState
+                        icon="stock"
+                        title={t('stock_products_empty_title')}
+                        description={t('stock_products_empty_hint')}
+                        action={
+                            canManage ? (
+                                <Link href={route('stock.items.create')}>
+                                    <PrimaryButton type="button">{t('warehouse_add_item')}</PrimaryButton>
+                                </Link>
+                            ) : null
+                        }
+                    />
+                ) : (
+                    <DataPanel padded={false}>
+                        <div className="border-b border-slate-800 px-4 py-3">
+                            <p className="text-sm font-semibold text-slate-100">
+                                {t('warehouse_tab_balance')}
+                            </p>
+                            <p className="text-xs text-slate-400">
+                                {t('warehouse_balance_table_hint', { count: list.length })}
+                            </p>
+                        </div>
+                        <DataTable minWidth="40rem" caption={t('warehouse_tab_balance')}>
                             <thead>
                                 <tr>
                                     <Th>{t('name')}</Th>
                                     <Th>{t('sku')}</Th>
+                                    <Th>{t('unit')}</Th>
                                     <Th align="end">{t('quantity')}</Th>
+                                    <Th align="end">{t('warehouse_avg_cost')}</Th>
                                     <Th>{t('stock_status')}</Th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {lowStockItems.map((item) => (
-                                    <tr key={item.id}>
-                                        <Td>
-                                            <Link
-                                                href={route('stock.items.show', item.id)}
-                                                className="font-semibold text-emerald-700 underline-offset-2 dark:text-emerald-300 hover:underline"
-                                            >
-                                                {item.name}
-                                            </Link>
-                                        </Td>
-                                        <Td muted>
-                                            <span dir="ltr">{item.sku || item.barcode || '—'}</span>
-                                        </Td>
-                                        <Td align="end" money>
-                                            {item.quantity} {item.unit}
-                                        </Td>
-                                        <Td>
-                                            <StockStatusBadge item={item} t={t} />
-                                        </Td>
-                                    </tr>
-                                ))}
+                                {list.map((item) => {
+                                    const currency =
+                                        (item.cost_currency || item.currency) === 'USD' ? usd : iqd;
+                                    return (
+                                        <tr key={item.id}>
+                                            <Td>
+                                                <Link
+                                                    href={route('stock.items.show', item.id)}
+                                                    className="font-semibold text-emerald-300 underline-offset-2 hover:underline"
+                                                >
+                                                    {item.name}
+                                                </Link>
+                                                {item.category_label ? (
+                                                    <p className="mt-0.5 text-xs text-slate-500">
+                                                        {item.category_label}
+                                                    </p>
+                                                ) : null}
+                                            </Td>
+                                            <Td muted>
+                                                <span dir="ltr">{item.sku || item.barcode || '—'}</span>
+                                            </Td>
+                                            <Td muted>{item.unit}</Td>
+                                            <Td align="end" money>
+                                                {item.quantity}
+                                            </Td>
+                                            <Td align="end" money>
+                                                <span className="inline-flex items-baseline gap-1">
+                                                    <MoneyAmount
+                                                        value={item.average_unit_cost ?? 0}
+                                                        label={currency}
+                                                        size="sm"
+                                                        showLabel={false}
+                                                    />
+                                                    <span className="text-[11px] text-slate-500">
+                                                        {currency}
+                                                    </span>
+                                                </span>
+                                            </Td>
+                                            <Td>
+                                                <StockStatusBadge item={item} t={t} />
+                                            </Td>
+                                        </tr>
+                                    );
+                                })}
                             </tbody>
                         </DataTable>
                     </DataPanel>
+                )}
+
+                {lowStockItems.length > 0 && (filters.status || '') !== 'low' ? (
+                    <p className="text-sm text-amber-200/90">
+                        {t('warehouse_low_inline', { count: lowStockItems.length })}{' '}
+                        <Link
+                            href={route('stock.dashboard', { status: 'low' })}
+                            className="font-semibold underline underline-offset-2"
+                        >
+                            {t('view')}
+                        </Link>
+                    </p>
                 ) : null}
 
-                <div className="grid gap-4 lg:grid-cols-2">
+                {recentMovements.length > 0 ? (
                     <DataPanel padded={false}>
-                        <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('warehouse_by_category')}</p>
-                        </div>
-                        <DataTable minWidth="28rem" caption={t('warehouse_by_category')}>
-                            <thead>
-                                <tr>
-                                    <Th>{t('category')}</Th>
-                                    <Th align="end">{t('stock_total_items')}</Th>
-                                    <Th align="end">{t('stock_value_iqd')}</Th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {categories.map((row) => (
-                                    <tr key={row.category}>
-                                        <Td>{row.category === 'uncategorized' ? t('uncategorized') : row.category}</Td>
-                                        <Td align="end" money>
-                                            {row.items_count}
-                                        </Td>
-                                        <Td align="end" money>
-                                            <MoneyAmount
-                                                value={row.value_iqd}
-                                                label={iqd}
-                                                size="sm"
-                                                showLabel={false}
-                                            />
-                                        </Td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </DataTable>
-                    </DataPanel>
-
-                    <DataPanel padded={false}>
-                        <div className="border-b border-slate-200/80 px-4 py-3 dark:border-slate-800">
-                            <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{t('stock_recent_movements')}</p>
+                        <div className="border-b border-slate-800 px-4 py-3">
+                            <p className="text-sm font-semibold text-slate-100">
+                                {t('stock_recent_movements')}
+                            </p>
                         </div>
                         <DataTable minWidth="28rem" caption={t('stock_recent_movements')}>
                             <thead>
@@ -213,11 +288,13 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                                             <span
                                                 className={
                                                     row.type === 'in'
-                                                        ? 'text-emerald-700 dark:text-emerald-300'
+                                                        ? 'text-emerald-300'
                                                         : 'text-amber-200'
                                                 }
                                             >
-                                                {row.type === 'in' ? t('warehouse_receive') : t('warehouse_dispatch')}
+                                                {row.type === 'in'
+                                                    ? t('warehouse_tab_receive')
+                                                    : t('warehouse_tab_dispatch')}
                                             </span>
                                         </Td>
                                         <Td>{row.item?.name || '—'}</Td>
@@ -229,7 +306,7 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                             </tbody>
                         </DataTable>
                     </DataPanel>
-                </div>
+                ) : null}
             </PageShell>
         </AuthenticatedLayout>
     );

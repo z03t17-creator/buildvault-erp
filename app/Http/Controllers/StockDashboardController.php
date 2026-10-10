@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\StockCategory;
 use App\Models\StockItem;
 use App\Services\StockService;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -14,42 +16,63 @@ class StockDashboardController extends Controller
         private readonly StockService $stock,
     ) {}
 
-    public function __invoke(): Response
+    public function __invoke(Request $request): Response
     {
         $this->authorize('viewAny', StockItem::class);
 
-        $summary = $this->stock->dashboardSummary();
-        $byCategory = StockItem::query()
-            ->with('stockCategory:id,name')
-            ->get()
-            ->groupBy(function (StockItem $item) {
-                $cat = trim((string) ($item->stockCategory?->name ?: $item->category ?: ''));
+        $q = trim((string) $request->get('q', ''));
+        $status = (string) $request->get('status', '');
 
-                return $cat !== '' ? $cat : 'uncategorized';
-            })
-            ->map(fn ($items, $category) => [
-                'category' => $category,
-                'items_count' => $items->count(),
-                'quantity_total' => round((float) $items->sum(fn (StockItem $i) => (float) $i->quantity), 3),
-                'value_iqd' => round((float) $items->sum(fn (StockItem $i) => $i->stockValueIqd()), 2),
-                'low_stock' => $items->filter(fn (StockItem $i) => $i->isLowStock())->count(),
-            ])
-            ->sortBy('category')
-            ->values()
-            ->all();
+        $summary = $this->stock->dashboardSummary();
+
+        $itemsQuery = StockItem::query()
+            ->with('stockCategory:id,name')
+            ->orderBy('name');
+
+        if ($q !== '') {
+            $itemsQuery->where(function ($builder) use ($q) {
+                $builder->where('name', 'like', '%'.$q.'%')
+                    ->orWhere('sku', 'like', '%'.$q.'%')
+                    ->orWhere('barcode', 'like', '%'.$q.'%');
+            });
+        }
+
+        $items = $itemsQuery->get()->map(function (StockItem $item) {
+            $item->setAttribute('average_unit_cost', $item->averageUnitCost());
+            $item->setAttribute('cost_currency', $item->costCurrency());
+            $item->setAttribute('stock_value', $item->stockValue());
+            $item->setAttribute('is_low_stock', $item->isLowStock());
+            $item->setAttribute('is_out_of_stock', $item->isOutOfStock());
+            $item->setAttribute('stock_status', $item->stockStatus());
+            $item->setAttribute(
+                'category_label',
+                $item->stockCategory?->name ?: (trim((string) ($item->category ?? '')) ?: null)
+            );
+
+            return $item;
+        });
+
+        if (in_array($status, ['ok', 'low', 'out'], true)) {
+            $items = $items->filter(fn (StockItem $item) => $item->stock_status === $status)->values();
+        }
 
         return Inertia::render('Stock/Dashboard', [
             'summary' => [
                 'total_items' => $summary['total_items'],
                 'stock_value_iqd' => $summary['stock_value_iqd'],
+                'stock_value_usd' => $summary['stock_value_usd'],
                 'low_stock' => $summary['low_stock'],
                 'out_of_stock' => $summary['out_of_stock'],
-                'today_in_qty' => $summary['today_in_qty'],
-                'today_out_qty' => $summary['today_out_qty'],
+                'today_movements' => $summary['today_movements'],
                 'today_in_count' => $summary['today_in_count'],
                 'today_out_count' => $summary['today_out_count'],
-                'by_category' => $byCategory,
             ],
+            'items' => $items,
+            'filters' => [
+                'q' => $q,
+                'status' => in_array($status, ['ok', 'low', 'out'], true) ? $status : '',
+            ],
+            'categories' => StockCategory::query()->orderBy('name')->get(['id', 'name']),
             'lowStockItems' => $summary['low_stock_items']->map(fn (StockItem $item) => [
                 'id' => $item->id,
                 'name' => $item->name,
@@ -57,11 +80,10 @@ class StockDashboardController extends Controller
                 'barcode' => $item->barcode,
                 'unit' => $item->unit,
                 'quantity' => (float) $item->quantity,
-                'min_quantity' => (float) $item->min_quantity,
                 'is_low_stock' => true,
                 'is_out_of_stock' => $item->isOutOfStock(),
             ])->values(),
-            'recentMovements' => $summary['recent_movements']->map(fn ($m) => [
+            'recentMovements' => $summary['recent_movements']->take(8)->map(fn ($m) => [
                 'id' => $m->id,
                 'type' => $m->type,
                 'moved_on' => $m->moved_on?->toDateString(),
@@ -69,11 +91,8 @@ class StockDashboardController extends Controller
                 'item' => $m->item ? [
                     'id' => $m->item->id,
                     'name' => $m->item->name,
-                    'sku' => $m->item->sku,
                     'unit' => $m->item->unit,
                 ] : null,
-                'project' => $m->project ? ['id' => $m->project->id, 'name' => $m->project->name] : null,
-                'staff' => $m->staff ? ['id' => $m->staff->id, 'name' => $m->staff->name] : null,
                 'place' => $m->placeLabel(),
             ])->values(),
             'canManage' => Gate::allows('create', StockItem::class),

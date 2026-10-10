@@ -6,7 +6,6 @@ import MoneyInput from '@/Components/MoneyInput';
 import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
-import SecondaryButton from '@/Components/SecondaryButton';
 import { stockFieldClass, stockMoneyClass, stockSegmentClass } from '@/Components/StockDesk';
 import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
@@ -14,7 +13,7 @@ import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, useForm } from '@inertiajs/react';
 
 export default function Create({
     items = [],
@@ -124,18 +123,13 @@ export default function Create({
             desk
             header={
                 <PageHeader
-                    title={t('warehouse_dispatch')}
+                    title={t('warehouse_tab_dispatch')}
                     subtitle={t('warehouse_dispatch_hint')}
                     icon={<NavIcon name="stockOut" className="text-lg text-amber-700 dark:text-amber-300" />}
-                    actions={
-                        <Link href={route('stock.dashboard')}>
-                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
-                        </Link>
-                    }
                 />
             }
         >
-            <Head title={t('warehouse_dispatch')} />
+            <Head title={t('warehouse_tab_dispatch')} />
             <PageShell className="!max-w-5xl !space-y-4">
                 <StockTabs />
                 <form
@@ -336,12 +330,12 @@ export default function Create({
                     </FormSection>
 
                     <FormActions>
-                        <PrimaryButton disabled={processing} className="!bg-amber-600 hover:!bg-amber-500">
+                        <PrimaryButton
+                            disabled={processing}
+                            className="min-h-[3rem] min-w-[12rem] !bg-amber-600 hover:!bg-amber-500"
+                        >
                             {t('warehouse_dispatch_save')}
                         </PrimaryButton>
-                        <Link href={route('stock.movements.index', { type: 'out' })}>
-                            <SecondaryButton type="button">{t('cancel')}</SecondaryButton>
-                        </Link>
                     </FormActions>
                 </form>
             </PageShell>

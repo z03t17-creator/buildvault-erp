@@ -34,6 +34,47 @@ class SimpleVaultService
     }
 
     /**
+     * Project سلفە available cash in one currency (advances in − expenses out).
+     * Holds still locked on advances are excluded from available.
+     */
+    public function projectAvailableCash(
+        int $projectId,
+        string $currency,
+        CarbonInterface|string|null $asOf = null,
+    ): float {
+        $currency = $this->currency($currency);
+        $asOf = $asOf ? Carbon::parse($asOf)->startOfDay() : now()->startOfDay();
+
+        $lines = VaultLine::query()
+            ->where('project_id', $projectId)
+            ->ofCurrency($currency)
+            ->whereDate('occurred_on', '<=', $asOf->toDateString())
+            ->orderBy('occurred_on')
+            ->orderBy('id')
+            ->get();
+
+        $available = 0.0;
+        foreach ($lines as $line) {
+            $amount = round((float) $line->amount, 2);
+            $hold = round((float) $line->hold_amount, 2);
+
+            if ($line->kind === VaultLine::KIND_ADVANCE) {
+                $available = round($available + ($amount - $hold), 2);
+                if ($hold > 0 && ($line->companyHoldUnlocked($asOf) || $line->hold_released_at !== null)) {
+                    $available = round($available + $hold, 2);
+                }
+                continue;
+            }
+
+            if ($line->kind === VaultLine::KIND_EXPENSE) {
+                $available = round($available - $amount, 2);
+            }
+        }
+
+        return round($available, 2);
+    }
+
+    /**
      * @param  array<string, mixed>  $data
      */
     public function postAdvance(array $data): VaultLine

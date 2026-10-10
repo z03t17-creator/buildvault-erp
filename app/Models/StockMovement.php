@@ -28,6 +28,22 @@ class StockMovement extends Model
         self::SITE_BUILDING,
     ];
 
+    /** Paid from project سلفە (vault advance available). */
+    public const PAYMENT_PROJECT_ADVANCE = 'project_advance';
+
+    /** Paid from main Zhako vault cash. */
+    public const PAYMENT_MAIN_VAULT = 'main_vault';
+
+    /** Supplier credit — no cash deducted. */
+    public const PAYMENT_SUPPLIER_CREDIT = 'supplier_credit';
+
+    /** @var list<string> */
+    public const PAYMENT_SOURCES = [
+        self::PAYMENT_PROJECT_ADVANCE,
+        self::PAYMENT_MAIN_VAULT,
+        self::PAYMENT_SUPPLIER_CREDIT,
+    ];
+
     /**
      * @var list<string>
      */
@@ -62,6 +78,8 @@ class StockMovement extends Model
         'new_qty',
         'user_id',
         'notes',
+        'payment_source',
+        'vault_line_id',
     ];
 
     /**
