@@ -1619,7 +1619,7 @@
     "warehouse_items_page_hint": "Name, category, SKU/barcode, quantity, min alert, and average cost.",
     "warehouse_items_hint": "All SKUs in the warehouse",
     "warehouse_add_item": "Add item",
-    "warehouse_item_form_hint": "Category, unit, SKU/barcode, and average cost in USD or IQD. Add stock with Stock In.",
+    "warehouse_item_form_hint": "Category, unit, and average cost in USD or IQD. Add stock with Stock In.",
     "warehouse_receive": "Receive + سلفە",
     "warehouse_receive_hint": "Supplier, invoice, unit cost, total, and shelf/zone.",
     "warehouse_receive_save": "Save receive",

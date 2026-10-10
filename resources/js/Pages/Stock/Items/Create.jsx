@@ -24,9 +24,7 @@ export default function Create({
     const unitOptions = units.length ? units : ['Pcs', 'M2', 'Bag', 'Meter'];
     const { data, setData, post, processing, errors } = useForm({
         name: '',
-        sku: '',
-        barcode: '',
-        auto_sku: defaults.auto_sku !== false,
+        auto_sku: true,
         stock_category_id: '',
         unit: defaults.unit || 'Pcs',
         quantity: 0,
