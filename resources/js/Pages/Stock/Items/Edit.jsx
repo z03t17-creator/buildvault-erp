@@ -20,7 +20,7 @@ const fieldClass =
 const moneyFieldClass =
     'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Edit({ item, suppliers, categories }) {
+export default function Edit({ item, categories }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const { data, setData, put, processing, errors } = useForm({
@@ -29,8 +29,6 @@ export default function Edit({ item, suppliers, categories }) {
         stock_category_id: item.stock_category_id || '',
         unit: item.unit || 'pcs',
         purchase_price_iqd: item.purchase_price_iqd ?? 0,
-        supplier_id: item.supplier_id || '',
-        location: item.location || '',
         notes: item.notes || '',
     });
 
@@ -121,29 +119,6 @@ export default function Edit({ item, suppliers, categories }) {
                                     onValueChange={(raw) => setData('purchase_price_iqd', raw)}
                                 />
                                 <InputError message={errors.purchase_price_iqd} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('supplier')} />
-                                <select
-                                    className={fieldClass}
-                                    value={data.supplier_id}
-                                    onChange={(e) => setData('supplier_id', e.target.value)}
-                                >
-                                    <option value="">—</option>
-                                    {(suppliers || []).map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            {s.name}
-                                        </option>
-                                    ))}
-                                </select>
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('location')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    value={data.location}
-                                    onChange={(e) => setData('location', e.target.value)}
-                                />
                             </FormField>
                             <FormField className="sm:col-span-2">
                                 <InputLabel value={t('notes')} />

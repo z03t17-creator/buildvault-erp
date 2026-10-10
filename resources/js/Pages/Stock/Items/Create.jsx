@@ -14,7 +14,7 @@ import useTranslations from '@/hooks/useTranslations';
 import { NavIcon } from '@/lib/navIcons';
 import { Head, Link, useForm } from '@inertiajs/react';
 
-export default function Create({ suppliers = [], categories = [], units = [], defaults = {} }) {
+export default function Create({ categories = [], units = [], defaults = {} }) {
     const t = useTranslations();
     const iqd = t('IQD');
     const unitOptions = units.length ? units : ['Pcs', 'M2', 'Bag', 'Meter'];
@@ -27,8 +27,6 @@ export default function Create({ suppliers = [], categories = [], units = [], de
         unit: defaults.unit || 'Pcs',
         quantity: 0,
         purchase_price_iqd: defaults.purchase_price_iqd ?? 0,
-        supplier_id: '',
-        location: '',
         notes: '',
     });
 
@@ -143,32 +141,6 @@ export default function Create({ suppliers = [], categories = [], units = [], de
                                 value={String(data.purchase_price_iqd ?? '')}
                                 onValueChange={(next) => setData('purchase_price_iqd', next)}
                                 allowDecimals={false}
-                            />
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('supplier')} htmlFor="supplier_id" />
-                            <select
-                                id="supplier_id"
-                                className={stockFieldClass}
-                                value={data.supplier_id}
-                                onChange={(e) => setData('supplier_id', e.target.value)}
-                            >
-                                <option value="">—</option>
-                                {suppliers.map((row) => (
-                                    <option key={row.id} value={row.id}>
-                                        {row.name}
-                                    </option>
-                                ))}
-                            </select>
-                        </FormField>
-                        <FormField className="sm:col-span-2">
-                            <InputLabel value={t('warehouse_shelf')} htmlFor="location" />
-                            <TextInput
-                                id="location"
-                                className={stockFieldClass}
-                                value={data.location}
-                                onChange={(e) => setData('location', e.target.value)}
-                                placeholder={t('warehouse_shelf_placeholder')}
                             />
                         </FormField>
                         <FormField className="sm:col-span-2">
