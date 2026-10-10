@@ -105,39 +105,6 @@ export default function Create({
                             </select>
                         </FormField>
                         <FormField>
-                            <div className="flex items-center justify-between gap-2">
-                                <InputLabel value={t('sku')} htmlFor="sku" />
-                                <label className="inline-flex items-center gap-2 text-xs text-slate-600 dark:text-slate-300">
-                                    <input
-                                        type="checkbox"
-                                        checked={!!data.auto_sku}
-                                        onChange={(e) => setData('auto_sku', e.target.checked)}
-                                    />
-                                    {t('warehouse_auto_sku')}
-                                </label>
-                            </div>
-                            <TextInput
-                                id="sku"
-                                className={stockFieldClass}
-                                value={data.sku}
-                                onChange={(e) => setData('sku', e.target.value)}
-                                disabled={!!data.auto_sku}
-                                placeholder={data.auto_sku ? t('warehouse_auto_sku_hint') : ''}
-                            />
-                            <InputError message={errors.sku} className="mt-1" />
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('barcode')} htmlFor="barcode" />
-                            <TextInput
-                                id="barcode"
-                                className={stockFieldClass}
-                                value={data.barcode}
-                                onChange={(e) => setData('barcode', e.target.value)}
-                                placeholder={t('warehouse_barcode_hint')}
-                            />
-                            <InputError message={errors.barcode} className="mt-1" />
-                        </FormField>
-                        <FormField>
                             <InputLabel value={t('currency')} htmlFor="currency" />
                             <div className="mt-1 flex gap-2">
                                 {currencies.map((code) => (
