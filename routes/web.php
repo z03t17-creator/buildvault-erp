@@ -351,6 +351,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             ->name('attendance.check-out');
         Route::post('/attendance/status', [AttendanceController::class, 'updateStatus'])
             ->name('attendance.status');
+        Route::post('/attendance/mark-all-present', [AttendanceController::class, 'markAllPresent'])
+            ->name('attendance.mark-all-present');
         Route::post('/attendance/mark-absences', [AttendanceController::class, 'markAbsences'])
             ->name('attendance.mark-absences');
     });

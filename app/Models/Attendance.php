@@ -7,8 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 /**
- * Salary-staff attendance — Stock Manager is the primary writer (Phase 4 UI).
- * Late > 30m → forfeit_day + penalty link.
+ * Daily / monthly staff attendance desk.
+ * Late > 30m or absent → forfeit_day (+ penalty when project is set).
  */
 class Attendance extends Model
 {
@@ -24,6 +24,9 @@ class Attendance extends Model
 
     public const STATUS_LEAVE_SICK = 'leave_sick';
 
+    /** Half-day / short leave — counts as 0.5 wage day. */
+    public const STATUS_HALF_DAY = 'half_day';
+
     /** Late threshold (minutes) that triggers a full-day salary forfeit. */
     public const LATE_FORFEIT_MINUTES = 30;
 
@@ -34,6 +37,13 @@ class Attendance extends Model
         self::STATUS_ABSENT_UNEXCUSED,
         self::STATUS_LEAVE_PAID,
         self::STATUS_LEAVE_SICK,
+        self::STATUS_HALF_DAY,
+    ];
+
+    /** Statuses that count toward worked / payable time. */
+    public const WORKED_STATUSES = [
+        self::STATUS_PRESENT,
+        self::STATUS_LATE,
     ];
 
     /**
@@ -115,7 +125,38 @@ class Attendance extends Model
         return in_array($this->status, [
             self::STATUS_LEAVE_PAID,
             self::STATUS_LEAVE_SICK,
+            self::STATUS_HALF_DAY,
         ], true);
+    }
+
+    public function isHalfDay(): bool
+    {
+        return $this->status === self::STATUS_HALF_DAY;
+    }
+
+    public function isAbsent(): bool
+    {
+        return $this->status === self::STATUS_ABSENT_UNEXCUSED;
+    }
+
+    public function isWorked(): bool
+    {
+        return in_array($this->status, self::WORKED_STATUSES, true);
+    }
+
+    /**
+     * Wage day factor for estimates / payroll (1, 0.5, or 0).
+     */
+    public function wageDayFactor(): float
+    {
+        if ($this->isWorked()) {
+            return $this->forfeit_day ? 0.0 : 1.0;
+        }
+        if ($this->isHalfDay()) {
+            return 0.5;
+        }
+
+        return 0.0;
     }
 
     /**
@@ -123,6 +164,10 @@ class Attendance extends Model
      */
     public function shouldForfeitDay(): bool
     {
+        if ($this->isAbsent()) {
+            return true;
+        }
+
         return (int) $this->late_minutes > self::LATE_FORFEIT_MINUTES;
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Attendance;
 use App\Models\Penalty;
 use App\Models\Staff;
 use App\Models\StaffRate;
@@ -517,7 +518,65 @@ class SimpleVaultService
             }
         }
 
+        // Attendance absences without a linked penalty still cut a full day;
+        // half-day / leave-short rows cut half a day.
+        $attendanceRows = Attendance::query()
+            ->where('staff_id', $staff->id)
+            ->whereDate('date', '>=', $month->toDateString())
+            ->whereDate('date', '<=', $end->toDateString())
+            ->get();
+
+        foreach ($attendanceRows as $row) {
+            if ($row->status === Attendance::STATUS_HALF_DAY) {
+                $cut = round($cut + ($daily * 0.5), 2);
+                continue;
+            }
+            if ($row->status === Attendance::STATUS_ABSENT_UNEXCUSED && ! $row->penalty_id) {
+                $cut = round($cut + $daily, 2);
+            }
+        }
+
         return max(0.0, round($monthly - $cut, 2));
+    }
+
+    /**
+     * Daily staff: present attendance days × day_rate (minus already posted daily pay).
+     */
+    public function dailyAttendanceDueFor(Staff $staff, CarbonInterface|string $month): float
+    {
+        if (! $staff->isDaily()) {
+            return 0.0;
+        }
+
+        $month = Carbon::parse($month)->startOfMonth();
+        $end = $month->copy()->endOfMonth();
+        $dayRate = round((float) ($staff->day_rate ?? 0), 2);
+        if ($dayRate <= 0) {
+            return 0.0;
+        }
+
+        $payableDays = 0.0;
+        $rows = Attendance::query()
+            ->where('staff_id', $staff->id)
+            ->whereDate('date', '>=', $month->toDateString())
+            ->whereDate('date', '<=', $end->toDateString())
+            ->get();
+
+        foreach ($rows as $row) {
+            $payableDays = round($payableDays + $row->wageDayFactor(), 2);
+        }
+
+        $gross = round($payableDays * $dayRate, 2);
+        $currency = $this->currency($staff->currency);
+        $paid = (float) VaultLine::query()
+            ->where('kind', VaultLine::KIND_DAILY_PAY)
+            ->where('staff_id', $staff->id)
+            ->where('currency', $currency)
+            ->whereDate('occurred_on', '>=', $month->toDateString())
+            ->whereDate('occurred_on', '<=', $end->toDateString())
+            ->sum('amount');
+
+        return max(0.0, round($gross - $paid, 2));
     }
 
     /**
@@ -699,6 +758,19 @@ class SimpleVaultService
                 ->whereDate('occurred_on', '<=', $month->copy()->endOfMonth()->toDateString())
                 ->sum('amount');
             $due = round($due + max(0, $net - $paid), 2);
+        }
+
+        // Daily staff: present/half attendance days become pending payout.
+        $dailyStaff = Staff::query()
+            ->where(function ($q) {
+                $q->where('pay_model', Staff::PAY_DAILY)
+                    ->orWhere('kind', Staff::KIND_TIME);
+            })
+            ->where('currency', $currency)
+            ->get();
+
+        foreach ($dailyStaff as $person) {
+            $due = round($due + $this->dailyAttendanceDueFor($person, $month), 2);
         }
 
         return $due;

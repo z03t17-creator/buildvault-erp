@@ -286,6 +286,38 @@ class Staff extends Model
         return $this->resolvePayModel() === self::PAY_UNIT;
     }
 
+    /** Daily + monthly staff appear on the attendance desk (unit / piece-rate do not). */
+    public function isAttendanceEligible(): bool
+    {
+        return $this->isMonthly() || $this->isDaily();
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Staff>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<Staff>
+     */
+    public function scopeAttendanceEligible($query)
+    {
+        return $query->where(function ($q) {
+            $q->whereIn('pay_model', [self::PAY_MONTHLY, self::PAY_DAILY])
+                ->orWhereIn('kind', [self::KIND_SALARY, self::KIND_TIME]);
+        });
+    }
+
+    /**
+     * @param  \Illuminate\Database\Eloquent\Builder<Staff>  $query
+     * @return \Illuminate\Database\Eloquent\Builder<Staff>
+     */
+    public function scopeUnitPay($query)
+    {
+        return $query->where(function ($q) {
+            $q->where('pay_model', self::PAY_UNIT)
+                ->orWhere(function ($inner) {
+                    $inner->whereNull('pay_model')->where('kind', self::KIND_UNIT);
+                });
+        });
+    }
+
     /** @deprecated */
     public function isSalary(): bool
     {

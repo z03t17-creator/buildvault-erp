@@ -54,11 +54,22 @@ class AttendancePhase23Test extends TestCase
             'monthly_salary' => 400,
             'currency' => DualCurrency::USD,
         ]);
-        // Time-kind staff are excluded from the attendance matrix.
+        // Daily staff are included; unit staff stay on the unit tab.
         Staff::query()->create([
-            'name' => 'Staff Skip',
+            'name' => 'Daily Included',
             'kind' => Staff::KIND_TIME,
+            'pay_model' => Staff::PAY_DAILY,
+            'day_rate' => 25,
+            'currency' => DualCurrency::USD,
             'trade' => 'laminate',
+        ]);
+        Staff::query()->create([
+            'name' => 'Unit Excluded',
+            'kind' => Staff::KIND_UNIT,
+            'pay_model' => Staff::PAY_UNIT,
+            'unit_rate' => 10,
+            'rate_unit' => 'm²',
+            'currency' => DualCurrency::USD,
         ]);
 
         $date = now()->toDateString();
@@ -87,15 +98,15 @@ class AttendancePhase23Test extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Attendance/Matrix')
-                ->has('grid', 4)
-                ->where('daySummary.staff', 4)
+                ->has('grid', 5)
+                ->where('daySummary.staff', 5)
                 ->where('daySummary.recorded', 2)
-                ->where('daySummary.present', 1)
+                ->where('daySummary.present', 2)
                 ->where('daySummary.late', 1)
                 ->where('daySummary.absent', 0)
-                ->where('daySummary.leave', 0)
+                ->where('daySummary.unit_staff', 1)
                 ->where('daySummary.forfeit_days', 0)
-                ->where('daySummary.unchecked', 2)
+                ->where('daySummary.unchecked', 3)
                 ->where('date', $date)
             );
 
@@ -106,14 +117,14 @@ class AttendancePhase23Test extends TestCase
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Attendance/Matrix')
-                // Staff has no project_id yet — matrix lists all salary staff.
-                ->has('grid', 4)
+                // Staff has no project_id yet — matrix lists all eligible staff.
+                ->has('grid', 5)
                 ->where('projectId', $projectA->id)
-                ->where('daySummary.staff', 4)
+                ->where('daySummary.staff', 5)
                 ->where('daySummary.recorded', 2)
-                ->where('daySummary.present', 1)
+                ->where('daySummary.present', 2)
                 ->where('daySummary.late', 1)
-                ->where('daySummary.unchecked', 2)
+                ->where('daySummary.unchecked', 3)
             );
     }
 
