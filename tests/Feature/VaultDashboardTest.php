@@ -131,7 +131,10 @@ class VaultDashboardTest extends TestCase
 
         $dash = file_get_contents(resource_path('js/Pages/Dashboards/Vault.jsx'));
         $this->assertStringContainsString('canManageAdvance', $dash);
+        $this->assertStringContainsString('canManageStaffPay', $dash);
         $this->assertStringContainsString('vault.lines.advance.edit', $dash);
+        $this->assertStringContainsString('vault.lines.staff-pay.edit', $dash);
+        $this->assertStringContainsString('vault.lines.staff-pay.destroy', $dash);
 
         $this->actingAs($user)
             ->delete(route('vault.lines.advance.destroy', $line))

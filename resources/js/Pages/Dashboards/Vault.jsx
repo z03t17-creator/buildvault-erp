@@ -83,6 +83,7 @@ function HoldTable({
     confirmingId = null,
     onConfirmHold,
     canManageAdvance = false,
+    canManageStaffPay = false,
     onRequestDelete,
 }) {
     if (!rows?.length) {
@@ -94,7 +95,9 @@ function HoldTable({
         );
     }
 
-    const showActions = canManageAdvance || (showStaff && canConfirmHold);
+    const canEditDelete =
+        (canManageAdvance && !showStaff) || (canManageStaffPay && showStaff);
+    const showActions = canEditDelete || (showStaff && canConfirmHold);
 
     return (
         <div className="overflow-x-auto">
@@ -155,10 +158,20 @@ function HoldTable({
                             {showActions ? (
                                 <td className="px-4 py-2.5">
                                     <div className="flex flex-wrap items-center gap-1.5">
-                                        {canManageAdvance ? (
+                                        {canEditDelete ? (
                                             <>
                                                 <Link
-                                                    href={route('vault.lines.advance.edit', row.id)}
+                                                    href={
+                                                        showStaff
+                                                            ? route(
+                                                                  'vault.lines.staff-pay.edit',
+                                                                  row.id,
+                                                              )
+                                                            : route(
+                                                                  'vault.lines.advance.edit',
+                                                                  row.id,
+                                                              )
+                                                    }
                                                     className="rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs font-semibold text-slate-200 transition hover:bg-white/10"
                                                 >
                                                     {t('edit')}
@@ -166,7 +179,14 @@ function HoldTable({
                                                 <button
                                                     type="button"
                                                     className="rounded-lg border border-rose-400/20 bg-rose-500/10 px-2.5 py-1 text-xs font-semibold text-rose-200 transition hover:bg-rose-500/20"
-                                                    onClick={() => onRequestDelete?.(row)}
+                                                    onClick={() =>
+                                                        onRequestDelete?.({
+                                                            ...row,
+                                                            kind: showStaff
+                                                                ? 'staff_pay'
+                                                                : 'advance',
+                                                        })
+                                                    }
                                                 >
                                                     {t('delete')}
                                                 </button>
@@ -314,10 +334,14 @@ export default function Vault({
         setDeleteTarget(null);
     };
 
-    const confirmDeleteAdvance = () => {
+    const confirmDeleteRow = () => {
         if (!deleteTarget?.id || deleting) return;
         setDeleting(true);
-        router.delete(route('vault.lines.advance.destroy', deleteTarget.id), {
+        const destroyRoute =
+            deleteTarget.kind === 'staff_pay'
+                ? 'vault.lines.staff-pay.destroy'
+                : 'vault.lines.advance.destroy';
+        router.delete(route(destroyRoute, deleteTarget.id), {
             preserveScroll: true,
             onFinish: () => {
                 setDeleting(false);
@@ -484,9 +508,11 @@ export default function Vault({
                             t={t}
                             usd={usd}
                             iqd={iqd}
+                            canManageStaffPay={canManage}
                             canConfirmHold={canManage}
                             confirmingId={confirmingId}
                             onConfirmHold={confirmHold}
+                            onRequestDelete={setDeleteTarget}
                         />
                     </Shell>
 
@@ -512,7 +538,7 @@ export default function Vault({
                     cancelLabel={t('cancel')}
                     processing={deleting}
                     onClose={closeDeleteDialog}
-                    onConfirm={confirmDeleteAdvance}
+                    onConfirm={confirmDeleteRow}
                 />
             </PageShell>
         </AuthenticatedLayout>
