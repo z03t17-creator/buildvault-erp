@@ -38,7 +38,6 @@ export default function Create({
         staff_id: '',
         receiver: '',
         issuer: defaults.issuer || '',
-        purpose: '',
         reference: '',
         notes: '',
     });
@@ -309,16 +308,7 @@ export default function Create({
                                 ))}
                             </select>
                         </FormField>
-                        <FormField>
-                            <InputLabel value={t('purpose')} htmlFor="purpose" />
-                            <TextInput
-                                id="purpose"
-                                className={stockFieldClass}
-                                value={data.purpose}
-                                onChange={(e) => setData('purpose', e.target.value)}
-                            />
-                        </FormField>
-                        <FormField>
+                        <FormField className="sm:col-span-2">
                             <InputLabel value={t('note')} htmlFor="notes" />
                             <TextInput
                                 id="notes"

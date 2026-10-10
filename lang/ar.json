@@ -1690,7 +1690,7 @@
     "warehouse_today_moves_hint": "وارد :in · صادر :out",
     "warehouse_balance_table_hint": ":count مادة متوفرة",
     "warehouse_low_inline": ":count مواد تحتاج إعادة تخزين.",
-    "warehouse_receive_sulfa_hint": "مصدر الدفع: سلفة المشروع أو الخزنة الرئيسية أو دين المورد.",
+    "warehouse_receive_sulfa_hint": "مصدر الدفع: سلفة المشروع أو الخزنة الرئيسية.",
     "warehouse_payment_source": "مصدر الدفع",
     "warehouse_pay_sulfa": "من سلفة المشروع",
     "warehouse_pay_vault": "من الخزنة الرئيسية",

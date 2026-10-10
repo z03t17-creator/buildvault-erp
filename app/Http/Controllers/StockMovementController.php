@@ -132,11 +132,14 @@ class StockMovementController extends Controller
             }),
             'projects' => $projects,
             'currencies' => DualCurrency::CURRENCIES,
-            'paymentSources' => StockMovement::PAYMENT_SOURCES,
+            'paymentSources' => [
+                StockMovement::PAYMENT_PROJECT_ADVANCE,
+                StockMovement::PAYMENT_MAIN_VAULT,
+            ],
             'defaults' => [
                 'moved_on' => now()->toDateString(),
                 'currency' => DualCurrency::IQD,
-                'payment_source' => StockMovement::PAYMENT_SUPPLIER_CREDIT,
+                'payment_source' => StockMovement::PAYMENT_PROJECT_ADVANCE,
             ],
         ]);
     }

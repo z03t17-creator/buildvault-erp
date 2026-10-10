@@ -1690,7 +1690,7 @@
     "warehouse_today_moves_hint": "داخل :in · دەرچوون :out",
     "warehouse_balance_table_hint": ":count کەرەستە لەسەر دەست",
     "warehouse_low_inline": ":count کەرەستە پێویستی بە دووبارەکردنەوە هەیە.",
-    "warehouse_receive_sulfa_hint": "سەرچاوەی پارەدان: سلفەی پڕۆژە، قاسەی سەرەکی، یان قەرزی دابینکەر.",
+    "warehouse_receive_sulfa_hint": "سەرچاوەی پارەدان: سلفەی پڕۆژە یان قاسەی سەرەکی.",
     "warehouse_payment_source": "سەرچاوەی پارەدان",
     "warehouse_pay_sulfa": "لە سلفەی پڕۆژە بدرێت",
     "warehouse_pay_vault": "لە قاسەی سەرەکی",

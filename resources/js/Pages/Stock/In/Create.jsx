@@ -18,17 +18,12 @@ import { useMemo } from 'react';
 
 const PAYMENT_PROJECT_ADVANCE = 'project_advance';
 const PAYMENT_MAIN_VAULT = 'main_vault';
-const PAYMENT_SUPPLIER_CREDIT = 'supplier_credit';
 
 export default function Create({
     items = [],
     projects = [],
     currencies = ['USD', 'IQD'],
-    paymentSources = [
-        PAYMENT_SUPPLIER_CREDIT,
-        PAYMENT_PROJECT_ADVANCE,
-        PAYMENT_MAIN_VAULT,
-    ],
+    paymentSources = [PAYMENT_PROJECT_ADVANCE, PAYMENT_MAIN_VAULT],
     defaults = {},
 }) {
     const t = useTranslations();
@@ -40,7 +35,7 @@ export default function Create({
         moved_on: defaults.moved_on || new Date().toISOString().slice(0, 10),
         currency: defaults.currency || 'IQD',
         purchase_price: '',
-        payment_source: defaults.payment_source || PAYMENT_SUPPLIER_CREDIT,
+        payment_source: defaults.payment_source || PAYMENT_PROJECT_ADVANCE,
         project_id: '',
         shelf_zone: '',
         notes: '',
@@ -87,7 +82,6 @@ export default function Create({
     const paymentLabels = {
         [PAYMENT_PROJECT_ADVANCE]: t('warehouse_pay_sulfa'),
         [PAYMENT_MAIN_VAULT]: t('warehouse_pay_vault'),
-        [PAYMENT_SUPPLIER_CREDIT]: t('warehouse_pay_credit'),
     };
 
     return (

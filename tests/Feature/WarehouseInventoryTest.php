@@ -177,6 +177,8 @@ class WarehouseInventoryTest extends TestCase
                 'moved_on' => '2026-10-10',
                 'currency' => 'USD',
                 'purchase_price' => 3.5,
+                // supplier_credit still accepted by API (hidden in UI) so this test
+                // can assert currency rules without needing vault cash.
                 'payment_source' => 'supplier_credit',
             ])
             ->assertRedirect(route('stock.dashboard'));
@@ -309,7 +311,6 @@ class WarehouseInventoryTest extends TestCase
                 'floor_label' => '3',
                 'apartment_number' => '12',
                 'staff_id' => $staff->id,
-                'purpose' => 'Shaft install',
             ])
             ->assertRedirect();
 

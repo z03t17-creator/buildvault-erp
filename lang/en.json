@@ -1690,7 +1690,7 @@
     "warehouse_today_moves_hint": "In :in · Out :out",
     "warehouse_balance_table_hint": ":count items on hand",
     "warehouse_low_inline": ":count items need restock.",
-    "warehouse_receive_sulfa_hint": "Choose payment: project سلفە, main vault, or supplier credit.",
+    "warehouse_receive_sulfa_hint": "Choose payment: project سلفە or main vault.",
     "warehouse_payment_source": "Payment source",
     "warehouse_pay_sulfa": "From project سلفە",
     "warehouse_pay_vault": "From main vault",
