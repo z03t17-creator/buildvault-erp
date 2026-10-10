@@ -6,6 +6,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import { stockFieldClass, stockMoneyClass } from '@/Components/StockDesk';
 import TextInput from '@/Components/TextInput';
 import StockTabs from '@/Components/StockTabs';
@@ -21,11 +22,14 @@ export default function Create({
     defaults = {},
 }) {
     const t = useTranslations();
-    const unitOptions = units.length ? units : ['Pcs', 'M2', 'Bag', 'Meter'];
+    const unitOptions = units.length
+        ? units
+        : ['Pcs', 'M2', 'Bag', 'Meter', 'دانە', 'm²', 'جوال', 'مەتر'];
+    const categoryNames = categories.map((cat) => cat.name).filter(Boolean);
     const { data, setData, post, processing, errors } = useForm({
         name: '',
         auto_sku: true,
-        stock_category_id: '',
+        category: '',
         unit: defaults.unit || 'Pcs',
         quantity: 0,
         currency: defaults.currency || 'IQD',
@@ -74,35 +78,28 @@ export default function Create({
                             <InputError message={errors.name} className="mt-1" />
                         </FormField>
                         <FormField>
-                            <InputLabel value={t('category')} htmlFor="stock_category_id" />
-                            <select
-                                id="stock_category_id"
+                            <InputLabel value={t('category')} htmlFor="category" />
+                            <SuggestionCombobox
+                                id="category"
                                 className={stockFieldClass}
-                                value={data.stock_category_id}
-                                onChange={(e) => setData('stock_category_id', e.target.value)}
-                            >
-                                <option value="">{t('uncategorized')}</option>
-                                {categories.map((cat) => (
-                                    <option key={cat.id} value={cat.id}>
-                                        {cat.name}
-                                    </option>
-                                ))}
-                            </select>
+                                value={data.category}
+                                onChange={(next) => setData('category', next)}
+                                suggestions={categoryNames}
+                                placeholder={t('warehouse_category_type_hint')}
+                            />
+                            <InputError message={errors.category || errors.stock_category_id} className="mt-1" />
                         </FormField>
                         <FormField>
                             <InputLabel value={t('unit')} htmlFor="unit" />
-                            <select
+                            <SuggestionCombobox
                                 id="unit"
                                 className={stockFieldClass}
                                 value={data.unit}
-                                onChange={(e) => setData('unit', e.target.value)}
-                            >
-                                {unitOptions.map((unit) => (
-                                    <option key={unit} value={unit}>
-                                        {unit}
-                                    </option>
-                                ))}
-                            </select>
+                                onChange={(next) => setData('unit', next)}
+                                suggestions={unitOptions}
+                                placeholder={t('warehouse_unit_type_hint')}
+                            />
+                            <InputError message={errors.unit} className="mt-1" />
                         </FormField>
                         <FormField>
                             <InputLabel value={t('currency')} htmlFor="currency" />

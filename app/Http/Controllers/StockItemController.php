@@ -220,14 +220,29 @@ class StockItemController extends Controller
         unset($data['purchase_price']);
 
         $categoryId = $data['stock_category_id'] ?? null;
+        $typedCategory = trim((string) ($data['category'] ?? ''));
         $categoryName = null;
-        if ($categoryId) {
+
+        if ($typedCategory !== '') {
+            $existing = StockCategory::query()
+                ->whereRaw('LOWER(name) = LOWER(?)', [$typedCategory])
+                ->first();
+            $category = $existing ?: StockCategory::query()->create(['name' => $typedCategory]);
+            $categoryName = $category->name;
+            $data['stock_category_id'] = (int) $category->id;
+            $data['category'] = $categoryName;
+        } elseif ($categoryId) {
             $categoryName = StockCategory::query()->whereKey($categoryId)->value('name');
             $data['category'] = $categoryName;
             $data['stock_category_id'] = (int) $categoryId;
         } else {
             $data['stock_category_id'] = null;
             $data['category'] = null;
+        }
+
+        $data['unit'] = trim((string) ($data['unit'] ?? ''));
+        if ($data['unit'] === '') {
+            $data['unit'] = 'Pcs';
         }
 
         $autoSku = ! empty($data['auto_sku']);

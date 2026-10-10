@@ -7,6 +7,7 @@ import PageHeader from '@/Components/PageHeader';
 import PageShell from '@/Components/PageShell';
 import PrimaryButton from '@/Components/PrimaryButton';
 import SecondaryButton from '@/Components/SecondaryButton';
+import SuggestionCombobox from '@/Components/SuggestionCombobox';
 import TextInput from '@/Components/TextInput';
 import StockTabs from '@/Components/StockTabs';
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
@@ -20,8 +21,12 @@ const fieldClass =
 const moneyFieldClass =
     'mt-1 block w-full min-h-[2.75rem] rounded-xl border border-slate-200 bg-white px-3 font-sans text-lg font-semibold tabular-nums shadow-sm focus:border-rose-500 focus:outline-none focus:ring-2 focus:ring-rose-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100';
 
-export default function Edit({ item, categories, currencies = ['USD', 'IQD'] }) {
+export default function Edit({ item, categories = [], units = [], currencies = ['USD', 'IQD'] }) {
     const t = useTranslations();
+    const unitOptions = units.length
+        ? units
+        : ['Pcs', 'M2', 'Bag', 'Meter', 'دانە', 'm²', 'جوال', 'مەتر'];
+    const categoryNames = categories.map((c) => c.name).filter(Boolean);
     const initialCurrency = item.currency || item.cost_currency || 'IQD';
     const initialPrice =
         initialCurrency === 'USD'
@@ -30,8 +35,8 @@ export default function Edit({ item, categories, currencies = ['USD', 'IQD'] }) 
     const { data, setData, put, processing, errors } = useForm({
         name: item.name || '',
         sku: item.sku || '',
-        stock_category_id: item.stock_category_id || '',
-        unit: item.unit || 'pcs',
+        category: item.category || item.stock_category?.name || '',
+        unit: item.unit || 'Pcs',
         currency: initialCurrency,
         purchase_price: initialPrice,
         notes: item.notes || '',
@@ -93,28 +98,26 @@ export default function Edit({ item, categories, currencies = ['USD', 'IQD'] }) 
                                 <InputError message={errors.sku} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('category')} />
-                                <select
+                                <InputLabel value={t('category')} htmlFor="category" />
+                                <SuggestionCombobox
+                                    id="category"
                                     className={fieldClass}
-                                    value={data.stock_category_id}
-                                    onChange={(e) => setData('stock_category_id', e.target.value)}
-                                >
-                                    <option value="">{t('uncategorized')}</option>
-                                    {(categories || []).map((c) => (
-                                        <option key={c.id} value={c.id}>
-                                            {c.name}
-                                        </option>
-                                    ))}
-                                </select>
-                                <InputError message={errors.stock_category_id} className="mt-1" />
+                                    value={data.category}
+                                    onChange={(next) => setData('category', next)}
+                                    suggestions={categoryNames}
+                                    placeholder={t('warehouse_category_type_hint')}
+                                />
+                                <InputError message={errors.category || errors.stock_category_id} className="mt-1" />
                             </FormField>
                             <FormField>
-                                <InputLabel value={t('unit')} />
-                                <TextInput
+                                <InputLabel value={t('unit')} htmlFor="unit" />
+                                <SuggestionCombobox
+                                    id="unit"
                                     className={fieldClass}
                                     value={data.unit}
-                                    onChange={(e) => setData('unit', e.target.value)}
-                                    required
+                                    onChange={(next) => setData('unit', next)}
+                                    suggestions={unitOptions}
+                                    placeholder={t('warehouse_unit_type_hint')}
                                 />
                                 <InputError message={errors.unit} className="mt-1" />
                             </FormField>

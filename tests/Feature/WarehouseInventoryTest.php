@@ -114,6 +114,48 @@ class WarehouseInventoryTest extends TestCase
         $this->assertSame(800.0, $available);
     }
 
+    public function test_item_accepts_typed_category_and_custom_unit(): void
+    {
+        $stock = $this->userWithRole(Roles::STOCK_MANAGER);
+
+        $this->actingAs($stock)
+            ->post(route('stock.items.store'), [
+                'name' => 'Custom Pipe',
+                'auto_sku' => true,
+                'category' => 'لوله',
+                'unit' => 'تەن',
+                'quantity' => 0,
+                'currency' => 'IQD',
+                'purchase_price' => 1000,
+            ])
+            ->assertRedirect();
+
+        $item = StockItem::query()->where('name', 'Custom Pipe')->first();
+        $this->assertNotNull($item);
+        $this->assertSame('لوله', $item->category);
+        $this->assertSame('تەن', $item->unit);
+        $this->assertDatabaseHas('stock_categories', ['name' => 'لوله']);
+        $this->assertSame(
+            (int) StockCategory::query()->where('name', 'لوله')->value('id'),
+            (int) $item->stock_category_id
+        );
+
+        // Reusing the same typed name (case-insensitive) must not create a duplicate.
+        $this->actingAs($stock)
+            ->post(route('stock.items.store'), [
+                'name' => 'Custom Elbow',
+                'auto_sku' => true,
+                'category' => 'لوله',
+                'unit' => 'دانە',
+                'quantity' => 0,
+                'currency' => 'IQD',
+                'purchase_price' => 500,
+            ])
+            ->assertRedirect();
+
+        $this->assertSame(1, StockCategory::query()->where('name', 'لوله')->count());
+    }
+
     public function test_stock_item_can_be_priced_in_usd(): void
     {
         $stock = $this->userWithRole(Roles::STOCK_MANAGER);

@@ -1620,6 +1620,8 @@
     "warehouse_items_hint": "كل الرموز في المستودع",
     "warehouse_add_item": "إضافة صنف",
     "warehouse_item_form_hint": "التصنيف والوحدة ومتوسط التكلفة بالدولار أو الدينار. أضف الكمية عبر إدخال المخزون.",
+    "warehouse_unit_type_hint": "اكتب أي وحدة، مثل Pcs أو دانە أو مەتر…",
+    "warehouse_category_type_hint": "اكتب تصنيفاً أو اختر واحداً، مثل Electrical…",
     "warehouse_receive": "إدخال المواد + سلفة",
     "warehouse_receive_hint": "المورد والفاتورة وتكلفة الوحدة والإجمالي ورف التخزين.",
     "warehouse_receive_save": "حفظ الإدخال",

@@ -1620,6 +1620,8 @@
     "warehouse_items_hint": "هەموو SKU لە کۆگا",
     "warehouse_add_item": "زیادکردنی کەرەستە",
     "warehouse_item_form_hint": "پۆل، یەکە، و نرخی ناوەند بە دۆلار یان دینار. بڕ زیاد بکە لە هاتنەژوورەوە.",
+    "warehouse_unit_type_hint": "یەکە بنووسە، وەک Pcs، دانە، مەتر…",
+    "warehouse_category_type_hint": "پۆل بنووسە یان هەڵبژێرە، وەک Electrical…",
     "warehouse_receive": "داخڵکردنی کەرەستە + سلفە",
     "warehouse_receive_hint": "دابینکەر، ژمارەی پسوولە، نرخی یەکە، کۆی نرخ، و ڕەفەی کۆگا.",
     "warehouse_receive_save": "پاشەکەوتی داخڵکردن",

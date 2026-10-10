@@ -1620,6 +1620,8 @@
     "warehouse_items_hint": "All SKUs in the warehouse",
     "warehouse_add_item": "Add item",
     "warehouse_item_form_hint": "Category, unit, and average cost in USD or IQD. Add stock with Stock In.",
+    "warehouse_unit_type_hint": "Type any unit, e.g. Pcs, دانە, مەتر…",
+    "warehouse_category_type_hint": "Type a category or pick one, e.g. Electrical…",
     "warehouse_receive": "Receive + سلفە",
     "warehouse_receive_hint": "Supplier, invoice, unit cost, total, and shelf/zone.",
     "warehouse_receive_save": "Save receive",
