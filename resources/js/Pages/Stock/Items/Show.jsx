@@ -104,11 +104,6 @@ export default function Show({ item }) {
                             <span className="text-sm font-medium text-slate-400">{item.unit}</span>
                         </span>
                     </Field>
-                    <Field label={t('min_quantity')}>
-                        <span className="font-sans text-lg tabular-nums" dir="ltr">
-                            {item.min_quantity}
-                        </span>
-                    </Field>
                     <Field label={`${t('purchase_price_iqd')} (${iqd})`}>
                         <MoneyAmount
                             value={item.purchase_price_iqd}

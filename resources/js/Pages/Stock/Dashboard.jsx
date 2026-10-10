@@ -126,7 +126,6 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                                     <Th>{t('name')}</Th>
                                     <Th>{t('sku')}</Th>
                                     <Th align="end">{t('quantity')}</Th>
-                                    <Th align="end">{t('min_quantity')}</Th>
                                     <Th>{t('stock_status')}</Th>
                                 </tr>
                             </thead>
@@ -146,9 +145,6 @@ export default function Dashboard({ summary, recentMovements = [], lowStockItems
                                         </Td>
                                         <Td align="end" money>
                                             {item.quantity} {item.unit}
-                                        </Td>
-                                        <Td align="end" money>
-                                            {item.min_quantity}
                                         </Td>
                                         <Td>
                                             <StockStatusBadge item={item} t={t} />

@@ -161,7 +161,6 @@ export default function Index({
                                     <Th>{t('category')}</Th>
                                     <Th>{t('unit')}</Th>
                                     <Th align="end">{t('quantity')}</Th>
-                                    <Th align="end">{t('min_quantity')}</Th>
                                     <Th align="end">{t('warehouse_avg_cost')}</Th>
                                     <Th>{t('stock_status')}</Th>
                                 </tr>
@@ -190,9 +189,6 @@ export default function Index({
                                         <Td muted>{item.unit}</Td>
                                         <Td align="end" money>
                                             {item.quantity}
-                                        </Td>
-                                        <Td align="end" money>
-                                            {item.min_quantity}
                                         </Td>
                                         <Td align="end" money>
                                             <MoneyAmount

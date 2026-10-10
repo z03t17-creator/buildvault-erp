@@ -28,7 +28,6 @@ export default function Edit({ item, suppliers, categories }) {
         sku: item.sku || '',
         stock_category_id: item.stock_category_id || '',
         unit: item.unit || 'pcs',
-        min_quantity: item.min_quantity ?? 0,
         purchase_price_iqd: item.purchase_price_iqd ?? 0,
         supplier_id: item.supplier_id || '',
         location: item.location || '',
@@ -113,17 +112,6 @@ export default function Edit({ item, suppliers, categories }) {
                                     required
                                 />
                                 <InputError message={errors.unit} className="mt-1" />
-                            </FormField>
-                            <FormField>
-                                <InputLabel value={t('min_quantity')} />
-                                <TextInput
-                                    className={fieldClass}
-                                    type="number"
-                                    step="0.001"
-                                    value={data.min_quantity}
-                                    onChange={(e) => setData('min_quantity', e.target.value)}
-                                />
-                                <InputError message={errors.min_quantity} className="mt-1" />
                             </FormField>
                             <FormField>
                                 <InputLabel value={`${t('purchase_price_iqd')} (${iqd})`} />

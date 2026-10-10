@@ -25,8 +25,7 @@ export default function Create({ suppliers = [], categories = [], units = [], de
         auto_sku: defaults.auto_sku !== false,
         stock_category_id: '',
         unit: defaults.unit || 'Pcs',
-        quantity: defaults.quantity ?? 0,
-        min_quantity: defaults.min_quantity ?? 0,
+        quantity: 0,
         purchase_price_iqd: defaults.purchase_price_iqd ?? 0,
         supplier_id: '',
         location: '',
@@ -135,26 +134,6 @@ export default function Create({ suppliers = [], categories = [], units = [], de
                                 placeholder={t('warehouse_barcode_hint')}
                             />
                             <InputError message={errors.barcode} className="mt-1" />
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('quantity')} htmlFor="quantity" />
-                            <MoneyInput
-                                id="quantity"
-                                className={stockMoneyClass}
-                                value={String(data.quantity ?? '')}
-                                onValueChange={(next) => setData('quantity', next)}
-                                allowDecimals
-                            />
-                        </FormField>
-                        <FormField>
-                            <InputLabel value={t('min_quantity')} htmlFor="min_quantity" />
-                            <MoneyInput
-                                id="min_quantity"
-                                className={stockMoneyClass}
-                                value={String(data.min_quantity ?? '')}
-                                onValueChange={(next) => setData('min_quantity', next)}
-                                allowDecimals
-                            />
                         </FormField>
                         <FormField>
                             <InputLabel value={`${t('warehouse_avg_cost')} (${iqd})`} htmlFor="purchase_price_iqd" />
